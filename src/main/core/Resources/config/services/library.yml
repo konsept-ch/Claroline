@@ -1,3 +1,6 @@
+parameters:
+    claroline.param.geoip_db_path: '%kernel.project_dir%/var/geoip/GeoLite2-City.mmdb'
+
 services:
     _defaults:
         autowire: false
@@ -115,3 +118,13 @@ services:
     Claroline\CoreBundle\Library\RoutingHelper:
         arguments:
             - '@router'
+
+    # GeoIp
+    Claroline\CoreBundle\Library\GeoIp\MaxMindGeoIpInfoProvider:
+        arguments: '@GeoIp2\Database\Reader'
+
+    Claroline\CoreBundle\Library\GeoIp\GeoIpInfoProviderInterface:
+        alias: 'Claroline\CoreBundle\Library\GeoIp\MaxMindGeoIpInfoProvider'
+
+    GeoIp2\Database\Reader:
+        arguments: [ '%claroline.param.geoip_db_path%' ]

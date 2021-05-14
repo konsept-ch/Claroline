@@ -37,6 +37,7 @@
         "doctrine/orm": "^2.6",
         "dompdf/dompdf": "*",
         "friendsofsymfony/jsrouting-bundle": "^2.2",
+        "geoip2/geoip2": "^2.11",
         "gedmo/doctrine-extensions": "2.4.35",
         "hwi/oauth-bundle": "^1.1",
         "icap/html-diff": "1.1.0",
@@ -72,6 +73,7 @@
         "symfony/inflector": "4.4.*",
         "symfony/intl": "4.4.*",
         "symfony/mailer": "4.4.*",
+        "symfony/messenger": "^5.2",
         "symfony/monolog-bridge": "4.4.*",
         "symfony/process": "4.4.*",
         "symfony/routing": "4.4.*",
@@ -87,9 +89,7 @@
         "symfony/web-profiler-bundle": "4.4.*",
         "symfony/yaml": "4.4.*",
         "twig/twig": "^2.14",
-        "willdurand/js-translation-bundle": "3.0.*",
-        "symfony/messenger": "^5.2"
-        "geoip2/geoip2": "^2.11"
+        "willdurand/js-translation-bundle": "3.0.*"
     },
     "require-dev": {
         "symfony/dom-crawler": "4.4.*",
@@ -168,11 +168,15 @@
         "bundles": [
             "Claroline\\BundleRecorder\\ScriptHandler::buildBundleFile"
         ],
+        "get-geoip": [
+            "Claroline\\CoreBundle\\GeoIp\\Database\\MaxmindGeoIpScriptHandler::refreshDatabase"
+        ],
         "pre-install-cmd": [
             "php bin/configure"
         ],
         "post-install-cmd": [
-            "composer bundles"
+            "composer bundles",
+            "composer get-geoip"
         ],
         "pre-update-cmd": [
             "php bin/configure",
@@ -181,6 +185,7 @@
         ],
         "post-update-cmd": [
             "composer bundles",
+            "composer get-geoip",
             "composer disable-maintenance",
             "composer delete-cache"
         ]

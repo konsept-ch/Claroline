@@ -1,9 +1,0 @@
-services:
-    GeoIp2\Database\Reader:
-        arguments: ['%claroline.param.files_directory%/geoip/GeoLite2-City.mmdb']
-
-    Claroline\CoreBundle\Library\GeoIp\MaxMindGeoIpInfoProvider:
-        arguments: '@GeoIp2\Database\Reader'
-
-    Claroline\CoreBundle\Library\GeoIp\GeoIpInfoProviderInterface:
-        alias: 'Claroline\CoreBundle\Library\GeoIp\MaxMindGeoIpInfoProvider'

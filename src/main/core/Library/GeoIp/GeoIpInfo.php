@@ -35,7 +35,7 @@ final class GeoIpInfo
         $this->longitude = $longitude;
     }
 
-    public static function fromMaxMind(City $info)
+    public static function fromMaxMind(City $info): self
     {
         return new self(
             $info->country->names['en'] ?? null,

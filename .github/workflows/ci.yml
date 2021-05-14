@@ -103,6 +103,8 @@ jobs:
 
       - name: "Install PHP dependencies with Composer"
         run: composer update --no-interaction
+        env:
+          MAXMIND_GEOIP_LICENSE_KEY: ${{ secrets.MAXMIND_GEOIP_LICENSE_KEY }}
 
       - name: "Cache node modules"
         uses: actions/cache@v2

@@ -4,8 +4,8 @@ namespace Claroline\LogBundle\Subscriber;
 
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\Event\CatalogEvents\SecurityEvents;
-use Claroline\LogBundle\Entity\SecurityLog;
 use Claroline\CoreBundle\Library\GeoIp\GeoIpInfoProviderInterface;
+use Claroline\LogBundle\Entity\SecurityLog;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Core\Authentication\Token\SwitchUserToken;
@@ -27,7 +27,7 @@ class SecurityLogSubscriber implements EventSubscriberInterface
         Security $security,
         RequestStack $requestStack,
         TranslatorInterface $translator,
-        GeoIpInfoProviderInterface $geoIpInfoProvider
+        ?GeoIpInfoProviderInterface $geoIpInfoProvider = null
     ) {
         $this->om = $om;
         $this->security = $security;
@@ -61,7 +61,18 @@ class SecurityLogSubscriber implements EventSubscriberInterface
         $logEntry->setEvent($eventName);
         $logEntry->setTarget($event->getUser());
         $logEntry->setDoer($this->security->getUser() ?? $event->getUser());
-        $logEntry->setDoerIp($this->getDoerIp());
+
+        $doerIp = $this->getDoerIp();
+        $logEntry->setDoerIp($doerIp);
+
+        if ($this->geoIpInfoProvider && 'CLI' !== $doerIp) {
+            $geoIpInfo = $this->geoIpInfoProvider->getGeoIpInfo($doerIp);
+
+            if ($geoIpInfo) {
+                $logEntry->setCountry($geoIpInfo->getCountry());
+                $logEntry->setCity($geoIpInfo->getCity());
+            }
+        }
 
         $this->om->persist($logEntry);
         $this->om->flush();
@@ -90,7 +101,7 @@ class SecurityLogSubscriber implements EventSubscriberInterface
         $logEntry->setDoer($this->security->getUser());
         $logEntry->setDoerIp($doerIp);
 
-        if ('CLI' !== $doerIp) {
+        if ($this->geoIpInfoProvider && 'CLI' !== $doerIp) {
             $geoIpInfo = $this->geoIpInfoProvider->getGeoIpInfo($doerIp);
 
             if ($geoIpInfo) {
@@ -98,6 +109,7 @@ class SecurityLogSubscriber implements EventSubscriberInterface
                 $logEntry->setCity($geoIpInfo->getCity());
             }
         }
+
         $this->em->persist($logEntry);
         $this->em->flush();
     }
