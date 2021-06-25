@@ -1,6 +1,6 @@
 <?php
 
-namespace Claroline\CoreBundle\GeoIp\Database;
+namespace Claroline\CoreBundle\Library\GeoIp\Database;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -48,7 +48,7 @@ class MaxMindGeoIpDatabaseDownloader
 
         foreach ($this->httpClient->stream($response) as $chunk) {
             try {
-                $this->appendToFile($tmpArchive, $chunk->getContent());
+                $this->filesystem->appendToFile($tmpArchive, $chunk->getContent());
             } catch (ExceptionInterface | IOException $e) {
                 if (!$catchExceptions) {
                     throw $e;
@@ -82,18 +82,5 @@ class MaxMindGeoIpDatabaseDownloader
 
         // Cleanup filesystem
         $this->filesystem->remove("$this->tempDir/claroline-geoip");
-    }
-
-    private function appendtoFile(string $filename, string $content): void
-    {
-        if (method_exists($this->filesystem, 'appendToFile')) {
-            $this->filesystem->appendToFile($filename, $content);
-
-            return;
-        }
-
-        if (false === @file_put_contents($filename, $content, \FILE_APPEND)) {
-            throw new IOException(sprintf('Failed to write file "%s".', $filename), 0, null, $filename);
-        }
     }
 }

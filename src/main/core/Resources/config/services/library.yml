@@ -1,5 +1,6 @@
 parameters:
     claroline.param.geoip_db_path: '%kernel.project_dir%/var/geoip/GeoLite2-City.mmdb'
+    env(MAXMIND_GEOIP_LICENSE_KEY): ''
 
 services:
     _defaults:
@@ -120,8 +121,15 @@ services:
             - '@router'
 
     # GeoIp
+    Claroline\CoreBundle\Library\GeoIp\Database\MaxMindGeoIpDatabaseDownloader:
+        arguments:
+            - '%env(MAXMIND_GEOIP_LICENSE_KEY)%'
+            - '@logger'
+            - '@?http_client'
+            - '@filesystem'
+
     Claroline\CoreBundle\Library\GeoIp\MaxMindGeoIpInfoProvider:
-        arguments: '@GeoIp2\Database\Reader'
+        arguments: ['@GeoIp2\Database\Reader']
 
     Claroline\CoreBundle\Library\GeoIp\GeoIpInfoProviderInterface:
         alias: 'Claroline\CoreBundle\Library\GeoIp\MaxMindGeoIpInfoProvider'

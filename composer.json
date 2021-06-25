@@ -169,7 +169,7 @@
             "Claroline\\BundleRecorder\\ScriptHandler::buildBundleFile"
         ],
         "get-geoip": [
-            "Claroline\\CoreBundle\\GeoIp\\Database\\MaxmindGeoIpScriptHandler::refreshDatabase"
+            "php bin/console claroline:geoip:download"
         ],
         "pre-install-cmd": [
             "php bin/configure"
