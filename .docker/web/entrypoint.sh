@@ -11,30 +11,16 @@ done
 
 echo "MySQL is up"
 
+php bin/configure # we run it again to generate parameters.yml inside the volume
+composer bundles # we run it again to generate bundles.ini inside the volume
+composer delete-cache # fixes install/update errors
+
 if [ -f files/installed ]; then
-  echo "Claroline is already installed"
+  echo "Claroline is already installed, updating and rebuilding themes and translations..."
 
-  if [ -f files/versionLastUsed.txt ]; then
-    versionLastUsed=$(head -n 1 files/versionLastUsed.txt)
-    currentVersion=$(head -n 1 VERSION.txt)
-
-    if [[ "$versionLastUsed" != "$currentVersion" ]]; then
-      echo "New version detected, updating..."
-      php bin/console claroline:update -vvv
-
-      chmod -R 750 var files config
-      chown -R www-data:www-data var files config
-      composer delete-cache # fixes SAML errors
-    else
-      echo "Claroline version is up to date, rebuilding themes"
-      php bin/console claroline:theme:build
-      composer delete-cache
-    fi
-  fi
+  php bin/console claroline:update -vvv
 else
-  echo "Installing Claroline..."
-  php bin/configure # we run it again to generate parameters.yml inside the volume
-  composer bundles # we run it again to generate bundles.ini inside the volume
+  echo "Installing Claroline for the first time..."
   php bin/console claroline:install -vvv
 
   if [[ -v PLATFORM_NAME ]]; then
@@ -49,7 +35,7 @@ else
 
   USERS=$(mysql $DB_NAME -u $DB_USER -p$DB_PASSWORD -h $DB_HOST -se "select count(*) from claro_user")
 
-  if [ "$USERS" == "0" ] && [ -v ADMIN_FIRSTNAME ] && [ -v ADMIN_LASTNAME ] && [ -v ADMIN_USERNAME ] && [ -v ADMIN_PASSWORD ]  && [ -v ADMIN_EMAIL ]; then
+  if [ "$USERS" == "1" ] && [ -v ADMIN_FIRSTNAME ] && [ -v ADMIN_LASTNAME ] && [ -v ADMIN_USERNAME ] && [ -v ADMIN_PASSWORD ]  && [ -v ADMIN_EMAIL ]; then
     echo '*********************************************************************************************************************'
     echo "Creating default admin user : $ADMIN_FIRSTNAME $ADMIN_LASTNAME $ADMIN_USERNAME $ADMIN_PASSWORD $ADMIN_EMAIL"
     echo '*********************************************************************************************************************'
@@ -59,15 +45,12 @@ else
     echo 'Users already exist or no admin vars detected, Claroline installed without an admin account'
   fi
 
-  echo "Setting correct file permissions"
-  chmod -R 750 var files config
-  chown -R www-data:www-data var files config
-
-  echo "Clean cache after setting correct permissions, fixes SAML issues"
-  composer delete-cache
   touch files/installed
 fi
 
-cp VERSION.txt files/versionLastUsed.txt
+composer delete-cache # fixes SAML errors
+
+chmod -R 750 var files config
+chown -R www-data:www-data var files config
 
 exec "$@"
