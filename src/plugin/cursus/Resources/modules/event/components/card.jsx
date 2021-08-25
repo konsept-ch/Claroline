@@ -1,7 +1,7 @@
 import React from 'react'
 import {PropTypes as T} from 'prop-types'
 import get from 'lodash/get'
-import classNames from 'classnames'
+import classes from 'classnames'
 
 import {asset} from '#/main/app/config/asset'
 import {trans, displayDateRange} from '#/main/app/intl'
@@ -19,7 +19,7 @@ const EventCard = props =>
     title={props.data.name}
     subtitle={displayDateRange(props.data.start, props.data.end)}
     contentText={props.data.description}
-    className={classNames({
+    className={classes({
       'is-event-online': !get(props.data, 'location.name'),
       'has-event-url': !get(props.data, 'location.name') && get(props.data, 'locationUrl')
     })}
