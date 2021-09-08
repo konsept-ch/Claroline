@@ -1,6 +1,6 @@
 <?php
 
-namespace Icap\BlogBundle\Controller\API;
+namespace Icap\BlogBundle\Controller;
 
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
@@ -181,7 +181,7 @@ class PostController
         $this->checkPermission('EDIT', $blog->getResourceNode(), [], true);
 
         $data = json_decode($request->getContent(), true);
-        $post = $this->postManager->updatePost($blog, $post, $this->postSerializer->deserialize($data), $user);
+        $post = $this->postManager->updatePost($blog, $post, $this->postSerializer->deserialize($data, $post), $user);
 
         return new JsonResponse($this->postSerializer->serialize($post));
     }
