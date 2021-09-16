@@ -11,7 +11,6 @@ use Claroline\AppBundle\Event\Crud\PatchEvent;
 use Claroline\AppBundle\Event\Crud\UpdateEvent;
 use Claroline\AppBundle\Event\StrictDispatcher;
 use Claroline\AppBundle\Persistence\ObjectManager;
-use Claroline\AuthenticationBundle\Security\Authentication\Authenticator;
 use Claroline\CoreBundle\Configuration\PlatformDefaults;
 use Claroline\CoreBundle\Entity\Group;
 use Claroline\CoreBundle\Entity\Role;
@@ -33,8 +32,6 @@ class UserCrud
 {
     /** @var TokenStorageInterface */
     private $tokenStorage;
-    /** @var Authenticator */
-    private $authenticator;
     /** @var ObjectManager */
     private $om;
     /** @var PlatformConfigurationHandler */
@@ -54,7 +51,6 @@ class UserCrud
 
     public function __construct(
         TokenStorageInterface $tokenStorage,
-        Authenticator $authenticator,
         ObjectManager $om,
         PlatformConfigurationHandler $config,
         RoleManager $roleManager,
@@ -65,7 +61,6 @@ class UserCrud
         StrictDispatcher $dispatcher
     ) {
         $this->tokenStorage = $tokenStorage;
-        $this->authenticator = $authenticator;
         $this->om = $om;
         $this->config = $config;
         $this->roleManager = $roleManager;
@@ -138,9 +133,9 @@ class UserCrud
             $token = $this->tokenStorage->getToken();
             //we want a main organization
             if ($token && $token->getUser() instanceof User && $token->getUser()->getMainOrganization()) {
-                $user->addOrganization($token->getUser()->getMainOrganization(), true);
+                $user->setMainOrganization($token->getUser()->getMainOrganization());
             } else {
-                $user->addOrganization($this->organizationManager->getDefault(), true);
+                $user->setMainOrganization($this->organizationManager->getDefault());
             }
         }
 
@@ -239,15 +234,7 @@ class UserCrud
 
     public function postPatch(PatchEvent $event)
     {
-        /** @var User $user */
-        $user = $event->getObject();
-
         if ($event->getValue() instanceof Role) {
-            // refresh token to get updated roles if the current user has changes in his roles
-            if ($this->authenticator->isAuthenticatedUser($user)) {
-                $this->authenticator->createToken($user);
-            }
-
             if ('add' === $event->getAction()) {
                 $this->dispatcher->dispatch(SecurityEvents::ADD_ROLE, AddRoleEvent::class, [[$event->getObject()], $event->getValue()]);
             } elseif ('remove' === $event->getAction()) {

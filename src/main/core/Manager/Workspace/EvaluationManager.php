@@ -12,8 +12,6 @@
 namespace Claroline\CoreBundle\Manager\Workspace;
 
 use Claroline\AppBundle\Persistence\ObjectManager;
-use Claroline\CoreBundle\Entity\Evaluation\AbstractEvaluation;
-use Claroline\CoreBundle\Entity\Group;
 use Claroline\CoreBundle\Entity\Log\Connection\LogConnectWorkspace;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
 use Claroline\CoreBundle\Entity\Resource\ResourceUserEvaluation;
@@ -23,6 +21,7 @@ use Claroline\CoreBundle\Entity\Workspace\Evaluation;
 use Claroline\CoreBundle\Entity\Workspace\Requirements;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\CoreBundle\Event\UserEvaluationEvent;
+use Claroline\EvaluationBundle\Entity\AbstractEvaluation;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class EvaluationManager
@@ -392,20 +391,6 @@ class EvaluationManager
         }
 
         $this->om->endFlushSuite();
-    }
-
-    /**
-     * Fetch all requirements associated to each role of a group and update (add/remove) a list of users for all of them.
-     *
-     * @param string $type
-     */
-    public function manageGroupSubscription(Group $group, array $users, $type = 'add')
-    {
-        $roles = $group->getEntityRoles();
-
-        foreach ($roles as $role) {
-            $this->manageRoleSubscription($role, $users, $type);
-        }
     }
 
     /**
