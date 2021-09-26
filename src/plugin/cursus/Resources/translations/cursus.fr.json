@@ -114,5 +114,27 @@
     "enable_session_pending_list": "Autoriser les utilisateurs à s'inscrire en liste d'attente si la session est complète",
     "course_registration_pending": "Vous êtes en liste d'attente pour cette formation.",
     "course_registration_pending_help": "Veuillez patienter le temps qu'un gestionnaire vous inscrive à une session.",
-    "hide_sessions": "Cacher les sessions aux utilisateurs"
+    "hide_sessions": "Cacher les sessions aux utilisateurs",
+
+    "new_quota": "Nouveau quota",
+    "add_quota": "Ajouter quota",
+    "quota": "Quota",
+    "quotas": "Quotas",
+    "use_quotas": "Utilise les quotas",
+    "threshold": "Nombre de quotas",
+    "used_by_quotas": "Utilisé par quota",
+    "remark": "Remarques",
+    "confirm": "Confirmer",
+    "validations": "Validations",
+    "subscriptions": "Inscriptions",
+    "subscription_total": "Total",
+    "subscription_pending": "à traiter",
+    "subscription_refused": "refusé",
+    "subscription_validated": "validé",
+    "subscription_managed": "validé sur quotas",
+    "subscription_quota": "Nombre de quotas",
+    "subscription_pending_help": "Le status est en attente.",
+    "subscription_refused_help": "Le status sera refusé.",
+    "subscription_validated_help": "Le status sera validé.",
+    "subscription_managed_help": "Le status sera validé et pris en compte dans le quota."
 }

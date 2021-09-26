@@ -24,31 +24,39 @@ class SessionUserFinder extends AbstractFinder
 
     public function configureQueryBuilder(QueryBuilder $qb, array $searches = [], array $sortBy = null, array $options = ['count' => false, 'page' => 0, 'limit' => -1])
     {
-        $sessionJoin = false;
+        $qb->join('obj.user', 'u');
+        $qb->join('obj.session', 's');
+        $qb->join('s.course', 'c');
 
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
+                case 'status':
+                    $qb->andWhere("(obj.status = :{$filterName})");
+                    $qb->setParameter($filterName, $filterValue);
+                    break;
+
+                case 'ignored_status':
+                    $qb->andWhere("obj.status != :{$filterName}");
+                    $qb->setParameter($filterName, $filterValue);
+                    break;
+
+                case 'organization':
+                    $qb->leftJoin('u.userOrganizationReferences', 'oref');
+                    $qb->andWhere("oref.organization = :{$filterName}");
+                    $qb->setParameter($filterName, $filterValue);
+                    break;
+
                 case 'course':
-                    if (!$sessionJoin) {
-                        $qb->join('obj.session', 's');
-                        $sessionJoin = true;
-                    }
-                    $qb->join('s.course', 'c');
                     $qb->andWhere("c.uuid = :{$filterName}");
                     $qb->setParameter($filterName, $filterValue);
                     break;
 
                 case 'session':
-                    if (!$sessionJoin) {
-                        $qb->join('obj.session', 's');
-                        $sessionJoin = true;
-                    }
                     $qb->andWhere("s.uuid = :{$filterName}");
                     $qb->setParameter($filterName, $filterValue);
                     break;
 
                 case 'user':
-                    $qb->join('obj.user', 'u');
                     $qb->andWhere("u.uuid = :{$filterName}");
                     $qb->setParameter($filterName, $filterValue);
                     break;

@@ -2,6 +2,7 @@ import React from 'react'
 import {PropTypes as T} from 'prop-types'
 import omit from 'lodash/omit'
 
+import {param} from '#/main/app/config'
 import {trans} from '#/main/app/intl/translation'
 import {LINK_BUTTON} from '#/main/app/buttons'
 import {Toolbar} from '#/main/app/action/components/toolbar'
@@ -44,6 +45,18 @@ const TrainingsMenu = (props) =>
           label: trans('my_events', {}, 'cursus'),
           target: props.path + '/events/registered',
           displayed: props.authenticated
+        }, {
+          name: 'quotas',
+          type: LINK_BUTTON,
+          label: trans('quotas', {}, 'cursus'),
+          target: props.path + '/quota',
+          displayed: param('quotas.enabled') && props.canManageQuotas
+        }, {
+          name: 'subscriptions',
+          type: LINK_BUTTON,
+          label: trans('validations', {}, 'cursus'),
+          target: props.path + '/subscription',
+          displayed: param('quotas.enabled') && props.canValidateSubscriptions
         }
       ]}
       onClick={props.autoClose}
@@ -52,8 +65,10 @@ const TrainingsMenu = (props) =>
 
 TrainingsMenu.propTypes = {
   path: T.string,
-  canEdit: T.bool.isRequired,
+  canEdit: T.bool,
   canRegister: T.bool.isRequired,
+  canManageQuotas: T.bool.isRequired,
+  canValidateSubscriptions: T.bool.isRequired,
   authenticated: T.bool.isRequired,
 
   // from menu
