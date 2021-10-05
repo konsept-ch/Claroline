@@ -9,6 +9,7 @@ services:
         arguments:
             - '@claroline.manager.workspace_manager'
             - '@security.token_storage'
+            - '@Claroline\AppBundle\API\Crud'
             - '@claroline.manager.resource_manager'
             - '@claroline.manager.organization.organization_manager'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
@@ -22,7 +23,6 @@ services:
     Claroline\CoreBundle\API\Crud\User\UserCrud:
         arguments:
             - '@security.token_storage'
-            - '@Claroline\AuthenticationBundle\Security\Authentication\Authenticator'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler'
             - '@Claroline\CoreBundle\Manager\RoleManager'
@@ -42,8 +42,6 @@ services:
     Claroline\CoreBundle\API\Crud\User\RoleCrud:
         arguments:
             - '@doctrine.dbal.default_connection'
-            - '@security.token_storage'
-            - '@Claroline\AuthenticationBundle\Security\Authentication\Authenticator'
             - '@Claroline\CoreBundle\Manager\RoleManager'
             - '@Claroline\AppBundle\Event\StrictDispatcher'
         tags:
@@ -69,7 +67,6 @@ services:
     Claroline\CoreBundle\API\Crud\User\GroupCrud:
         arguments:
             - '@security.token_storage'
-            - '@Claroline\AuthenticationBundle\Security\Authentication\Authenticator'
             - '@Claroline\AppBundle\Event\StrictDispatcher'
             - '@Claroline\CoreBundle\Manager\RoleManager'
         tags:
@@ -85,12 +82,14 @@ services:
             - '@Claroline\AppBundle\Event\StrictDispatcher'
             - '@Claroline\CoreBundle\Manager\Resource\ResourceLifecycleManager'
             - '@Claroline\CoreBundle\Manager\ResourceManager'
+            - '@Claroline\CoreBundle\Manager\Resource\RightsManager'
             - '@Claroline\CoreBundle\API\Serializer\Resource\ResourceNodeSerializer'
             - '%claroline.param.files_directory%'
         tags:
             - { name: kernel.event_listener, event: crud.pre.create.resource_node, method: preCreate }
             - { name: kernel.event_listener, event: crud.pre.delete.resource_node, method: preDelete }
             - { name: kernel.event_listener, event: crud.pre.copy.resource_node, method: preCopy }
+            - { name: kernel.event_listener, event: crud.post.copy.resource_node, method: postCopy }
 
     Claroline\CoreBundle\API\Crud\File\PublicFile:
         arguments:

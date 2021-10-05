@@ -142,9 +142,6 @@ class PlatformDefaults implements ParameterProviderInterface
             'header' => [
                 'search' => [
                     'order' => 1,
-                    'user' => true,
-                    'workspace' => true,
-                    'resource' => true,
                 ],
                 'history' => [
                     'order' => 2,
@@ -154,6 +151,14 @@ class PlatformDefaults implements ParameterProviderInterface
                 ],
                 'notifications' => [
                     'order' => 4,
+                ],
+            ],
+            'search' => [
+                'limit' => 5,
+                'items' => [
+                    'user' => true,
+                    'workspace' => true,
+                    'resource' => true,
                 ],
             ],
             'admin' => [
@@ -200,7 +205,7 @@ class PlatformDefaults implements ParameterProviderInterface
                 'maxmind_license_key' => null,
             ],
             'job_queue' => [
-                'enabled' => false,
+                'enabled' => true,
             ],
         ];
     }

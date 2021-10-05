@@ -3,11 +3,11 @@
 namespace UJM\ExoBundle\Manager\Attempt;
 
 use Claroline\AppBundle\Persistence\ObjectManager;
-use Claroline\CoreBundle\Entity\Evaluation\AbstractEvaluation;
 use Claroline\CoreBundle\Entity\Resource\ResourceEvaluation;
 use Claroline\CoreBundle\Entity\User;
-use Claroline\CoreBundle\Manager\Resource\ResourceEvaluationManager;
 use Claroline\CoreBundle\Security\Collection\ResourceCollection;
+use Claroline\EvaluationBundle\Entity\AbstractEvaluation;
+use Claroline\EvaluationBundle\Manager\ResourceEvaluationManager;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use UJM\ExoBundle\Entity\Attempt\Answer;
@@ -25,44 +25,30 @@ use UJM\ExoBundle\Serializer\Attempt\PaperSerializer;
 
 class PaperManager
 {
-    /**
-     * @var ObjectManager
-     */
+    /** @var AuthorizationCheckerInterface */
+    private $authorization;
+
+    /** @var ObjectManager */
     private $om;
 
-    /**
-     * @var PaperRepository
-     */
+    /** @var PaperRepository */
     private $repository;
 
-    /**
-     * @var EventDispatcherInterface
-     */
+    /** @var EventDispatcherInterface */
     private $eventDispatcher;
 
-    /**
-     * @var PaperSerializer
-     */
+    /** @var PaperSerializer */
     private $serializer;
 
-    /**
-     * @var ItemManager
-     */
+    /** @var ItemManager */
     private $itemManager;
 
-    /**
-     * @var ScoreManager
-     */
+    /** @var ScoreManager */
     private $scoreManager;
 
-    /**
-     * @var ResourceEvaluationManager
-     */
+    /** @var ResourceEvaluationManager */
     private $resourceEvalManager;
 
-    /**
-     * PaperManager constructor.
-     */
     public function __construct(
         AuthorizationCheckerInterface $authorization,
         ObjectManager $om,
@@ -389,7 +375,7 @@ class PaperManager
             if (is_null($successScore) || empty($paper->getTotal())) {
                 $status = AbstractEvaluation::STATUS_COMPLETED;
             } else {
-                $percentScore = ($score * 100);
+                $percentScore = ($score / $paper->getTotal()) * 100;
                 $status = $percentScore >= $successScore ?
                     AbstractEvaluation::STATUS_PASSED :
                     AbstractEvaluation::STATUS_FAILED;
@@ -419,12 +405,12 @@ class PaperManager
         return $this->resourceEvalManager->createResourceEvaluation(
             $paper->getExercise()->getResourceNode(),
             $paper->getUser(),
-            null,
             [
                 'status' => $status,
                 'score' => $score,
                 'scoreMax' => $paper->getTotal(),
-                'progression' => $nbQuestions > 0 ? floor(($nbAnswers / $nbQuestions) * 100) : null,
+                'progression' => $nbAnswers,
+                'progressionMax' => $nbQuestions,
                 'data' => $data,
             ]
         );

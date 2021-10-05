@@ -1,0 +1,12 @@
+services:
+    Claroline\EvaluationBundle\Messenger\AddWorkspaceRequirementsHandler:
+        tags: [ messenger.message_handler ]
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\EvaluationBundle\Manager\WorkspaceEvaluationManager'
+            - '@Claroline\EvaluationBundle\Manager\WorkspaceRequirementsManager'
+
+    Claroline\EvaluationBundle\Messenger\RemoveWorkspaceRequirementsHandler:
+        tags: [ messenger.message_handler ]
+        arguments:
+            - '@Claroline\EvaluationBundle\Manager\WorkspaceRequirementsManager'

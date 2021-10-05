@@ -5,14 +5,11 @@ namespace Icap\BlogBundle\Listener\Resource;
 use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\AppBundle\Persistence\ObjectManager;
-use Claroline\CoreBundle\Entity\Evaluation\AbstractEvaluation;
 use Claroline\CoreBundle\Event\ExportObjectEvent;
-use Claroline\CoreBundle\Event\GenericDataEvent;
 use Claroline\CoreBundle\Event\ImportObjectEvent;
 use Claroline\CoreBundle\Event\Resource\CopyResourceEvent;
 use Claroline\CoreBundle\Event\Resource\LoadResourceEvent;
 use Claroline\CoreBundle\Library\Normalizer\DateNormalizer;
-use Claroline\CoreBundle\Manager\Resource\ResourceEvaluationManager;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
 use Icap\BlogBundle\Entity\Blog;
 use Icap\BlogBundle\Entity\Comment;
@@ -34,8 +31,6 @@ class BlogListener
     private $om;
     /** @var SerializerProvider */
     private $serializer;
-    /** @var ResourceEvaluationManager */
-    private $evaluationManager;
     /** @var BlogManager */
     private $blogManager;
     /** @var PostManager */
@@ -48,7 +43,6 @@ class BlogListener
         TokenStorageInterface $tokenStorage,
         ObjectManager $om,
         SerializerProvider $serializer,
-        ResourceEvaluationManager $evaluationManager,
         BlogManager $blogManager,
         PostManager $postManager,
         CommentManager $commentManager
@@ -57,7 +51,6 @@ class BlogListener
         $this->tokenStorage = $tokenStorage;
         $this->om = $om;
         $this->serializer = $serializer;
-        $this->evaluationManager = $evaluationManager;
         $this->blogManager = $blogManager;
         $this->postManager = $postManager;
         $this->commentManager = $commentManager;
@@ -99,11 +92,11 @@ class BlogListener
         $blog = $exportEvent->getObject();
 
         $data = [
-          'posts' => array_map(function (Post $post) {
-              return $this->serializer->serialize($post, [
-                CommentSerializer::INCLUDE_COMMENTS, CommentSerializer::FETCH_COMMENTS,
-              ]);
-          }, $blog->getPosts()->toArray()),
+            'posts' => array_map(function (Post $post) {
+                return $this->serializer->serialize($post, [
+                    CommentSerializer::INCLUDE_COMMENTS, CommentSerializer::FETCH_COMMENTS,
+                ]);
+            }, $blog->getPosts()->toArray()),
         ];
         $exportEvent->overwrite('_data', $data);
     }
@@ -130,7 +123,7 @@ class BlogListener
             }
 
             $post->setBlog($blog)
-              ->setAuthor($this->tokenStorage->getToken()->getUser());
+                ->setAuthor($this->tokenStorage->getToken()->getUser());
 
             foreach ($postData['comments'] as $commentData) {
                 /** @var Comment $comment */
@@ -205,57 +198,6 @@ class BlogListener
         $this->om->persist($newBlog);
 
         $event->setCopy($newBlog);
-        $event->stopPropagation();
-    }
-
-    public function onGenerateResourceTracking(GenericDataEvent $event)
-    {
-        $data = $event->getData();
-        $node = $data['resourceNode'];
-        $user = $data['user'];
-        $startDate = $data['startDate'];
-
-        $logs = $this->evaluationManager->getLogsForResourceTracking(
-            $node,
-            $user,
-            ['resource-read', 'resource-icap_blog-post_create', 'resource-icap_blog-post_update', 'resource-icap_blog-comment_create'],
-            $startDate
-        );
-        $nbLogs = count($logs);
-
-        if ($nbLogs > 0) {
-            $this->om->startFlushSuite();
-            $tracking = $this->evaluationManager->getResourceUserEvaluation($node, $user);
-            $tracking->setDate($logs[0]->getDateLog());
-            $status = AbstractEvaluation::STATUS_UNKNOWN;
-            $nbAttempts = 0;
-            $nbOpenings = 0;
-
-            foreach ($logs as $log) {
-                switch ($log->getAction()) {
-                    case 'resource-read':
-                        ++$nbOpenings;
-
-                        if (AbstractEvaluation::STATUS_UNKNOWN === $status) {
-                            $status = AbstractEvaluation::STATUS_OPENED;
-                        }
-                        break;
-                    case 'resource-icap_blog-post_create':
-                    case 'resource-icap_blog-post_update':
-                    case 'resource-icap_blog-comment_create':
-                        ++$nbAttempts;
-                        $status = AbstractEvaluation::STATUS_PARTICIPATED;
-                        break;
-                }
-            }
-            $tracking->setStatus($status);
-            $tracking->setNbAttempts($nbAttempts);
-            $tracking->setNbOpenings($nbOpenings);
-
-            $this->om->persist($tracking);
-            $this->om->endFlushSuite();
-        }
-
         $event->stopPropagation();
     }
 }

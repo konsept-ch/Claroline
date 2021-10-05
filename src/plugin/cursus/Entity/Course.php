@@ -19,7 +19,7 @@ use Gedmo\Mapping\Annotation as Gedmo;
 use Symfony\Bridge\Doctrine\Validator\Constraints as DoctrineAssert;
 
 /**
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="Claroline\CursusBundle\Repository\CourseRepository")
  * @ORM\Table(name="claro_cursusbundle_course")
  * @DoctrineAssert\UniqueEntity("code")
  */
@@ -71,6 +71,15 @@ class Course extends AbstractTraining
      * @var Session[]
      */
     private $sessions;
+
+    /**
+     * Hides sessions to users.
+     *
+     * @ORM\Column(type="boolean")
+     *
+     * @var string
+     */
+    private $hideSessions = false;
 
     /**
      * If true, automatically register users to the default session of the training children
@@ -195,6 +204,16 @@ class Course extends AbstractTraining
         }
 
         return false;
+    }
+
+    public function getHideSessions(): bool
+    {
+        return $this->hideSessions;
+    }
+
+    public function setHideSessions(bool $hideSessions)
+    {
+        $this->hideSessions = $hideSessions;
     }
 
     public function getSessionOpening(): ?string

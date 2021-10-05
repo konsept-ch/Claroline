@@ -68,7 +68,7 @@ class FieldChoiceCategorySerializer
             }
         }
         $field = isset($data['field']['id']) ?
-            $this->fieldRepo->findOneBy(['uuid' => $data['field']['id']]) :
+            $this->fieldRepo->findByFieldFacetUuid($data['field']['id']) :
             null;
 
         if (!empty($field)) {
@@ -86,7 +86,7 @@ class FieldChoiceCategorySerializer
                     $fieldChoiceCategory->setDateValue($date);
                     break;
                 case FieldFacet::CHOICE_TYPE:
-                    $options = $field->getDetails();
+                    $options = $field->getOptions();
 
                     if (isset($options['multiple']) && $options['multiple']) {
                         $this->sipe('value', 'setArrayValue', $data, $fieldChoiceCategory);
