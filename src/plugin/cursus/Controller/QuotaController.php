@@ -46,6 +46,8 @@ class QuotaController extends AbstractCrudController
     private $tokenStorage;
     /** @var PlatformConfigurationHandler */
     private $config;
+    /** @var QuotaManager */
+    private $quotaManager;
     /** @var SessionManager */
     private $sessionManager;
 
@@ -55,7 +57,7 @@ class QuotaController extends AbstractCrudController
         TokenStorageInterface $tokenStorage,
         PlatformConfigurationHandler $config,
         ObjectManager $om,
-        QuotaManager $manager,
+        QuotaManager $quotaManager,
         SessionManager $sessionManager
     ) {
         $this->eventDispatcher = $eventDispatcher;
@@ -63,7 +65,7 @@ class QuotaController extends AbstractCrudController
         $this->tokenStorage = $tokenStorage;
         $this->config = $config;
         $this->om = $om;
-        $this->manager = $manager;
+        $this->quotaManager = $quotaManager;
         $this->sessionManager = $sessionManager;
     }
 
@@ -82,6 +84,33 @@ class QuotaController extends AbstractCrudController
         return ['copyBulk', 'doc', 'exist'];
     }
 
+    protected function getDefaultHiddenFilters()
+    {
+        $filters = [];
+        if (!$this->authorization->isGranted('ROLE_ADMIN')) {
+            /** @var User $user */
+            $user = $this->tokenStorage->getToken()->getUser();
+
+            // filter by organization
+            if ($user instanceof User) {
+                $organizations = $user->getOrganizations();
+            } else {
+                $organizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
+            }
+
+            $filters['organizations'] = array_unique(array_reduce($organizations, function (array $output, Organization $organization) {
+                $output[] = $organization->getUuid();
+                foreach ($organization->getChildren() as $child) {
+                    $output[] = $child->getUuid();
+                }
+
+                return $output;
+            }, []));
+        }
+
+        return $filters;
+    }
+
     /**
      * @Route("/{id}/statistics", name="apiv2_cursus_quota_statistics", methods={"GET"})
      * @EXT\ParamConverter("quota", class="Claroline\CursusBundle\Entity\Quota", options={"mapping": {"id": "uuid"}})
@@ -90,7 +119,9 @@ class QuotaController extends AbstractCrudController
     {
         $this->checkPermission('VALIDATE_SUBSCRIPTIONS', null, [], true);
 
-        $sessionUsers = $this->om->getRepository(SessionUser::class)->findByOrganization($quota->getOrganization());
+        /** @var SessionUserRepository */
+        $repo = $this->om->getRepository(SessionUser::class);
+        $sessionUsers = $repo->findByOrganization($quota->getOrganization());
         $statistics = [
             'total' => count($sessionUsers),
             'pending' => array_reduce($sessionUsers, function ($accum, $subscription) {
@@ -103,21 +134,19 @@ class QuotaController extends AbstractCrudController
                 return $accum + (SessionUser::STATUS_VALIDATED == $subscription->getStatus() ? 1 : 0);
             }, 0),
         ];
-        if ($quota->useQuotas())
-        {
+        if ($quota->useQuotas()) {
             $statistics['managed'] = array_reduce($sessionUsers, function ($accum, $subscription) {
                 return $accum + (SessionUser::STATUS_MANAGED == $subscription->getStatus() ? 1 : 0);
             }, 0);
             $statistics['calculated'] = array_reduce($sessionUsers, function ($accum, $subscription) {
                 return SessionUser::STATUS_MANAGED == $subscription->getStatus() ? $accum + $subscription->getSession()->getQuotaDays() : $accum;
             }, 0);
-        }
-        else
-        {
+        } else {
             $statistics['total'] = array_reduce($sessionUsers, function ($accum, $subscription) {
                 return $accum + (SessionUser::STATUS_MANAGED != $subscription->getStatus() ? 1 : 0);
             }, 0);
         }
+
         return new JsonResponse($statistics);
     }
 
@@ -127,17 +156,18 @@ class QuotaController extends AbstractCrudController
      */
     public function exportAction(Quota $quota, Request $request): StreamedResponse
     {
+        $this->checkPermission('VALIDATE_SUBSCRIPTIONS', null, [], true);
+
         $organization = $quota->getOrganization();
-        if (!$this->canSeeQuota($organization)) {
-            return new JsonResponse('The user hasn\'t authorization for view this organization.', 401);
-        }
 
         $query = $request->query->all();
         $query['hiddenFilters'] = [
             'organization' => $organization,
         ];
 
-        if (!$quota->useQuotas()) $query['hiddenFilters']['ignored_status'] = SessionUser::STATUS_MANAGED;
+        if (!$quota->useQuotas()) {
+            $query['hiddenFilters']['ignored_status'] = SessionUser::STATUS_MANAGED;
+        }
 
         $subscriptions = $this->finder->searchEntities(SessionUser::class, $query)['data'];
 
@@ -147,7 +177,7 @@ class QuotaController extends AbstractCrudController
             'tempDir' => $this->config->getParameter('server.tmp_dir'),
         ]);
 
-        $domPdf->loadHtml($this->manager->generateFromTemplate($quota, $subscriptions, $request->getLocale()));
+        $domPdf->loadHtml($this->quotaManager->generateFromTemplate($quota, $subscriptions, $request->getLocale()));
 
         // Render the HTML as PDF
         $domPdf->render();
@@ -166,17 +196,18 @@ class QuotaController extends AbstractCrudController
      */
     public function listSubscriptionsAction(Quota $quota, Request $request): JsonResponse
     {
+        $this->checkPermission('VALIDATE_SUBSCRIPTIONS', null, [], true);
+
         $organization = $quota->getOrganization();
-        if (!$this->canSeeQuota($organization)) {
-            return new JsonResponse('The user hasn\'t authorization for view this organization.', 401);
-        }
 
         $query = $request->query->all();
         $query['hiddenFilters'] = [
             'organization' => $organization,
         ];
-        
-        if (!$quota->useQuotas()) $query['hiddenFilters']['ignored_status'] = SessionUser::STATUS_MANAGED;
+
+        if (!$quota->useQuotas()) {
+            $query['hiddenFilters']['ignored_status'] = SessionUser::STATUS_MANAGED;
+        }
 
         $options = isset($query['options']) ? $query['options'] : [];
 
@@ -192,6 +223,8 @@ class QuotaController extends AbstractCrudController
      */
     public function setSubscriptionStatusAction(Quota $quota, SessionUser $sessionUser, Request $request): JsonResponse
     {
+        $this->checkPermission('VALIDATE_SUBSCRIPTIONS', null, [], true);
+
         $remark = $request->query->get('remark', '');
 
         $status = $request->query->get('status', null);
@@ -227,6 +260,7 @@ class QuotaController extends AbstractCrudController
             $this->om->flush();
 
             $this->eventDispatcher->dispatch(new LogSubscriptionSetStatusEvent($sessionUser), 'log');
+            $this->quotaManager->sendSetStatusMail($sessionUser);
         }
 
         return new JsonResponse([
@@ -243,16 +277,5 @@ class QuotaController extends AbstractCrudController
         return new JsonResponse([
             'quota' => $this->serializer->serialize($quota),
         ]);
-    }
-
-    private function canSeeQuota(Organization $organization): bool
-    {
-        if ($this->authorization->isGranted('ROLE_ADMIN')) {
-            return true;
-        }
-
-        $user = $this->tokenStorage->getToken()->getUser();
-
-        return $user instanceof User && $organization->getAdministrators()->contains($user);
     }
 }
