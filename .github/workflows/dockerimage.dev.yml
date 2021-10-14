@@ -12,4 +12,14 @@ jobs:
         # run: docker-compose up # remove -d in order to see the build output in gh actions for debugging - you'll need to cancel the run manually once it's done
         run: docker-compose -f docker-compose.dev.yml up -d
       - name: Test 127.0.0.1
-        run: docker run --network container:claroline-web curlimages/curl -s  --connect-timeout 30 --max-time 600 --retry 20 --retry-delay 30 --retry-max-time 600 --retry-all-errors http://127.0.0.1/
+        run: |
+          docker run \
+          --network container:claroline-web \
+          curlimages/curl -s \
+          --connect-timeout 30 \
+          --max-time 600 \
+          --retry 20 \
+          --retry-delay 30 \
+          --retry-max-time 600 \
+          --retry-all-errors \
+          http://127.0.0.1/

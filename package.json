@@ -11,7 +11,8 @@
   "scripts": {
     "themes": "node src/main/core/Resources/server/themes/bin build",
     "webpack": "node_modules/.bin/webpack --config=webpack.config.prod.js --progress --bail",
-    "webpack:dev": "node_modules/.bin/webpack-dev-server --config=webpack.config.dev.js --color"
+    "webpack:dev": "node_modules/.bin/webpack-dev-server --config=webpack.config.dev.js --color",
+    "test": "docker run --network container:claroline-web -v $PWD:/test -w /test -e CYPRESS_baseUrl=http://localhost/ cypress/included:8.6.0"
   },
   "dependencies": {
     "assets-webpack-plugin": "3.9.7",
@@ -69,7 +70,9 @@
     "package.json"
   ],
   "devDependencies": {
+    "@testing-library/cypress": "8.0.1",
     "circular-dependency-plugin": "^4",
+    "cypress-terminal-report": "3.3.3",
     "eslint": "^7.15.0",
     "eslint-plugin-react": "^7.21.5",
     "redux-freeze": "^0.1.7",
