@@ -70,6 +70,11 @@ class AbstractTraining
     protected $publicRegistration = false;
 
     /**
+     * @ORM\Column(name="auto_registration", type="boolean")
+     */
+    protected $autoRegistration = false;
+
+    /**
      * @ORM\Column(name="public_unregistration", type="boolean")
      */
     protected $publicUnregistration = false;
@@ -88,6 +93,13 @@ class AbstractTraining
      * @ORM\Column(name="user_validation", type="boolean")
      */
     protected $userValidation = false;
+
+    /**
+     * Enables the waiting list for the training.
+     *
+     * @ORM\Column(name="pending_registrations", type="boolean")
+     */
+    protected $pendingRegistrations = false;
 
     /**
      * @ORM\Column(name="max_users", nullable=true, type="integer")
@@ -148,6 +160,16 @@ class AbstractTraining
         $this->publicRegistration = $publicRegistration;
     }
 
+    public function getAutoRegistration(): bool
+    {
+        return $this->autoRegistration;
+    }
+
+    public function setAutoRegistration(bool $autoRegistration)
+    {
+        $this->autoRegistration = $autoRegistration;
+    }
+
     public function getPublicUnregistration()
     {
         return $this->publicUnregistration;
@@ -191,6 +213,16 @@ class AbstractTraining
     public function hasValidation()
     {
         return $this->registrationValidation || $this->userValidation;
+    }
+
+    public function getPendingRegistrations(): bool
+    {
+        return $this->pendingRegistrations;
+    }
+
+    public function setPendingRegistrations(bool $pendingRegistrations)
+    {
+        $this->pendingRegistrations = $pendingRegistrations;
     }
 
     public function getMaxUsers()

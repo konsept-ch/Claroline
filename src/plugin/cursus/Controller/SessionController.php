@@ -20,6 +20,7 @@ use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
 use Claroline\CoreBundle\Library\RoutingHelper;
 use Claroline\CoreBundle\Manager\Tool\ToolManager;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
+use Claroline\CoreBundle\Validator\Exception\InvalidDataException;
 use Claroline\CursusBundle\Entity\Event;
 use Claroline\CursusBundle\Entity\Registration\AbstractRegistration;
 use Claroline\CursusBundle\Entity\Registration\SessionGroup;
@@ -36,7 +37,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * @Route("/cursus_session")
@@ -94,11 +95,16 @@ class SessionController extends AbstractCrudController
             /** @var User $user */
             $user = $this->tokenStorage->getToken()->getUser();
 
+            // filter by organization
             if ($user instanceof User) {
-                $filters['organizations'] = array_map(function (Organization $organization) {
-                    return $organization->getUuid();
-                }, $user->getOrganizations());
+                $organizations = $user->getOrganizations();
+            } else {
+                $organizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
             }
+
+            $filters['organizations'] = array_map(function (Organization $organization) {
+                return $organization->getUuid();
+            }, $organizations);
 
             // hide hidden sessions for non admin
             if (!$this->checkToolAccess('EDIT')) {
@@ -200,7 +206,7 @@ class SessionController extends AbstractCrudController
      */
     public function addUsersAction(Session $session, string $type, Request $request): JsonResponse
     {
-        $this->checkPermission('EDIT', $session, [], true);
+        $this->checkPermission('REGISTER', $session, [], true);
 
         $users = $this->decodeIdsString($request, User::class);
         $nbUsers = count($users);
@@ -224,7 +230,7 @@ class SessionController extends AbstractCrudController
      */
     public function removeUsersAction(Session $session, Request $request): JsonResponse
     {
-        $this->checkPermission('EDIT', $session, [], true);
+        $this->checkPermission('REGISTER', $session, [], true);
 
         $sessionUsers = $this->decodeIdsString($request, SessionUser::class);
         $this->manager->removeUsers($session, $sessionUsers);
@@ -238,7 +244,7 @@ class SessionController extends AbstractCrudController
      */
     public function listGroupsAction(Session $session, string $type, Request $request): JsonResponse
     {
-        $this->checkPermission('OPEN', $session, [], true);
+        $this->checkPermission('REGISTER', $session, [], true);
 
         $params = $request->query->all();
         if (!isset($params['hiddenFilters'])) {
@@ -258,7 +264,7 @@ class SessionController extends AbstractCrudController
      */
     public function addGroupsAction(Session $session, string $type, Request $request): JsonResponse
     {
-        $this->checkPermission('EDIT', $session, [], true);
+        $this->checkPermission('REGISTER', $session, [], true);
 
         $groups = $this->decodeIdsString($request, Group::class);
         $nbUsers = 0;
@@ -286,7 +292,7 @@ class SessionController extends AbstractCrudController
      */
     public function removeGroupsAction(Session $session, Request $request): JsonResponse
     {
-        $this->checkPermission('EDIT', $session, [], true);
+        $this->checkPermission('REGISTER', $session, [], true);
 
         $sessionGroups = $this->decodeIdsString($request, SessionGroup::class);
         $this->manager->removeGroups($session, $sessionGroups);
@@ -300,7 +306,7 @@ class SessionController extends AbstractCrudController
      */
     public function listPendingAction(Session $session, Request $request): JsonResponse
     {
-        $this->checkPermission('EDIT', $session, [], true);
+        $this->checkPermission('REGISTER', $session, [], true);
 
         $params = $request->query->all();
         if (!isset($params['hiddenFilters'])) {
@@ -320,7 +326,7 @@ class SessionController extends AbstractCrudController
      */
     public function addPendingAction(Session $session, Request $request): JsonResponse
     {
-        $this->checkPermission('EDIT', $session, [], true);
+        $this->checkPermission('REGISTER', $session, [], true);
 
         $users = $this->decodeIdsString($request, User::class);
         $sessionUsers = $this->manager->addUsers($session, $users, AbstractRegistration::LEARNER, false);
@@ -336,7 +342,7 @@ class SessionController extends AbstractCrudController
      */
     public function confirmPendingAction(Session $session, Request $request): JsonResponse
     {
-        $this->checkPermission('EDIT', $session, [], true);
+        $this->checkPermission('REGISTER', $session, [], true);
 
         $users = $this->decodeIdsString($request, SessionUser::class);
         $sessionUsers = $this->manager->confirmUsers($session, $users);
@@ -352,7 +358,7 @@ class SessionController extends AbstractCrudController
      */
     public function validatePendingAction(Session $session, Request $request): JsonResponse
     {
-        $this->checkPermission('EDIT', $session, [], true);
+        $this->checkPermission('REGISTER', $session, [], true);
 
         $users = $this->decodeIdsString($request, SessionUser::class);
         $sessionUsers = $this->manager->validateUsers($session, $users);
@@ -369,9 +375,9 @@ class SessionController extends AbstractCrudController
      */
     public function selfRegisterAction(Session $session, User $user): JsonResponse
     {
-        $this->checkPermission('SELF_REGISTER', $session, [], true);
+        $this->checkPermission('OPEN', $session, [], true);
 
-        if (!$session->getPublicRegistration()) {
+        if (!$session->getPublicRegistration() && !$session->getAutoRegistration()) {
             throw new AccessDeniedException();
         }
 
@@ -407,7 +413,7 @@ class SessionController extends AbstractCrudController
      */
     public function inviteAllAction(Session $session): JsonResponse
     {
-        $this->checkPermission('EDIT', $session, [], true);
+        $this->checkPermission('REGISTER', $session, [], true);
 
         $this->manager->inviteAllSessionLearners($session);
 
@@ -420,7 +426,7 @@ class SessionController extends AbstractCrudController
      */
     public function inviteUsersAction(Session $session, Request $request): JsonResponse
     {
-        $this->checkPermission('EDIT', $session, [], true);
+        $this->checkPermission('REGISTER', $session, [], true);
 
         $sessionUsers = $this->decodeIdsString($request, SessionUser::class);
         $this->manager->sendSessionInvitation($session, array_map(function (SessionUser $sessionUser) {
@@ -436,7 +442,7 @@ class SessionController extends AbstractCrudController
      */
     public function inviteGroupsAction(Session $session, Request $request): JsonResponse
     {
-        $this->checkPermission('EDIT', $session, [], true);
+        $this->checkPermission('REGISTER', $session, [], true);
 
         $sessionGroups = $this->decodeIdsString($request, SessionGroup::class);
         $users = [];
@@ -451,6 +457,72 @@ class SessionController extends AbstractCrudController
         $this->manager->sendSessionInvitation($session, $users, false);
 
         return new JsonResponse(null, 204);
+    }
+
+    /**
+     * @Route("/{id}/move/users/{type}", name="apiv2_cursus_session_move_users", methods={"PUT"})
+     * @EXT\ParamConverter("session", class="Claroline\CursusBundle\Entity\Session", options={"mapping": {"id": "uuid"}})
+     */
+    public function moveUsersAction(Session $session, string $type, Request $request): JsonResponse
+    {
+        $this->checkPermission('REGISTER', $session, [], true);
+
+        $data = $this->decodeRequest($request);
+        if (empty($data['target']) || empty($data['sessionUsers'])) {
+            throw new InvalidDataException('Missing either target session or registrations to move.');
+        }
+
+        $targetSession = $this->om->getRepository(Session::class)->findOneBy([
+            'uuid' => $data['target'],
+        ]);
+
+        $sessionUsers = [];
+        foreach ($data['sessionUsers'] as $sessionUserId) {
+            $sessionUser = $this->om->getRepository(SessionUser::class)->findOneBy([
+                'uuid' => $sessionUserId,
+            ]);
+
+            if (!empty($sessionUser)) {
+                $sessionUsers[] = $sessionUser;
+            }
+        }
+
+        $this->manager->moveUsers($session, $targetSession, $sessionUsers, $type);
+
+        return new JsonResponse();
+    }
+
+    /**
+     * @Route("/{id}/move/groups/{type}", name="apiv2_cursus_session_move_groups", methods={"PUT"})
+     * @EXT\ParamConverter("session", class="Claroline\CursusBundle\Entity\Session", options={"mapping": {"id": "uuid"}})
+     */
+    public function moveGroupsAction(Session $session, string $type, Request $request): JsonResponse
+    {
+        $this->checkPermission('REGISTER', $session, [], true);
+
+        $data = $this->decodeRequest($request);
+        if (empty($data['target']) || empty($data['sessionGroups'])) {
+            throw new InvalidDataException('Missing either target session or registrations to move.');
+        }
+
+        $targetSession = $this->om->getRepository(Session::class)->findOneBy([
+            'uuid' => $data['target'],
+        ]);
+
+        $sessionGroups = [];
+        foreach ($data['sessionGroups'] as $sessionGroupId) {
+            $sessionGroup = $this->om->getRepository(SessionGroup::class)->findOneBy([
+                'uuid' => $sessionGroupId,
+            ]);
+
+            if (!empty($sessionGroup)) {
+                $sessionGroups[] = $sessionGroup;
+            }
+        }
+
+        $this->manager->moveGroups($session, $targetSession, $sessionGroups, $type);
+
+        return new JsonResponse();
     }
 
     private function checkToolAccess(string $rights = 'OPEN'): bool

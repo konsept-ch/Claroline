@@ -885,7 +885,6 @@
     "resource_icon_set_illustrator_options": "<strong>Profils SVG :</strong> SVG 1.1 <br/> <strong>Polices :</strong> Vectoriser <br/> <strong> Emplacement de l'image : </strong> Incorporer <br/> <strong> Propriétés CSS :</strong> Attributs de Style",
     "resource_icon_set_info_text": "Veuillez donner un nom pour votre jeu d’icônes, et indiquez le fichier ZIP contenant les images que vous souhaitez appliquer. <br/>Il est NECESSAIRE de nommer vos fichiers en accord avec la liste ci-dessous afin de faire correspondre les icônes avec le type de ressource voulu. <br/>Exemple : le fichier 'text.png' sera associé à la ressource de type 'texte'. <br/>Il n'est pas nécessaire de personnaliser toute la liste : l’icône par défaut de la ressource sera utilisée s’il n’y a pas de correspondance. <br/>Le format optimal pour vos images sont : 71 x 80px en SVG. <br/>Les autres formats et tailles d’images sont supportés mais ne donneront pas le meilleur résultat visuel (préférez le PNG en 71x80).",
     "resource_icon_set_management": "Gestion des jeux d'icônes pour les ressources",
-    "resource_limit_exceeded": "La limite maximale (%max%) de ressources est dépassée. Vous avez déjà créé %current% ressources.",
     "resource_picker": "Sélecteur de ressources",
     "resource_to_open": "Ressource à ouvrir",
     "resource_type": "Type de ressource",
@@ -1426,7 +1425,7 @@
     "poster": "Image de couverture",
     "external": "Externe",
     "internal": "Interne",
-    "force_organization_creation": "Forcer l'ajout d'une organization à l'utilisateur lors de l'inscription",
+    "force_organization_creation": "Forcer l'ajout d'une organisation à l'utilisateur lors de l'inscription",
     "no_selection": "Pas de selection",
     "allow_workspace_registration": "Permettre l'inscription aux espaces d'activités lors de l'inscription",
     "workspace_user_register_validation_message": "Voulez-vous vraiment inscrire les utilisateurs suivants: [%users%] ?",
@@ -1668,5 +1667,7 @@
     "irl": "En présentiel",
     "add_room": "Ajouter une salle",
     "security": "Sécurité",
-    "both": "Tous les deux"
+    "both": "Tous les deux",
+    "disable_inactive_users": "Désactiver les utilisateurs inactifs",
+    "disable_inactive_users_help": "Tous les utilisateurs qui ne se sont pas connectés à la plateforme depuis la date choisie seront désactivés."
 }

@@ -99,7 +99,7 @@ class CourseSerializer
                 'open' => $this->authorization->isGranted('OPEN', $course),
                 'edit' => $this->authorization->isGranted('EDIT', $course),
                 'delete' => $this->authorization->isGranted('DELETE', $course),
-                'self_register' => $this->authorization->isGranted('SELF_REGISTER', $course),
+                'register' => $this->authorization->isGranted('REGISTER', $course),
             ],
             'opening' => [
                 'session' => $course->getSessionOpening(),
@@ -120,7 +120,10 @@ class CourseSerializer
                     'tutorRoleName' => $course->getTutorRoleName(),
                     'learnerRoleName' => $course->getLearnerRoleName(),
                     'duration' => $course->getDefaultSessionDuration(),
+                ],
+                'display' => [
                     'order' => $course->getOrder(),
+                    'hideSessions' => $course->getHideSessions(),
                 ],
                 'restrictions' => [
                     'hidden' => $course->isHidden(),
@@ -130,10 +133,12 @@ class CourseSerializer
                 'registration' => [
                     'propagate' => $course->getPropagateRegistration(),
                     'selfRegistration' => $course->getPublicRegistration(),
+                    'autoRegistration' => $course->getAutoRegistration(),
                     'selfUnregistration' => $course->getPublicUnregistration(),
                     'validation' => $course->getRegistrationValidation(),
                     'userValidation' => $course->getUserValidation(),
                     'mail' => $course->getRegistrationMail(),
+                    'pendingRegistrations' => $course->getPendingRegistrations(),
                 ],
                 'pricing' => [
                     'price' => $course->getPrice(),
@@ -169,17 +174,21 @@ class CourseSerializer
         $this->sipe('meta.learnerRoleName', 'setLearnerRoleName', $data, $course);
         $this->sipe('meta.icon', 'setIcon', $data, $course);
         $this->sipe('meta.duration', 'setDefaultSessionDuration', $data, $course);
-        $this->sipe('meta.order', 'setOrder', $data, $course);
+
+        $this->sipe('display.order', 'setOrder', $data, $course);
+        $this->sipe('display.hideSessions', 'setHideSessions', $data, $course);
 
         $this->sipe('restrictions.users', 'setMaxUsers', $data, $course);
         $this->sipe('restrictions.hidden', 'setHidden', $data, $course);
 
         $this->sipe('registration.propagate', 'setPropagateRegistration', $data, $course);
         $this->sipe('registration.selfRegistration', 'setPublicRegistration', $data, $course);
+        $this->sipe('registration.autoRegistration', 'setAutoRegistration', $data, $course);
         $this->sipe('registration.selfUnregistration', 'setPublicUnregistration', $data, $course);
         $this->sipe('registration.validation', 'setRegistrationValidation', $data, $course);
         $this->sipe('registration.userValidation', 'setUserValidation', $data, $course);
         $this->sipe('registration.mail', 'setRegistrationMail', $data, $course);
+        $this->sipe('registration.pendingRegistrations', 'setPendingRegistrations', $data, $course);
 
         $this->sipe('opening.session', 'setSessionOpening', $data, $course);
 

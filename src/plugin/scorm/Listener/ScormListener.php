@@ -11,6 +11,7 @@
 
 namespace Claroline\ScormBundle\Listener;
 
+use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
@@ -22,7 +23,7 @@ use Claroline\CoreBundle\Event\Resource\DeleteResourceEvent;
 use Claroline\CoreBundle\Event\Resource\DownloadResourceEvent;
 use Claroline\CoreBundle\Event\Resource\LoadResourceEvent;
 use Claroline\CoreBundle\Event\Resource\ResourceActionEvent;
-use Claroline\CoreBundle\Manager\Resource\ResourceEvaluationManager;
+use Claroline\EvaluationBundle\Manager\ResourceEvaluationManager;
 use Claroline\ScormBundle\Entity\Sco;
 use Claroline\ScormBundle\Entity\Scorm;
 use Claroline\ScormBundle\Manager\ScormManager;
@@ -94,7 +95,8 @@ class ScormListener
             'userEvaluation' => is_null($user) ?
                 null :
                 $this->serializer->serialize(
-                    $this->resourceEvalManager->getResourceUserEvaluation($scorm->getResourceNode(), $user)
+                    $this->resourceEvalManager->getUserEvaluation($scorm->getResourceNode(), $user),
+                    [Options::SERIALIZE_MINIMAL]
                 ),
             'trackings' => $this->scormManager->generateScosTrackings($scorm->getRootScos(), $user),
         ]);
@@ -192,21 +194,9 @@ class ScormListener
         $resource = $event->getResource();
         $workspace = $resource->getResourceNode()->getWorkspace();
         $newWorkspace = $event->getCopy()->getResourceNode()->getWorkspace();
-        $copy = $event->getCopy();
+
         $hashName = $resource->getHashName();
-        $copy->setHashName($hashName);
-        $copy->setName($resource->getName());
-        $copy->setVersion($resource->getVersion());
-        $copy->setRatio($resource->getRatio());
-        $this->om->persist($copy);
 
-        $scos = $resource->getScos();
-
-        foreach ($scos as $sco) {
-            if (is_null($sco->getScoParent())) {
-                $this->copySco($sco, $copy);
-            }
-        }
         if ($workspace->getId() !== $newWorkspace->getId()) {
             $ds = DIRECTORY_SEPARATOR;
             /* Copies archive file & unzipped files */
@@ -224,7 +214,6 @@ class ScormListener
             }
         }
 
-        $event->setCopy($copy);
         $event->stopPropagation();
     }
 

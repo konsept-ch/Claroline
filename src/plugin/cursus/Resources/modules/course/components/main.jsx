@@ -27,7 +27,7 @@ const CourseMain = (props) =>
             activeSession={null}
             activeSessionRegistration={null}
             availableSessions={props.availableSessions}
-            register={props.register}
+            courseRegistration={props.courseRegistration}
           />
         )
       }, {
@@ -40,7 +40,7 @@ const CourseMain = (props) =>
             activeSession={props.activeSession}
             activeSessionRegistration={props.activeSessionRegistration}
             availableSessions={props.availableSessions}
-            register={props.register}
+            courseRegistration={props.courseRegistration}
           />
         )
       }
@@ -64,8 +64,8 @@ CourseMain.propTypes = {
   activeSessionRegistration: T.shape({
     // TODO : propTypes
   }),
-  openSession: T.func.isRequired,
-  register: T.func.isRequired
+  courseRegistration: T.shape({}),
+  openSession: T.func.isRequired
 }
 
 export {

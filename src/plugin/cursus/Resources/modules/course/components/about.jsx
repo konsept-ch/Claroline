@@ -10,7 +10,7 @@ import {hasPermission} from '#/main/app/security'
 import {Alert} from '#/main/app/alert/components/alert'
 import {AlertBlock} from '#/main/app/alert/components/alert-block'
 import {Button} from '#/main/app/action/components/button'
-import {LINK_BUTTON, MODAL_BUTTON, POPOVER_BUTTON} from '#/main/app/buttons'
+import {CALLBACK_BUTTON, LINK_BUTTON, MODAL_BUTTON, POPOVER_BUTTON} from '#/main/app/buttons'
 import {ContentHtml} from '#/main/app/content/components/html'
 import {ContentTitle} from '#/main/app/content/components/title'
 import {isHtmlEmpty} from '#/main/app/data/types/html/validators'
@@ -27,6 +27,14 @@ import {Course as CourseTypes, Session as SessionTypes} from '#/plugin/cursus/pr
 import {CourseCard} from '#/plugin/cursus/course/components/card'
 import {SessionCard} from '#/plugin/cursus/session/components/card'
 import {MODAL_COURSE_REGISTRATION} from '#/plugin/cursus/course/modals/registration'
+
+function canSelfRegister(course, session, registered = false) {
+  return !registered
+    && (!isEmpty(session) || get(course, 'registration.pendingRegistrations'))
+    && getInfo(course, session, 'registration.selfRegistration')
+    && !getInfo(course, session, 'registration.autoRegistration')
+    && (getInfo(course, session, 'registration.pendingRegistrations') || !isFull(session))
+}
 
 const CurrentRegistration = (props) => {
   let registrationTitle = trans('session_registration_pending', {}, 'cursus')
@@ -67,6 +75,8 @@ CurrentRegistration.propTypes = {
 const CourseAbout = (props) => {
   const availableSessions = props.availableSessions
     .filter(session => !props.activeSession || props.activeSession.id !== session.id)
+
+  const selfRegistration = canSelfRegister(props.course, props.activeSession, !isEmpty(props.activeSessionRegistration) || !isEmpty(props.courseRegistration))
 
   return (
     <div className="row">
@@ -222,14 +232,11 @@ const CourseAbout = (props) => {
             <Alert type="warning">{trans('registration_requires_manager', {}, 'cursus')}</Alert>
           }
 
-          {!isEmpty(props.activeSession)
-            && isEmpty(props.activeSessionRegistration)
-            && getInfo(props.course, props.activeSession, 'registration.selfRegistration')
-            && getInfo(props.course, props.activeSession, 'permissions.self_register') &&
+          {selfRegistration &&
             <Button
               className="btn btn-block btn-emphasis"
               type={MODAL_BUTTON}
-              label={trans(isFull(props.activeSession) ? 'register_waiting_list' : 'self_register', {}, 'actions')}
+              label={trans(isEmpty(props.activeSession) || isFull(props.activeSession) ? 'register_waiting_list' : 'self_register', {}, 'actions')}
               modal={[MODAL_COURSE_REGISTRATION, {
                 path: props.path,
                 course: props.course,
@@ -240,13 +247,13 @@ const CourseAbout = (props) => {
             />
           }
 
-          {isEmpty(props.activeSession) &&
+          {isEmpty(props.activeSession) && !get(props.course, 'display.hideSessions') &&
             <Button
               className="btn btn-block btn-emphasis"
               type={LINK_BUTTON}
               label={trans('show_sessions', {}, 'actions')}
               target={route(props.path, props.course)+'/sessions'}
-              primary={true}
+              primary={!selfRegistration}
             />
           }
 
@@ -259,18 +266,37 @@ const CourseAbout = (props) => {
             />
           }
 
-          {(isFullyRegistered(props.activeSessionRegistration) || hasPermission('edit', props.course)) && !isEmpty(getInfo(props.course, props.activeSession, 'workspace')) &&
+          {(isFullyRegistered(props.activeSessionRegistration)
+            || get(props.activeSession, 'registration.autoRegistration')
+            || hasPermission('edit', props.course)
+          ) && !isEmpty(getInfo(props.course, props.activeSession, 'workspace')) &&
             <Button
               className="btn btn-block"
-              type={LINK_BUTTON}
+              type={CALLBACK_BUTTON}
               label={trans('open-training', {}, 'actions')}
-              target={workspaceRoute(getInfo(props.course, props.activeSession, 'workspace'))}
+              callback={() => {
+                const workspaceUrl = workspaceRoute(getInfo(props.course, props.activeSession, 'workspace'))
+                if (get(props.activeSession, 'registration.autoRegistration') && !isFullyRegistered(props.activeSessionRegistration)) {
+                  props.register(props.course, props.activeSession.id).then(() => props.history.push(workspaceUrl))
+                } else {
+                  props.history.push(workspaceUrl)
+                }
+              }}
             />
           }
         </section>
       </div>
 
       <div className="col-md-9">
+        {props.courseRegistration &&
+          <AlertBlock
+            type="warning"
+            title={trans('course_registration_pending', {}, 'cursus')}
+          >
+            {trans('course_registration_pending_help', {}, 'cursus')}
+          </AlertBlock>
+        }
+
         {props.activeSessionRegistration &&
           <CurrentRegistration
             sessionFull={isFull(props.activeSession)}
@@ -391,32 +417,36 @@ const CourseAbout = (props) => {
           />
         )}
 
-        <ContentTitle
-          level={3}
-          displayLevel={2}
-          title={trans(!props.activeSession ? 'available_sessions' : 'other_available_sessions', {}, 'cursus')}
-        />
+        {!get(props.course, 'display.hideSessions') &&
+          <Fragment>
+            <ContentTitle
+              level={3}
+              displayLevel={2}
+              title={trans(!props.activeSession ? 'available_sessions' : 'other_available_sessions', {}, 'cursus')}
+            />
 
-        {availableSessions.map((session, index) =>
-          <SessionCard
-            key={session.id}
-            style={{marginBottom: index === availableSessions.length - 1 ? 20 : 5}}
-            orientation="row"
-            size="xs"
-            data={session}
-            primaryAction={{
-              type: LINK_BUTTON,
-              target: route(props.path, props.course, session)
-            }}
-          />
-        )}
+            {availableSessions.map((session, index) =>
+              <SessionCard
+                key={session.id}
+                style={{marginBottom: index === availableSessions.length - 1 ? 20 : 5}}
+                orientation="row"
+                size="xs"
+                data={session}
+                primaryAction={{
+                  type: LINK_BUTTON,
+                  target: route(props.path, props.course, session)
+                }}
+              />
+            )}
 
-        {isEmpty(availableSessions) &&
-          <ContentPlaceholder
-            icon="fa fa-fw fa-calendar-week"
-            title={trans('no_available_session', {}, 'cursus')}
-            help={trans('no_available_session_help', {}, 'cursus')}
-          />
+            {isEmpty(availableSessions) &&
+            <ContentPlaceholder
+              icon="fa fa-fw fa-calendar-week"
+              title={trans('no_available_session', {}, 'cursus')}
+              help={trans('no_available_session_help', {}, 'cursus')}
+            />
+            }
+          </Fragment>
         }
       </div>
     </div>
@@ -434,10 +464,14 @@ CourseAbout.propTypes = {
   activeSessionRegistration: T.shape({
 
   }),
+  courseRegistration: T.shape({}),
   availableSessions: T.arrayOf(T.shape(
     SessionTypes.propTypes
   )),
-  register: T.func.isRequired
+  register: T.func.isRequired,
+  history: T.shape({
+    push: T.func.isRequired
+  }).isRequired
 }
 
 export {

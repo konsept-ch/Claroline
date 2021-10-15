@@ -4,28 +4,36 @@ plugin:
           is_displayable_in_workspace: true
           is_displayable_in_desktop: false
           class: clock
+          tool_rights:
+              - name: register
 
         - name: trainings
           is_displayable_in_workspace: false
           is_displayable_in_desktop: true
           class: graduation-cap
           tool_rights:
-              - name: self_register
+              - name: register
 
     data_sources:
+        # TODO : to replace by course_sessions with a filter
         - name: public_course_sessions
+          type: list
+          context: [workspace, desktop, home]
+          tags: [community, event]
+
+        - name: course_sessions
           type: list
           context: [workspace, desktop, home]
           tags: [community, event]
 
         - name: my_course_sessions
           type: list
-          context: [desktop]
+          context: [workspace, desktop]
           tags: [community, event]
 
         - name: all_courses
           type: list
-          context: [desktop, home]
+          context: [workspace, desktop, home]
           tags: [community, event]
 
         - name: training_events

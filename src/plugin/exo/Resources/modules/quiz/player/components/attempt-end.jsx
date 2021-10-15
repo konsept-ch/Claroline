@@ -6,7 +6,7 @@ import get from 'lodash/get'
 import {trans} from '#/main/app/intl/translation'
 import {hasPermission} from '#/main/app/security'
 import {Toolbar} from '#/main/app/action/components/toolbar'
-import {LINK_BUTTON} from '#/main/app/buttons'
+import {LINK_BUTTON, URL_BUTTON} from '#/main/app/buttons'
 import {route} from '#/main/core/workspace/routing'
 import {selectors as resourceSelect} from '#/main/core/resource/store'
 import {selectors as securitySelectors} from '#/main/app/security/store/selectors'
@@ -19,7 +19,7 @@ import {isQuestionType} from '#/plugin/exo/items/item-types'
 
 import {select as playerSelect} from '#/plugin/exo/quiz/player/selectors'
 import {showCorrection, showScore} from '#/plugin/exo/resources/quiz/papers/restrictions'
-import {AttemptsChart} from '#/plugin/exo/charts/attempts/containers/chart'
+import {AttemptsChart} from '#/plugin/exo/charts/attempts/components/chart'
 
 // TODO : merge with PlayerRestrictions
 // TODO : show number of attempts info
@@ -222,10 +222,10 @@ const AttemptEndComponent = props =>
                 displayed: props.showStatistics
               }, {
                 name: 'home',
-                type: LINK_BUTTON,
+                type: URL_BUTTON, // we require an URL_BUTTON here to escape the embedded resource router
                 icon: 'fa fa-fw fa-home',
                 label: trans('return-home', {}, 'actions'),
-                target: route(props.workspace),
+                target: '#'+route(props.workspace),
                 displayed: !!props.workspace,
                 exact: true
               }

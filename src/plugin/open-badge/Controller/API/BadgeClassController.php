@@ -14,20 +14,17 @@ namespace Claroline\OpenBadgeBundle\Controller\API;
 use Claroline\AppBundle\Controller\AbstractCrudController;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
-use Claroline\CoreBundle\Library\Normalizer\DateNormalizer;
-use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
+use Claroline\CoreBundle\Validator\Exception\InvalidDataException;
 use Claroline\OpenBadgeBundle\Entity\Assertion;
 use Claroline\OpenBadgeBundle\Entity\BadgeClass;
-use Claroline\OpenBadgeBundle\Manager\OpenBadgeManager;
+use Claroline\OpenBadgeBundle\Manager\AssertionManager;
+use Claroline\OpenBadgeBundle\Manager\BadgeManager;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * @Route("/badge-class")
@@ -38,23 +35,19 @@ class BadgeClassController extends AbstractCrudController
 
     /** @var AuthorizationCheckerInterface */
     private $authorization;
-    /** @var TokenStorageInterface */
-    private $tokenStorage;
-    /** @var TranslatorInterface */
-    private $translator;
-    /** @var OpenBadgeManager */
+    /** @var BadgeManager */
     private $manager;
+    /** @var AssertionManager */
+    private $assertionManager;
 
     public function __construct(
         AuthorizationCheckerInterface $authorization,
-        TokenStorageInterface $tokenStorage,
-        TranslatorInterface $translator,
-        OpenBadgeManager $manager
+        BadgeManager $manager,
+        AssertionManager $assertionManager
     ) {
         $this->authorization = $authorization;
-        $this->tokenStorage = $tokenStorage;
-        $this->translator = $translator;
         $this->manager = $manager;
+        $this->assertionManager = $assertionManager;
     }
 
     public function getName()
@@ -115,7 +108,7 @@ class BadgeClassController extends AbstractCrudController
      * @Route("/workspace/{workspace}", name="apiv2_badge-class_workspace_badge_list", methods={"GET"})
      * @EXT\ParamConverter("workspace", class="ClarolineCoreBundle:Workspace\Workspace", options={"mapping": {"workspace": "uuid"}})
      */
-    public function getWorkspaceBadgesAction(Request $request, Workspace $workspace): JsonResponse
+    public function listByWorkspaceAction(Request $request, Workspace $workspace): JsonResponse
     {
         return new JsonResponse(
             $this->finder->search(BadgeClass::class, array_merge(
@@ -156,7 +149,7 @@ class BadgeClassController extends AbstractCrudController
         $users = $this->decodeIdsString($request, User::class);
 
         foreach ($users as $user) {
-            $this->manager->addAssertion($badge, $user);
+            $this->assertionManager->create($badge, $user);
         }
 
         return new JsonResponse(
@@ -175,7 +168,7 @@ class BadgeClassController extends AbstractCrudController
         $assertions = $this->decodeIdsString($request, Assertion::class);
 
         foreach ($assertions as $assertion) {
-            $this->manager->revokeAssertion($assertion);
+            $this->assertionManager->delete($assertion);
         }
 
         return new JsonResponse(
@@ -184,51 +177,22 @@ class BadgeClassController extends AbstractCrudController
     }
 
     /**
-     * @Route("/{badge}/users/export", name="apiv2_badge-class_export_users", methods={"GET"})
+     * Searches for users which meet the badge rules and grant them the badge.
+     *
+     * @Route("/{badge}/users/recalculate", name="apiv2_badge-class_recalculate_users", methods={"POST"})
      * @EXT\ParamConverter("badge", class="ClarolineOpenBadgeBundle:BadgeClass", options={"mapping": {"badge": "uuid"}})
      */
-    public function exportUsersAction(BadgeClass $badge): StreamedResponse
+    public function recalculateAction(BadgeClass $badge): JsonResponse
     {
         $this->checkPermission('GRANT', $badge, [], true);
 
-        /** @var Assertion[] $assertions */
-        $assertions = $this->om->getRepository(Assertion::class)->findBy([
-            'badge' => $badge,
-        ]);
+        if (empty($badge->getRules())) {
+            // we can only recompute badges with auto rules
+            throw new InvalidDataException('The badge have no rules to check.');
+        }
 
-        $fileName = "assertions-{$badge->getName()}";
-        $fileName = TextNormalizer::toKey($fileName);
+        $this->manager->grantAll($badge);
 
-        return new StreamedResponse(function () use ($assertions) {
-            // Prepare CSV file
-            $handle = fopen('php://output', 'w+');
-
-            // Create header
-            fputcsv($handle, [
-                $this->translator->trans('last_name', [], 'platform'),
-                $this->translator->trans('first_name', [], 'platform'),
-                $this->translator->trans('email', [], 'platform'),
-                $this->translator->trans('date', [], 'platform'),
-                $this->translator->trans('revoked', [], 'badge'),
-            ], ';', '"');
-
-            foreach ($assertions as $assertion) {
-                // put Workspace evaluation
-                fputcsv($handle, [
-                    $assertion->getRecipient()->getLastName(),
-                    $assertion->getRecipient()->getFirstName(),
-                    $assertion->getRecipient()->getEmail(),
-                    DateNormalizer::normalize($assertion->getIssuedOn()),
-                    $assertion->getRevoked(),
-                ], ';', '"');
-            }
-
-            fclose($handle);
-
-            return $handle;
-        }, 200, [
-            'Content-Type' => 'application/force-download',
-            'Content-Disposition' => 'attachment; filename="'.$fileName.'.csv"',
-        ]);
+        return new JsonResponse();
     }
 }

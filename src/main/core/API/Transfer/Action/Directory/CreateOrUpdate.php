@@ -13,7 +13,7 @@ use Claroline\CoreBundle\Entity\Resource\ResourceType;
 use Claroline\CoreBundle\Entity\Role;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * @todo : can be partially merged with CreateAction
@@ -143,15 +143,25 @@ class CreateOrUpdate extends AbstractAction
 
         // try to update an existing node
         $resourceNode = null;
-        if (!empty($data['id'])) {
-            $dataResourceNode['id'] = $data['id'];
+        if (!empty($data['id']) || !empty($data['slug'])) {
+            if (!empty($data['id'])) {
+                $dataResourceNode['id'] = $data['id'];
+            }
+
+            if (!empty($data['slug'])) {
+                $dataResourceNode['slug'] = $data['slug'];
+            }
 
             /** @var ResourceNode $resourceNode */
-            $resourceNode = $this->om->getRepository(ResourceNode::class)->findOneBy(['uuid' => $data['id'], 'parent' => $parent]);
+            $resourceNode = $this->om->getObject($data, ResourceNode::class, ['slug']);
         }
 
         if ($resourceNode) {
-            $resourceNode = $this->serializer->deserialize($dataResourceNode, $resourceNode);
+            $options = [];
+            if (isset($data['recursive']) && $data['recursive']) {
+                $options[] = Options::IS_RECURSIVE;
+            }
+            $this->crud->update($resourceNode, $dataResourceNode, $options);
         } else {
             $resourceNode = $this->crud->create(ResourceNode::class, $dataResourceNode);
             $resource = $this->crud->create(Directory::class, []);
@@ -179,6 +189,10 @@ class CreateOrUpdate extends AbstractAction
                 'id' => [
                     'type' => 'string',
                     'description' => $this->translator->trans('directory_id', [], 'transfer'),
+                ],
+                'slug' => [
+                    'type' => 'string',
+                    'description' => $this->translator->trans('directory_slug', [], 'transfer'),
                 ],
                 'name' => [
                     'type' => 'string',
@@ -240,6 +254,10 @@ class CreateOrUpdate extends AbstractAction
                             ],
                         ],
                     ],
+                ],
+                'recursive' => [
+                    'type' => 'boolean',
+                    'description' => $this->translator->trans('apply_recursively_to_directories', [], 'platform'),
                 ],
             ],
 
