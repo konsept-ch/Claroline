@@ -28,7 +28,6 @@ use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
 use Claroline\CoreBundle\Manager\LogConnectManager;
 use Claroline\CoreBundle\Manager\ResourceManager;
 use Claroline\CoreBundle\Manager\RoleManager;
-use Claroline\CoreBundle\Manager\Workspace\TransferManager;
 use Claroline\CoreBundle\Manager\Workspace\WorkspaceManager;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
@@ -65,8 +64,6 @@ class WorkspaceController extends AbstractCrudController
     private $translator;
     /** @var WorkspaceManager */
     private $workspaceManager;
-    /** @var TransferManager */
-    private $importer;
     /** @var string */
     private $logDir;
     /** @var LogConnectManager */
@@ -80,7 +77,6 @@ class WorkspaceController extends AbstractCrudController
         ResourceManager $resourceManager,
         TranslatorInterface $translator,
         WorkspaceManager $workspaceManager,
-        TransferManager $importer,
         $logDir,
         LogConnectManager $logConnectManager
     ) {
@@ -88,7 +84,6 @@ class WorkspaceController extends AbstractCrudController
         $this->authorization = $authorization;
         $this->dispatcher = $dispatcher;
         $this->roleManager = $roleManager;
-        $this->importer = $importer;
         $this->resourceManager = $resourceManager;
         $this->translator = $translator;
         $this->workspaceManager = $workspaceManager;
@@ -148,7 +143,10 @@ class WorkspaceController extends AbstractCrudController
     {
         return new JsonResponse($this->finder->search(
             Workspace::class,
-            array_merge($request->query->all(), ['hiddenFilters' => ['user' => $this->tokenStorage->getToken()->getUser()->getId()]]),
+            array_merge($request->query->all(), ['hiddenFilters' => [
+                'model' => false,
+                'user' => $this->tokenStorage->getToken()->getUser()->getId(),
+            ]]),
             $this->getOptions()['list']
         ));
     }
@@ -191,6 +189,30 @@ class WorkspaceController extends AbstractCrudController
         return new JsonResponse($this->finder->search(
             Workspace:: class,
             array_merge($request->query->all(), ['hiddenFilters' => ['model' => true]]),
+            $this->getOptions()['list']
+        ));
+    }
+
+    /**
+     * @ApiDoc(
+     *     description="The list of archived workspace for the current security token.",
+     *     queryString={
+     *         "$finder=Claroline\CoreBundle\Entity\Workspace\Workspace&!archived",
+     *         {"name": "page", "type": "integer", "description": "The queried page."},
+     *         {"name": "limit", "type": "integer", "description": "The max amount of objects per page."},
+     *         {"name": "sortBy", "type": "string", "description": "Sort by the property if you want to."}
+     *     }
+     * )
+     * @Route("/list/archived", name="apiv2_workspace_list_archive", methods={"GET"})
+     */
+    public function listArchivedAction(Request $request): JsonResponse
+    {
+        return new JsonResponse($this->finder->search(
+            Workspace:: class,
+            array_merge($request->query->all(), ['hiddenFilters' => [
+                'administrated' => true,
+                'archived' => true,
+            ]]),
             $this->getOptions()['list']
         ));
     }
@@ -275,7 +297,7 @@ class WorkspaceController extends AbstractCrudController
     {
         $this->checkPermission('OPEN', $workspace, [], true);
 
-        $pathArch = $this->importer->export($workspace);
+        $pathArch = $this->workspaceManager->export($workspace);
         $filename = TextNormalizer::toKey($workspace->getCode()).'.zip';
 
         $response = new BinaryFileResponse($pathArch);

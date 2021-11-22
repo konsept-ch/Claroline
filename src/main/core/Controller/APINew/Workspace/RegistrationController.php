@@ -13,9 +13,8 @@ namespace Claroline\CoreBundle\Controller\APINew\Workspace;
 
 use Claroline\AppBundle\Annotations\ApiDoc;
 use Claroline\AppBundle\API\Crud;
-use Claroline\AppBundle\API\FinderProvider;
 use Claroline\AppBundle\API\SerializerProvider;
-use Claroline\AppBundle\Controller\AbstractApiController;
+use Claroline\AppBundle\Controller\RequestDecoderTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\Entity\Group;
 use Claroline\CoreBundle\Entity\Role;
@@ -34,8 +33,10 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 /**
  * @Route("/workspace")
  */
-class RegistrationController extends AbstractApiController
+class RegistrationController
 {
+    use RequestDecoderTrait;
+
     /** @var AuthorizationCheckerInterface */
     private $authorization;
 
@@ -44,9 +45,6 @@ class RegistrationController extends AbstractApiController
 
     /** @var SerializerProvider */
     private $serializer;
-
-    /** @var FinderProvider */
-    private $finder;
 
     /** @var Crud */
     private $crud;
@@ -61,7 +59,6 @@ class RegistrationController extends AbstractApiController
         AuthorizationCheckerInterface $authorization,
         ObjectManager $om,
         SerializerProvider $serializer,
-        FinderProvider $finder,
         Crud $crud,
         WorkspaceManager $workspaceManager,
         WorkspaceUserQueueManager $registrationQueueManager
@@ -69,7 +66,6 @@ class RegistrationController extends AbstractApiController
         $this->authorization = $authorization;
         $this->om = $om;
         $this->serializer = $serializer;
-        $this->finder = $finder;
         $this->crud = $crud;
         $this->workspaceManager = $workspaceManager;
         $this->registrationQueueManager = $registrationQueueManager;
@@ -97,7 +93,7 @@ class RegistrationController extends AbstractApiController
      */
     public function listPendingAction(Request $request, Workspace $workspace): JsonResponse
     {
-        return new JsonResponse($this->finder->search(
+        return new JsonResponse($this->crud->list(
             WorkspaceRegistrationQueue::class,
             array_merge($request->query->all(), ['hiddenFilters' => ['workspace' => $workspace->getUuid()]])
         ));
@@ -134,7 +130,7 @@ class RegistrationController extends AbstractApiController
             $this->registrationQueueManager->removeRegistration($pending);
         }
 
-        return new JsonResponse($this->finder->search(
+        return new JsonResponse($this->crud->list(
             WorkspaceRegistrationQueue::class,
             array_merge($request->query->all(), ['hiddenFilters' => ['workspace' => $workspace->getUuid()]])
         ));
@@ -169,7 +165,7 @@ class RegistrationController extends AbstractApiController
             $this->registrationQueueManager->removeRegistration($pending);
         }
 
-        return new JsonResponse($this->finder->search(
+        return new JsonResponse($this->crud->list(
             WorkspaceRegistrationQueue::class,
             array_merge($request->query->all(), ['hiddenFilters' => ['workspace' => $workspace->getUuid()]])
         ));
