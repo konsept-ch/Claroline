@@ -2,14 +2,15 @@
 
 namespace Claroline\CoreBundle\API\Serializer\Workspace;
 
-use Claroline\AppBundle\API\FinderProvider;
 use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\Serializer\SerializerTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\API\Serializer\File\PublicFileSerializer;
 use Claroline\CoreBundle\API\Serializer\Resource\ResourceNodeSerializer;
+use Claroline\CoreBundle\API\Serializer\User\OrganizationSerializer;
 use Claroline\CoreBundle\API\Serializer\User\UserSerializer;
 use Claroline\CoreBundle\Entity\File\PublicFile;
+use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
 use Claroline\CoreBundle\Entity\Role;
 use Claroline\CoreBundle\Entity\User;
@@ -17,7 +18,6 @@ use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\CoreBundle\Library\Normalizer\DateNormalizer;
 use Claroline\CoreBundle\Library\Normalizer\DateRangeNormalizer;
 use Claroline\CoreBundle\Library\Utilities\FileUtilities;
-use Claroline\CoreBundle\Manager\ResourceManager;
 use Claroline\CoreBundle\Manager\Workspace\WorkspaceManager;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -38,14 +38,11 @@ class WorkspaceSerializer
     /** @var WorkspaceManager */
     private $workspaceManager;
 
-    /** @var ResourceManager */
-    private $resourceManager;
-
     /** @var FileUtilities */
     private $fileUt;
 
-    /** @var FinderProvider */
-    private $finder;
+    /** @var OrganizationSerializer */
+    private $organizationSerializer;
 
     /** @var UserSerializer */
     private $userSerializer;
@@ -61,10 +58,9 @@ class WorkspaceSerializer
         TokenStorageInterface $tokenStorage,
         ObjectManager $om,
         WorkspaceManager $workspaceManager,
-        ResourceManager $resourceManager,
         FileUtilities $fileUt,
-        FinderProvider $finder,
         UserSerializer $userSerializer,
+        OrganizationSerializer $organizationSerializer,
         PublicFileSerializer $publicFileSerializer,
         ResourceNodeSerializer $resNodeSerializer
     ) {
@@ -72,10 +68,9 @@ class WorkspaceSerializer
         $this->authorization = $authorization;
         $this->om = $om;
         $this->workspaceManager = $workspaceManager;
-        $this->resourceManager = $resourceManager;
         $this->fileUt = $fileUt;
-        $this->finder = $finder;
         $this->userSerializer = $userSerializer;
+        $this->organizationSerializer = $organizationSerializer;
         $this->publicFileSerializer = $publicFileSerializer;
         $this->resNodeSerializer = $resNodeSerializer;
     }
@@ -123,6 +118,7 @@ class WorkspaceSerializer
                 'configure' => $editPerm,
                 'administrate' => $editPerm,
                 'export' => $this->authorization->isGranted('EXPORT', $workspace),
+                'archive' => $this->authorization->isGranted('ARCHIVE', $workspace),
             ],
             'meta' => $this->getMeta($workspace, $options),
             'contactEmail' => $workspace->getContactEmail(),
@@ -148,8 +144,12 @@ class WorkspaceSerializer
                 'notifications' => $this->getNotifications($workspace),
             ]);
 
-            // TODO : remove me. Used by workspace transfer
             if (!in_array(Options::SERIALIZE_LIST, $options)) {
+                $serialized['organizations'] = array_map(function (Organization $organization) {
+                    return $this->organizationSerializer->serialize($organization, [Options::SERIALIZE_MINIMAL]);
+                }, $workspace->getOrganizations()->toArray());
+
+                // TODO : remove me. Used by workspace transfer
                 $serialized['roles'] = array_map(function (Role $role) use ($options) {
                     if (in_array(Options::REFRESH_UUID, $options)) {
                         return [
@@ -428,6 +428,22 @@ class WorkspaceSerializer
             if (isset($data['breadcrumb']['items'])) {
                 $workspaceOptions->setBreadcrumbItems($data['breadcrumb']['items']);
             }
+        }
+
+        if (array_key_exists('organizations', $data)) {
+            $organizations = [];
+            if (!empty($data['organizations'])) {
+                foreach ($data['organizations'] as $organizationData) {
+                    if (isset($organizationData['id'])) {
+                        $organization = $this->om->getObject($organizationData, Organization::class);
+                        if ($organization) {
+                            $organizations[] = $organization;
+                        }
+                    }
+                }
+            }
+
+            $workspace->setOrganizations($organizations);
         }
 
         return $workspace;
