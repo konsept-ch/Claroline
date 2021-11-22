@@ -137,5 +137,7 @@
     "subscription_refused_help": "Le statut sera refusé.",
     "subscription_validated_help": "Le statut sera validé.",
     "subscription_managed_help": "Le statut sera validé et pris en compte dans le quota.",
-    "quotas_insufficient": "Quotas insuffisant !"
+    "quotas_insufficient": "Quotas insuffisant !",
+    "cancellations": "Annulations",
+    "cancellation_date": "Date d'annulation"
 }
