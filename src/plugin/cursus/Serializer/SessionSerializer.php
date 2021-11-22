@@ -115,6 +115,13 @@ class SessionSerializer
             'workspace' => $session->getWorkspace() ?
                 $this->workspaceSerializer->serialize($session->getWorkspace(), [Options::SERIALIZE_MINIMAL]) :
                 null,
+            'pricing' => [
+                'price' => $session->getPrice(),
+            ],
+            'quotas' => [
+                'used' => $session->usedByQuotas(),
+                'days' => $session->getQuotaDays(),
+            ],
         ];
 
         if (!in_array(Options::SERIALIZE_MINIMAL, $options)) {
@@ -158,7 +165,6 @@ class SessionSerializer
                     'eventRegistrationType' => $session->getEventRegistrationType(),
                 ],
                 'pricing' => [
-                    'price' => $session->getPrice(),
                     'description' => $session->getPriceDescription(),
                 ],
                 'participants' => $this->sessionRepo->countParticipants($session),
@@ -195,6 +201,9 @@ class SessionSerializer
 
         $this->sipe('pricing.price', 'setPrice', $data, $session);
         $this->sipe('pricing.description', 'setPriceDescription', $data, $session);
+
+        $this->sipe('quotas.used', 'setUsedByQuotas', $data, $session);
+        $this->sipe('quotas.days', 'setQuotaDays', $data, $session);
 
         if (isset($data['meta'])) {
             $this->sipe('meta.default', 'setDefaultSession', $data, $session);

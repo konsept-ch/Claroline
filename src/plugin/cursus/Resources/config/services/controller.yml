@@ -35,6 +35,20 @@ services:
             - '@translator'
             - '@Claroline\CursusBundle\Manager\EventManager'
 
+    Claroline\CursusBundle\Controller\QuotaController:
+        parent: Claroline\AppBundle\Controller\AbstractCrudController
+        public: true
+        arguments:
+            - '@event_dispatcher'
+            - '@security.authorization_checker'
+            - '@security.token_storage'
+            - '@translator'
+            - '@Claroline\CoreBundle\Manager\LocaleManager'
+            - '@Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\CursusBundle\Manager\QuotaManager'
+            - '@Claroline\CursusBundle\Manager\SessionManager'
+
     Claroline\CursusBundle\Controller\EventPresenceController:
         arguments:
             - '@security.authorization_checker'

@@ -13,6 +13,8 @@ plugin:
           class: graduation-cap
           tool_rights:
               - name: register
+              - name: manage_quotas
+              - name: validate_subscriptions
 
     data_sources:
         # TODO : to replace by course_sessions with a filter
@@ -165,3 +167,49 @@ plugin:
               - user_username
               - user_first_name
               - user_last_name
+
+        - name: training_quota_status_changed
+          type: email
+          placeholders:
+              - session_name
+              - user_first_name
+              - user_last_name
+              - session_start
+              - session_end
+              - status
+
+        - name: training_quota_status_validated
+          type: email
+          placeholders:
+              - session_name
+              - user_first_name
+              - user_last_name
+              - session_start
+              - session_end
+
+        - name: training_quota_status_managed
+          type: email
+          placeholders:
+              - session_name
+              - user_first_name
+              - user_last_name
+              - session_start
+              - session_end
+
+        - name: training_quota_status_refused
+          type: email
+          placeholders:
+              - session_name
+              - user_first_name
+              - user_last_name
+              - session_start
+              - session_end
+
+        - name: training_quota_status_cancelled
+          type: email
+          placeholders:
+              - session_name
+              - user_first_name
+              - user_last_name
+              - session_start
+              - session_end
