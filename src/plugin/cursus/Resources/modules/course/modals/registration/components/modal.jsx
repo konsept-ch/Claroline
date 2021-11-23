@@ -26,7 +26,6 @@ const RegistrationModal = props => {
     })
       .then(response => response.json())
       .then(response => {
-        console.log(response)
         setHasRequirements(response)
         setLoaded(true)
       })
