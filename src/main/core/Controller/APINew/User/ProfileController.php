@@ -21,8 +21,11 @@ use Claroline\CoreBundle\API\Serializer\ParametersSerializer;
 use Claroline\CoreBundle\API\Serializer\User\ProfileSerializer;
 use Claroline\CoreBundle\Entity\Facet\Facet;
 use Claroline\CoreBundle\Entity\User;
+use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
+use Exception;
+use PHPMD\Renderer\JSONRenderer;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -97,6 +100,70 @@ class ProfileController
         return new BinaryFileResponse($pathArch, 200, [
             'Content-Disposition' => "attachment; filename={$fileName}",
         ]);
+    }
+
+    /**
+     * @Route("/requirements", name="apiv2_profile_requirements", methods={"GET"})
+     * @EXT\ParamConverter("user", converter="current_user", options={"allowAnonymous"=false})
+     */
+    public function requirementsAction(User $user)
+    {
+        $facets = $this->profileSerializer->serialize();
+        $serializedUser = $this->serializer->serialize($user, [Options::SERIALIZE_MINIMAL, Options::SERIALIZE_FACET]);
+        $comparators = [
+            'equal' => function($a, $b) {
+                foreach ($b as $v) {
+                    if ($a != $v) return false;
+                }
+                return true;
+            },
+            'different' => function($a, $b) {
+                foreach ($b as $v) {
+                    if ($a == $v) return false;
+                }
+                return true;
+            },
+            'empty' => function($a, $b) {
+                return empty($a);
+            },
+            'not_empty' => function($a, $b) {
+                return !empty($a);
+            }
+        ];
+        $profile = $serializedUser['profile'];
+
+        /** @var Organization */
+        $organization = $user->getMainOrganization();
+        if ($organization == null || count($organization->getChildren()) > 0) {
+            return new JsonResponse(false);
+        }
+
+        foreach ($facets as $facet) {
+            foreach ($facet['sections'] as $section) {
+                foreach ($section['fields'] as $field) {
+                    $condition = $field['display']['condition'];
+                    $fieldId = $condition['field'];
+                    $displayed = false;
+                    if ($fieldId && isset($profile[$fieldId])) {
+                        $value = $condition['value'];
+                        $displayed = $comparators[$condition['comparator']]($profile[$fieldId], is_array($value) ? $value : [$value]);
+                    }
+                    else {
+                        $displayed = true;
+                    }
+            
+                    if (!$field['restrictions']['hidden'] && $displayed && $field['required'] && !isset($profile[$field['id']])) {
+                        return new JsonResponse(false);
+                    }
+                }
+            }
+        }
+
+        return new JsonResponse(true);
+        /*return new JsonResponse([
+            'facets' => $facets,
+            'user' => $serializedUser
+        ]);*/
     }
 
     /**
