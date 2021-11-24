@@ -116,6 +116,6 @@
     "course_registration_pending_help": "Veuillez patienter le temps qu'un gestionnaire vous inscrive à une session.",
     "hide_sessions": "Cacher les sessions aux utilisateurs",
 
-    "registation_requirements": "À vérifier avant l'inscription",
-    "apply_registation_requirements": "Veuillez remplir votre profile avant de vous inscrire."
+    "registation_requirements": "Informations manquantes",
+    "apply_registation_requirements": "Veuillez compléter votre profil avant de procéder à l'inscription."
 }

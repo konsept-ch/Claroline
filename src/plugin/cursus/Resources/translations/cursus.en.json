@@ -108,5 +108,8 @@
     "opening_session": "Displayed session",
     "course_registration_pending": "You are on the pending list for this training.",
     "course_registration_pending_help": "Please wait till a manager register you to a session.",
-    "hide_sessions": "Hide sessions to users"
+    "hide_sessions": "Hide sessions to users",
+
+    "registation_requirements": "Requirements before registration",
+    "apply_registation_requirements": "Please fill all account fields before registration"
 }
