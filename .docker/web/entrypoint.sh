@@ -2,6 +2,16 @@
 
 set -e
 
+echo "Creating required directories in volumes"
+mkdir -p var/geoip
+mkdir -p files/config
+mkdir -p files/data
+mkdir -p files/templates
+
+echo "Copying initial config files to /config volume"
+cp ../initial/config ./config
+
+echo "Generating parameters.yml and bundles.ini"
 php bin/configure # we run it again to generate parameters.yml inside the volume
 composer bundles # we run it again to generate bundles.ini inside the volume
 composer delete-cache # fixes install/update errors
@@ -44,7 +54,7 @@ echo "Clean cache after setting correct permissions, fixes SAML issues"
 composer delete-cache # fixes SAML errors
 
 echo "Setting correct file permissions for PROD"
-chmod -R 750 var files config
+chmod -R 750 var files config public/js public/themes
 chown -R www-data:www-data var files config
 
 exec "$@"
