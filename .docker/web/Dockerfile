@@ -46,6 +46,7 @@ RUN a2dissite 000-default && a2dissite default-ssl && a2ensite claroline.conf
 
 COPY . /var/www/html/claroline
 WORKDIR /var/www/html/claroline
+COPY ./config /var/www/html/initial/config
 
 RUN composer install --no-dev --optimize-autoloader
 RUN rm ./config/parameters.yml
