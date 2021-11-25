@@ -47,13 +47,15 @@ RUN a2dissite 000-default && a2dissite default-ssl && a2ensite claroline.conf
 COPY . /var/www/html/claroline
 WORKDIR /var/www/html/claroline
 
+RUN chmod 644 ./.docker/mysql
+
 RUN composer install --no-dev --optimize-autoloader
 RUN rm ./config/parameters.yml
 
 RUN npm install --legacy-peer-deps
 RUN npm run webpack
 
-RUN chmod 644 ./.docker/mysql
+COPY ./config /var/www/html/initial/config
 
 COPY ./.docker/web/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
