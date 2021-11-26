@@ -54,7 +54,8 @@ echo "Clean cache after setting correct permissions, fixes SAML issues"
 composer delete-cache # fixes SAML errors
 
 echo "Setting correct file permissions for PROD"
-chmod -R 750 var files config public/js public/themes
+chmod -R 750 var files config
+chmod -R 755 public/js public/themes
 chown -R www-data:www-data var files config
 
 exec "$@"
