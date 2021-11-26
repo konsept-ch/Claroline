@@ -46,6 +46,19 @@ else
     echo "Changing platform support email to $PLATFORM_SUPPORT_EMAIL";
     sed -i "/support_email: null/c\support_email: $PLATFORM_SUPPORT_EMAIL" files/config/platform_options.json
   fi
+  
+  USERS=$(mysql $DB_NAME -u $DB_USER -p$DB_PASSWORD -h $DB_HOST -se "select count(*) from claro_user")
+
+  if [ "$USERS" == "1" ] && [ -v ADMIN_FIRSTNAME ] && [ -v ADMIN_LASTNAME ] && [ -v ADMIN_USERNAME ] && [ -v ADMIN_PASSWORD ]  && [ -v ADMIN_EMAIL ]; then
+    echo '*********************************************************************************************************************'
+    echo "Creating default non-admin user for production : $ADMIN_FIRSTNAME $ADMIN_LASTNAME $ADMIN_USERNAME $ADMIN_PASSWORD $ADMIN_EMAIL"
+    echo '*********************************************************************************************************************'
+
+    php bin/console claroline:user:create $ADMIN_FIRSTNAME $ADMIN_LASTNAME $ADMIN_USERNAME $ADMIN_PASSWORD $ADMIN_EMAIL
+  else
+    echo 'Users already exist or no admin vars detected, Claroline installed without an admin account'
+  fi
+
 
   echo "In order to create an admin user, run the following command inside the docker container (and replace the variables):"
   echo "php bin/console claroline:user:create -a \$ADMIN_FIRSTNAME \$ADMIN_LASTNAME \$ADMIN_USERNAME \$ADMIN_PASSWORD \$ADMIN_EMAIL"
@@ -58,8 +71,8 @@ echo "Clean cache after setting correct permissions, fixes SAML issues"
 composer delete-cache # fixes SAML errors
 
 echo "Setting correct file permissions for PROD"
-chmod -R 750 var files config
 chmod -R 755 public/js public/themes
+chmod -R 750 var files config
 chown -R www-data:www-data var files config
 
 exec "$@"
