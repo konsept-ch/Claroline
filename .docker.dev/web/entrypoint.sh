@@ -11,6 +11,9 @@ composer install # if composer.lock exists, this takes ~2 seconds (every subsequ
 npm install --legacy-peer-deps # if package-lock.json exists, this takes ~3 seconds (every subsequent run with no changes to deps)
 # --legacy-peer-deps is needed until all dependencies are compatible with npm 7 (until npm install runs without error)
 
+echo "Cleaning up unused bundled themes for faster install/update..."
+rm -rf src/main/theme/Resources/themes/claroline-black src/main/theme/Resources/themes/claroline-mint src/main/theme/Resources/themes/claroline-ruby
+
 # Wait for MySQL to respond, depends on mysql-client
 echo "Waiting for $DB_HOST..."
 while ! mysqladmin ping -h "$DB_HOST" --silent; do
