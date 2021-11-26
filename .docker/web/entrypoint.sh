@@ -16,6 +16,9 @@ php bin/configure # we run it again to generate parameters.yml inside the volume
 composer bundles # we run it again to generate bundles.ini inside the volume
 composer delete-cache # fixes install/update errors
 
+echo "Cleaning up unused bundled themes for faster install/update..."
+rm -rf src/main/theme/Resources/themes/claroline-black src/main/theme/Resources/themes/claroline-mint src/main/theme/Resources/themes/claroline-ruby
+
 # Wait for MySQL to respond, depends on mysql-client
 echo "Waiting for $DB_HOST..."
 while ! mysqladmin ping -h "$DB_HOST" --silent; do
@@ -30,6 +33,7 @@ if [ -f files/installed ]; then
 
   php bin/console claroline:update -vvv
 else
+
   echo "Installing Claroline for the first time..."
   php bin/console claroline:install -vvv
 
@@ -54,7 +58,8 @@ echo "Clean cache after setting correct permissions, fixes SAML issues"
 composer delete-cache # fixes SAML errors
 
 echo "Setting correct file permissions for PROD"
-chmod -R 750 var files config public/js public/themes
+chmod -R 750 var files config
+chmod -R 755 public/js public/themes
 chown -R www-data:www-data var files config
 
 exec "$@"
