@@ -59,7 +59,6 @@ else
     echo 'Users already exist or no admin vars detected, Claroline installed without an admin account'
   fi
 
-
   echo "In order to create an admin user, run the following command inside the docker container (and replace the variables):"
   echo "php bin/console claroline:user:create -a \$ADMIN_FIRSTNAME \$ADMIN_LASTNAME \$ADMIN_USERNAME \$ADMIN_PASSWORD \$ADMIN_EMAIL"
 
