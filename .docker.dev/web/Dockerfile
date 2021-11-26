@@ -44,20 +44,15 @@ COPY ./.docker.dev/web/files/apache2/claroline.conf /etc/apache2/sites-available
 COPY ./.docker.dev/web/files/apache2/claroline-ssl.conf /etc/apache2/sites-available/
 RUN a2dissite 000-default && a2dissite default-ssl && a2ensite claroline.conf
 
-RUN pwd
 COPY . /var/www/html/claroline
 WORKDIR /var/www/html/claroline
-RUN pwd
 
 RUN chmod 644 ./.docker/mysql
 
-RUN ls -la
 RUN composer install --optimize-autoloader
-RUN ls -la
 RUN rm ./config/parameters.yml
 
 RUN npm install --legacy-peer-deps
-RUN ls -la
 
 COPY ./node_modules /var/www/html/initial/node_modules
 COPY ./vendor /var/www/html/initial/vendor
