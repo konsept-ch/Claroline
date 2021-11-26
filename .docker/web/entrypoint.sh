@@ -9,7 +9,7 @@ mkdir -p files/data
 mkdir -p files/templates
 
 echo "Copying initial config files to /config volume"
-cp -R ../initial/config ./config
+cp -R ../initial/config ./
 
 echo "Generating parameters.yml and bundles.ini"
 php bin/configure # we run it again to generate parameters.yml inside the volume
