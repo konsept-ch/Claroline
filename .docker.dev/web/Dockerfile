@@ -54,8 +54,8 @@ RUN rm ./config/parameters.yml
 
 RUN npm install --legacy-peer-deps
 
-COPY ./node_modules /var/www/html/initial/node_modules
-COPY ./vendor /var/www/html/initial/vendor
+COPY /var/www/html/claroline/node_modules /var/www/html/initial/node_modules
+COPY /var/www/html/claroline/vendor /var/www/html/initial/vendor
 
 RUN wget https://cs.symfony.com/download/php-cs-fixer-v2.phar -O /php-cs-fixer
 RUN echo "diffs=\$(git diff --name-only) && php /php-cs-fixer fix --dry-run --diff --config=.php_cs \$diffs && /var/www/html/claroline/node_modules/.bin/eslint --ext js --ext jsx \$diffs" > /usr/local/bin/check-code
