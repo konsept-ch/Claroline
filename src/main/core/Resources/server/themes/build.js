@@ -65,7 +65,7 @@ function buildTheme(theme, themeState) {
           // destination
           path.resolve(themeDir),
           // asset dir
-          assetDir))
+          assetDir)
       )
     }
 
