@@ -83,17 +83,6 @@ const UserMenu = props =>
         {props.unavailable &&
           <ContentHelp help={trans('only_admin_login_help', {}, 'administration')} />
         }
-
-        {!props.unavailable && props.registration &&
-          <Button
-            type={LINK_BUTTON}
-            className="btn btn-block"
-            label={trans('create-account', {}, 'actions')}
-            target="/registration"
-            onClick={props.closeMenu}
-            active={false}
-          />
-        }
       </div>
     }
 
