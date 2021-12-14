@@ -97,10 +97,12 @@ class UserValidator implements ValidatorInterface
         if (in_array(Options::VALIDATE_FACET, $options)) {
             $facets = $this->profileSerializer->serialize([Options::REGISTRATION]);
             $required = [];
+            $allFields = [];
 
             foreach ($facets as $facet) {
                 foreach ($facet['sections'] as $section) {
                     foreach ($section['fields'] as $field) {
+                        $allFields[] = $field;
                         if ($field['required']) {
                             $required[] = $field;
                         }
@@ -109,7 +111,7 @@ class UserValidator implements ValidatorInterface
             }
 
             foreach ($required as $field) {
-                if (!ArrayUtils::has($data, 'profile.'.$field['id'])) {
+                if ($this->isFieldDisplayed($field, $allFields, $data) && !ArrayUtils::has($data, 'profile.'.$field['id'])) {
                     $errors[] = [
                         'path' => 'profile/'.$field['id'],
                         'message' => 'The field '.$field['label'].' is required',
@@ -158,5 +160,45 @@ class UserValidator implements ValidatorInterface
             'username' => 'username',
             'email' => 'email',
         ];
+    }
+
+    public function isFieldDisplayed($fieldDef, $allFields, $data)
+    {
+        if (!empty($fieldDef['display']['condition'])) {
+            $parentField = null;
+
+            foreach ($allFields as $currentField) {
+                if ($currentField['id'] === $fieldDef['display']['condition']['field']) {
+                    $parentField = $currentField;
+                }
+            }
+
+            if ($parentField) {
+                $parentValue = ArrayUtils::get($data, 'profile.'.$parentField['id']);
+
+                $displayed = false;
+
+                switch ($fieldDef['display']['condition']['comparator']) {
+                    case 'equal':
+                        $displayed = $parentValue === $fieldDef['display']['condition']['value'];
+                        break;
+                    case 'different':
+                        $displayed = $parentValue !== $fieldDef['display']['condition']['value'];
+                        break;
+                    case 'empty':
+                        $displayed = empty($parentValue);
+                        break;
+                    case 'not_empty':
+                        $displayed = !empty($parentValue);
+                        break;
+                }
+
+                return $displayed;
+            } else {
+                return true;
+            }
+        } else {
+            return true;
+        }
     }
 }
