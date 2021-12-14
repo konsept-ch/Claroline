@@ -21,7 +21,7 @@ const OrganizationButton = props =>
     label={trans('add_organization')}
     disabled={props.disabled}
     modal={[MODAL_ORGANIZATIONS, {
-      url: ['apiv2_organization_list'],
+      url: [props.url],
       title: props.title,
       selectAction: (selected) => ({
         type: CALLBACK_BUTTON,
@@ -35,7 +35,12 @@ OrganizationButton.propTypes = {
   title: T.string,
   onChange: T.func.isRequired,
   size: T.string,
-  disabled: T.bool
+  disabled: T.bool,
+  url: T.string
+}
+
+OrganizationButton.defaultProps = {
+  url: 'apiv2_organization_list'
 }
 
 const OrganizationInput = props => {
@@ -46,6 +51,8 @@ const OrganizationInput = props => {
       />
     )
   }
+
+  const url = props.mode === 'recursive' ? 'apiv2_user_list_flat' : 'apiv2_organization_list'
 
   if (props.value) {
     return (
@@ -71,6 +78,7 @@ const OrganizationInput = props => {
           disabled={props.disabled}
           size={props.size}
           onChange={props.onChange}
+          url={url}
         />
       </Fragment>
     )
@@ -87,6 +95,7 @@ const OrganizationInput = props => {
         disabled={props.disabled}
         size={props.size}
         onChange={props.onChange}
+        url={url}
       />
     </ContentPlaceholder>
   )
@@ -97,7 +106,7 @@ implementPropTypes(OrganizationInput, DataInputTypes, {
   picker: T.shape({
     title: T.string
   }),
-  mode: T.oneOf(['picker', 'choice'])
+  mode: T.oneOf(['picker', 'choice', 'recursive'])
 }, {
   value: null,
   mode: 'picker'

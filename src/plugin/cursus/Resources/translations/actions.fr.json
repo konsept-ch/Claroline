@@ -7,6 +7,9 @@
   "validate_registration": "Valider l'inscription",
   "send_invitation": "Envoyer une invitation",
   "open-training": "Ouvrir la formation",
+  "nothing": "Ne fait rien",
   "move-pending": "Déplacer en liste d'attente",
+  "export_with_filter": "Exporter avec filtre",
+  "export_all": "Exporter tout",
   "cancel": "Annuler"
 }

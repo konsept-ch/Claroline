@@ -33,5 +33,11 @@
     "session_name_desc": "Le nom de la session de formation",
     "session_start_desc": "La date de début de la session de formation",
     "session_trainers_desc": "La liste des formateurs de la session de formation",
-    "registration_confirmation_url": "Le lien de confirmation de l'inscription"
+    "registration_confirmation_url": "Le lien de confirmation de l'inscription",
+
+    "training_quota_status_changed": "Changement de status d'inscription",
+    "training_quota_status_validated": "Validation de votre inscription",
+    "training_quota_status_managed": "Validation de votre inscription",
+    "training_quota_status_refused": "Refus de votre inscription",
+    "training_quota_status_cancelled": "Annulation de votre inscription"
 }
