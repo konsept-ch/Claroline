@@ -4,34 +4,10 @@ services:
         autoconfigure: false
         public: true
 
-    Claroline\CoreBundle\Library\Configuration\PlatformDefaults:
-        tags: ['claroline.configuration']
-
     Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler:
         arguments:
             - '%claroline.param.platform_options%'
             - '@request_stack'
-
-    Claroline\CoreBundle\Library\Configuration\LegacyParametersMapping:
-        tags: ['claroline.configuration.mapping.legacy']
-
-    Claroline\CoreBundle\Library\Installation\Refresher:
-        arguments:
-            - '@service_container'
-
-    Claroline\CoreBundle\Library\Installation\OperationExecutor:
-        arguments:
-            - '@kernel'
-            - '@claroline.installation.manager'
-            - '@Claroline\CoreBundle\Library\Installation\Plugin\Installer'
-            - '@Claroline\AppBundle\Persistence\ObjectManager'
-            - '@Claroline\CoreBundle\Manager\VersionManager'
-        calls:
-            - setLogger: ['@logger']
-
-    Claroline\CoreBundle\Library\Installation\Plugin\RoutingChecker:
-        arguments:
-            - '@claroline.symfony_yaml'
 
     Claroline\CoreBundle\Library\Installation\Plugin\Recorder:
         arguments:
@@ -44,10 +20,9 @@ services:
         arguments:
             - '@claroline.plugin.validator'
             - '@Claroline\CoreBundle\Library\Installation\Plugin\Recorder'
-            - '@claroline.installation.manager'
+            - '@Claroline\InstallationBundle\Manager\InstallationManager'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\CoreBundle\Manager\PluginManager'
-            - '@translator'
             - '@Claroline\CoreBundle\Manager\VersionManager'
         calls:
             - setLogger: [ '@logger' ]
@@ -57,10 +32,9 @@ services:
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\CoreBundle\Manager\Resource\MaskManager'
             - '@filesystem'
-            - '@kernel'
             - '@Claroline\CoreBundle\Manager\Tool\ToolManager'
             - '@Claroline\CoreBundle\Manager\Tool\ToolMaskDecoderManager'
-            - '@claroline.manager.icon_set_manager'
+            - '@Claroline\ThemeBundle\Manager\IconSetManager'
         calls:
             - setLogger: [ '@logger' ]
 
@@ -71,11 +45,11 @@ services:
 
     Claroline\CoreBundle\Library\Installation\PlatformInstaller:
         arguments:
-            - '@Claroline\CoreBundle\Library\Installation\OperationExecutor'
-            - '@claroline.installation.manager'
-            - '@Claroline\CoreBundle\Library\Installation\Plugin\Installer'
-            - '@Claroline\CoreBundle\Library\Installation\Refresher'
             - '@kernel'
+            - '@Claroline\CoreBundle\Manager\PluginManager'
+            - '@Claroline\CoreBundle\Library\Installation\Plugin\Installer'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\InstallationBundle\Manager\InstallationManager'
             - '@service_container'
         calls:
             - setLogger: [ '@logger' ]
@@ -115,6 +89,11 @@ services:
     Claroline\CoreBundle\Library\RoutingHelper:
         arguments:
             - '@router'
+
+    Claroline\CoreBundle\Library\ICS\ICSGenerator:
+        arguments:
+            - '%claroline.param.files_directory%'
+            - '@filesystem'
 
     # GeoIp
     Claroline\CoreBundle\Library\GeoIp\Database\MaxMindGeoIpDatabaseDownloader:

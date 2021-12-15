@@ -7,7 +7,6 @@ use Claroline\AppBundle\API\Serializer\SerializerTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\Entity\Location\Location;
 use Claroline\CoreBundle\Entity\Organization\Organization;
-use Claroline\CoreBundle\Entity\User;
 
 class OrganizationSerializer
 {
@@ -16,17 +15,29 @@ class OrganizationSerializer
     /** @var ObjectManager */
     private $om;
 
-    /**
-     * OrganizationSerializer constructor.
-     */
     public function __construct(ObjectManager $om)
     {
         $this->om = $om;
     }
 
-    public function getName()
+    public function getName(): string
     {
         return 'organization';
+    }
+
+    public function getClass(): string
+    {
+        return Organization::class;
+    }
+
+    public function getSchema(): string
+    {
+        return '#/main/core/organization.json';
+    }
+
+    public function getSamples(): string
+    {
+        return '#/main/core/organization';
     }
 
     /**
@@ -36,91 +47,73 @@ class OrganizationSerializer
      *
      * @return array - the serialized representation of the workspace
      */
-    public function serialize(Organization $organization, array $options = [])
+    public function serialize(Organization $organization, array $options = []): array
     {
-        $data = [
+        $serialized = [
             'id' => $organization->getUuid(),
             'name' => $organization->getName(),
             'code' => $organization->getCode(),
             'email' => $organization->getEmail(),
             'type' => $organization->getType(),
-            'parent' => !empty($organization->getParent()) ? [
-                'id' => $organization->getParent()->getUuid(),
-                'name' => $organization->getParent()->getName(),
-                'code' => $organization->getParent()->getCode(),
-                'meta' => [
-                    'default' => $organization->getParent()->getDefault(),
-                ],
-            ] : null,
             'meta' => [
                 'default' => $organization->getDefault(),
                 'position' => $organization->getPosition(),
             ],
-            'limit' => [
+            'restrictions' => [
+                'public' => $organization->isPublic(),
                 'users' => $organization->getMaxUsers(),
             ],
-            'managers' => array_map(function (User $administrator) {
-                return [
-                    'id' => $administrator->getId(),
-                    'username' => $administrator->getUsername(),
-                ];
-            }, $organization->getAdministrators()->toArray()),
-            'locations' => array_map(function (Location $location) {
-                return [
-                    'id' => $location->getId(),
-                    'name' => $location->getName(),
-                ];
-            }, $organization->getLocations()->toArray()),
         ];
 
+        if (!in_array(Options::SERIALIZE_MINIMAL, $options)) {
+            $serialized = array_merge($serialized, [
+                'parent' => !empty($organization->getParent()) ? [
+                    'id' => $organization->getParent()->getUuid(),
+                    'name' => $organization->getParent()->getName(),
+                    'code' => $organization->getParent()->getCode(),
+                    'meta' => [
+                        'default' => $organization->getParent()->getDefault(),
+                    ],
+                ] : null,
+                'locations' => array_map(function (Location $location) {
+                    return [
+                        'id' => $location->getId(),
+                        'name' => $location->getName(),
+                    ];
+                }, $organization->getLocations()->toArray()),
+            ]);
+        }
+
         if (in_array(Options::IS_RECURSIVE, $options)) {
-            $data['children'] = array_map(function (Organization $child) use ($options) {
+            $serialized['children'] = array_map(function (Organization $child) use ($options) {
                 return $this->serialize($child, $options);
             }, $organization->getChildren()->toArray());
         }
 
-        return $data;
+        return $serialized;
     }
 
-    public function deserialize($data, Organization $organization = null, array $options = [])
+    public function deserialize($data, Organization $organization = null, array $options = []): Organization
     {
         $this->sipe('name', 'setName', $data, $organization);
         $this->sipe('code', 'setCode', $data, $organization);
         $this->sipe('email', 'setEmail', $data, $organization);
         $this->sipe('type', 'setType', $data, $organization);
         $this->sipe('vat', 'setVat', $data, $organization);
-        $this->sipe('limit.users', 'setMaxUsers', $data, $organization);
+        $this->sipe('restrictions.users', 'setMaxUsers', $data, $organization);
+        $this->sipe('restrictions.public', 'setPublic', $data, $organization);
 
         if (isset($data['parent'])) {
             if (empty($data['parent'])) {
                 $organization->setParent(null);
             } else {
-                $parent = $this->om->getRepository($this->getClass())->findOneBy([
+                $parent = $this->om->getRepository(Organization::class)->findOneBy([
                     'uuid' => $data['parent']['id'],
                 ]);
                 $organization->setParent($parent);
             }
         }
-    }
 
-    public function getClass()
-    {
-        return Organization::class;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSchema()
-    {
-        return '#/main/core/organization.json';
-    }
-
-    /**
-     * @return string
-     */
-    public function getSamples()
-    {
-        return '#/main/core/organization';
+        return $organization;
     }
 }

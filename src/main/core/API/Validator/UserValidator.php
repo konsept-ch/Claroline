@@ -10,8 +10,7 @@ use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\API\Serializer\User\ProfileSerializer;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler;
-use Claroline\CoreBundle\Repository\User\UserRepository;
-use Doctrine\ORM\QueryBuilder;
+use Claroline\CoreBundle\Manager\UserManager;
 
 class UserValidator implements ValidatorInterface
 {
@@ -19,19 +18,20 @@ class UserValidator implements ValidatorInterface
     private $om;
     /** @var PlatformConfigurationHandler */
     private $config;
+    /** @var UserManager */
+    private $manager;
     /** @var ProfileSerializer */
     private $profileSerializer;
-    /** @var UserRepository */
-    private $repo;
 
     public function __construct(
         ObjectManager $om,
         PlatformConfigurationHandler $config,
+        UserManager $manager,
         ProfileSerializer $profileSerializer
     ) {
         $this->om = $om;
         $this->config = $config;
-        $this->repo = $this->om->getRepository(User::class);
+        $this->manager = $manager;
         $this->profileSerializer = $profileSerializer;
     }
 
@@ -42,6 +42,20 @@ class UserValidator implements ValidatorInterface
         // implements something cleaner later
         if (ValidatorProvider::UPDATE === $mode && !isset($data['id'])) {
             return $errors;
+        }
+
+        if (ValidatorProvider::CREATE === $mode) {
+            // check the platform user limit
+            $restrictions = $this->config->getParameter('restrictions') ?? [];
+            if (isset($restrictions['users']) && isset($restrictions['max_users']) && $restrictions['users'] && $restrictions['max_users']) {
+                $usersCount = $this->manager->countEnabledUsers();
+                if ($usersCount >= $restrictions['max_users']) {
+                    $errors[] = [
+                        'path' => '',
+                        'message' => 'The user limit of the platform has been reached.',
+                    ];
+                }
+            }
         }
 
         // validate username format
@@ -69,21 +83,11 @@ class UserValidator implements ValidatorInterface
             ];
         }
 
-        // check public url is not already used
-        if (isset($data['meta']) && isset($data['meta']['publicUrl'])) {
-            if ($this->exists('publicUrl', $data['meta']['publicUrl'], isset($data['id']) ? $data['id'] : null)) {
-                $errors[] = [
-                  'path' => 'meta/publicUrl',
-                  'message' => 'The public url '.$data['meta']['publicUrl'].' already exists.',
-              ];
-            }
-        }
-
         // check if the administrative code is unique if the platform is configured to
         if (isset($data['administrativeCode']) && $this->config->getParameter('is_user_admin_code_unique')) {
-            if ($this->exists('publicUrl', $data['administrativeCode'], isset($data['id']) ? $data['id'] : null)) {
+            if ($this->exists('administrativeCode', $data['administrativeCode'], isset($data['id']) ? $data['id'] : null)) {
                 $errors[] = [
-                    'path' => 'meta/publicUrl',
+                    'path' => '/administrativeCode',
                     'message' => 'The administrative code '.$data['administrativeCode'].' already exists.',
                 ];
             }
@@ -128,7 +132,6 @@ class UserValidator implements ValidatorInterface
      */
     private function exists($propName, $propValue, $userId = null)
     {
-        /** @var QueryBuilder $qb */
         $qb = $this->om->createQueryBuilder();
         $qb
             ->select('COUNT(DISTINCT user)')

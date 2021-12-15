@@ -12,7 +12,6 @@
 namespace Claroline\CoreBundle\Manager;
 
 use Claroline\AppBundle\API\Crud;
-use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\Event\StrictDispatcher;
 use Claroline\AppBundle\Log\LoggableTrait;
 use Claroline\AppBundle\Manager\File\TempFileManager;
@@ -26,10 +25,7 @@ use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\CoreBundle\Event\CatalogEvents\ResourceEvents;
 use Claroline\CoreBundle\Event\Resource\DownloadResourceEvent;
 use Claroline\CoreBundle\Event\Resource\LoadResourceEvent;
-use Claroline\CoreBundle\Exception\ExportResourceException;
-use Claroline\CoreBundle\Exception\ResourceMoveException;
 use Claroline\CoreBundle\Exception\ResourceNotFoundException;
-use Claroline\CoreBundle\Exception\ResourceTypeNotFoundException;
 use Claroline\CoreBundle\Library\Utilities\ClaroUtilities;
 use Claroline\CoreBundle\Manager\Resource\RightsManager;
 use Claroline\CoreBundle\Repository\Resource\ResourceNodeRepository;
@@ -92,11 +88,6 @@ class ResourceManager implements LoggerAwareInterface
         $this->resourceTypeRepo = $om->getRepository(ResourceType::class);
         $this->resourceNodeRepo = $om->getRepository(ResourceNode::class);
         $this->roleRepo = $om->getRepository(Role::class);
-    }
-
-    public function getLogger()
-    {
-        return $this->logger;
     }
 
     /**
@@ -192,23 +183,16 @@ class ResourceManager implements LoggerAwareInterface
         }
     }
 
-    /**
-     * Moves a resource.
-     *
-     * @throws ResourceMoveException
-     *
-     * @return ResourceNode
-     */
-    public function move(ResourceNode $child, ResourceNode $parent)
+    public function move(ResourceNode $child, ResourceNode $parent): ResourceNode
     {
         if ($parent === $child) {
-            throw new ResourceMoveException('You cannot move a directory into itself');
+            throw new \RuntimeException('You cannot move a directory into itself');
         }
 
         $descendants = $this->resourceNodeRepo->findDescendants($child);
         foreach ($descendants as $descendant) {
             if ($parent === $descendant) {
-                throw new ResourceMoveException('You cannot move a directory into its descendants');
+                throw new \RuntimeException('You cannot move a directory into its descendants');
             }
         }
 
@@ -228,75 +212,16 @@ class ResourceManager implements LoggerAwareInterface
     }
 
     /**
-     * Copies a resource in a directory.
-     *
-     * @deprecated use crud instead
-     *
-     * @return ResourceNode
-     */
-    public function copy(ResourceNode $node, ResourceNode $parent, User $user)
-    {
-        $this->log("Copying {$node->getName()} from type {$node->getResourceType()->getName()}");
-
-        /** @var ResourceNode $newNode */
-        $newNode = $this->crud->copy($node, [Options::NO_RIGHTS, Crud::NO_PERMISSIONS], ['user' => $user, 'parent' => $parent]);
-
-        $this->om->persist($newNode);
-        $this->om->flush();
-
-        return $newNode;
-    }
-
-    /**
-     * Sets the publication flag of a collection of nodes.
-     *
-     * @param ResourceNode[] $nodes
-     * @param bool           $arePublished
-     * @param bool           $isRecursive
-     *
-     * @return ResourceNode[]
-     */
-    public function setPublishedStatus(array $nodes, $arePublished, $isRecursive = false)
-    {
-        foreach ($nodes as $node) {
-            $this->crud->update(ResourceNode::class, [
-                'id' => $node->getUuid(),
-                'meta' => ['published' => $arePublished],
-            ]);
-
-            // do it on every children too
-            if ($isRecursive) {
-                $descendants = $this->resourceNodeRepo->findDescendants($node);
-                $this->setPublishedStatus($descendants, $arePublished, false);
-            }
-        }
-
-        return $nodes;
-    }
-
-    /**
-     * Removes a resource.
-     */
-    public function delete(ResourceNode $node, bool $softDelete = false)
-    {
-        $this->crud->delete($node, $softDelete ? [Options::SOFT_DELETE] : []);
-    }
-
-    /**
      * Returns an archive with the required content.
      *
      * @param ResourceNode[] $elements - the nodes being exported
-     *
-     * @throws ExportResourceException
-     *
-     * @return array
      */
-    public function download(array $elements, $forceArchive = false)
+    public function download(array $elements, ?bool $forceArchive = false): array
     {
         $data = [];
 
         if (0 === count($elements)) {
-            throw new ExportResourceException('No resources were selected.');
+            throw new \RuntimeException('No resources were selected.');
         }
 
         $pathArch = $this->tempManager->generate();
@@ -446,29 +371,6 @@ class ResourceManager implements LoggerAwareInterface
         }
 
         return null;
-    }
-
-    /**
-     * Check if a ResourceNode can be added in a Workspace (resource amount limit).
-     *
-     * @return bool
-     */
-    public function checkResourceLimitExceeded(Workspace $workspace)
-    {
-        return $workspace->getMaxUploadResources() < $this->countActiveResources($workspace);
-    }
-
-    /**
-     * Count the number of resources in a workspace.
-     *
-     * @return int
-     */
-    public function countActiveResources(Workspace $workspace = null)
-    {
-        return $this->resourceNodeRepo->count([
-            'workspace' => $workspace,
-            'active' => true,
-        ]);
     }
 
     public function getLastIndex(ResourceNode $parent)
@@ -663,8 +565,6 @@ class ResourceManager implements LoggerAwareInterface
      * Expects an array of types array(array('name' => 'type'),...).
      *
      * @return array
-     *
-     * @throws ResourceTypeNotFoundException
      */
     private function checkResourceTypes(array $resourceTypes)
     {
@@ -684,7 +584,7 @@ class ResourceManager implements LoggerAwareInterface
                 return true;
             });
 
-            throw new ResourceTypeNotFoundException(sprintf('The resource type(s) %s were not found.', implode(', ', $unknownTypes)));
+            throw new \RuntimeException(sprintf('The resource type(s) %s were not found.', implode(', ', $unknownTypes)));
         }
 
         return $validTypes;

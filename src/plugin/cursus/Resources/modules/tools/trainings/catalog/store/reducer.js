@@ -20,8 +20,10 @@ const reducer = combineReducers({
   course: makeReducer(null, {
     [LOAD_COURSE]: (state, action) => action.course
   }),
+  courseDefaultSession: makeReducer(null, {
+    [LOAD_COURSE]: (state, action) => action.defaultSession || null
+  }),
   courseActiveSession: makeReducer(null, {
-    [LOAD_COURSE]: (state, action) => action.defaultSession || null,
     [LOAD_COURSE_SESSION]: (state, action) => action.session
   }),
   courseAvailableSessions: makeReducer([], {
@@ -45,31 +47,37 @@ const reducer = combineReducers({
     })
   }),
 
+  coursePending: makeListReducer(selectors.STORE_NAME+'.coursePending', {}, {
+    invalidated: makeReducer(false, {
+      [LOAD_COURSE]: () => true
+    })
+  }),
+
   // current user registrations to course sessions
   courseRegistrations: makeReducer({users: [], groups: []}, {
     [LOAD_COURSE]: (state, action) => action.registrations
   }),
 
-  // participants
-  courseTutors: makeListReducer(selectors.STORE_NAME+'.courseTutors', {}, {
+  // active session participants
+  sessionTutors: makeListReducer(selectors.STORE_NAME+'.sessionTutors', {}, {
     invalidated: makeReducer(false, {
       [LOAD_COURSE]: () => true,
       [LOAD_COURSE_SESSION]: () => true
     })
   }),
-  courseUsers: makeListReducer(selectors.STORE_NAME+'.courseUsers', {}, {
+  sessionUsers: makeListReducer(selectors.STORE_NAME+'.sessionUsers', {}, {
     invalidated: makeReducer(false, {
       [LOAD_COURSE]: () => true,
       [LOAD_COURSE_SESSION]: () => true
     })
   }),
-  courseGroups: makeListReducer(selectors.STORE_NAME+'.courseGroups', {}, {
+  sessionGroups: makeListReducer(selectors.STORE_NAME+'.sessionGroups', {}, {
     invalidated: makeReducer(false, {
       [LOAD_COURSE]: () => true,
       [LOAD_COURSE_SESSION]: () => true
     })
   }),
-  coursePending: makeListReducer(selectors.STORE_NAME+'.coursePending', {}, {
+  sessionPending: makeListReducer(selectors.STORE_NAME+'.sessionPending', {}, {
     invalidated: makeReducer(false, {
       [LOAD_COURSE]: () => true,
       [LOAD_COURSE_SESSION]: () => true

@@ -104,9 +104,11 @@ class SessionSerializer
                 'open' => $this->authorization->isGranted('OPEN', $session),
                 'edit' => $this->authorization->isGranted('EDIT', $session),
                 'delete' => $this->authorization->isGranted('DELETE', $session),
+                'register' => $this->authorization->isGranted('REGISTER', $session),
             ],
             'course' => $this->courseSerializer->serialize($session->getCourse(), [Options::SERIALIZE_MINIMAL]),
             'restrictions' => [
+                'hidden' => $session->isHidden(),
                 'users' => $session->getMaxUsers(),
                 'dates' => DateRangeNormalizer::normalize($session->getStartDate(), $session->getEndDate()),
             ],
@@ -136,7 +138,6 @@ class SessionSerializer
                     'days' => $session->getCourse() ? $session->getCourse()->getDefaultSessionDays() : null,
                     'hours' => $session->getCourse() ? $session->getCourse()->getDefaultSessionHours() : null,
                     'default' => $session->isDefaultSession(),
-                    'order' => $session->getOrder(),
                     'learnerRole' => $session->getLearnerRole() ?
                         $this->roleSerializer->serialize($session->getLearnerRole(), [Options::SERIALIZE_MINIMAL]) :
                         null,
@@ -144,12 +145,17 @@ class SessionSerializer
                         $this->roleSerializer->serialize($session->getTutorRole(), [Options::SERIALIZE_MINIMAL]) :
                         null,
                 ],
+                'display' => [
+                    'order' => $session->getOrder(),
+                ],
                 'registration' => [
                     'selfRegistration' => $session->getPublicRegistration(),
+                    'autoRegistration' => $session->getAutoRegistration(),
                     'selfUnregistration' => $session->getPublicUnregistration(),
                     'validation' => $session->getRegistrationValidation(),
                     'userValidation' => $session->getUserValidation(),
                     'mail' => $session->getRegistrationMail(),
+                    'pendingRegistrations' => $session->getPendingRegistrations(),
                     'eventRegistrationType' => $session->getEventRegistrationType(),
                 ],
                 'pricing' => [
@@ -177,22 +183,23 @@ class SessionSerializer
         $this->sipe('description', 'setDescription', $data, $session);
         $this->sipe('plainDescription', 'setPlainDescription', $data, $session);
 
-        $this->sipe('meta.default', 'setDefaultSession', $data, $session);
-        $this->sipe('meta.order', 'setOrder', $data, $session);
-
-        $this->sipe('restrictions.users', 'setMaxUsers', $data, $session);
+        $this->sipe('display.order', 'setOrder', $data, $session);
 
         $this->sipe('registration.selfRegistration', 'setPublicRegistration', $data, $session);
+        $this->sipe('registration.autoRegistration', 'setAutoRegistration', $data, $session);
         $this->sipe('registration.selfUnregistration', 'setPublicUnregistration', $data, $session);
         $this->sipe('registration.validation', 'setRegistrationValidation', $data, $session);
         $this->sipe('registration.userValidation', 'setUserValidation', $data, $session);
         $this->sipe('registration.mail', 'setRegistrationMail', $data, $session);
+        $this->sipe('registration.pendingRegistrations', 'setPendingRegistrations', $data, $session);
         $this->sipe('registration.eventRegistrationType', 'setEventRegistrationType', $data, $session);
 
         $this->sipe('pricing.price', 'setPrice', $data, $session);
         $this->sipe('pricing.description', 'setPriceDescription', $data, $session);
 
         if (isset($data['meta'])) {
+            $this->sipe('meta.default', 'setDefaultSession', $data, $session);
+
             if (isset($data['meta']['created'])) {
                 $session->setCreatedAt(DateNormalizer::denormalize($data['meta']['created']));
             }
@@ -208,11 +215,16 @@ class SessionSerializer
             }
         }
 
-        if (isset($data['restrictions']['dates'])) {
-            $dates = DateRangeNormalizer::denormalize($data['restrictions']['dates']);
+        if (isset($data['restrictions'])) {
+            $this->sipe('restrictions.users', 'setMaxUsers', $data, $session);
+            $this->sipe('restrictions.hidden', 'setHidden', $data, $session);
 
-            $session->setStartDate($dates[0]);
-            $session->setEndDate($dates[1]);
+            if (isset($data['restrictions']['dates'])) {
+                $dates = DateRangeNormalizer::denormalize($data['restrictions']['dates']);
+
+                $session->setStartDate($dates[0]);
+                $session->setEndDate($dates[1]);
+            }
         }
 
         if (isset($data['poster'])) {

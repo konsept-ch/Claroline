@@ -17,14 +17,11 @@ use Claroline\AppBundle\Entity\Identifier\Uuid;
 use Claroline\AppBundle\Entity\Meta\Description;
 use Claroline\AppBundle\Entity\Meta\Poster;
 use Claroline\AppBundle\Entity\Meta\Thumbnail;
-use Claroline\CoreBundle\Entity\Facet\FieldFacetValue;
 use Claroline\CoreBundle\Entity\Model\GroupsTrait;
 use Claroline\CoreBundle\Entity\Model\OrganizationsTrait;
 use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CoreBundle\Entity\Organization\UserOrganizationReference;
 use Claroline\CoreBundle\Entity\Task\ScheduledTask;
-use Claroline\CoreBundle\Entity\Workspace\WorkspaceRegistrationQueue;
-use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
@@ -42,7 +39,6 @@ use Symfony\Component\Validator\Constraints as Assert;
  *         @ORM\Index(name="enabled_idx", columns={"is_enabled"}),
  *         @ORM\Index(name="is_removed", columns={"is_removed"})
  * })
- * @ORM\EntityListeners({"Claroline\CoreBundle\Listener\Entity\UserListener"})
  * @DoctrineAssert\UniqueEntity("username")
  * @DoctrineAssert\UniqueEntity("email")
  */
@@ -162,7 +158,6 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
      *
      * @ORM\OneToOne(
      *     targetEntity="Claroline\CoreBundle\Entity\Workspace\Workspace",
-     *     inversedBy="personalUser",
      *     cascade={"persist", "remove"}
      * )
      * @ORM\JoinColumn(name="workspace_id", onDelete="SET NULL")
@@ -249,44 +244,11 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
     protected $isMailValidated = false;
 
     /**
-     * @var string
-     *
-     * @Assert\Regex("/^[^\/]+$/")
-     * @ORM\Column(name="public_url", type="string", nullable=true, unique=true)
-     */
-    protected $publicUrl;
-
-    /**
-     * @var bool
-     *
-     * @ORM\Column(name="has_tuned_public_url", type="boolean")
-     */
-    protected $hasTunedPublicUrl = false;
-
-    /**
      * @var \DateTime
      *
      * @ORM\Column(name="expiration_date", type="datetime", nullable=true)
      */
     protected $expirationDate;
-
-    /**
-     * @ORM\OneToMany(
-     *     targetEntity="Claroline\CoreBundle\Entity\Facet\FieldFacetValue",
-     *     mappedBy="user",
-     *     cascade={"persist"}
-     * )
-     *
-     * @todo relation should not be declared here (only use Unidirectional)
-     */
-    protected $fieldsFacetValue;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(nullable=true)
-     */
-    protected $authentication;
 
     /**
      * @ORM\Column(name="email_validation_hash", nullable=true)
@@ -335,13 +297,6 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
     private $scheduledTasks;
 
     /**
-     * @ORM\OneToMany(targetEntity="Claroline\CoreBundle\Entity\Workspace\WorkspaceRegistrationQueue", mappedBy="user")
-     *
-     * @todo relation should not be declared here (only use Unidirectional)
-     */
-    protected $wkUserQueues;
-
-    /**
      * @var string
      *
      * @ORM\Column(nullable=true)
@@ -357,10 +312,8 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
 
         $this->roles = new ArrayCollection();
         $this->groups = new ArrayCollection();
-        $this->wkUserQueues = new ArrayCollection();
         $this->locations = new ArrayCollection();
         $this->salt = base_convert(sha1(uniqid(mt_rand(), true)), 16, 36);
-        $this->fieldsFacetValue = new ArrayCollection();
         $this->scheduledTasks = new ArrayCollection();
         $this->administratedOrganizations = new ArrayCollection();
         $this->userOrganizationReferences = new ArrayCollection();
@@ -514,9 +467,6 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
     public function setUsername($username)
     {
         $this->username = $username;
-        if (empty($this->publicUrl)) {
-            $this->publicUrl = $this->generatePublicUrl();
-        }
 
         return $this;
     }
@@ -871,53 +821,6 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
         return $this->isMailNotified;
     }
 
-    /**
-     * @param string $publicUrl
-     *
-     * @return User
-     */
-    public function setPublicUrl($publicUrl)
-    {
-        $this->publicUrl = $publicUrl;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getPublicUrl()
-    {
-        return $this->publicUrl;
-    }
-
-    private function generatePublicUrl()
-    {
-        return TextNormalizer::stripDiacritics(
-            strtolower(str_replace(' ', '-', $this->username))
-        );
-    }
-
-    /**
-     * @param mixed $hasTunedPublicUrl
-     *
-     * @return User
-     */
-    public function setHasTunedPublicUrl($hasTunedPublicUrl)
-    {
-        $this->hasTunedPublicUrl = $hasTunedPublicUrl;
-
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function hasTunedPublicUrl()
-    {
-        return $this->hasTunedPublicUrl;
-    }
-
     public function setExpirationDate($expirationDate)
     {
         $this->expirationDate = $expirationDate;
@@ -932,18 +835,6 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
             new \DateTime($defaultExpirationDate);
     }
 
-    public function getFieldsFacetValue()
-    {
-        return $this->fieldsFacetValue;
-    }
-
-    public function addFieldFacet(FieldFacetValue $fieldFacetValue)
-    {
-        $this->fieldsFacetValue->add($fieldFacetValue);
-
-        $fieldFacetValue->setUser($this);
-    }
-
     public function setInitDate($initDate)
     {
         $this->initDate = $initDate;
@@ -952,16 +843,6 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
     public function getInitDate()
     {
         return $this->initDate;
-    }
-
-    public function setAuthentication($authentication)
-    {
-        $this->authentication = $authentication;
-    }
-
-    public function getAuthentication()
-    {
-        return $this->authentication;
     }
 
     public function setIsMailValidated($isMailValidated)
@@ -1001,15 +882,15 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
             }
         }
 
-        $userOrgas = $this->userOrganizationReferences->toArray();
-        $userOrgas = array_map(function (UserOrganizationReference $ref) {
+        $userOrganizations = $this->userOrganizationReferences->toArray();
+        $userOrganizations = array_map(function (UserOrganizationReference $ref) {
             return $ref->getOrganization();
-        }, $userOrgas);
+        }, $userOrganizations);
 
-        return array_merge($organizations, $userOrgas);
+        return array_merge($organizations, $userOrganizations);
     }
 
-    public function addOrganization(Organization $organization, $main = false)
+    public function addOrganization(Organization $organization)
     {
         if ($organization->getMaxUsers() > -1) {
             $totalUsers = count($organization->getUserOrganizationReferecnes());
@@ -1019,10 +900,10 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
         }
 
         $found = false;
-
         foreach ($this->userOrganizationReferences as $userOrgaRef) {
             if ($userOrgaRef->getOrganization() === $organization && $userOrgaRef->getUser() === $this) {
                 $found = true;
+                break;
             }
         }
 
@@ -1030,7 +911,6 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
             $ref = new UserOrganizationReference();
             $ref->setOrganization($organization);
             $ref->setUser($this);
-            $ref->setIsMain($main);
 
             $this->userOrganizationReferences->add($ref);
         }
@@ -1090,6 +970,8 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
 
     public function setMainOrganization(Organization $organization)
     {
+        $this->addOrganization($organization);
+
         foreach ($this->userOrganizationReferences as $ref) {
             if ($ref->isMain()) {
                 $ref->setIsMain(false);
@@ -1159,11 +1041,6 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
     public function removeScheduledTask(ScheduledTask $task)
     {
         $this->scheduledTasks->removeElement($task);
-    }
-
-    public function addWorkspaceUserQueue(WorkspaceRegistrationQueue $wkUserQueue)
-    {
-        $this->wkUserQueues->add($wkUserQueue);
     }
 
     public function setCode($code)

@@ -89,7 +89,9 @@ services:
 
     Claroline\CoreBundle\API\Transfer\Action\User\Delete: ~
 
-    Claroline\CoreBundle\API\Transfer\Action\User\Update: ~
+    Claroline\CoreBundle\API\Transfer\Action\User\Update:
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
 
     Claroline\CoreBundle\API\Transfer\Action\User\Enable:
         arguments:
@@ -111,10 +113,18 @@ services:
         arguments:
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\AppBundle\API\Crud'
-            - '@claroline.manager.workspace_manager'
-            - '@Claroline\CoreBundle\API\Serializer\Workspace\WorkspaceSerializer'
 
     Claroline\CoreBundle\API\Transfer\Action\Workspace\Delete: ~
+
+    Claroline\CoreBundle\API\Transfer\Action\Workspace\Archive:
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceManager'
+
+    Claroline\CoreBundle\API\Transfer\Action\Workspace\Unarchive:
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceManager'
 
     Claroline\CoreBundle\API\Transfer\Action\Workspace\AddUser:
         arguments:

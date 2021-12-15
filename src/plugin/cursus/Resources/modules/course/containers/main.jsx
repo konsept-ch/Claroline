@@ -5,16 +5,18 @@ import {CourseMain as CourseMainComponent} from '#/plugin/cursus/course/componen
 
 const CourseMain = connect(
   (state) => ({
+    defaultSession: selectors.defaultSession(state),
     activeSession: selectors.activeSession(state),
     activeSessionRegistration: selectors.activeSessionRegistration(state),
+    courseRegistration: selectors.courseRegistration(state),
     availableSessions: selectors.availableSessions(state)
   }),
   (dispatch) => ({
     openSession(sessionId) {
       dispatch(actions.openSession(sessionId))
     },
-    register(course, sessionId) {
-      dispatch(actions.register(course, sessionId))
+    openForm(slug, defaultProps) {
+      dispatch(actions.openForm(slug, defaultProps))
     }
   })
 )(CourseMainComponent)

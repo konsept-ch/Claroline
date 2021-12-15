@@ -15,10 +15,22 @@ services:
         tags:
             - { name: kernel.event_listener, event: open_tool_desktop_trainings, method: onDisplayDesktop }
 
-    # Data sources
+    # Data source
+    Claroline\CursusBundle\Listener\DataSource\SessionSource:
+        arguments:
+            - '@security.authorization_checker'
+            - '@security.token_storage'
+            - '@Claroline\AppBundle\API\FinderProvider'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+        tags:
+            - { name: kernel.event_listener, event: data_source.course_sessions.load, method: getData }
+
     Claroline\CursusBundle\Listener\DataSource\PublicSessionSource:
         arguments:
+            - '@security.authorization_checker'
+            - '@security.token_storage'
             - '@Claroline\AppBundle\API\FinderProvider'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
         tags:
             - { name: kernel.event_listener, event: data_source.public_course_sessions.load, method: getData }
 
@@ -34,13 +46,22 @@ services:
             - '@Claroline\AppBundle\API\FinderProvider'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@security.token_storage'
-            - '@Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface'
+            - '@security.authorization_checker'
         tags:
             - { name: kernel.event_listener, event: data_source.all_courses.load, method: getData }
 
     Claroline\CursusBundle\Listener\DataSource\EventsSource:
         arguments:
+            - '@security.authorization_checker'
+            - '@security.token_storage'
             - '@Claroline\AppBundle\API\FinderProvider'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
         tags:
             - { name: kernel.event_listener, event: data_source.training_events.load, method: getData }
+
+    Claroline\CursusBundle\Listener\DataSource\MyEventsSource:
+        arguments:
+            - '@security.token_storage'
+            - '@Claroline\AppBundle\API\FinderProvider'
+        tags:
+            - { name: kernel.event_listener, event: data_source.my_training_events.load, method: getData }

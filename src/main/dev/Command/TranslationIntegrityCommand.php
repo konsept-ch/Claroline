@@ -22,7 +22,7 @@ class TranslationIntegrityCommand extends Command
     protected function configure()
     {
         $this->setName('claroline:debug:translations')
-            ->setDescription('Show translations integrity informations. This command ignore arrays');
+            ->setDescription('Show translations integrity information. This command ignore arrays');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -43,7 +43,7 @@ class TranslationIntegrityCommand extends Command
         $translationFiles = [];
 
         foreach ($bundles as $bundle) {
-            $parts = explode('\\', get_class($bundle['instance']));
+            $parts = explode('\\', get_class($bundle));
             $shortName = end($parts);
 
             if ($pluginManager->isLoaded($shortName)) {

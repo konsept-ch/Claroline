@@ -14,7 +14,7 @@ import {canViewEntryMetadata} from '#/plugin/claco-form/resources/claco-form/per
 function formatFieldValue(entry, field, value, clacoForm, currentUser) {
   let formattedValue = ''
 
-  if (field.isMetadata && !canViewEntryMetadata(entry, clacoForm, false, currentUser)) {
+  if (field.restrictions.metadata && !canViewEntryMetadata(entry, clacoForm, false, currentUser)) {
     formattedValue = '-'
   } else {
     formattedValue = value
@@ -161,14 +161,16 @@ export default (clacoForm, canViewMetadata = false, canEdit = false, canAdminist
           type: 'date',
           filterable: canViewMetadata,
           displayable: false,
-          sortable: false
+          sortable: false,
+          options: {time: true}
         }, {
           name: 'createdBefore',
           label: trans('created_before'),
           type: 'date',
           filterable: canViewMetadata,
           displayable: false,
-          sortable: false
+          sortable: false,
+          options: {time: true}
         }, {
           name: 'user',
           label: trans('user'),
@@ -216,7 +218,7 @@ export default (clacoForm, canViewMetadata = false, canEdit = false, canAdminist
       ].concat(
         // Fields defined in ClacoForm
         fields
-          .filter(f => !f.restrictions.hidden && (!f.isMetadata || canViewMetadata))
+          .filter(f => !f.restrictions.hidden && (!f.restrictions.metadata || canViewMetadata))
           .map(field => {
             const options = field.options ? Object.assign({}, field.options) : {}
 
@@ -230,7 +232,7 @@ export default (clacoForm, canViewMetadata = false, canEdit = false, canAdminist
 
             return {
               name: 'values.' + field.id,
-              label: field.name,
+              label: field.label,
               type: field.type,
               options: options
             }

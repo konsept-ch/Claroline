@@ -4,26 +4,30 @@ plugin:
           is_displayable_in_workspace: true
           is_displayable_in_desktop: false
           class: clock
+          tool_rights:
+              - name: register
 
         - name: trainings
           is_displayable_in_workspace: false
           is_displayable_in_desktop: true
           class: graduation-cap
+          tool_rights:
+              - name: register
 
     data_sources:
-        - name: public_course_sessions
+        - name: course_sessions
           type: list
           context: [workspace, desktop, home]
           tags: [community, event]
 
         - name: my_course_sessions
           type: list
-          context: [desktop]
+          context: [workspace, desktop]
           tags: [community, event]
 
         - name: all_courses
           type: list
-          context: [desktop, home]
+          context: [workspace, desktop, home]
           tags: [community, event]
 
         - name: training_events
@@ -31,8 +35,14 @@ plugin:
           context: [workspace, desktop]
           tags: [community, event]
 
+        - name: my_training_events
+          type: list
+          context: [workspace, desktop]
+          tags: [community, event]
+
     templates:
         - name: training_course
+          type: pdf
           placeholders:
               - course_name
               - course_code
@@ -43,6 +53,7 @@ plugin:
               - course_max_users
 
         - name: training_session
+          type: pdf
           placeholders:
               - course_name
               - course_code
@@ -58,6 +69,7 @@ plugin:
               - session_end
 
         - name: training_session_invitation
+          type: email
           placeholders:
               - course_name
               - course_code
@@ -71,6 +83,7 @@ plugin:
               - session_trainers
 
         - name: training_session_confirmation
+          type: email
           placeholders:
               - course_name
               - course_code
@@ -85,6 +98,7 @@ plugin:
               - registration_confirmation_url
 
         - name: training_event
+          type: pdf
           placeholders:
               - course_name
               - course_code
@@ -104,6 +118,7 @@ plugin:
               - event_trainers
 
         - name: training_event_invitation
+          type: email
           placeholders:
               - course_name
               - course_code
@@ -123,6 +138,7 @@ plugin:
               - event_trainers
 
         - name: training_event_presences
+          type: pdf
           placeholders:
               - event_name
               - event_code
@@ -132,6 +148,7 @@ plugin:
               - event_presences_table
 
         - name: training_event_presence
+          type: pdf
           placeholders:
               - event_name
               - event_code
@@ -142,4 +159,3 @@ plugin:
               - user_username
               - user_first_name
               - user_last_name
-

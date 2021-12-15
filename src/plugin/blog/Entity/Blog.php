@@ -2,30 +2,18 @@
 
 namespace Icap\BlogBundle\Entity;
 
-use Claroline\AppBundle\Entity\Identifier\Uuid;
 use Claroline\CoreBundle\Entity\Resource\AbstractResource;
-use Claroline\CoreBundle\Entity\User;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Table(name="icap__blog")
- * @ORM\Entity(repositoryClass="Icap\BlogBundle\Repository\BlogRepository")
+ * @ORM\Entity()
  * @ORM\HasLifecycleCallbacks
  */
 class Blog extends AbstractResource
 {
-    use Uuid;
-
-    /**
-     * Blog constructor.
-     */
-    public function __construct()
-    {
-        $this->refreshUuid();
-    }
-
     /**
      * @var Post[]
      *
@@ -54,6 +42,14 @@ class Blog extends AbstractResource
      * @ORM\Column(type="text", nullable=true)
      */
     protected $infos;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->posts = new ArrayCollection();
+        $this->members = new ArrayCollection();
+    }
 
     /**
      * @return Blog
@@ -152,21 +148,6 @@ class Blog extends AbstractResource
     public function displayPostViewCounter()
     {
         return $this->getOptions()->getDisplayPostViewCounter();
-    }
-
-    /**
-     * @return User[]
-     */
-    public function getAuthors()
-    {
-        $authors = [];
-
-        foreach ($this->getPosts() as $post) {
-            $postAuthor = $post->getAuthor();
-            $authors[$postAuthor->getUsername()] = $postAuthor;
-        }
-
-        return $authors;
     }
 
     /**

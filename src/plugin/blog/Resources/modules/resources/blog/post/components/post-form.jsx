@@ -28,8 +28,7 @@ const PostFormComponent = props =>
         name={selectors.STORE_NAME + '.post_edit'}
         sections={[
           {
-            id: 'Post',
-            title: 'Post form',
+            title: trans('information'),
             primary: true,
             fields: [
               {
@@ -37,7 +36,7 @@ const PostFormComponent = props =>
                 type: 'string',
                 label: trans('icap_blog_post_form_title', {}, 'icap_blog'),
                 required: true
-              },{
+              }, {
                 name: 'publicationDate',
                 type: 'date',
                 help: trans('icap_blog_post_form_publicationDate_help', {}, 'icap_blog'),
@@ -46,7 +45,7 @@ const PostFormComponent = props =>
                 options: {
                   time: false
                 }
-              },{
+              }, {
                 name: 'content',
                 type: 'html',
                 label: trans('icap_blog_post_form_content', {}, 'icap_blog'),
@@ -55,14 +54,28 @@ const PostFormComponent = props =>
                   minRows: 6,
                   workspace: props.workspace
                 }
-              },{
-                name: 'tags',
+              }, {
+                name: 'meta.author',
                 type: 'string',
-                help: trans('icap_blog_post_form_tags_help', {}, 'icap_blog'),
-                label: trans('icap_blog_post_form_tags', {}, 'icap_blog'),
-                options: {
-                  minRows: 6
-                }
+                label: trans('author')
+              }, {
+                name: 'tags',
+                label: trans('tags'),
+                type: 'tag'
+              }
+            ]
+          }, {
+            icon: 'fa fa-fw fa-desktop',
+            title: trans('display_parameters'),
+            fields: [
+              {
+                name: 'poster',
+                type: 'image',
+                label: trans('poster')
+              }, {
+                name: 'thumbnail',
+                type: 'image',
+                label: trans('thumbnail')
               }
             ]
           }
@@ -80,7 +93,7 @@ const PostFormComponent = props =>
             }}
           />
           <Button
-            label={trans('cancel')}
+            label={trans('cancel', {}, 'actions')}
             type={CALLBACK_BUTTON}
             className="btn"
             callback={() => {
@@ -101,7 +114,6 @@ PostFormComponent.propTypes = {
   postId: T.string,
   history: T.shape({}),
   originalTags: T.string,
-  goHome: T.bool,
   saveEnabled: T.bool,
   post: T.shape(PostType.propTypes).isRequired,
   save: T.func.isRequired,
@@ -118,7 +130,6 @@ const PostForm = withRouter(connect(
     originalTags: formSelect.originalData(formSelect.form(state, selectors.STORE_NAME + '.post_edit')).tags,
     postId: !isEmpty(selectors.postEdit(state)) ? selectors.postEdit(state).data.id : null,
     post: selectors.postEdit(state),
-    goHome: selectors.goHome(state),
     saveEnabled: formSelect.saveEnabled(formSelect.form(state, selectors.STORE_NAME + '.post_edit'))
   }), dispatch => ({
     save: (blogId, mode, postId, history, originalTags, path, currentUser) => {
@@ -130,7 +141,7 @@ const PostForm = withRouter(connect(
             //update tag list
             dispatch(toolbarActions.addTags('', response.tags))
           }
-          //upate author list
+          //update author list
           dispatch(toolbarActions.addAuthor(currentUser, response.tags))
           history.push(path)
         })

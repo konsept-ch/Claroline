@@ -1,0 +1,45 @@
+services:
+    Claroline\EvaluationBundle\Subscriber\ResourceEvaluationSubscriber:
+        arguments:
+            - '@Claroline\EvaluationBundle\Manager\ResourceEvaluationManager'
+        tags:
+            - { name: kernel.event_subscriber }
+
+    Claroline\EvaluationBundle\Subscriber\WorkspaceEvaluationSubscriber:
+        arguments:
+            - '@security.token_storage'
+            - '@Claroline\EvaluationBundle\Manager\WorkspaceEvaluationManager'
+        tags:
+            - { name: kernel.event_subscriber }
+
+    Claroline\EvaluationBundle\Subscriber\WorkspaceRequirementsSubscriber:
+        arguments:
+            - '@message_bus'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+        tags:
+            - { name: kernel.event_subscriber }
+
+    # Data sources
+    Claroline\EvaluationBundle\Subscriber\DataSource\ResourceAttemptSource:
+        arguments:
+            - '@security.token_storage'
+            - '@security.authorization_checker'
+            - '@Claroline\AppBundle\API\FinderProvider'
+        tags:
+            - { name: kernel.event_subscriber }
+
+    Claroline\EvaluationBundle\Subscriber\DataSource\ResourceEvaluationSource:
+        arguments:
+            - '@security.token_storage'
+            - '@security.authorization_checker'
+            - '@Claroline\AppBundle\API\FinderProvider'
+        tags:
+            - { name: kernel.event_subscriber }
+
+    Claroline\EvaluationBundle\Subscriber\DataSource\WorkspaceEvaluationSource:
+        arguments:
+            - '@security.token_storage'
+            - '@security.authorization_checker'
+            - '@Claroline\AppBundle\API\FinderProvider'
+        tags:
+            - { name: kernel.event_subscriber }

@@ -19,7 +19,6 @@ use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\CoreBundle\Event\Log\LogResourceExportEvent;
 use Claroline\CoreBundle\Event\Log\LogResourceReadEvent;
 use Claroline\CoreBundle\Event\Log\LogWorkspaceToolReadEvent;
-use Claroline\CoreBundle\Event\Log\UserLoginEvent;
 use Claroline\CoreBundle\Manager\FileManager;
 use Claroline\CoreBundle\Manager\LogManager;
 use Claroline\CoreBundle\Manager\UserManager;
@@ -32,6 +31,7 @@ use Claroline\CoreBundle\Repository\Resource\ResourceTypeRepository;
 use Claroline\CoreBundle\Repository\User\GroupRepository;
 use Claroline\CoreBundle\Repository\User\RoleRepository;
 use Claroline\CoreBundle\Repository\User\UserRepository;
+use Claroline\CoreBundle\Repository\WorkspaceRepository;
 use Doctrine\ORM\EntityRepository;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
@@ -39,6 +39,9 @@ class AnalyticsManager
 {
     /** @var TokenStorageInterface */
     private $tokenStorage;
+
+    /** @var WorkspaceRepository */
+    private $workspaceRepo;
 
     /** @var UserRepository */
     private $userRepo;
@@ -93,6 +96,7 @@ class AnalyticsManager
         $this->workspaceManager = $workspaceManager;
         $this->fileManager = $fileManager;
 
+        $this->workspaceRepo = $objectManager->getRepository('ClarolineCoreBundle:Workspace\Workspace');
         $this->userRepo = $objectManager->getRepository('ClarolineCoreBundle:User');
         $this->roleRepo = $objectManager->getRepository('ClarolineCoreBundle:Role');
         $this->groupRepo = $objectManager->getRepository('ClarolineCoreBundle:Group');
@@ -128,7 +132,7 @@ class AnalyticsManager
         $organizations = [];
         $user = $this->tokenStorage->getToken()->getUser();
         if (!$user->hasRole('ROLE_ADMIN')) {
-            $organizations = $user->getAdministratedOrganizations();
+            $organizations = $user->getAdministratedOrganizations()->toArray();
         }
 
         return [
@@ -141,7 +145,7 @@ class AnalyticsManager
             'users' => $this->userRepo->countUsers($organizations),
             'roles' => count($this->roleRepo->findAllPlatformRoles()),
             'groups' => count($this->groupRepo->findByOrganizations($organizations)),
-            'workspaces' => $this->workspaceManager->getNbNonPersonalWorkspaces($organizations),
+            'workspaces' => $this->workspaceRepo->countNonPersonalWorkspaces($organizations),
             'organizations' => !empty($organizations) ?
                 count($organizations) :
                 $this->organizationRepo->count([]),
@@ -249,7 +253,7 @@ class AnalyticsManager
                 $listData = $this->resourceRepo->findMimeTypesWithMostResources($finderParams['limit'], $organizations);
                 break;
             case 'top_workspaces_resources':
-                $listData = $this->workspaceManager->getWorkspacesWithMostResources($finderParams['limit'], $organizations);
+                $listData = $this->workspaceRepo->findWorkspacesWithMostResources($finderParams['limit'], $organizations);
                 break;
             case 'top_workspaces_connections':
                 $finderParams['filters']['action'] = LogWorkspaceToolReadEvent::ACTION;
@@ -275,7 +279,7 @@ class AnalyticsManager
                 break;
             case 'top_users_connections':
             default:
-                $finderParams['filters']['action'] = UserLoginEvent::ACTION;
+                $finderParams['filters']['action'] = 'user-login';
                 $finderParams['sortBy'] = '-actions';
                 $listData = $this->logManager->getUserActionsList($finderParams);
                 $listData = $listData['data'];

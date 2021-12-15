@@ -14,6 +14,8 @@
             "homepage": "http://github.com/claroline"
         }
     ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "require": {
         "php": ">=7.2",
         "ext-curl": "*",
@@ -37,7 +39,7 @@
         "doctrine/orm": "^2.8",
         "dompdf/dompdf": "*",
         "friendsofsymfony/jsrouting-bundle": "^2.2",
-        "gedmo/doctrine-extensions": "^3.1",
+        "gedmo/doctrine-extensions": "^3.2",
         "geoip2/geoip2": "^2.11",
         "hwi/oauth-bundle": "^1.1",
         "icap/html-diff": "1.1.0",
@@ -106,11 +108,11 @@
             "Claroline\\CoreBundle\\": "src/main/core",
             "Claroline\\AppBundle\\": "src/main/app",
             "Claroline\\AuthenticationBundle\\": "src/main/authentication",
-            "Claroline\\BundleRecorder\\": "src/main/recorder",
             "Claroline\\InstallationBundle\\": "src/main/installation",
             "Claroline\\MigrationBundle\\": "src/main/migration",
             "Claroline\\KernelBundle\\": "src/main/kernel",
             "Claroline\\ThemeBundle\\": "src/main/theme",
+            "Claroline\\EvaluationBundle\\": "src/main/evaluation",
             "Claroline\\AgendaBundle\\": "src/plugin/agenda",
             "Claroline\\AnalyticsBundle\\": "src/plugin/analytics",
             "Claroline\\AnnouncementBundle\\": "src/plugin/announcement",
@@ -150,7 +152,6 @@
             "Claroline\\SlideshowBundle\\": "src/plugin/slideshow",
             "Claroline\\AudioPlayerBundle\\": "src/plugin/audio-player",
             "Claroline\\CursusBundle\\": "src/plugin/cursus",
-            "Claroline\\BookingBundle\\": "src/plugin/booking",
             "Claroline\\BigBlueButtonBundle\\": "src/integration/big-blue-button",
             "Claroline\\DocumentationBundle\\": "src/plugin/documentation",
             "Claroline\\LogBundle\\": "src/main/log"
@@ -167,7 +168,7 @@
             "rm -rf ./var/cache/*"
         ],
         "bundles": [
-            "Claroline\\BundleRecorder\\ScriptHandler::buildBundleFile"
+            "Claroline\\KernelBundle\\ScriptHandler::buildBundleFile"
         ],
         "setup-geoip": [
             "php bin/console claroline:geoip:download"
@@ -190,19 +191,5 @@
             "composer disable-maintenance",
             "composer delete-cache"
         ]
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true,
-    "config": {
-        "github-protocols": [
-            "https",
-            "git",
-            "ssh"
-        ],
-        "process-timeout": 3600
-    },
-    "extra": {
-        "symfony-var-dir": "var",
-        "symfony-assets-install": "symlink"
     }
 }

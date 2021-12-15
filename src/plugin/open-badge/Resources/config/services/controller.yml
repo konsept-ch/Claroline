@@ -14,18 +14,17 @@ services:
         public: true
         arguments:
             - '@security.authorization_checker'
-            - '@Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler'
-            - '@Claroline\OpenBadgeBundle\Manager\OpenBadgeManager'
+            - '@Claroline\OpenBadgeBundle\Manager\BadgeManager'
             - '@security.token_storage'
+            - '@Claroline\AppBundle\Manager\PdfManager'
 
     Claroline\OpenBadgeBundle\Controller\API\BadgeClassController:
         parent: Claroline\AppBundle\Controller\AbstractCrudController
         public: true
         arguments:
             - '@security.authorization_checker'
-            - '@security.token_storage'
-            - '@translator'
-            - '@Claroline\OpenBadgeBundle\Manager\OpenBadgeManager'
+            - '@Claroline\OpenBadgeBundle\Manager\BadgeManager'
+            - '@Claroline\OpenBadgeBundle\Manager\AssertionManager'
 
     Claroline\OpenBadgeBundle\Controller\API\EndorsementController:
         parent: Claroline\AppBundle\Controller\AbstractCrudController

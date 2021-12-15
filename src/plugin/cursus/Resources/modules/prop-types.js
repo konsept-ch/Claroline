@@ -22,9 +22,11 @@ const Course = {
       workspaceModel: T.shape(WorkspaceTypes.propTypes),
       tutorRoleName: T.string,
       learnerRoleName: T.string,
-      icon: T.string,
-      defaultSessionDuration: T.number,
-      order: T.number
+      defaultSessionDuration: T.number
+    }),
+    display: T.shape({
+      order: T.number,
+      hideSessions: T.bool
     }),
     restrictions: T.shape({
       active: T.bool,
@@ -32,6 +34,7 @@ const Course = {
     }),
     registration: T.shape({
       selfRegistration: T.bool,
+      autoRegistration: T.bool,
       selfUnregistration: T.bool,
       validation: T.bool,
       mail: T.bool,
@@ -42,14 +45,16 @@ const Course = {
     code: '',
     title: '',
     parent: null,
-    meta: {
-      order: constants.DEFAULT_ORDER
+    display: {
+      order: constants.DEFAULT_ORDER,
+      hideSessions: false
     },
     restrictions: {
       users: null
     },
     registration: {
       selfRegistration: false,
+      autoRegistration: false,
       selfUnregistration: false,
       validation: false,
       mail: false,
@@ -78,11 +83,10 @@ const Session = {
       ),
       learnerRole: T.shape(
         RoleTypes.propTypes
-      ),
-      creationDate: T.string,
-      order: T.number,
-      color: T.string,
-      certificated: T.bool
+      )
+    }),
+    display: T.shape({
+      order: T.number
     }),
     restrictions: T.shape({
       users: T.number,
@@ -95,6 +99,7 @@ const Session = {
     }),
     registration: T.shape({
       selfRegistration: T.bool,
+      autoRegistration: T.bool,
       selfUnregistration: T.bool,
       validation: T.bool,
       mail: T.bool,
@@ -104,12 +109,14 @@ const Session = {
   },
   defaultProps: {
     meta: {
-      default: false,
-      order: constants.DEFAULT_ORDER,
-      certificated: true
+      default: false
+    },
+    display: {
+      order: constants.DEFAULT_ORDER
     },
     registration: {
       selfRegistration: false,
+      autoRegistration: false,
       selfUnregistration: false,
       validation: false,
       mail: false,

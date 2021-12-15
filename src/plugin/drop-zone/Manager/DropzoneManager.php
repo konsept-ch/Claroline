@@ -14,11 +14,9 @@ namespace Claroline\DropZoneBundle\Manager;
 use Claroline\AppBundle\API\Crud;
 use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\AppBundle\Persistence\ObjectManager;
-use Claroline\CoreBundle\Entity\Evaluation\AbstractEvaluation;
 use Claroline\CoreBundle\Entity\Resource\ResourceUserEvaluation;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler;
-use Claroline\CoreBundle\Manager\Resource\ResourceEvaluationManager;
 use Claroline\CoreBundle\Manager\RoleManager;
 use Claroline\CoreBundle\Repository\Resource\ResourceNodeRepository;
 use Claroline\DropZoneBundle\Entity\Correction;
@@ -44,6 +42,8 @@ use Claroline\DropZoneBundle\Event\Log\LogDropzoneConfigureEvent;
 use Claroline\DropZoneBundle\Repository\CorrectionRepository;
 use Claroline\DropZoneBundle\Repository\DocumentRepository;
 use Claroline\DropZoneBundle\Repository\DropRepository;
+use Claroline\EvaluationBundle\Entity\AbstractEvaluation;
+use Claroline\EvaluationBundle\Manager\ResourceEvaluationManager;
 use Claroline\TeamBundle\Entity\Team;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -195,23 +195,6 @@ class DropzoneManager
     }
 
     /**
-     * Deletes a Dropzone.
-     */
-    public function delete(Dropzone $dropzone)
-    {
-        $this->om->startFlushSuite();
-        $uuid = $dropzone->getUuid();
-        $ds = DIRECTORY_SEPARATOR;
-        $dropzoneDir = $this->filesDir.$ds.'dropzone'.$ds.$uuid;
-
-        if ($this->fileSystem->exists($dropzoneDir)) {
-            $this->fileSystem->remove($dropzoneDir);
-        }
-        $this->crud->delete($dropzone);
-        $this->om->endFlushSuite();
-    }
-
-    /**
      * Sets Dropzone drop type to default.
      */
     public function setDefaultDropType(Dropzone $dropzone)
@@ -253,7 +236,6 @@ class DropzoneManager
             $this->resourceEvalManager->createResourceEvaluation(
                 $dropzone->getResourceNode(),
                 $user,
-                null,
                 ['status' => AbstractEvaluation::STATUS_INCOMPLETE]
             );
             $this->om->endFlushSuite();
@@ -290,7 +272,6 @@ class DropzoneManager
                     $this->resourceEvalManager->createResourceEvaluation(
                         $dropzone->getResourceNode(),
                         $teamUser,
-                        null,
                         ['status' => AbstractEvaluation::STATUS_INCOMPLETE]
                     );
                 }
@@ -301,7 +282,6 @@ class DropzoneManager
                 $this->resourceEvalManager->createResourceEvaluation(
                     $dropzone->getResourceNode(),
                     $user,
-                    null,
                     ['status' => AbstractEvaluation::STATUS_INCOMPLETE]
                 );
             }
@@ -370,14 +350,13 @@ class DropzoneManager
     /**
      * Creates a Document.
      *
-     * @param int      $documentType
      * @param mixed    $documentData
      * @param Revision $revision
      * @param bool     $isManager
      *
      * @return Document
      */
-    public function createDocument(Drop $drop, User $user, $documentType, $documentData, Revision $revision = null, $isManager = false)
+    public function createDocument(Drop $drop, User $user, string $documentType, $documentData, Revision $revision = null, $isManager = false)
     {
         $document = new Document();
         $document->setDrop($drop);
@@ -926,7 +905,7 @@ class DropzoneManager
      * @param string $teamName
      * @param bool   $withCreation
      *
-     * @return Drop | null
+     * @return Drop|null
      */
     public function getPeerDrop(Dropzone $dropzone, User $user = null, $teamId = null, $teamName = null, $withCreation = true)
     {
@@ -965,7 +944,7 @@ class DropzoneManager
      * @param string $teamId
      * @param string $teamName
      *
-     * @return Drop | null
+     * @return Drop|null
      */
     public function getAvailableDropForPeer(Dropzone $dropzone, User $user = null, $teamId = null, $teamName = null)
     {
@@ -1095,13 +1074,12 @@ class DropzoneManager
         }
         if ($isComplete) {
             foreach ($users as $user) {
-                $userEval = $this->resourceEvalManager->getResourceUserEvaluation($dropzone->getResourceNode(), $user, false);
+                $userEval = $this->resourceEvalManager->getUserEvaluation($dropzone->getResourceNode(), $user, false);
 
                 if (!empty($userEval) && !in_array($userEval->getStatus(), $fixedStatusList)) {
                     $this->resourceEvalManager->createResourceEvaluation(
                         $dropzone->getResourceNode(),
                         $user,
-                        null,
                         ['status' => AbstractEvaluation::STATUS_COMPLETED, 'progression' => 100]
                     );
                 } elseif (!empty($drop)) {
@@ -1153,14 +1131,12 @@ class DropzoneManager
                 $this->resourceEvalManager->createResourceEvaluation(
                     $dropzone->getResourceNode(),
                     $user,
-                    null,
                     [
                         'status' => $status,
                         'score' => $score,
                         'scoreMax' => $scoreMax,
                         'data' => $this->serializeDrop($drop),
-                    ],
-                    ['status' => true, 'score' => true]
+                    ]
                 );
             }
 
@@ -1179,7 +1155,7 @@ class DropzoneManager
      */
     public function getResourceUserEvaluation(Dropzone $dropzone, User $user)
     {
-        return $this->resourceEvalManager->getResourceUserEvaluation($dropzone->getResourceNode(), $user);
+        return $this->resourceEvalManager->getUserEvaluation($dropzone->getResourceNode(), $user);
     }
 
     /**
@@ -1198,18 +1174,14 @@ class DropzoneManager
                 $this->resourceEvalManager->createResourceEvaluation(
                     $dropzone->getResourceNode(),
                     $user,
-                    null,
-                    ['progression' => $progression, 'data' => $this->serializeDrop($drop)],
-                    ['progression' => true]
+                    ['progression' => $progression, 'data' => $this->serializeDrop($drop)]
                 );
             }
         } else {
             $this->resourceEvalManager->createResourceEvaluation(
                 $dropzone->getResourceNode(),
                 $drop->getUser(),
-                null,
-                ['progression' => $progression, 'data' => $this->serializeDrop($drop)],
-                ['progression' => true]
+                ['progression' => $progression, 'data' => $this->serializeDrop($drop)]
             );
         }
         $this->om->endFlushSuite();

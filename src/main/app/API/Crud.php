@@ -2,6 +2,7 @@
 
 namespace Claroline\AppBundle\API;
 
+use Claroline\AppBundle\API\Utils\ArrayUtils;
 use Claroline\AppBundle\Event\Crud\CrudEvent;
 use Claroline\AppBundle\Event\StrictDispatcher;
 use Claroline\AppBundle\Persistence\ObjectManager;
@@ -35,6 +36,9 @@ class Crud
     /** @var StrictDispatcher */
     private $dispatcher;
 
+    /** @var FinderProvider */
+    private $finder;
+
     /** @var SerializerProvider */
     private $serializer;
 
@@ -47,6 +51,7 @@ class Crud
     public function __construct(
       ObjectManager $om,
       StrictDispatcher $dispatcher,
+      FinderProvider $finder,
       SerializerProvider $serializer,
       ValidatorProvider $validator,
       SchemaProvider $schema,
@@ -54,10 +59,72 @@ class Crud
     ) {
         $this->om = $om;
         $this->dispatcher = $dispatcher;
+        $this->finder = $finder;
         $this->serializer = $serializer;
         $this->validator = $validator;
         $this->schema = $schema;
         $this->authorization = $authorization;
+    }
+
+    /**
+     * @param string|int $id
+     *
+     * @return object|null
+     */
+    public function get(string $class, $id)
+    {
+        if (!is_numeric($id) && property_exists($class, 'uuid')) {
+            return $this->om->getRepository($class)->findOneBy(['uuid' => $id]);
+        }
+
+        return $this->om->getRepository($class)->findOneBy(['id' => $id]);
+    }
+
+    public function list(string $class, array $query = [], array $options = [])
+    {
+        $results = $this->finder->searchEntities($class, $query);
+
+        return array_merge($results, [
+            'data' => array_map(function ($result) use ($options) {
+                return $this->serializer->serialize($result, $options);
+            }, $results['data']),
+        ]);
+    }
+
+    public function csv(string $class, array $query = [], array $options = [])
+    {
+        $data = $this->list($class, $query, $options)['data'];
+
+        $titles = [];
+        $formatted = [];
+        if (!empty($data[0])) {
+            $firstRow = $data[0];
+            //get the title list
+            $titles = !empty($query['columns']) ? $query['columns'] : ArrayUtils::getPropertiesName($firstRow);
+
+            foreach ($data as $el) {
+                $formattedData = [];
+                foreach ($titles as $title) {
+                    $formattedData[$title] = ArrayUtils::has($el, $title) ?
+                        ArrayUtils::get($el, $title) : null;
+                    $formattedData[$title] = !is_array($formattedData[$title]) ? $formattedData[$title] : json_encode($formattedData[$title]);
+                }
+                $formatted[] = $formattedData;
+            }
+        }
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'CSVCLARO').'.csv';
+        $fp = fopen($tmpFile, 'w');
+
+        fputcsv($fp, $titles, ';');
+
+        foreach ($formatted as $item) {
+            fputcsv($fp, $item, ';');
+        }
+
+        fclose($fp);
+
+        return $tmpFile;
     }
 
     /**
@@ -236,8 +303,6 @@ class Crud
         $class = $this->getRealClass($object);
         $new = new $class();
 
-        //default option for copy
-        $options[] = Options::REFRESH_UUID;
         $serializer = $this->serializer->get($new);
 
         if (method_exists($serializer, 'getCopyOptions')) {
@@ -247,7 +312,7 @@ class Crud
         $this->serializer->deserialize(
           $this->serializer->serialize($object, $options),
           $new,
-          $options
+          array_merge([], $options, [Options::REFRESH_UUID])
         );
 
         $this->om->persist($new);
@@ -334,6 +399,7 @@ class Crud
 
     /**
      * Patches a property in `object`.
+     * This may use 'update' permission and events.
      *
      * @param object $object   - the entity to update
      * @param string $property - the property to update
@@ -342,7 +408,7 @@ class Crud
      *
      * @return object
      */
-    public function replace($object, $property, $data, array $options = [])
+    public function replace($object, string $property, $data, array $options = [])
     {
         $methodName = 'set'.ucfirst($property);
 

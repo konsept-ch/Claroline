@@ -13,15 +13,14 @@ namespace Claroline\InstallationBundle\Command;
 
 use Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler;
 use Claroline\CoreBundle\Library\Installation\PlatformInstaller;
-use Claroline\CoreBundle\Library\Installation\Refresher;
 use Claroline\CoreBundle\Library\Maintenance\MaintenanceHandler;
 use Claroline\CoreBundle\Manager\VersionManager;
+use Claroline\InstallationBundle\Manager\RefreshManager;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Updates, installs or uninstalls core and plugin bundles.
@@ -31,17 +30,20 @@ class PlatformUpdateCommand extends Command
     private $refresher;
     private $installer;
     private $versionManager;
-    private $platformConfigurationHandler;
-    private $translator;
+    private $config;
     private $environment;
 
-    public function __construct(Refresher $refresher, PlatformInstaller $installer, VersionManager $versionManager, PlatformConfigurationHandler $platformConfigurationHandler, TranslatorInterface $translator, string $environment)
-    {
+    public function __construct(
+        RefreshManager $refresher,
+        PlatformInstaller $installer,
+        VersionManager $versionManager,
+        PlatformConfigurationHandler $config,
+        string $environment
+    ) {
         $this->refresher = $refresher;
         $this->installer = $installer;
         $this->versionManager = $versionManager;
-        $this->platformConfigurationHandler = $platformConfigurationHandler;
-        $this->translator = $translator;
+        $this->config = $config;
         $this->environment = $environment;
 
         parent::__construct();
@@ -100,9 +102,7 @@ class PlatformUpdateCommand extends Command
         );
 
         // generate platform_options with default parameters if it does not exist
-        $this->platformConfigurationHandler->saveParameters();
-
-        $this->setLocale();
+        $this->config->saveParameters();
 
         if (!$input->getOption('no_symlink')) {
             $this->refresher->buildSymlinks();
@@ -136,7 +136,7 @@ class PlatformUpdateCommand extends Command
         // dump static assets
         if (!$input->getOption('no_asset')) {
             $this->refresher->installAssets();
-            $this->refresher->dumpAssets($this->environment);
+            $this->refresher->dumpAssets();
         }
 
         // build themes
@@ -156,13 +156,5 @@ class PlatformUpdateCommand extends Command
         );
 
         return 0;
-    }
-
-    private function setLocale()
-    {
-        $locale = $this->platformConfigurationHandler->getParameter('locales.default');
-        if ($locale) {
-            $this->translator->setLocale($locale);
-        }
     }
 }

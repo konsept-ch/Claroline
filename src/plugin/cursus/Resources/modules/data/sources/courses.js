@@ -28,6 +28,14 @@ export default {
         label: trans('code'),
         displayed: true
       }, {
+        name: 'meta.duration',
+        type: 'number',
+        label: trans('duration'),
+        options: {
+          unit: trans('days')
+        },
+        displayed: true
+      }, {
         name: 'location',
         type: 'location',
         label: trans('location'),
@@ -53,7 +61,7 @@ export default {
         filterable: param('pricing.enabled'),
         sortable: param('pricing.enabled')
       }, {
-        name: 'meta.order',
+        name: 'display.order',
         alias: 'order',
         type: 'number',
         label: trans('order'),

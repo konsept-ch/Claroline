@@ -27,13 +27,9 @@ services:
           - '@security.authorization_checker'
           - '@security.token_storage'
 
-    Claroline\CoreBundle\API\Finder\Workspace\RequirementsFinder: ~
-
     Claroline\CoreBundle\API\Finder\Workspace\PendingRegistrationFinder: ~
 
     Claroline\CoreBundle\API\Finder\Workspace\OrderedToolFinder: ~
-
-    Claroline\CoreBundle\API\Finder\Workspace\EvaluationFinder: ~
 
     Claroline\CoreBundle\API\Finder\User\UserFinder:
         arguments:
@@ -46,14 +42,17 @@ services:
           - '@security.authorization_checker'
           - '@security.token_storage'
 
-    Claroline\CoreBundle\API\Finder\User\OrganizationFinder:
-        arguments:
-          - '@security.authorization_checker'
-          - '@security.token_storage'
+    Claroline\CoreBundle\API\Finder\User\OrganizationFinder: ~
 
     Claroline\CoreBundle\API\Finder\Location\LocationFinder: ~
 
     Claroline\CoreBundle\API\Finder\Location\RoomFinder: ~
+
+    Claroline\CoreBundle\API\Finder\Location\RoomBookingFinder: ~
+
+    Claroline\CoreBundle\API\Finder\Location\MaterialFinder: ~
+
+    Claroline\CoreBundle\API\Finder\Location\MaterialBookingFinder: ~
 
     Claroline\CoreBundle\API\Finder\User\GroupFinder:
         arguments:
@@ -79,8 +78,6 @@ services:
         arguments:
           - '@security.authorization_checker'
           - '@security.token_storage'
-
-    Claroline\CoreBundle\API\Finder\Resource\ResourceUserEvaluationFinder: ~
 
     Claroline\CoreBundle\API\Finder\Resource\ResourceNodeFinder:
         arguments:

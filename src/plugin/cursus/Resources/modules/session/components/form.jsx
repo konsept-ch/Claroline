@@ -79,7 +79,7 @@ const SessionForm = (props) =>
             type: 'image',
             label: trans('thumbnail')
           }, {
-            name: 'meta.order',
+            name: 'display.order',
             type: 'number',
             label: trans('order'),
             required: true,
@@ -97,33 +97,94 @@ const SessionForm = (props) =>
             type: 'boolean',
             label: trans('activate_self_registration'),
             help: trans('self_registration_training_help', {}, 'cursus'),
+            onChange: (checked) => {
+              if (!checked) {
+                props.update('registration.autoRegistration', false)
+                props.update('registration.validation', false)
+                props.update('registration.pendingRegistrations', false)
+              }
+            },
             linked: [
               {
-                name: 'registration.validation',
+                name: 'registration._selfRegistrationMode',
+                type: 'choice',
+                label: trans('mode'),
+                displayed: (session) => get(session, 'registration.selfRegistration'),
+                calculated: (session) => {
+                  if (get(session, 'registration.autoRegistration')) {
+                    return 'auto'
+                  } else if (get(session, 'registration.validation')) {
+                    return 'validation'
+                  }
+
+                  return 'simple'
+                },
+                required: true,
+                options: {
+                  condensed: false,
+                  choices: {
+                    simple: trans('simple_registration', {}, 'cursus'),
+                    validation: trans('validate_registration', {}, 'cursus'),
+                    auto: trans('auto_registration', {}, 'cursus')
+                  }
+                },
+                onChange: (registrationMode) => {
+                  switch (registrationMode) {
+                    case 'simple':
+                      props.update('registration.autoRegistration', false)
+                      props.update('registration.validation', false)
+                      break
+
+                    case 'auto':
+                      props.update('registration.autoRegistration', true)
+
+                      // reset incompatible options
+                      props.update('restrictions._restrictUsers', false)
+                      props.update('restrictions.users', null)
+                      props.update('registration.mail', false)
+                      props.update('registration.validation', false)
+                      props.update('registration.userValidation', false)
+                      props.update('registration.selfUnregistration', false)
+                      props.update('registration.pendingRegistrations', false)
+                      break
+
+                    case 'validation':
+                      props.update('registration.validation', true)
+
+                      // reset incompatible options
+                      props.update('registration.autoRegistration', false)
+                      break
+                  }
+                }
+              }, {
+                name: 'registrations.pendingRegistrations',
                 type: 'boolean',
-                label: trans('validate_registration'),
-                help: trans('validate_registration_help', {}, 'cursus'),
-                displayed: (course) => course.registration && course.registration.selfRegistration
+                label: trans('enable_session_pending_list', {}, 'cursus'),
+                displayed: (session) => get(session, 'registration.selfRegistration')
+                  && !get(session, 'registration.autoRegistration')
+                  && (get(session, 'restrictions.users') || get(session, 'restrictions._restrictUsers'))
               }
             ]
-          }, {
-            name: 'registration.selfUnregistration',
-            type: 'boolean',
-            label: trans('activate_self_unregistration'),
-            help: trans('self_unregistration_training_help', {}, 'cursus')
           }, {
             name: 'registration.mail',
             type: 'boolean',
             label: trans('registration_send_mail', {}, 'cursus'),
+            displayed: (session) => !get(session, 'registration.autoRegistration'),
             linked: [
               {
                 name: 'registration.userValidation',
                 type: 'boolean',
                 label: trans('registration_user_validation', {}, 'cursus'),
                 help: trans('registration_user_validation_help', {}, 'cursus'),
-                displayed: (course) => course.registration && course.registration.mail
+                displayed: (session) => get(session, 'registration.mail')
               }
             ]
+          }, {
+            name: 'registration.selfUnregistration',
+            type: 'boolean',
+            label: trans('activate_self_unregistration'),
+            displayed: (session) => !get(session, 'registration.autoRegistration'),
+            help: trans('self_unregistration_training_help', {}, 'cursus')
           }, {
             name: 'registration.eventRegistrationType',
             type: 'choice',
@@ -161,10 +222,15 @@ const SessionForm = (props) =>
         title: trans('access_restrictions'),
         fields: [
           {
+            name: 'restrictions.hidden',
+            type: 'boolean',
+            label: trans('restrict_hidden'),
+            help: trans('restrict_hidden_help')
+          }, {
             name: 'restrictions._restrictUsers',
             type: 'boolean',
             label: trans('restrict_users_count'),
-            calculated: (course) => get(course, 'restrictions.users') || get(course, 'restrictions._restrictUsers'),
+            calculated: (session) => get(session, 'restrictions.users') || get(session, 'restrictions._restrictUsers'),
             onChange: (value) => {
               if (!value) {
                 props.update('restrictions.users', null)
@@ -176,7 +242,7 @@ const SessionForm = (props) =>
                 type: 'number',
                 label: trans('users_count'),
                 required: true,
-                displayed: (course) => get(course, 'restrictions.users') || get(course, 'restrictions._restrictUsers'),
+                displayed: (session) => get(session, 'restrictions.users') || get(session, 'restrictions._restrictUsers'),
                 options: {
                   min: 0
                 }

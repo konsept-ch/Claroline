@@ -12,22 +12,19 @@
 namespace Claroline\CoreBundle\Listener\Resource\Types;
 
 use Claroline\AppBundle\API\SerializerProvider;
+use Claroline\AppBundle\Event\Crud\CopyEvent;
 use Claroline\AppBundle\Event\StrictDispatcher;
 use Claroline\AppBundle\Persistence\ObjectManager;
-use Claroline\CoreBundle\Entity\Evaluation\AbstractEvaluation;
 use Claroline\CoreBundle\Entity\Resource\File;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
 use Claroline\CoreBundle\Event\ExportObjectEvent;
-use Claroline\CoreBundle\Event\GenericDataEvent;
 use Claroline\CoreBundle\Event\ImportObjectEvent;
-use Claroline\CoreBundle\Event\Resource\CopyResourceEvent;
 use Claroline\CoreBundle\Event\Resource\DeleteResourceEvent;
 use Claroline\CoreBundle\Event\Resource\DownloadResourceEvent;
 use Claroline\CoreBundle\Event\Resource\File\LoadFileEvent;
 use Claroline\CoreBundle\Event\Resource\LoadResourceEvent;
 use Claroline\CoreBundle\Event\Resource\ResourceActionEvent;
 use Claroline\CoreBundle\Library\Utilities\FileUtilities;
-use Claroline\CoreBundle\Manager\Resource\ResourceEvaluationManager;
 use Claroline\CoreBundle\Manager\ResourceManager;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\Filesystem\Filesystem;
@@ -61,9 +58,6 @@ class FileListener
     /** @var SerializerProvider */
     private $serializer;
 
-    /** @var ResourceEvaluationManager */
-    private $resourceEvalManager;
-
     /** @var FileUtilities */
     private $fileUtils;
 
@@ -74,7 +68,6 @@ class FileListener
         string $filesDir,
         SerializerProvider $serializer,
         ResourceManager $resourceManager,
-        ResourceEvaluationManager $resourceEvalManager,
         FileUtilities $fileUtils
     ) {
         $this->tokenStorage = $tokenStorage;
@@ -83,7 +76,6 @@ class FileListener
         $this->filesDir = $filesDir;
         $this->serializer = $serializer;
         $this->resourceManager = $resourceManager;
-        $this->resourceEvalManager = $resourceEvalManager;
         $this->fileUtils = $fileUtils;
     }
 
@@ -162,7 +154,6 @@ class FileListener
         $file = $event->getResource();
 
         $pathName = $this->filesDir.DIRECTORY_SEPARATOR.$file->getHashName();
-
         if (file_exists($pathName)) {
             $event->setFiles([$pathName]);
         }
@@ -187,9 +178,9 @@ class FileListener
     {
         $file = $exportEvent->getObject();
         $path = $this->filesDir.DIRECTORY_SEPARATOR.$file->getHashName();
-        $file = $exportEvent->getObject();
+
         $newPath = uniqid().'.'.pathinfo($file->getHashName(), PATHINFO_EXTENSION);
-        //get the filePath
+
         $exportEvent->addFile($newPath, $path);
         $exportEvent->overwrite('_path', $newPath);
     }
@@ -209,11 +200,10 @@ class FileListener
         //move filebags elements here
     }
 
-    public function onCopy(CopyResourceEvent $event)
+    public function onCopy(CopyEvent $event)
     {
-        /** @var File $file */
-        $resource = $event->getResource();
-        $destParent = $event->getParent();
+        $resource = $event->getObject();
+        $destParent = $resource->getResourceNode();
         $workspace = $destParent->getWorkspace();
         $newFile = $event->getCopy();
         $newFile->setMimeType($resource->getMimeType());
@@ -237,10 +227,6 @@ class FileListener
             //do nothing yet
             //maybe log an error
         }
-
-        $event->setCopy($newFile);
-
-        $event->stopPropagation();
     }
 
     public function onDownload(DownloadResourceEvent $event)
@@ -270,32 +256,5 @@ class FileListener
         $eventName = str_replace('"', '', $eventName);
 
         return 'file.'.$eventName.'.'.$event;
-    }
-
-    public function onGenerateResourceTracking(GenericDataEvent $event)
-    {
-        $data = $event->getData();
-        $node = $data['resourceNode'];
-        $user = $data['user'];
-        $startDate = $data['startDate'];
-
-        $logs = $this->resourceEvalManager->getLogsForResourceTracking(
-            $node,
-            $user,
-            ['resource-read'],
-            $startDate
-        );
-        $nbLogs = count($logs);
-
-        if ($nbLogs > 0) {
-            $this->om->startFlushSuite();
-            $tracking = $this->resourceEvalManager->getResourceUserEvaluation($node, $user);
-            $tracking->setDate($logs[0]->getDateLog());
-            $tracking->setStatus(AbstractEvaluation::STATUS_OPENED);
-            $tracking->setNbOpenings($nbLogs);
-            $this->om->persist($tracking);
-            $this->om->endFlushSuite();
-        }
-        $event->stopPropagation();
     }
 }

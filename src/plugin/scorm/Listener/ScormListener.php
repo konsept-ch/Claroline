@@ -11,6 +11,7 @@
 
 namespace Claroline\ScormBundle\Listener;
 
+use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
@@ -22,7 +23,7 @@ use Claroline\CoreBundle\Event\Resource\DeleteResourceEvent;
 use Claroline\CoreBundle\Event\Resource\DownloadResourceEvent;
 use Claroline\CoreBundle\Event\Resource\LoadResourceEvent;
 use Claroline\CoreBundle\Event\Resource\ResourceActionEvent;
-use Claroline\CoreBundle\Manager\Resource\ResourceEvaluationManager;
+use Claroline\EvaluationBundle\Manager\ResourceEvaluationManager;
 use Claroline\ScormBundle\Entity\Sco;
 use Claroline\ScormBundle\Entity\Scorm;
 use Claroline\ScormBundle\Manager\ScormManager;
@@ -94,7 +95,8 @@ class ScormListener
             'userEvaluation' => is_null($user) ?
                 null :
                 $this->serializer->serialize(
-                    $this->resourceEvalManager->getResourceUserEvaluation($scorm->getResourceNode(), $user)
+                    $this->resourceEvalManager->getUserEvaluation($scorm->getResourceNode(), $user),
+                    [Options::SERIALIZE_MINIMAL]
                 ),
             'trackings' => $this->scormManager->generateScosTrackings($scorm->getRootScos(), $user),
         ]);
@@ -103,28 +105,27 @@ class ScormListener
 
     public function onDelete(DeleteResourceEvent $event)
     {
-        $ds = DIRECTORY_SEPARATOR;
         $scorm = $event->getResource();
         $workspace = $scorm->getResourceNode()->getWorkspace();
         $hashName = $scorm->getHashName();
 
-        $nbScorm = (int) ($this->scormResourceRepo->findNbScormWithSameSource($hashName, $workspace));
-
+        $nbScorm = (int) $this->scormResourceRepo->findNbScormWithSameSource($hashName, $workspace);
         if (1 === $nbScorm) {
-            $scormArchiveFile = $this->filesDir.$ds.'scorm'.$ds.$workspace->getUuid().$ds.$hashName;
-            $scormResourcesPath = $this->uploadDir.$ds.'scorm'.$ds.$workspace->getUuid().$ds.$hashName;
+            $files = [];
 
+            $scormArchiveFile = $this->filesDir.DIRECTORY_SEPARATOR.'scorm'.DIRECTORY_SEPARATOR.$workspace->getUuid().DIRECTORY_SEPARATOR.$hashName;
             if (file_exists($scormArchiveFile)) {
-                $event->setFiles([$scormArchiveFile]);
+                $files[] = $scormArchiveFile;
             }
+
+            $scormResourcesPath = $this->uploadDir.DIRECTORY_SEPARATOR.'scorm'.DIRECTORY_SEPARATOR.$workspace->getUuid().DIRECTORY_SEPARATOR.$hashName;
             if (file_exists($scormResourcesPath)) {
-                try {
-                    $this->deleteFiles($scormResourcesPath);
-                } catch (\Exception $e) {
-                }
+                $files[] = $scormResourcesPath;
             }
+
+            $event->setFiles($files);
         }
-        $this->om->remove($event->getResource());
+
         $event->stopPropagation();
     }
 
@@ -192,21 +193,9 @@ class ScormListener
         $resource = $event->getResource();
         $workspace = $resource->getResourceNode()->getWorkspace();
         $newWorkspace = $event->getCopy()->getResourceNode()->getWorkspace();
-        $copy = $event->getCopy();
+
         $hashName = $resource->getHashName();
-        $copy->setHashName($hashName);
-        $copy->setName($resource->getName());
-        $copy->setVersion($resource->getVersion());
-        $copy->setRatio($resource->getRatio());
-        $this->om->persist($copy);
 
-        $scos = $resource->getScos();
-
-        foreach ($scos as $sco) {
-            if (is_null($sco->getScoParent())) {
-                $this->copySco($sco, $copy);
-            }
-        }
         if ($workspace->getId() !== $newWorkspace->getId()) {
             $ds = DIRECTORY_SEPARATOR;
             /* Copies archive file & unzipped files */
@@ -224,7 +213,6 @@ class ScormListener
             }
         }
 
-        $event->setCopy($copy);
         $event->stopPropagation();
     }
 

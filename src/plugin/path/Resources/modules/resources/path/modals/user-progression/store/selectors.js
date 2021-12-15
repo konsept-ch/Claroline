@@ -6,11 +6,17 @@ const store = (state) => state[STORE_NAME]
 
 const stepsProgression = createSelector(
   [store],
-  (store) => store.userStepsProgression
+  (store) => store.progression
+)
+
+const lastAttempt = createSelector(
+  [store],
+  (store) => store.lastAttempt
 )
 
 export const selectors = {
   STORE_NAME,
 
-  stepsProgression
+  stepsProgression,
+  lastAttempt
 }

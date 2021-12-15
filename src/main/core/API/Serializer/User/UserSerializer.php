@@ -6,7 +6,6 @@ use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\Serializer\SerializerTrait;
 use Claroline\AppBundle\Event\StrictDispatcher;
 use Claroline\AppBundle\Persistence\ObjectManager;
-use Claroline\CoreBundle\API\Serializer\Facet\FieldFacetValueSerializer;
 use Claroline\CoreBundle\API\Serializer\File\PublicFileSerializer;
 use Claroline\CoreBundle\Entity\Facet\FieldFacet;
 use Claroline\CoreBundle\Entity\Facet\FieldFacetValue;
@@ -15,14 +14,14 @@ use Claroline\CoreBundle\Entity\Group;
 use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CoreBundle\Entity\Role;
 use Claroline\CoreBundle\Entity\User;
-use Claroline\CoreBundle\Entity\Workspace\WorkspaceRegistrationQueue;
-use Claroline\CoreBundle\Event\User\DecorateUserEvent;
 use Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler;
+use Claroline\CoreBundle\Library\Normalizer\DateNormalizer;
 use Claroline\CoreBundle\Library\Normalizer\DateRangeNormalizer;
+use Claroline\CoreBundle\Manager\FacetManager;
+use Claroline\CoreBundle\Manager\Workspace\WorkspaceUserQueueManager;
 use Claroline\CoreBundle\Repository\Facet\FieldFacetRepository;
 use Claroline\CoreBundle\Repository\Facet\FieldFacetValueRepository;
 use Claroline\CoreBundle\Repository\User\RoleRepository;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
@@ -35,19 +34,19 @@ class UserSerializer
     /** @var AuthorizationCheckerInterface */
     private $authorization;
     /** @var ObjectManager */
-    protected $om;
+    private $om;
     /** @var PlatformConfigurationHandler */
     private $config;
     /** @var PublicFileSerializer */
     private $fileSerializer;
     /** @var OrganizationSerializer */
     private $organizationSerializer;
-    /** @var FieldFacetValueSerializer */
-    private $fieldFacetValueSerializer;
-    /** @var ContainerInterface */
-    private $container;
     /** @var StrictDispatcher */
     private $eventDispatcher;
+    /** @var FacetManager */
+    private $facetManager;
+    /** @var WorkspaceUserQueueManager */
+    private $workspaceUserQueueManager;
 
     private $organizationRepo;
     /** @var RoleRepository */
@@ -63,20 +62,20 @@ class UserSerializer
         ObjectManager $om,
         PlatformConfigurationHandler $config,
         PublicFileSerializer $fileSerializer,
-        ContainerInterface $container,
         StrictDispatcher $eventDispatcher,
         OrganizationSerializer $organizationSerializer,
-        FieldFacetValueSerializer $fieldFacetValueSerializer
+        FacetManager $facetManager,
+        WorkspaceUserQueueManager $workspaceUserQueueManager
     ) {
         $this->tokenStorage = $tokenStorage;
         $this->authorization = $authorization;
         $this->om = $om;
         $this->config = $config;
         $this->fileSerializer = $fileSerializer;
-        $this->container = $container;
         $this->eventDispatcher = $eventDispatcher;
         $this->organizationSerializer = $organizationSerializer;
-        $this->fieldFacetValueSerializer = $fieldFacetValueSerializer;
+        $this->facetManager = $facetManager;
+        $this->workspaceUserQueueManager = $workspaceUserQueueManager;
 
         $this->organizationRepo = $om->getRepository(Organization::class);
         $this->roleRepo = $om->getRepository(Role::class);
@@ -111,7 +110,7 @@ class UserSerializer
         $showEmailRoles = $this->config->getParameter('profile.show_email') ?? [];
         $showEmail = false;
         if ($token) {
-            $isOwner = $token->getUser() instanceof User && $token->getUser()->getUuid() === $user->getUuid();
+            $isOwner = $token->getUser() instanceof User && $token->getUser()->getId() === $user->getId();
             $showEmail = $isOwner || !empty(array_filter($token->getRoleNames(), function (string $role) use ($showEmailRoles) {
                 return 'ROLE_ADMIN' === $role || in_array($role, $showEmailRoles);
             }));
@@ -130,7 +129,6 @@ class UserSerializer
             'administrativeCode' => $user->getAdministrativeCode(),
             'phone' => $showEmail ? $user->getPhone() : null,
             'meta' => $this->serializeMeta($user),
-            'publicUrl' => $user->getPublicUrl(), // todo : merge with the one from meta (I do it to have it in minimal)
             'permissions' => $this->serializePermissions($user),
             'restrictions' => $this->serializeRestrictions($user),
         ];
@@ -159,8 +157,6 @@ class UserSerializer
 
             $serializedUser = array_merge($serializedUser, [
                 'poster' => $this->serializePoster($user),
-                'meta' => $this->serializeMeta($user),
-                'restrictions' => $this->serializeRestrictions($user),
                 'roles' => array_merge($userRoles, $groupRoles),
                 'groups' => array_values(array_map(function (Group $group) { // todo use group serializer with minimal option
                     return [
@@ -186,32 +182,16 @@ class UserSerializer
                 $serializedUser['profile'] = [];
                 foreach ($fields as $field) {
                     // we just flatten field facets in the base user structure
-                    $serializedUser['profile'][$field->getFieldFacet()->getUuid()] = $field->getValue();
+                    $serializedUser['profile'][$field->getFieldFacet()->getUuid()] = $this->facetManager->serializeFieldValue(
+                        $user,
+                        $field->getType(),
+                        $field->getValue()
+                    );
                 }
             }
         }
 
-        return $this->decorate($user, $serializedUser);
-    }
-
-    /**
-     * Dispatches an event to let plugins add some custom data to the serialized user.
-     * For example: AuthenticationBundle adds CAS Id to the serialized user.
-     */
-    private function decorate(User $user, array $serializedUser): array
-    {
-        $unauthorizedKeys = array_keys($serializedUser);
-
-        /** @var DecorateUserEvent $event */
-        $event = $this->eventDispatcher->dispatch('serialize_user', 'User\DecorateUser', [
-            $user,
-            $unauthorizedKeys,
-        ]);
-
-        return array_merge(
-            $serializedUser,
-            $event->getInjectedData()
-        );
+        return $serializedUser;
     }
 
     /**
@@ -235,12 +215,7 @@ class UserSerializer
         return null;
     }
 
-    /**
-     * Serialize the user poster.
-     *
-     * @return array|null
-     */
-    private function serializePoster(User $user)
+    private function serializePoster(User $user): ?array
     {
         if (!empty($user->getPoster())) {
             /** @var PublicFile $file */
@@ -256,12 +231,7 @@ class UserSerializer
         return null;
     }
 
-    /**
-     * Serialize the user thumbnail.
-     *
-     * @return array|null
-     */
-    private function serializeThumbnail(User $user)
+    private function serializeThumbnail(User $user): ?array
     {
         if (!empty($user->getThumbnail())) {
             /** @var PublicFile $file */
@@ -285,15 +255,12 @@ class UserSerializer
         }
 
         return [
-            'publicUrl' => $user->getPublicUrl(),
-            'publicUrlTuned' => $user->hasTunedPublicUrl(),
             'acceptedTerms' => $user->hasAcceptedTerms(),
-            'lastLogin' => $user->getLastLogin() ? $user->getLastLogin()->format('Y-m-d\TH:i:s') : null,
-            'created' => $user->getCreated() ? $user->getCreated()->format('Y-m-d\TH:i:s') : null,
+            'lastLogin' => DateNormalizer::normalize($user->getLastLogin()),
+            'created' => DateNormalizer::normalize($user->getCreated()),
             'description' => $user->getDescription(),
             'mailValidated' => $user->isMailValidated(),
             'mailNotified' => $user->isMailNotified(),
-            'authentication' => $user->getAuthentication(),
             'personalWorkspace' => (bool) $user->getPersonalWorkspace(),
             'locale' => $locale,
         ];
@@ -313,12 +280,6 @@ class UserSerializer
         } else {
             // use given locale
             $user->setLocale($meta['locale']);
-        }
-
-        // tune public URL
-        if (!empty($meta['publicUrl']) && $meta['publicUrl'] !== $user->getPublicUrl()) {
-            $user->setPublicUrl($meta['publicUrl']);
-            $user->setHasTunedPublicUrl(true);
         }
     }
 
@@ -411,11 +372,11 @@ class UserSerializer
             $organization = $this->om->getObject($data['mainOrganization'], Organization::class, ['id', 'code', 'name', 'email']);
 
             if ($organization) {
-                $user->addOrganization($organization);
                 $user->setMainOrganization($organization);
             }
         }
 
+        // TODO : this should not be done here
         //only add role here. If we want to remove them, use the crud remove method instead
         //it's useful if we want to create a user with a list of roles
         if (isset($data['roles'])) {
@@ -434,20 +395,12 @@ class UserSerializer
                     ]);
                 }
 
-                // TODO : this should not be done here
                 if ($role && $role->getId()) {
                     $roleWs = $role->getWorkspace();
                     if (in_array(Options::WORKSPACE_VALIDATE_ROLES, $options) && Role::WS_ROLE === $role->getType() && $roleWs->getRegistrationValidation()) {
                         if (!$user->hasRole($role)) {
-                            $workspaceManager = $this->container->get('claroline.manager.workspace_manager');
-
-                            if (!$workspaceManager->isUserInValidationQueue($roleWs, $user)) {
-                                //for some reason the workspace add manager queue is broken here. Probably it's the log fault
-                                $queue = new WorkspaceRegistrationQueue();
-                                $queue->setUser($user);
-                                $queue->setRole($role);
-                                $queue->setWorkspace($roleWs);
-                                $this->om->persist($queue);
+                            if (!$this->workspaceUserQueueManager->isUserInValidationQueue($roleWs, $user)) {
+                                $this->workspaceUserQueueManager->addUserQueue($roleWs, $user, $role);
                             }
                         }
                     } else {
@@ -457,6 +410,7 @@ class UserSerializer
             }
         }
 
+        // TODO : this should not be done here
         //only add groups here. If we want to remove them, use the crud remove method instead
         //it's useful if we want to create a user with a list of roles
         if (isset($data['groups'])) {
@@ -491,24 +445,30 @@ class UserSerializer
             }
         }
 
-        $fieldFacets = $this->fieldFacetRepo->findPlatformFieldFacets();
-        foreach ($fieldFacets as $fieldFacet) {
-            if (isset($data['profile']) && isset($data['profile'][$fieldFacet->getUuid()])) {
-                /** @var FieldFacetValue $fieldFacetValue */
-                $fieldFacetValue = $this->om
-                    ->getRepository(FieldFacetValue::class)
-                    ->findOneBy([
-                        'user' => $user,
-                        'fieldFacet' => $fieldFacet,
-                    ]) ?? new FieldFacetValue();
+        if (isset($data['profile'])) {
+            $fieldFacets = $this->fieldFacetRepo->findPlatformFieldFacets();
+            foreach ($fieldFacets as $fieldFacet) {
+                if (array_key_exists($fieldFacet->getUuid(), $data['profile'])) {
+                    /** @var FieldFacetValue $fieldFacetValue */
+                    $fieldFacetValue = $this->fieldFacetValueRepo // TODO : retrieve all values at once for performances
+                        ->findOneBy([
+                            'user' => $user,
+                            'fieldFacet' => $fieldFacet,
+                        ]) ?? new FieldFacetValue();
 
-                $user->addFieldFacet(
-                    $this->fieldFacetValueSerializer->deserialize([
-                        'name' => $fieldFacet->getName(),
-                        'value' => $data['profile'][$fieldFacet->getUuid()],
-                        'fieldFacet' => ['id' => $fieldFacet->getUuid()],
-                    ], $fieldFacetValue)
-                );
+                    $fieldFacetValue->setUser($user);
+                    $fieldFacetValue->setFieldFacet($fieldFacet);
+
+                    $fieldFacetValue->setValue(
+                        $this->facetManager->deserializeFieldValue(
+                            $user,
+                            $fieldFacet->getType(),
+                            $data['profile'][$fieldFacet->getUuid()]
+                        )
+                    );
+
+                    $this->om->persist($fieldFacetValue);
+                }
             }
         }
 

@@ -11,3 +11,23 @@ services:
             - method: setPlanningManager
               arguments:
                   - '@Claroline\CoreBundle\Manager\PlanningManager'
+
+    Claroline\CoreBundle\Subscriber\GlobalSearchSubscriber:
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\AppBundle\API\SerializerProvider'
+        tags:
+            - { name: kernel.event_subscriber }
+
+    Claroline\CoreBundle\Subscriber\Location\RoomPlanningSubscriber:
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+        tags:
+            - { name: kernel.event_subscriber }
+
+    Claroline\CoreBundle\Subscriber\Facet\OrganizationFieldSubscriber:
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\AppBundle\API\SerializerProvider'
+        tags:
+            - { name: kernel.event_subscriber }

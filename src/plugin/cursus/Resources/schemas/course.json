@@ -21,7 +21,7 @@
       "description": "The course description"
     },
     "meta": {
-      "type": ["object"],
+      "type": "object",
       "properties": {
         "workspaceModel": {
           "type": ["object", "null"],
@@ -52,13 +52,21 @@
         "duration": {
           "type": "number",
           "description": "The default duration in days of session"
-        },
+        }
+      }
+    },
+    "display": {
+      "type": "object",
+      "properties": {
         "order": {
           "type": "integer",
           "description": "The course display order"
+        },
+        "hideSessions": {
+          "type": "boolean",
+          "description": "Display or hide sessions to users"
         }
-      },
-      "required": ["order"]
+      }
     },
     "restrictions": {
       "type": "object",

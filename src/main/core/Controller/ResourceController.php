@@ -11,20 +11,18 @@
 
 namespace Claroline\CoreBundle\Controller;
 
-use Claroline\AppBundle\API\FinderProvider;
 use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\AppBundle\Controller\RequestDecoderTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\Entity\Resource\MenuAction;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
-use Claroline\CoreBundle\Entity\Resource\ResourceRights;
 use Claroline\CoreBundle\Exception\ResourceNotFoundException;
 use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
+use Claroline\CoreBundle\Library\RoutingHelper;
 use Claroline\CoreBundle\Manager\Resource\ResourceActionManager;
 use Claroline\CoreBundle\Manager\Resource\ResourceRestrictionsManager;
 use Claroline\CoreBundle\Manager\ResourceManager;
-use Claroline\CoreBundle\Repository\Resource\ResourceRightsRepository;
 use Claroline\CoreBundle\Security\Collection\ResourceCollection;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -64,21 +62,19 @@ class ResourceController
     private $restrictionsManager;
     /** @var ObjectManager */
     private $om;
-    /** @var FinderProvider */
-    private $finder;
-    /** @var ResourceRightsRepository */
-    private $rightsRepo;
+    /** @var RoutingHelper */
+    private $routing;
 
     public function __construct(
         TokenStorageInterface $tokenStorage,
         Environment $templating,
-        FinderProvider $finder,
         SerializerProvider $serializer,
         ResourceManager $manager,
         ResourceActionManager $actionManager,
         ResourceRestrictionsManager $restrictionsManager,
         ObjectManager $om,
-        AuthorizationCheckerInterface $authorization
+        AuthorizationCheckerInterface $authorization,
+        RoutingHelper $routing
     ) {
         $this->tokenStorage = $tokenStorage;
         $this->templating = $templating;
@@ -87,9 +83,8 @@ class ResourceController
         $this->actionManager = $actionManager;
         $this->restrictionsManager = $restrictionsManager;
         $this->om = $om;
-        $this->rightsRepo = $om->getRepository(ResourceRights::class);
         $this->authorization = $authorization;
-        $this->finder = $finder;
+        $this->routing = $routing;
     }
 
     /**
@@ -167,14 +162,11 @@ class ResourceController
     /**
      * Downloads a list of Resources.
      *
-     * @Route("/download", name="claro_resource_download", defaults={"forceArchive"=false})
-     * @Route("/download/{forceArchive}", name="claro_resource_download", requirements={"forceArchive"="^(true|false|0|1)$"})
-     *
-     * @param bool $forceArchive
+     * @Route("/download", name="claro_resource_download")
      *
      * @return JsonResponse|BinaryFileResponse
      */
-    public function downloadAction(Request $request, $forceArchive = false)
+    public function downloadAction(Request $request)
     {
         $nodes = $this->decodeIdsString($request, ResourceNode::class);
 
@@ -183,7 +175,7 @@ class ResourceController
             throw new AccessDeniedException($collection->getErrorsForDisplay());
         }
 
-        $data = $this->manager->download($nodes, $forceArchive);
+        $data = $this->manager->download($nodes);
 
         $file = $data['file'];
         $fileName = $data['name'];

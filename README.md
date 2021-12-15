@@ -26,7 +26,7 @@ file. For an installation from scratch, the commands would be:
     cd Claroline
     composer install --no-dev --optimize-autoloader
 
-    npm install
+    npm install (for npm 7+ you need to pass --legacy-peer-deps)
     npm run webpack
     
     php bin/console claroline:install -vvv
@@ -39,7 +39,7 @@ As a developer, by using Docker you can quickly get the platform running in DEV 
 
 You can also develop a custom theme in watch mode.
 
-To learn more: [Docker instructions](doc/sections/docker.md)
+To learn more: [Docker instructions](docs/sections/dev/docker.md)
 
 Upgrade 13.x
 -------
@@ -127,7 +127,7 @@ For a development installation, you'll need at least:
 - MySQL/MariaDB >= 8.0
 - [composer][composer] (recent version)
 - [node.js][node] >= 10
-- [npm][npm] >= 6
+- [npm][npm] >= 6 (for 7+ you need to pass --legacy-peer-deps)
 
 It's also highly recommended to develop on an UNIX-like OS.
 

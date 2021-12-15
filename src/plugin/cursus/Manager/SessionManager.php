@@ -15,10 +15,10 @@ use Claroline\AppBundle\API\Crud;
 use Claroline\AppBundle\Manager\PlatformManager;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\Entity\Role;
-use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\CoreBundle\Event\CatalogEvents\MessageEvents;
 use Claroline\CoreBundle\Event\SendMessageEvent;
+use Claroline\CoreBundle\Library\Normalizer\DateRangeNormalizer;
 use Claroline\CoreBundle\Library\RoutingHelper;
 use Claroline\CoreBundle\Manager\RoleManager;
 use Claroline\CoreBundle\Manager\Template\TemplateManager;
@@ -34,7 +34,6 @@ use Claroline\CursusBundle\Event\Log\LogSessionUserRegistrationEvent;
 use Claroline\CursusBundle\Event\Log\LogSessionUserUnregistrationEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class SessionManager
@@ -57,8 +56,6 @@ class SessionManager
     private $routingHelper;
     /** @var TemplateManager */
     private $templateManager;
-    /** @var TokenStorageInterface */
-    private $tokenStorage;
     /** @var WorkspaceManager */
     private $workspaceManager;
     /** @var EventManager */
@@ -78,7 +75,6 @@ class SessionManager
         RoleManager $roleManager,
         RoutingHelper $routingHelper,
         TemplateManager $templateManager,
-        TokenStorageInterface $tokenStorage,
         WorkspaceManager $workspaceManager,
         EventManager $sessionEventManager
     ) {
@@ -91,7 +87,6 @@ class SessionManager
         $this->roleManager = $roleManager;
         $this->routingHelper = $routingHelper;
         $this->templateManager = $templateManager;
-        $this->tokenStorage = $tokenStorage;
         $this->workspaceManager = $workspaceManager;
         $this->sessionEventManager = $sessionEventManager;
 
@@ -137,32 +132,28 @@ class SessionManager
      */
     public function generateWorkspace(Session $session): Workspace
     {
-        /** @var User $user */
-        $user = $this->tokenStorage->getToken()->getUser();
-
         $course = $session->getCourse();
+
+        $model = null;
         if (!empty($course->getWorkspaceModel())) {
-            $model = $course->getWorkspaceModel();
-        } else {
-            $model = $this->workspaceManager->getDefaultModel();
+            $model = ['id' => $course->getWorkspaceModel()->getUuid()];
         }
 
-        $workspace = new Workspace();
-        $workspace->setName($session->getName());
-        $workspace->setCode($this->workspaceManager->getUniqueCode($session->getCode()));
-
-        $workspace = $this->workspaceManager->copy($model, $workspace);
-
-        $workspace->setCreator($user);
-
-        $workspace->setDescription($session->getDescription());
-        $workspace->setPoster($session->getPoster());
-        $workspace->setThumbnail($session->getThumbnail());
-        $workspace->setAccessibleFrom($session->getStartDate());
-        $workspace->setAccessibleUntil($session->getEndDate());
-        $workspace->setHidden($course->isHidden());
-
-        $this->om->persist($workspace);
+        /** @var Workspace $workspace */
+        $workspace = $this->crud->create(Workspace::class, [
+            'name' => $session->getName(),
+            'code' => $session->getCode(),
+            'thumbnail' => ['url' => $session->getThumbnail()],
+            'poster' => ['url' => $session->getPoster()],
+            'model' => $model,
+            'meta' => [
+                'description' => $session->getDescription(),
+            ],
+            'restrictions' => [
+                'dates' => DateRangeNormalizer::normalize($session->getStartDate(), $session->getEndDate()),
+                'hidden' => $session->isHidden(),
+            ],
+        ]);
 
         return $workspace;
     }
@@ -212,6 +203,8 @@ class SessionManager
             }
         }
 
+        $this->checkUsersRegistration($session, $results);
+
         // TODO : what to do with this if he goes in pending state ?
 
         if ($session->getRegistrationMail()) {
@@ -225,16 +218,8 @@ class SessionManager
             foreach ($course->getChildren() as $childCourse) {
                 $childSession = $childCourse->getDefaultSession();
                 if ($childSession && !$childSession->isTerminated()) {
-                    $this->addUsers($childSession, $users);
+                    $this->addUsers($childSession, $users, $type);
                 }
-            }
-        }
-
-        // registers users to linked events
-        $events = $session->getEvents();
-        foreach ($events as $event) {
-            if (Session::REGISTRATION_AUTO === $event->getRegistrationType() && !$event->isTerminated()) {
-                $this->sessionEventManager->addUsers($event, $users);
             }
         }
 
@@ -243,6 +228,9 @@ class SessionManager
         return $results;
     }
 
+    /**
+     * @param SessionUser[] $sessionUsers
+     */
     public function removeUsers(Session $session, array $sessionUsers)
     {
         foreach ($sessionUsers as $sessionUser) {
@@ -250,15 +238,37 @@ class SessionManager
 
             // unregister user from the linked workspace
             if ($session->getWorkspace()) {
-                $this->workspaceManager->unregister($sessionUser->getUser(), $session->getWorkspace());
+                $this->workspaceManager->unregister($sessionUser->getUser(), $session->getWorkspace(), [Crud::NO_PERMISSIONS]);
             }
 
-            // TODO : unregister from events
+            // unregister user from linked events
+            $eventRegistrations = $this->sessionEventManager->getBySessionAndUser($session, $sessionUser->getUser());
+            foreach ($eventRegistrations as $eventRegistration) {
+                $this->sessionEventManager->removeUsers($eventRegistration->getEvent(), [$eventRegistration]);
+            }
 
             $this->eventDispatcher->dispatch(new LogSessionUserUnregistrationEvent($sessionUser), 'log');
         }
 
         $this->om->flush();
+    }
+
+    /**
+     * @param SessionUser[] $sessionUsers
+     */
+    public function moveUsers(Session $originalSession, Session $targetSession, array $sessionUsers, string $type = AbstractRegistration::LEARNER)
+    {
+        $this->om->startFlushSuite();
+
+        // unregister users from current session
+        $this->removeUsers($originalSession, $sessionUsers);
+
+        // register to the new session
+        $this->addUsers($targetSession, array_map(function (SessionUser $sessionUser) {
+            return $sessionUser->getUser();
+        }, $sessionUsers), $type, true);
+
+        $this->om->endFlushSuite();
     }
 
     /**
@@ -273,13 +283,9 @@ class SessionManager
         foreach ($sessionUsers as $sessionUser) {
             $sessionUser->setConfirmed(true);
             $this->om->persist($sessionUser);
-
-            // grant workspace role if registration is fully validated
-            $role = AbstractRegistration::TUTOR === $sessionUser->getType() ? $session->getTutorRole() : $session->getLearnerRole();
-            if ($role && $sessionUser->isValidated() && $sessionUser->isConfirmed() && !$sessionUser->getUser()->hasRole($role->getName())) {
-                $this->crud->patch($sessionUser->getUser(), 'role', Crud::COLLECTION_ADD, [$role], [Crud::NO_PERMISSIONS]);
-            }
         }
+
+        $this->checkUsersRegistration($session, $sessionUsers);
 
         $this->om->endFlushSuite();
 
@@ -299,6 +305,8 @@ class SessionManager
             $sessionUser->setValidated(true);
             $this->om->persist($sessionUser);
         }
+
+        $this->checkUsersRegistration($session, $sessionUsers);
 
         $this->om->endFlushSuite();
 
@@ -348,6 +356,25 @@ class SessionManager
             }
         }
 
+        // registers groups to linked trainings
+        $course = $session->getCourse();
+        if ($course->getPropagateRegistration() && !empty($course->getChildren())) {
+            foreach ($course->getChildren() as $childCourse) {
+                $childSession = $childCourse->getDefaultSession();
+                if ($childSession && !$childSession->isTerminated()) {
+                    $this->addGroups($childSession, $groups);
+                }
+            }
+        }
+
+        // registers groups to linked events
+        $events = $session->getEvents();
+        foreach ($events as $event) {
+            if (Session::REGISTRATION_AUTO === $event->getRegistrationType() && !$event->isTerminated()) {
+                $this->sessionEventManager->addGroups($event, $groups);
+            }
+        }
+
         if ($session->getRegistrationMail()) {
             $this->sendSessionInvitation($session, $users, false);
         }
@@ -357,6 +384,9 @@ class SessionManager
         return $results;
     }
 
+    /**
+     * @param SessionGroup[] $sessionGroups
+     */
     public function removeGroups(Session $session, array $sessionGroups)
     {
         foreach ($sessionGroups as $sessionGroup) {
@@ -367,12 +397,34 @@ class SessionManager
                 $this->workspaceManager->unregister($sessionGroup->getGroup(), $session->getWorkspace());
             }
 
-            // TODO : unregister from events
+            // unregister group from linked events
+            $eventRegistrations = $this->sessionEventManager->getBySessionAndGroup($session, $sessionGroup->getGroup());
+            foreach ($eventRegistrations as $eventRegistration) {
+                $this->sessionEventManager->removeGroups($eventRegistration->getEvent(), [$eventRegistration]);
+            }
 
             $this->eventDispatcher->dispatch(new LogSessionGroupUnregistrationEvent($sessionGroup), 'log');
         }
 
         $this->om->flush();
+    }
+
+    /**
+     * @param SessionGroup[] $sessionGroups
+     */
+    public function moveGroups(Session $originalSession, Session $targetSession, array $sessionGroups, string $type = AbstractRegistration::LEARNER)
+    {
+        $this->om->startFlushSuite();
+
+        // unregister users from current session
+        $this->removeGroups($originalSession, $sessionGroups);
+
+        // register to the new session
+        $this->addGroups($targetSession, array_map(function (SessionGroup $sessionGroup) {
+            return $sessionGroup->getGroup();
+        }, $sessionGroups), $type);
+
+        $this->om->endFlushSuite();
     }
 
     /**
@@ -521,6 +573,46 @@ class SessionManager
                 $title,
                 [$user]
             ), MessageEvents::MESSAGE_SENDING);
+        }
+    }
+
+    /**
+     * @param SessionUser[] $sessionUsers
+     */
+    private function checkUsersRegistration(Session $session, array $sessionUsers)
+    {
+        $fullyRegistered = [
+            AbstractRegistration::TUTOR => [],
+            AbstractRegistration::LEARNER => [],
+        ];
+
+        foreach ($sessionUsers as $sessionUser) {
+            if ($sessionUser->isValidated() && $sessionUser->isConfirmed()) {
+                // registration is fully validated
+                $fullyRegistered[$sessionUser->getType()][] = $sessionUser->getUser();
+
+                // grant workspace role if registration is fully validated
+                $role = AbstractRegistration::TUTOR === $sessionUser->getType() ? $session->getTutorRole() : $session->getLearnerRole();
+                if ($role && !$sessionUser->getUser()->hasRole($role->getName())) {
+                    $this->crud->patch($sessionUser->getUser(), 'role', Crud::COLLECTION_ADD, [$role], [Crud::NO_PERMISSIONS]);
+                }
+            }
+        }
+
+        if (!empty($fullyRegistered[AbstractRegistration::TUTOR]) || !empty($fullyRegistered[AbstractRegistration::LEARNER])) {
+            // registers users to linked events
+            $events = $session->getEvents();
+            foreach ($events as $event) {
+                if (Session::REGISTRATION_AUTO === $event->getRegistrationType() && !$event->isTerminated()) {
+                    if (!empty($fullyRegistered[AbstractRegistration::TUTOR])) {
+                        $this->sessionEventManager->addUsers($event, $fullyRegistered[AbstractRegistration::TUTOR], AbstractRegistration::TUTOR);
+                    }
+
+                    if (!empty($fullyRegistered[AbstractRegistration::LEARNER])) {
+                        $this->sessionEventManager->addUsers($event, $fullyRegistered[AbstractRegistration::LEARNER], AbstractRegistration::LEARNER);
+                    }
+                }
+            }
         }
     }
 }

@@ -12,6 +12,7 @@
 namespace Claroline\CursusBundle\Controller;
 
 use Claroline\AppBundle\Controller\AbstractCrudController;
+use Claroline\AppBundle\Manager\PdfManager;
 use Claroline\CoreBundle\Entity\Group;
 use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CoreBundle\Entity\User;
@@ -24,7 +25,6 @@ use Claroline\CursusBundle\Entity\Registration\EventGroup;
 use Claroline\CursusBundle\Entity\Registration\EventUser;
 use Claroline\CursusBundle\Entity\Session;
 use Claroline\CursusBundle\Manager\EventManager;
-use Dompdf\Dompdf;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -48,17 +48,21 @@ class EventController extends AbstractCrudController
     private $translator;
     /** @var EventManager */
     private $manager;
+    /** @var PdfManager */
+    private $pdfManager;
 
     public function __construct(
         AuthorizationCheckerInterface $authorization,
         TokenStorageInterface $tokenStorage,
         TranslatorInterface $translator,
-        EventManager $manager
+        EventManager $manager,
+        PdfManager $pdfManager
     ) {
         $this->authorization = $authorization;
         $this->tokenStorage = $tokenStorage;
         $this->translator = $translator;
         $this->manager = $manager;
+        $this->pdfManager = $pdfManager;
     }
 
     public function getName()
@@ -80,11 +84,16 @@ class EventController extends AbstractCrudController
     {
         if (!$this->authorization->isGranted('ROLE_ADMIN')) {
             $user = $this->tokenStorage->getToken()->getUser();
+            if ($user instanceof User) {
+                $organizations = $user->getOrganizations();
+            } else {
+                $organizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
+            }
 
             return [
                 'organizations' => array_map(function (Organization $organization) {
                     return $organization->getUuid();
-                }, $user->getOrganizations()),
+                }, $organizations),
             ];
         }
 
@@ -140,9 +149,9 @@ class EventController extends AbstractCrudController
         $this->checkPermission('OPEN', $sessionEvent, [], true);
 
         $user = $this->tokenStorage->getToken()->getUser();
-        $registrations = [];
+        $registration = [];
         if ($user instanceof User) {
-            $registrations = [
+            $registration = [
                 'users' => $this->finder->search(EventUser::class, ['filters' => [
                     'user' => $user->getUuid(),
                     'event' => $sessionEvent->getUuid(),
@@ -156,7 +165,7 @@ class EventController extends AbstractCrudController
 
         return new JsonResponse([
             'event' => $this->serializer->serialize($sessionEvent),
-            'registrations' => $registrations,
+            'registration' => $registration,
         ]);
     }
 
@@ -168,20 +177,29 @@ class EventController extends AbstractCrudController
     {
         $this->checkPermission('OPEN', $sessionEvent, [], true);
 
-        $domPdf = new Dompdf([
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true,
-        ]);
-        $domPdf->loadHtml($this->manager->generateFromTemplate($sessionEvent, $request->getLocale()));
-
-        // Render the HTML as PDF
-        $domPdf->render();
-
-        return new StreamedResponse(function () use ($domPdf) {
-            echo $domPdf->output();
+        return new StreamedResponse(function () use ($sessionEvent, $request) {
+            echo $this->pdfManager->fromHtml(
+                $this->manager->generateFromTemplate($sessionEvent, $request->getLocale())
+            );
         }, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename='.TextNormalizer::toKey($sessionEvent->getName()).'.pdf',
+        ]);
+    }
+
+    /**
+     * @Route("/{id}/ics", name="apiv2_cursus_event_download_ics", methods={"GET"})
+     * @EXT\ParamConverter("sessionEvent", class="Claroline\CursusBundle\Entity\Event", options={"mapping": {"id": "uuid"}})
+     */
+    public function downloadICSAction(Event $sessionEvent): StreamedResponse
+    {
+        $this->checkPermission('OPEN', $sessionEvent, [], true);
+
+        return new StreamedResponse(function () use ($sessionEvent) {
+            echo $this->manager->getICS($sessionEvent);
+        }, 200, [
+            'Content-Type' => 'text/calendar',
+            'Content-Disposition' => 'attachment; filename='.TextNormalizer::toKey($sessionEvent->getName()).'.ics',
         ]);
     }
 
@@ -231,7 +249,7 @@ class EventController extends AbstractCrudController
      */
     public function inviteAllAction(Event $sessionEvent): JsonResponse
     {
-        $this->checkPermission('EDIT', $sessionEvent, [], true);
+        $this->checkPermission('REGISTER', $sessionEvent, [], true);
 
         $this->manager->inviteAllSessionEventLearners($sessionEvent);
 
@@ -265,7 +283,7 @@ class EventController extends AbstractCrudController
      */
     public function addUsersAction(Event $sessionEvent, string $type, Request $request): JsonResponse
     {
-        $this->checkPermission('EDIT', $sessionEvent, [], true);
+        $this->checkPermission('REGISTER', $sessionEvent, [], true);
 
         $users = $this->decodeIdsString($request, User::class);
         $nbUsers = count($users);
@@ -289,7 +307,7 @@ class EventController extends AbstractCrudController
      */
     public function removeUsersAction(Event $sessionEvent, Request $request): JsonResponse
     {
-        $this->checkPermission('EDIT', $sessionEvent, [], true);
+        $this->checkPermission('REGISTER', $sessionEvent, [], true);
 
         $sessionEventUsers = $this->decodeIdsString($request, EventUser::class);
         $this->manager->removeUsers($sessionEvent, $sessionEventUsers);
@@ -303,7 +321,7 @@ class EventController extends AbstractCrudController
      */
     public function inviteUsersAction(Event $sessionEvent, Request $request): JsonResponse
     {
-        $this->checkPermission('EDIT', $sessionEvent, [], true);
+        $this->checkPermission('REGISTER', $sessionEvent, [], true);
 
         $sessionUsers = $this->decodeIdsString($request, EventUser::class);
         $this->manager->sendSessionEventInvitation($sessionEvent, array_map(function (EventUser $sessionUser) {
@@ -339,7 +357,7 @@ class EventController extends AbstractCrudController
      */
     public function addGroupsAction(Event $sessionEvent, string $type, Request $request): JsonResponse
     {
-        $this->checkPermission('EDIT', $sessionEvent, [], true);
+        $this->checkPermission('REGISTER', $sessionEvent, [], true);
 
         $groups = $this->decodeIdsString($request, Group::class);
         $nbUsers = 0;
@@ -367,7 +385,7 @@ class EventController extends AbstractCrudController
      */
     public function removeGroupsAction(Event $sessionEvent, Request $request): JsonResponse
     {
-        $this->checkPermission('EDIT', $sessionEvent, [], true);
+        $this->checkPermission('REGISTER', $sessionEvent, [], true);
 
         $sessionGroups = $this->decodeIdsString($request, EventGroup::class);
         $this->manager->removeGroups($sessionEvent, $sessionGroups);
@@ -381,7 +399,7 @@ class EventController extends AbstractCrudController
      */
     public function inviteGroupsAction(Event $sessionEvent, Request $request): JsonResponse
     {
-        $this->checkPermission('EDIT', $sessionEvent, [], true);
+        $this->checkPermission('REGISTER', $sessionEvent, [], true);
 
         $sessionGroups = $this->decodeIdsString($request, EventGroup::class);
         $users = [];

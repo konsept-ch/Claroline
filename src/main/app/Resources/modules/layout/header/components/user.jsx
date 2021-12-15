@@ -88,7 +88,7 @@ const UserMenu = props =>
           <Button
             type={LINK_BUTTON}
             className="btn btn-block"
-            label={trans('self-register', {}, 'actions')}
+            label={trans('create-account', {}, 'actions')}
             target="/registration"
             onClick={props.closeMenu}
             active={false}
@@ -165,7 +165,6 @@ UserMenu.propTypes = {
     name: T.string,
     username: T.string,
     email: T.string,
-    publicUrl: T.string,
     picture: T.shape({
       url: T.string.isRequired
     }),
@@ -249,7 +248,6 @@ HeaderUser.propTypes = {
     name: T.string,
     username: T.string,
     email: T.string,
-    publicUrl: T.string,
     picture: T.shape({
       url: T.string.isRequired
     }),

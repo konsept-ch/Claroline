@@ -22,26 +22,14 @@ services:
         calls:
             - setLogger: [ '@logger' ]
 
-    claroline.manager.database_manager:
-        alias: Claroline\AppBundle\Manager\DatabaseManager
-        public: true
-
     Claroline\AppBundle\Manager\CommandManager:
         arguments:
             - '@kernel'
-
-    claroline.manager.command_manager:
-        alias: Claroline\AppBundle\Manager\CommandManager
-        public: true
 
     Claroline\AppBundle\Manager\CacheManager:
         arguments:
             - '@Claroline\AppBundle\Event\StrictDispatcher'
             - '@kernel'
-
-    claroline.manager.cache_manager:
-        alias: Claroline\AppBundle\Manager\CacheManager
-        public: true
 
     Claroline\AppBundle\Manager\File\TempFileManager:
         arguments:
@@ -55,3 +43,8 @@ services:
         arguments:
             - '@Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler'
             - '@Claroline\CoreBundle\Manager\ContentManager'
+
+    Claroline\AppBundle\Manager\PdfManager:
+        arguments:
+            - '@twig'
+            - '@Claroline\AppBundle\Manager\PlatformManager'

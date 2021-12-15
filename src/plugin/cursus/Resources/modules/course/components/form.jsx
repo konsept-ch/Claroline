@@ -1,5 +1,6 @@
 import React from 'react'
 import {PropTypes as T} from 'prop-types'
+import get from 'lodash/get'
 
 import {trans} from '#/main/app/intl/translation'
 import {param} from '#/main/app/config'
@@ -98,13 +99,17 @@ const CourseForm = (props) =>
             type: 'image',
             label: trans('thumbnail')
           }, {
-            name: 'meta.order',
+            name: 'display.order',
             type: 'number',
             label: trans('order'),
             required: true,
             options: {
               min: 0
             }
+          }, {
+            name: 'display.hideSessions',
+            type: 'boolean',
+            label: trans('hide_sessions', {}, 'cursus')
           }
         ]
       }, {
@@ -139,27 +144,75 @@ const CourseForm = (props) =>
             help: trans('self_registration_training_help', {}, 'cursus'),
             onChange: (checked) => {
               if (!checked) {
+                props.update(props.name, 'registration.autoRegistration', false)
                 props.update(props.name, 'registration.validation', false)
+                props.update(props.name, 'registration.pendingRegistrations', false)
               }
             },
             linked: [
               {
-                name: 'registration.validation',
+                name: 'registration._selfRegistrationMode',
+                type: 'choice',
+                label: trans('mode'),
+                displayed: (course) => get(course, 'registration.selfRegistration'),
+                calculated: (course) => {
+                  if (get(course, 'registration.autoRegistration')) {
+                    return 'auto'
+                  } else if (get(course, 'registration.validation')) {
+                    return 'validation'
+                  }
+
+                  return 'simple'
+                },
+                required: true,
+                options: {
+                  condensed: false,
+                  choices: {
+                    simple: trans('simple_registration', {}, 'cursus'),
+                    validation: trans('validate_registration', {}, 'cursus'),
+                    auto: trans('auto_registration', {}, 'cursus')
+                  }
+                },
+                onChange: (registrationMode) => {
+                  switch (registrationMode) {
+                    case 'simple':
+                      props.update(props.name, 'registration.autoRegistration', false)
+                      props.update(props.name, 'registration.validation', false)
+                      break
+
+                    case 'auto':
+                      props.update(props.name, 'registration.autoRegistration', true)
+
+                      // reset incompatible options
+                      props.update(props.name, 'restrictions._restrictUsers', false)
+                      props.update(props.name, 'restrictions.users', null)
+                      props.update(props.name, 'registration.mail', false)
+                      props.update(props.name, 'registration.validation', false)
+                      props.update(props.name, 'registration.userValidation', false)
+                      props.update(props.name, 'registration.selfUnregistration', false)
+                      props.update(props.name, 'registration.pendingRegistrations', false)
+                      break
+
+                    case 'validation':
+                      props.update(props.name, 'registration.validation', true)
+
+                      // reset incompatible options
+                      props.update(props.name, 'registration.autoRegistration', false)
+                      break
+                  }
+                }
+              }, {
+                name: 'registration.pendingRegistrations',
                 type: 'boolean',
-                label: trans('validate_registration'),
-                help: trans('validate_registration_help', {}, 'cursus'),
-                displayed: (course) => course.registration && course.registration.selfRegistration
+                label: trans('enable_course_pending_list', {}, 'cursus'),
+                displayed: (course) => get(course, 'registration.selfRegistration') && !get(course, 'registration.autoRegistration')
               }
             ]
-          }, {
-            name: 'registration.selfUnregistration',
-            type: 'boolean',
-            label: trans('activate_self_unregistration'),
-            help: trans('self_unregistration_training_help', {}, 'cursus')
           }, {
             name: 'registration.mail',
             type: 'boolean',
             label: trans('registration_send_mail', {}, 'cursus'),
+            displayed: (course) => !get(course, 'registration.autoRegistration'),
             onChange: (checked) => {
               if (!checked) {
                 props.update(props.name, 'registration.userValidation', false)
@@ -171,9 +224,15 @@ const CourseForm = (props) =>
                 type: 'boolean',
                 label: trans('registration_user_validation', {}, 'cursus'),
                 help: trans('registration_user_validation_help', {}, 'cursus'),
-                displayed: (course) => course.registration && course.registration.mail
+                displayed: (course) => get(course, 'registration.mail')
               }
             ]
+          }, {
+            name: 'registration.selfUnregistration',
+            type: 'boolean',
+            label: trans('activate_self_unregistration'),
+            help: trans('self_unregistration_training_help', {}, 'cursus'),
+            displayed: (course) => !get(course, 'registration.autoRegistration')
           }, {
             name: 'registration.propagate',
             type: 'boolean',
@@ -313,7 +372,7 @@ const CourseForm = (props) =>
             name: 'restrictions._restrictUsers',
             type: 'boolean',
             label: trans('restrict_users_count'),
-            calculated: (course) => !!course.restrictions.users || course.restrictions._restrictUsers,
+            calculated: (course) => !!get(course, 'restrictions.users') || get(course, 'restrictions._restrictUsers'),
             onChange: (value) => {
               if (!value) {
                 props.update(props.name, 'restrictions.users', null)
@@ -325,7 +384,7 @@ const CourseForm = (props) =>
                 type: 'number',
                 label: trans('users_count'),
                 required: true,
-                displayed: (course) => course.restrictions.users || course.restrictions._restrictUsers,
+                displayed: (course) => get(course, 'restrictions.users') || get(course, 'restrictions._restrictUsers'),
                 options: {
                   min: 0
                 }

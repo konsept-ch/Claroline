@@ -11,7 +11,7 @@ import {Button} from '#/main/app/action/components/button'
 import {LINK_BUTTON, MODAL_BUTTON} from '#/main/app/buttons'
 import {ContentHtml} from '#/main/app/content/components/html'
 import {ContentTitle} from '#/main/app/content/components/title'
-import {LocationCard} from '#/main/core/user/data/components/location-card'
+import {LocationCard} from '#/main/core/data/types/location/components/card'
 import {RoomCard} from '#/main/core/data/types/room/components/card'
 import {ResourceCard} from '#/main/core/resource/components/card'
 import {route as resourceRoute} from '#/main/core/resource/routing'
@@ -145,7 +145,7 @@ const EventAbout = (props) =>
           <Button
             className="btn btn-block btn-emphasis"
             type={MODAL_BUTTON}
-            label={trans('self-register', {}, 'actions')}
+            label={trans('self_register', {}, 'actions')}
             modal={[MODAL_COURSE_REGISTRATION, {
               event: props.event,
               register: props.register
@@ -204,10 +204,10 @@ const EventAbout = (props) =>
         </div>
       </div>
 
-      {props.registration &&
+      {props.registration && (!isEmpty(props.registration.users) || !isEmpty(props.registration.groups)) &&
         <CurrentRegistration
           eventFull={isFull(props.event)}
-          registration={props.registration}
+          registration={!isEmpty(props.registration.users) ? props.registration.users[0] : props.registration.groups[0]}
         />
       }
 
@@ -268,7 +268,8 @@ EventAbout.propTypes = {
     EventTypes.propTypes
   ).isRequired,
   registration: T.shape({
-
+    users: T.array,
+    groups: T.array
   }),
   register: T.func.isRequired
 }

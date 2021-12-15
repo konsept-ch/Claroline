@@ -21,6 +21,7 @@ use Claroline\AppBundle\Entity\Meta\Order;
 use Claroline\AppBundle\Entity\Meta\Poster;
 use Claroline\AppBundle\Entity\Meta\Thumbnail;
 use Claroline\AppBundle\Entity\Meta\UpdatedAt;
+use Claroline\AppBundle\Entity\Restriction\Hidden;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -34,6 +35,7 @@ class AbstractTraining
     use Uuid;
     use Code;
     use Description;
+    use Hidden;
     use Order;
     use CreatedAt;
     use UpdatedAt;
@@ -68,6 +70,11 @@ class AbstractTraining
     protected $publicRegistration = false;
 
     /**
+     * @ORM\Column(name="auto_registration", type="boolean")
+     */
+    protected $autoRegistration = false;
+
+    /**
      * @ORM\Column(name="public_unregistration", type="boolean")
      */
     protected $publicUnregistration = false;
@@ -86,6 +93,13 @@ class AbstractTraining
      * @ORM\Column(name="user_validation", type="boolean")
      */
     protected $userValidation = false;
+
+    /**
+     * Enables the waiting list for the training.
+     *
+     * @ORM\Column(name="pending_registrations", type="boolean")
+     */
+    protected $pendingRegistrations = false;
 
     /**
      * @ORM\Column(name="max_users", nullable=true, type="integer")
@@ -146,6 +160,16 @@ class AbstractTraining
         $this->publicRegistration = $publicRegistration;
     }
 
+    public function getAutoRegistration(): bool
+    {
+        return $this->autoRegistration;
+    }
+
+    public function setAutoRegistration(bool $autoRegistration)
+    {
+        $this->autoRegistration = $autoRegistration;
+    }
+
     public function getPublicUnregistration()
     {
         return $this->publicUnregistration;
@@ -189,6 +213,16 @@ class AbstractTraining
     public function hasValidation()
     {
         return $this->registrationValidation || $this->userValidation;
+    }
+
+    public function getPendingRegistrations(): bool
+    {
+        return $this->pendingRegistrations;
+    }
+
+    public function setPendingRegistrations(bool $pendingRegistrations)
+    {
+        $this->pendingRegistrations = $pendingRegistrations;
     }
 
     public function getMaxUsers()

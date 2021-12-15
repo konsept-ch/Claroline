@@ -4,6 +4,7 @@ import {connect} from 'react-redux'
 import get from 'lodash/get'
 import isEmpty from 'lodash/isEmpty'
 
+import {url} from '#/main/app/api'
 import {withRouter} from '#/main/app/router'
 import {trans, transChoice} from '#/main/app/intl/translation'
 import {ContentHtml} from '#/main/app/content/components/html'
@@ -18,6 +19,7 @@ import {MODAL_USERS} from '#/main/core/modals/users'
 import {BadgeLayout}  from '#/plugin/open-badge/tools/badges/badge/components/layout'
 import {Badge as BadgeTypes} from '#/plugin/open-badge/prop-types'
 import {AssertionUserCard} from '#/plugin/open-badge/tools/badges/assertion/components/card'
+import {actions as badgeActions}  from '#/plugin/open-badge/tools/badges/store'
 import {actions, selectors}  from '#/plugin/open-badge/tools/badges/badge/store'
 
 const BadgeDetailsComponent = (props) => {
@@ -88,8 +90,7 @@ const BadgeDetailsComponent = (props) => {
                 name: 'user',
                 type: 'user',
                 label: trans('user'),
-                displayed: true,
-                sortable: false
+                displayed: true
               }, {
                 name: 'user.email',
                 type: 'email',
@@ -105,6 +106,15 @@ const BadgeDetailsComponent = (props) => {
                 options: {
                   time: true
                 }
+              }
+            ]}
+            actions={(rows) => [
+              {
+                type: CALLBACK_BUTTON,
+                icon: 'fa fa-fw fa-download',
+                label: trans('download', {}, 'actions'),
+                callback: () => rows.map(row => props.downloadAssertion(row)),
+                displayed: get(props.badge, 'permissions.grant')
               }
             ]}
             card={AssertionUserCard}
@@ -146,13 +156,31 @@ const BadgeDetailsComponent = (props) => {
           displayed: get(props.badge, 'permissions.edit'),
           group: trans('management')
         }, {
+          name: 'recalculate',
+          type: CALLBACK_BUTTON,
+          icon: 'fa fa-fw fa-refresh',
+          label: trans('recalculate', {}, 'actions'),
+          callback: () => props.recalculate(props.badge.id),
+          displayed: get(props.badge, 'permissions.grant') && !isEmpty(props.badge.rules),
+          disabled:  !get(props.badge, 'meta.enabled'),
+          group: trans('management')
+        }, {
           name: 'export-results',
           type: DOWNLOAD_BUTTON,
           icon: 'fa fa-fw fa-file-csv',
           label: trans('export', {}, 'actions'),
           displayed: get(props.badge, 'permissions.grant'),
           file: {
-            url: ['apiv2_badge-class_export_users', {badge: props.badge.id}]
+            url: url(['apiv2_assertion_csv'], {
+              filters: {badge: get(props.badge, 'id')},
+              columns: [
+                'user.firstName',
+                'user.lastName',
+                'user.email',
+                'issuedOn',
+                'expires'
+              ]
+            })
           },
           group: trans('transfer')
         }, {
@@ -210,7 +238,9 @@ BadgeDetailsComponent.propTypes = {
   enable: T.func.isRequired,
   disable: T.func.isRequired,
   delete: T.func.isRequired,
-  grant: T.func.isRequired
+  grant: T.func.isRequired,
+  recalculate: T.func.isRequired,
+  downloadAssertion: T.func.isRequired
 }
 
 BadgeDetailsComponent.defaultProps = {
@@ -240,6 +270,12 @@ const BadgeDetails = withRouter(
 
       grant(badgeId, selected) {
         dispatch(actions.grant(badgeId, selected))
+      },
+      recalculate(badgeId) {
+        dispatch(actions.recalculate(badgeId))
+      },
+      downloadAssertion(assertion) {
+        dispatch(badgeActions.downloadAssertion(assertion))
       }
     })
   )(BadgeDetailsComponent)

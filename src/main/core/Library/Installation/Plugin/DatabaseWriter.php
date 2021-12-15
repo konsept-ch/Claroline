@@ -32,7 +32,6 @@ use Claroline\ThemeBundle\Manager\IconSetManager;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
  * This class is used to save/delete a plugin and its possible dependencies (like
@@ -50,8 +49,6 @@ class DatabaseWriter implements LoggerAwareInterface
     private $mm;
     /** @var Filesystem */
     private $fileSystem;
-    /** @var string */
-    private $kernelRootDir;
     /** @var ToolManager */
     private $toolManager;
     /** @var ToolMaskDecoderManager */
@@ -62,14 +59,10 @@ class DatabaseWriter implements LoggerAwareInterface
     /** @var PluginRepository */
     private $pluginRepository;
 
-    /**
-     * Constructor.
-     */
     public function __construct(
         ObjectManager $em,
         MaskManager $mm,
         Filesystem $fileSystem,
-        KernelInterface $kernel,
         ToolManager $toolManager,
         ToolMaskDecoderManager $toolMaskManager,
         IconSetManager $iconSetManager
@@ -77,7 +70,6 @@ class DatabaseWriter implements LoggerAwareInterface
         $this->em = $em;
         $this->mm = $mm;
         $this->fileSystem = $fileSystem;
-        $this->kernelRootDir = $kernel->getProjectDir().'/app';
         $this->toolManager = $toolManager;
         $this->toolMaskManager = $toolMaskManager;
         $this->iconSetManager = $iconSetManager;
@@ -92,9 +84,11 @@ class DatabaseWriter implements LoggerAwareInterface
      */
     public function insert(PluginBundleInterface $pluginBundle, array $pluginConfiguration)
     {
+        $namespaceParts = explode('\\', $pluginBundle->getNamespace());
+
         $pluginEntity = new Plugin();
-        $pluginEntity->setVendorName($pluginBundle->getVendorName());
-        $pluginEntity->setBundleName($pluginBundle->getBundleName());
+        $pluginEntity->setVendorName($namespaceParts[0]);
+        $pluginEntity->setBundleName($namespaceParts[1]);
 
         $this->em->persist($pluginEntity);
         $this->persistConfiguration($pluginConfiguration, $pluginEntity, $pluginBundle);
@@ -110,10 +104,12 @@ class DatabaseWriter implements LoggerAwareInterface
      */
     public function update(PluginBundleInterface $pluginBundle, array $pluginConfiguration)
     {
+        $namespaceParts = explode('\\', $pluginBundle->getNamespace());
+
         /** @var Plugin $plugin */
         $plugin = $this->pluginRepository->findOneBy([
-             'vendorName' => $pluginBundle->getVendorName(),
-             'bundleName' => $pluginBundle->getBundleName(),
+             'vendorName' => $namespaceParts[0],
+             'bundleName' => $namespaceParts[1],
         ]);
 
         if (null === $plugin) {
@@ -738,6 +734,7 @@ class DatabaseWriter implements LoggerAwareInterface
     private function persistTemplateType($templateTypeConfiguration, Plugin $plugin, TemplateType $templateType)
     {
         $templateType->setName($templateTypeConfiguration['name']);
+        $templateType->setType($templateTypeConfiguration['type']);
         $templateType->setPlaceholders(isset($templateTypeConfiguration['placeholders']) ? $templateTypeConfiguration['placeholders'] : []);
         $templateType->setPlugin($plugin);
         $this->em->persist($templateType);

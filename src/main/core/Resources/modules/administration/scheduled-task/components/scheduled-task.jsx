@@ -84,6 +84,7 @@ const ScheduledTaskForm = props =>
     <FormSections level={3}>
       <FormSection
         icon="fa fa-fw fa-user"
+        className="embedded-list-section"
         title={trans('users')}
         disabled={props.new}
         actions={[
@@ -132,7 +133,7 @@ const ScheduledTask = connect(
       dispatch(modalActions.showModal(MODAL_DATA_LIST, {
         icon: 'fa fa-fw fa-user',
         title: trans('add_users'),
-        confirmText: trans('add'),
+        confirmText: trans('add', {}, 'actions'),
         name: selectors.STORE_NAME + '.picker',
         definition: UserList.definition,
         card: UserList.card,

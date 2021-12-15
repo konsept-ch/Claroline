@@ -24,7 +24,7 @@ services:
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\CoreBundle\API\Serializer\ParametersSerializer'
             - '@Claroline\CoreBundle\Manager\LocaleManager'
-            - '@claroline.manager.icon_set_manager'
+            - '@Claroline\ThemeBundle\Manager\IconSetManager'
         tags:
             - { name: kernel.event_listener, event: administration_tool_main_settings, method: onDisplayTool }
 
@@ -36,7 +36,7 @@ services:
 
     Claroline\CoreBundle\Listener\Administration\TemplateListener:
         tags:
-            - { name: kernel.event_listener, event: administration_tool_templates_management, method: onAdministrationToolOpen }
+            - { name: kernel.event_listener, event: administration_tool_templates, method: onAdministrationToolOpen }
 
     Claroline\CoreBundle\Listener\Administration\TransferListener:
         arguments:
@@ -118,6 +118,7 @@ services:
         tags:
             - { name: kernel.event_listener, event: resource.directory.load, method: onLoad }
             - { name: kernel.event_listener, event: resource.directory.add, method: onAdd }
+            - { name: kernel.event_listener, event: resource.directory.delete, method: onDelete }
 
     Claroline\CoreBundle\Listener\Resource\Types\FileListener:
         arguments:
@@ -127,7 +128,6 @@ services:
             - '%claroline.param.files_directory%'
             - '@Claroline\AppBundle\API\SerializerProvider'
             - '@claroline.manager.resource_manager'
-            - '@claroline.manager.resource_evaluation_manager'
             - '@Claroline\CoreBundle\Library\Utilities\FileUtilities'
         tags:
             - { name: kernel.event_listener, event: resource.file.load, method: onLoad }
@@ -136,9 +136,8 @@ services:
             - { name: kernel.event_listener, event: transfer.file.import.before, method: onImportBefore }
             - { name: kernel.event_listener, event: transfer.file.export, method: onExportFile }
             - { name: kernel.event_listener, event: transfer.file.import.after, method: onImportFile }
-            - { name: kernel.event_listener, event: resource.file.copy, method: onCopy }
+            - { name: kernel.event_listener, event: crud.pre.copy.file, method: onCopy }
             - { name: kernel.event_listener, event: download_file, method: onDownload }
-            - { name: kernel.event_listener, event: generate_resource_user_evaluation_file, method: onGenerateResourceTracking }
 
     Claroline\CoreBundle\Listener\Resource\Types\TextListener:
         arguments:
@@ -155,7 +154,6 @@ services:
             - '@Claroline\AppBundle\API\SerializerProvider'
             - '@claroline.manager.resource_manager'
             - '@Claroline\CoreBundle\Manager\Resource\ResourceLifecycleManager'
-            - '@claroline.manager.resource_evaluation_manager'
         tags:
             - { name: kernel.event_listener, event: resource_load, method: load }
             - { name: kernel.event_listener, event: resource.create, method: create }
@@ -199,6 +197,10 @@ services:
         tags:
             - { name: kernel.event_listener, event: open_tool_workspace_resource_trash, method: onDisplayWorkspace }
 
+    Claroline\CoreBundle\Listener\Tool\LocationsListener:
+        tags:
+            - { name: kernel.event_listener, event: open_tool_desktop_locations, method: onDisplayDesktop }
+
     Claroline\CoreBundle\Listener\Tool\WorkspacesListener:
         arguments:
             - '@security.token_storage'
@@ -207,15 +209,6 @@ services:
             - '@security.authorization_checker'
         tags:
             - { name: kernel.event_listener, event: open_tool_desktop_workspaces, method: onDisplayDesktop }
-
-    Claroline\CoreBundle\Listener\Workspace\EvaluationListener:
-        arguments:
-            - '@Claroline\CoreBundle\Manager\Workspace\EvaluationManager'
-        tags:
-            - { name: kernel.event_listener, event: resource_evaluation, method: onResourceEvaluation }
-            - { name: kernel.event_listener, event: log, method: onLog }
-            - { name: kernel.event_listener, event: crud_post_collection_patch_object_claroline_corebundle_entity_role, method: onRoleChange }
-            - { name: kernel.event_listener, event: crud_post_collection_patch_object_claroline_corebundle_entity_group, method: groupUsersPostCollectionPatch }
 
     Claroline\CoreBundle\Listener\ViewAsListener:
         arguments:
@@ -230,20 +223,26 @@ services:
     Claroline\CoreBundle\Listener\PlatformListener:
         arguments:
             - '@security.token_storage'
+            - '@translator'
             - '@Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler'
+            - '@Claroline\CoreBundle\Manager\VersionManager'
             - '@claroline.manager.temp_file'
             - '@Claroline\CoreBundle\Manager\LocaleManager'
         tags:
             - { name: kernel.event_listener, event: kernel.request, method: setLocale, priority: 17 }
             - { name: kernel.event_listener, event: kernel.request, method: checkAvailability }
             - { name: kernel.event_listener, event: kernel.terminate, method: clearTemp }
+            - { name: kernel.event_listener, event: platform.connection_messages.populate, method: displayVersionChangeLogs }
 
-    Claroline\CoreBundle\Listener\CliListener:
+    Claroline\CoreBundle\Listener\CommandListener:
         arguments:
+            - '@translator'
+            - '@Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler'
             - '@Claroline\AuthenticationBundle\Security\Authentication\Authenticator'
             - '@Claroline\CoreBundle\Manager\UserManager'
         tags:
             - { name: kernel.event_listener, event: console.command, method: setDefaultUser, priority: 17 }
+            - { name: kernel.event_listener, event: console.command, method: setLocale, priority: 16 }
 
     Claroline\CoreBundle\Listener\AuthenticationSuccessListener:
         arguments:
@@ -260,18 +259,9 @@ services:
     Claroline\CoreBundle\Listener\Entity\UserListener:
         arguments:
             - '@security.encoder_factory'
-        tags: ['doctrine.entity_listener']
-
-    Claroline\CoreBundle\Listener\Doctrine\DebugListener:
-        public: true
-        calls:
-            - setLogger: [ '@logger' ]
         tags:
-            - { name: doctrine.event_listener, event: onFLush }
-
-    Claroline\CoreBundle\Doctrine\EntityListenerResolver:
-        arguments:
-            - '@service_container'
+            - { name: 'doctrine.orm.entity_listener', entity: 'Claroline\CoreBundle\Entity\User', event: 'prePersist' }
+            - { name: 'doctrine.orm.entity_listener', entity: 'Claroline\CoreBundle\Entity\User', event: 'preUpdate' }
 
     Claroline\CoreBundle\Listener\Log\GroupListener:
         arguments:

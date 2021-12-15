@@ -11,34 +11,6 @@
 
 namespace Claroline\CoreBundle\Event\Security;
 
-use Claroline\CoreBundle\Entity\Role;
-use Claroline\CoreBundle\Entity\User;
-use Symfony\Contracts\EventDispatcher\Event;
-use Symfony\Contracts\Translation\TranslatorInterface;
-
-class AddRoleEvent extends Event
+class AddRoleEvent extends AbstractRoleEvent
 {
-    private $user;
-    private $role;
-
-    public function __construct(User $user, Role $role)
-    {
-        $this->user = $user;
-        $this->role = $role;
-    }
-
-    public function getUser(): User
-    {
-        return $this->user;
-    }
-
-    public function getRole()
-    {
-        return $this->role;
-    }
-
-    public function getMessage(TranslatorInterface $translator)
-    {
-        return $translator->trans('addRole', ['username' => $this->user->getUsername(), 'role' => $this->role->getName()], 'security');
-    }
 }

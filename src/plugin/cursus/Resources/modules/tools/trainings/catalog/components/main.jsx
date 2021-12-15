@@ -6,7 +6,7 @@ import {Routes} from '#/main/app/router'
 import {Course as CourseTypes} from '#/plugin/cursus/prop-types'
 import {CatalogList} from '#/plugin/cursus/tools/trainings/catalog/components/list'
 import {CatalogDetails} from '#/plugin/cursus/tools/trainings/catalog/containers/details'
-import {CatalogForm} from '#/plugin/cursus/tools/trainings/catalog/containers/form'
+import {CatalogCreation} from '#/plugin/cursus/tools/trainings/catalog/components/creation'
 
 const CatalogMain = (props) =>
   <Routes
@@ -16,20 +16,15 @@ const CatalogMain = (props) =>
         path: '/',
         exact: true,
         render: () => (
-          <CatalogList path={`${props.path}/catalog`} />
+          <CatalogList path={`${props.path}/catalog`} canEdit={props.canEdit} />
         )
       }, {
         path: '/new',
         exact: true,
         onEnter: () => props.openForm(null, CourseTypes.defaultProps),
+        disabled: !props.canEdit,
         render: () => (
-          <CatalogForm path={`${props.path}/catalog`} />
-        )
-      }, {
-        path: '/:slug/edit',
-        onEnter: (params = {}) => props.openForm(params.slug),
-        render: () => (
-          <CatalogForm path={`${props.path}/catalog`} />
+          <CatalogCreation path={`${props.path}/catalog`} />
         )
       }, {
         path: '/:slug',
@@ -43,6 +38,7 @@ const CatalogMain = (props) =>
 
 CatalogMain.propTypes = {
   path: T.string.isRequired,
+  canEdit: T.bool.isRequired,
   open: T.func.isRequired,
   openForm: T.func.isRequired
 }

@@ -14,7 +14,6 @@ namespace Claroline\CoreBundle\Entity\Facet;
 use Claroline\AppBundle\Entity\Identifier\Id;
 use Claroline\AppBundle\Entity\Identifier\Uuid;
 use Claroline\AppBundle\Entity\Restriction\Hidden;
-use Claroline\CoreBundle\Entity\Resource\ResourceNode;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -30,44 +29,23 @@ class FieldFacet
     use Hidden;
 
     /** @var int */
-    const STRING_TYPE = 1;
+    const NUMBER_TYPE = 'number';
     /** @var int */
-    const NUMBER_TYPE = 2;
+    const DATE_TYPE = 'date';
     /** @var int */
-    const DATE_TYPE = 3;
+    const COUNTRY_TYPE = 'country';
     /** @var int */
-    const RADIO_TYPE = 4;
+    const EMAIL_TYPE = 'email';
     /** @var int */
-    const SELECT_TYPE = 5;
+    const HTML_TYPE = 'html';
     /** @var int */
-    const CHECKBOXES_TYPE = 6;
+    const CASCADE_TYPE = 'cascade';
     /** @var int */
-    const COUNTRY_TYPE = 7;
+    const FILE_TYPE = 'file';
     /** @var int */
-    const EMAIL_TYPE = 8;
+    const BOOLEAN_TYPE = 'boolean';
     /** @var int */
-    const HTML_TYPE = 9;
-    /** @var int */
-    const CASCADE_TYPE = 10;
-    /** @var int */
-    const FILE_TYPE = 11;
-    /** @var int */
-    const BOOLEAN_TYPE = 12;
-    /** @var int */
-    const CHOICE_TYPE = 13;
-    /** @var array */
-    public static $types = [
-        'string' => self::STRING_TYPE,
-        'number' => self::NUMBER_TYPE,
-        'date' => self::DATE_TYPE,
-        'country' => self::COUNTRY_TYPE,
-        'email' => self::EMAIL_TYPE,
-        'html' => self::HTML_TYPE,
-        'cascade' => self::CASCADE_TYPE,
-        'file' => self::FILE_TYPE,
-        'boolean' => self::BOOLEAN_TYPE,
-        'choice' => self::CHOICE_TYPE,
-    ];
+    const CHOICE_TYPE = 'choice';
 
     /**
      * @ORM\Column(name="name")
@@ -77,9 +55,9 @@ class FieldFacet
     private $label;
 
     /**
-     * @ORM\Column(type="integer")
+     * @ORM\Column()
      *
-     * @var int
+     * @var string
      */
     private $type;
 
@@ -101,7 +79,7 @@ class FieldFacet
      *
      * @var int
      */
-    private $position;
+    private $position = 0;
 
     /**
      * @ORM\OneToMany(
@@ -121,17 +99,7 @@ class FieldFacet
     private $required = false;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Claroline\CoreBundle\Entity\Resource\ResourceNode")
-     * @ORM\JoinColumn(name="resource_node", onDelete="CASCADE", nullable=true)
-     *
-     * @var ResourceNode
-     *
-     * @todo should not be declared here (not used in Profile)
-     */
-    private $resourceNode;
-
-    /**
-     * @ORM\Column(type="json_array")
+     * @ORM\Column(type="json")
      *
      * @var array
      */
@@ -140,41 +108,52 @@ class FieldFacet
     /**
      * @ORM\Column(name="is_metadata", type="boolean", options={"default" = 0})
      */
-    protected $isMetadata = false;
+    private $metadata = false;
 
     /**
      * @ORM\Column(name="locked", type="boolean", options={"default" = 0})
      */
-    protected $locked = false;
+    private $locked = false;
 
     /**
      * @ORM\Column(name="locked_edition", type="boolean", options={"default" = 0})
      */
-    protected $lockedEditionOnly = false;
+    private $lockedEditionOnly = false;
 
     /**
      * @ORM\Column(name="help", nullable=true)
      */
-    protected $help;
+    private $help;
 
     /**
-     * Constructor.
+     * @ORM\Column(name="condition_field", type="string", nullable=true)
+     *
+     * @var string
      */
+    private $conditionField;
+
+    /**
+     * @ORM\Column(name="condition_comparator", type="string", nullable=true)
+     *
+     * @var string
+     */
+    private $conditionComparator;
+
+    /**
+     * @ORM\Column(name="condition_value", type="json", nullable=true)
+     *
+     * @var array
+     */
+    private $conditionValue = [];
+
     public function __construct()
     {
         $this->refreshUuid();
+
         $this->fieldFacetChoices = new ArrayCollection();
     }
 
-    /**
-     * @return int
-     */
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    public function setPanelFacet(PanelFacet $panelFacet = null)
+    public function setPanelFacet(?PanelFacet $panelFacet = null)
     {
         $this->panelFacet = $panelFacet;
 
@@ -183,18 +162,12 @@ class FieldFacet
         }
     }
 
-    /**
-     * @return PanelFacet
-     */
-    public function getPanelFacet()
+    public function getPanelFacet(): ?PanelFacet
     {
         return $this->panelFacet;
     }
 
-    /**
-     * @return string
-     */
-    public function getName()
+    public function getName(): string
     {
         $string = str_replace(' ', '-', $this->label); // Replaces all spaces with hyphens.
         $string = preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
@@ -203,42 +176,22 @@ class FieldFacet
         return $this->id.'-'.strtolower($string);
     }
 
-    /**
-     * @param string $label
-     */
-    public function setLabel($label)
+    public function setLabel(string $label)
     {
         $this->label = $label;
     }
 
-    /**
-     * @return string
-     */
-    public function getLabel()
+    public function getLabel(): ?string
     {
         return $this->label;
     }
 
-    /**
-     * @param int|string $type
-     */
-    public function setType($type)
+    public function setType(string $type)
     {
-        //if we pass a correct type name
-        if (in_array($type, array_keys(static::$types))) {
-            $this->type = static::$types[$type];
-        } elseif (in_array($type, static::$types)) {
-            //otherwise we use the integer
-            $this->type = $type;
-        } else {
-            throw new \InvalidArgumentException('Type must be a FieldFacet class constant');
-        }
+        $this->type = $type;
     }
 
-    /**
-     * @return int
-     */
-    public function getType()
+    public function getType(): ?string
     {
         return $this->type;
     }
@@ -257,62 +210,14 @@ class FieldFacet
         }
     }
 
-    /**
-     * @param int $position
-     */
-    public function setPosition($position)
+    public function setPosition(?int $position = null)
     {
         $this->position = $position;
     }
 
-    /**
-     * @return int
-     */
-    public function getPosition()
+    public function getPosition(): ?int
     {
         return $this->position;
-    }
-
-    /**
-     * @return string
-     */
-    public function getFieldType()
-    {
-        switch ($this->type) {
-            case self::NUMBER_TYPE: return 'number';
-            case self::DATE_TYPE: return 'date';
-            case self::STRING_TYPE: return 'string';
-            case self::COUNTRY_TYPE: return 'country';
-            case self::EMAIL_TYPE: return 'email';
-            case self::HTML_TYPE: return 'html';
-            case self::CASCADE_TYPE: return 'cascade';
-            case self::FILE_TYPE: return 'file';
-            case self::BOOLEAN_TYPE: return 'boolean';
-            case self::CHOICE_TYPE: return 'choice';
-            default: return 'error';
-        }
-    }
-
-    /**
-     * @deprecated
-     *
-     * @return string
-     */
-    public function getInputType()
-    {
-        switch ($this->type) {
-            case self::NUMBER_TYPE: return 'number';
-            case self::DATE_TYPE: return 'date';
-            case self::STRING_TYPE: return 'string';
-            case self::COUNTRY_TYPE: return 'country';
-            case self::EMAIL_TYPE: return 'email';
-            case self::HTML_TYPE: return 'html';
-            case self::CASCADE_TYPE: return 'cascade_select';
-            case self::FILE_TYPE: return 'file';
-            case self::BOOLEAN_TYPE: return 'boolean';
-            case self::CHOICE_TYPE: return 'choice';
-            default: return 'error';
-        }
     }
 
     /**
@@ -321,14 +226,6 @@ class FieldFacet
     public function getFieldFacetChoices()
     {
         return $this->fieldFacetChoices;
-    }
-
-    /**
-     * @return array
-     */
-    public function getFieldFacetChoicesArray()
-    {
-        return $this->fieldFacetChoices->toArray();
     }
 
     /**
@@ -353,42 +250,20 @@ class FieldFacet
 
     public function emptyFieldFacetChoices()
     {
-        return $this->fieldFacetChoices->clear();
+        $this->fieldFacetChoices->clear();
     }
 
-    /**
-     * @return bool
-     */
-    public function isRequired()
+    public function isRequired(): bool
     {
         return $this->required;
     }
 
-    /**
-     * @param bool $required
-     */
-    public function setRequired($required)
+    public function setRequired(bool $required)
     {
         $this->required = $required;
     }
 
-    /**
-     * @return ResourceNode
-     */
-    public function getResourceNode()
-    {
-        return $this->resourceNode;
-    }
-
-    public function setResourceNode(ResourceNode $resourceNode = null)
-    {
-        $this->resourceNode = $resourceNode;
-    }
-
-    /**
-     * @return array
-     */
-    public function getOptions()
+    public function getOptions(): ?array
     {
         return $this->options;
     }
@@ -398,67 +273,73 @@ class FieldFacet
         $this->options = $options;
     }
 
-    /**
-     * @return bool
-     */
-    public function getIsMetadata()
+    public function isMetadata(): bool
     {
-        return $this->isMetadata;
+        return $this->metadata;
     }
 
-    /**
-     * @param bool $isMetadata
-     */
-    public function setIsMetadata($isMetadata)
+    public function setMetadata(bool $isMetadata)
     {
-        $this->isMetadata = $isMetadata;
+        $this->metadata = $isMetadata;
     }
 
-    /**
-     * @return bool
-     */
-    public function isLocked()
+    public function isLocked(): bool
     {
         return $this->locked;
     }
 
-    /**
-     * @param bool $locked
-     */
-    public function setLocked($locked)
+    public function setLocked(bool $locked)
     {
         $this->locked = $locked;
     }
 
-    /**
-     * @return bool
-     */
-    public function getLockedEditionOnly()
+    public function getLockedEditionOnly(): bool
     {
         return $this->lockedEditionOnly;
     }
 
-    /**
-     * @param bool $lockedEditionOnly
-     */
-    public function setLockedEditionOnly($lockedEditionOnly)
+    public function setLockedEditionOnly(bool $lockedEditionOnly)
     {
         $this->lockedEditionOnly = $lockedEditionOnly;
     }
 
-    /**
-     * @return string
-     */
-    public function getHelp()
+    public function getHelp(): ?string
     {
         return $this->help;
     }
 
-    /**
-     * @param string $help
-     */
-    public function setHelp($help)
+    public function setHelp(?string $help)
     {
         $this->help = $help;
+    }
+
+    public function getConditionField(): ?string
+    {
+        return $this->conditionField;
+    }
+
+    public function setConditionField(?string $conditionField)
+    {
+        $this->conditionField = $conditionField;
+    }
+
+    public function getConditionComparator(): ?string
+    {
+        return $this->conditionComparator;
+    }
+
+    public function setConditionComparator(?string $conditionComparator)
+    {
+        $this->conditionComparator = $conditionComparator;
+    }
+
+    public function getConditionValue()
+    {
+        return $this->conditionValue;
+    }
+
+    public function setConditionValue($conditionValue)
+    {
+        $this->conditionValue = $conditionValue;
     }
 }

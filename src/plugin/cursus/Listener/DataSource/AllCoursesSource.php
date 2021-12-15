@@ -49,12 +49,10 @@ class AllCoursesSource
     public function getData(GetDataEvent $event)
     {
         $options = $event->getOptions();
+        $options['hiddenFilters']['hidden'] = false;
 
         if (!$this->authorization->isGranted('ROLE_ADMIN')) {
             $user = $this->tokenStorage->getToken()->getUser();
-
-            $organizations = null;
-
             if ($user instanceof User) {
                 $organizations = $user->getOrganizations();
             } else {

@@ -19,6 +19,7 @@ import {Button} from '#/main/app/action/components/button'
 import {Toolbar} from '#/main/app/action/components/toolbar'
 import {FormSections, FormSection} from '#/main/app/content/form/components/sections'
 import {ListData} from '#/main/app/content/list/containers/data'
+import {formatField} from '#/main/core/user/profile/utils'
 
 import {selectors as resourceSelectors} from '#/main/core/resource/store'
 import {UserCard} from '#/main/core/user/components/card'
@@ -199,7 +200,7 @@ class EntryComponent extends Component {
   }
 
   isFieldDisplayable(field) {
-    return this.canViewMetadata() || !field.restrictions.isMetadata
+    return this.canViewMetadata() || !field.restrictions.metadata
   }
 
   getSections(fields) {
@@ -208,43 +209,25 @@ class EntryComponent extends Component {
         id: 'general',
         title: trans('general'),
         primary: true,
-        fields: fields.map(f => {
-          const params = {
-            name: `values.${f.id}`,
-            type: f.type,
-            label: f.label,
-            required: f.required,
-            help: f.help,
-            displayed: this.isFieldDisplayable(f)
-          }
+        fields: fields
+          .filter(f => this.isFieldDisplayable(f))
+          .map(f => {
+            const params = formatField(f, fields, 'values')
 
-          switch (f.type) {
-            case 'choice':
-              params['options'] = {
-                multiple: f.options.multiple !== undefined ? f.options.multiple : false,
-                condensed: f.options.condensed !== undefined ? f.options.condensed : false,
-                choices: f.options.choices ?
-                  f.options.choices.reduce((acc, choice) => {
-                    acc[choice.value] = choice.value
+            switch (f.type) {
+              case 'file':
+                if (this.props.entry && this.props.entry.values && this.props.entry.values[f.id]) {
+                  params['calculated'] = (data) => Object.assign(
+                    {},
+                    data.values[f.id],
+                    {url: url(['claro_claco_form_field_value_file_download', {entry: data.id, field: f.id}])}
+                  )
+                }
+                break
+            }
 
-                    return acc
-                  }, {}) :
-                  {}
-              }
-              break
-            case 'file':
-              if (this.props.entry && this.props.entry.values && this.props.entry.values[f.id]) {
-                params['calculated'] = (data) => Object.assign(
-                  {},
-                  data.values[f.id],
-                  {url: url(['claro_claco_form_field_value_file_download', {entry: data.id, field: f.id}])}
-                )
-              }
-              break
-          }
-
-          return params
-        })
+            return params
+          })
       }
     ]
   }
@@ -341,7 +324,7 @@ class EntryComponent extends Component {
                             .save()
                         })}
                         share={(users) => this.props.shareEntry(this.props.entryId, users)}
-                        delete={() => this.props.deleteEntry(this.props.entry)}
+                        delete={() => this.props.deleteEntry(this.props.entry).then(() => this.props.history.push(`${this.props.path}/entries`))}
                         toggleStatus={() => this.props.switchEntryStatus(this.props.entry.id)}
                         toggleLock={() => this.props.switchEntryLock(this.props.entry.id)}
                         updateEntryUserProp={this.props.updateEntryUserProp}
@@ -548,10 +531,9 @@ const Entry = withRouter(connect(
     template: selectors.template(state),
     titleLabel: selectors.params(state).title_field_label
   }),
-  (dispatch, ownProps) => ({
+  (dispatch) => ({
     deleteEntry(entry) {
-      dispatch(actions.deleteEntries([entry]))
-      ownProps.history.push('/entries')
+      return dispatch(actions.deleteEntry(entry))
     },
     switchEntryStatus(entryId) {
       dispatch(actions.switchEntryStatus(entryId))

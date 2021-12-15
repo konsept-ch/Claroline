@@ -8,7 +8,9 @@ services:
         calls:
             - setLogger: [ '@logger' ]
 
-    Claroline\DevBundle\Listener\DebugListener:
+    Claroline\DevBundle\Listener\DebugToolbarListener:
+        arguments:
+            - '%kernel.debug%'
         tags:
             - { name: kernel.event_listener, event: kernel.response, method: onResponse }
 
@@ -19,12 +21,6 @@ services:
             - '@Claroline\DevBundle\Manager\TranslationManager'
         tags:
             - { name: 'console.command', command: 'claroline:fixup:translations' }
-
-    Claroline\DevBundle\Command\CreatePluginCommand:
-        arguments:
-            - '%claroline.param.vendor_directory%'
-        tags:
-            - { name: 'console.command', command: 'claroline:plugin:create' }
 
     Claroline\DevBundle\Command\RouterDebugCommand:
         arguments:
@@ -38,9 +34,3 @@ services:
             - '@Claroline\AppBundle\Routing\Documentator'
         tags:
             - { name: 'console.command', command: 'claroline:api:dump' }
-
-    Claroline\DevBundle\Command\RefreshCommand:
-        arguments:
-            - '@Claroline\CoreBundle\Library\Installation\Refresher'
-        tags:
-            - { name: 'console.command', command: 'claroline:refresh' }

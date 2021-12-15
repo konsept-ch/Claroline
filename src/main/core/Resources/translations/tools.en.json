@@ -12,9 +12,10 @@
     "main_settings": "Settings",
     "technical_settings": "Technical settings",
     "appearance_settings": "Appearance",
-    "templates_management": "Templates management",
+    "templates": "Templates",
     "resource_trash": "Resources trash",
     "integration": "Integration",
     "workspaces": "Workspaces",
-    "toolOpen": "context : User userName open the tool toolName"
+    "toolOpen": "context : User userName open the tool toolName",
+    "locations": "Locations"
 }

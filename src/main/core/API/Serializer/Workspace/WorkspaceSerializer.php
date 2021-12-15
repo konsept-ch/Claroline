@@ -2,14 +2,15 @@
 
 namespace Claroline\CoreBundle\API\Serializer\Workspace;
 
-use Claroline\AppBundle\API\FinderProvider;
 use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\Serializer\SerializerTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\API\Serializer\File\PublicFileSerializer;
 use Claroline\CoreBundle\API\Serializer\Resource\ResourceNodeSerializer;
+use Claroline\CoreBundle\API\Serializer\User\OrganizationSerializer;
 use Claroline\CoreBundle\API\Serializer\User\UserSerializer;
 use Claroline\CoreBundle\Entity\File\PublicFile;
+use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
 use Claroline\CoreBundle\Entity\Role;
 use Claroline\CoreBundle\Entity\User;
@@ -17,7 +18,6 @@ use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\CoreBundle\Library\Normalizer\DateNormalizer;
 use Claroline\CoreBundle\Library\Normalizer\DateRangeNormalizer;
 use Claroline\CoreBundle\Library\Utilities\FileUtilities;
-use Claroline\CoreBundle\Manager\ResourceManager;
 use Claroline\CoreBundle\Manager\Workspace\WorkspaceManager;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -38,14 +38,11 @@ class WorkspaceSerializer
     /** @var WorkspaceManager */
     private $workspaceManager;
 
-    /** @var ResourceManager */
-    private $resourceManager;
-
     /** @var FileUtilities */
     private $fileUt;
 
-    /** @var FinderProvider */
-    private $finder;
+    /** @var OrganizationSerializer */
+    private $organizationSerializer;
 
     /** @var UserSerializer */
     private $userSerializer;
@@ -61,10 +58,9 @@ class WorkspaceSerializer
         TokenStorageInterface $tokenStorage,
         ObjectManager $om,
         WorkspaceManager $workspaceManager,
-        ResourceManager $resourceManager,
         FileUtilities $fileUt,
-        FinderProvider $finder,
         UserSerializer $userSerializer,
+        OrganizationSerializer $organizationSerializer,
         PublicFileSerializer $publicFileSerializer,
         ResourceNodeSerializer $resNodeSerializer
     ) {
@@ -72,10 +68,9 @@ class WorkspaceSerializer
         $this->authorization = $authorization;
         $this->om = $om;
         $this->workspaceManager = $workspaceManager;
-        $this->resourceManager = $resourceManager;
         $this->fileUt = $fileUt;
-        $this->finder = $finder;
         $this->userSerializer = $userSerializer;
+        $this->organizationSerializer = $organizationSerializer;
         $this->publicFileSerializer = $publicFileSerializer;
         $this->resNodeSerializer = $resNodeSerializer;
     }
@@ -108,13 +103,7 @@ class WorkspaceSerializer
             ]);
         }
 
-        $poster = null;
-        if ($workspace->getPoster()) {
-            /** @var PublicFile $poster */
-            $poster = $this->om->getRepository(PublicFile::class)->findOneBy([
-                'url' => $workspace->getPoster(),
-            ]);
-        }
+        $editPerm = $this->authorization->isGranted('EDIT', $workspace);
 
         $serialized = [
             'id' => $this->getUuid($workspace, $options),
@@ -123,20 +112,29 @@ class WorkspaceSerializer
             'code' => $workspace->getCode(),
             'slug' => $workspace->getSlug(),
             'thumbnail' => $thumbnail ? $this->publicFileSerializer->serialize($thumbnail) : null,
-            'poster' => $poster ? $this->publicFileSerializer->serialize($poster) : null,
-            'permissions' => [ // TODO it will decrease perfs, should be tested, but it is required in lists
+            'permissions' => [
                 'open' => $this->authorization->isGranted('OPEN', $workspace),
                 'delete' => $this->authorization->isGranted('DELETE', $workspace),
-                'configure' => $this->authorization->isGranted('EDIT', $workspace),
-                'administrate' => $this->authorization->isGranted('EDIT', $workspace),
+                'configure' => $editPerm,
+                'administrate' => $editPerm,
                 'export' => $this->authorization->isGranted('EXPORT', $workspace),
+                'archive' => $this->authorization->isGranted('ARCHIVE', $workspace),
             ],
             'meta' => $this->getMeta($workspace, $options),
             'contactEmail' => $workspace->getContactEmail(),
         ];
 
         if (!in_array(Options::SERIALIZE_MINIMAL, $options)) {
+            $poster = null;
+            if ($workspace->getPoster()) {
+                /** @var PublicFile $poster */
+                $poster = $this->om->getRepository(PublicFile::class)->findOneBy([
+                    'url' => $workspace->getPoster(),
+                ]);
+            }
+
             $serialized = array_merge($serialized, [
+                'poster' => $poster ? $this->publicFileSerializer->serialize($poster) : null,
                 'registered' => $this->isRegistered($workspace),
                 'opening' => $this->getOpening($workspace),
                 'display' => $this->getDisplay($workspace),
@@ -146,16 +144,13 @@ class WorkspaceSerializer
                 'notifications' => $this->getNotifications($workspace),
             ]);
 
-            // TODO : remove me. Used by workspace transfer
             if (!in_array(Options::SERIALIZE_LIST, $options)) {
-                $serialized['roles'] = array_map(function (Role $role) use ($options) {
-                    if (in_array(Options::REFRESH_UUID, $options)) {
-                        return [
-                            'translationKey' => $role->getTranslationKey(),
-                            'type' => $role->getType(),
-                        ];
-                    }
+                $serialized['organizations'] = array_map(function (Organization $organization) {
+                    return $this->organizationSerializer->serialize($organization, [Options::SERIALIZE_MINIMAL]);
+                }, $workspace->getOrganizations()->toArray());
 
+                // TODO : remove me. Used by workspace transfer
+                $serialized['roles'] = array_map(function (Role $role) {
                     return [
                         'id' => $role->getUuid(),
                         'name' => $role->getName(),
@@ -184,13 +179,12 @@ class WorkspaceSerializer
     {
         return [
             'lang' => $workspace->getLang(),
-            'forceLang' => (bool) $workspace->getLang(),
             'archived' => $workspace->isArchived(),
             'model' => $workspace->isModel(),
             'personal' => $workspace->isPersonal(),
             'description' => $workspace->getDescription(),
-            'created' => DateNormalizer::normalize($workspace->getCreated()),
-            'updated' => DateNormalizer::normalize($workspace->getCreated()), // todo implement
+            'created' => DateNormalizer::normalize($workspace->getCreatedAt()),
+            'updated' => DateNormalizer::normalize($workspace->getUpdatedAt()),
             'creator' => $workspace->getCreator() ? $this->userSerializer->serialize($workspace->getCreator(), [Options::SERIALIZE_MINIMAL]) : null,
         ];
     }
@@ -263,32 +257,20 @@ class WorkspaceSerializer
             ),
             'code' => $workspace->getAccessCode(),
             'allowedIps' => $workspace->getAllowedIps(),
-            'maxUsers' => $workspace->getMaxUsers(),
-            // TODO : store raw file size to avoid this
-            'maxStorage' => $this->fileUt->getRealFileSize($workspace->getMaxStorageSize()),
-            'maxResources' => $workspace->getMaxUploadResources(),
         ];
     }
 
     private function getRegistration(Workspace $workspace, array $options): array
     {
+        $defaultRole = null;
         if ($workspace->getDefaultRole()) {
             // this should use RoleSerializer but we will get a circular reference if we do it
-            if (in_array(Options::REFRESH_UUID, $options)) {
-                $defaultRole = [
-                  'translationKey' => $workspace->getDefaultRole()->getTranslationKey(),
-                  'type' => $workspace->getDefaultRole()->getType(),
-                ];
-            } else {
-                $defaultRole = [
-                    'id' => $workspace->getDefaultRole()->getUuid(),
-                    'name' => $workspace->getDefaultRole()->getName(),
-                    'type' => $workspace->getDefaultRole()->getType(), // TODO : should be a string for better data readability
-                    'translationKey' => $workspace->getDefaultRole()->getTranslationKey(),
-                ];
-            }
-        } else {
-            $defaultRole = null;
+            $defaultRole = [
+                'id' => $workspace->getDefaultRole()->getUuid(),
+                'name' => $workspace->getDefaultRole()->getName(),
+                'type' => $workspace->getDefaultRole()->getType(), // TODO : should be a string for better data readability
+                'translationKey' => $workspace->getDefaultRole()->getTranslationKey(),
+            ];
         }
 
         return [
@@ -303,7 +285,7 @@ class WorkspaceSerializer
     private function getNotifications(Workspace $workspace)
     {
         return [
-            'enabled' => !$workspace->isDisabledNotifications(),
+            'enabled' => $workspace->hasNotifications(),
         ];
     }
 
@@ -312,40 +294,6 @@ class WorkspaceSerializer
      */
     public function deserialize(array $data, Workspace $workspace, array $options = []): Workspace
     {
-        $this->sipe('code', 'setCode', $data, $workspace);
-        $this->sipe('name', 'setName', $data, $workspace);
-        $this->sipe('contactEmail', 'setContactEmail', $data, $workspace);
-
-        if (isset($data['thumbnail']) && isset($data['thumbnail']['id'])) {
-            /** @var PublicFile $thumbnail */
-            $thumbnail = $this->om->getObject($data['thumbnail'], PublicFile::class);
-            if ($thumbnail) {
-                $workspace->setThumbnail($data['thumbnail']['url']);
-                $this->fileUt->createFileUse($thumbnail, Workspace::class, $workspace->getUuid());
-            }
-        }
-
-        if (isset($data['poster']) && isset($data['poster']['id'])) {
-            /** @var PublicFile $poster */
-            $poster = $this->om->getObject($data['poster'], PublicFile::class);
-            if ($poster) {
-                $workspace->setPoster($data['poster']['url']);
-                $this->fileUt->createFileUse($poster, Workspace::class, $workspace->getUuid());
-            }
-        }
-
-        if (empty($workspace->getCreator()) && isset($data['meta']) && !empty($data['meta']['creator'])) {
-            /** @var User $creator */
-            $creator = $this->om->getObject($data['meta']['creator'], User::class);
-            $workspace->setCreator($creator);
-        }
-
-        if (isset($data['extra']) && isset($data['extra']['model']) && isset($data['extra']['model']['code'])) {
-            /** @var Workspace $model */
-            $model = $this->om->getRepository(Workspace::class)->findOneBy(['code' => $data['extra']['model']['code']]);
-            $workspace->setWorkspaceModel($model);
-        }
-
         //not sure if keep that. Might be troublesome later for rich texts
         if (!in_array(Options::REFRESH_UUID, $options)) {
             $this->sipe('id', 'setUuid', $data, $workspace);
@@ -353,48 +301,90 @@ class WorkspaceSerializer
             $workspace->refreshUuid();
         }
 
+        if (array_key_exists('model', $data)) {
+            $model = null;
+            if (!empty($data['model'])) {
+                /** @var Workspace $model */
+                $model = $this->om->getObject($data['model'], Workspace::class, ['code']);
+            }
+
+            $workspace->setWorkspaceModel($model);
+        }
+
+        $this->sipe('code', 'setCode', $data, $workspace);
+        $this->sipe('name', 'setName', $data, $workspace);
+        $this->sipe('contactEmail', 'setContactEmail', $data, $workspace);
+
+        if (array_key_exists('thumbnail', $data)) {
+            $thumbnailUrl = null;
+            if (!empty($data['thumbnail'])) {
+                /** @var PublicFile $thumbnail */
+                $thumbnail = $this->om->getObject($data['thumbnail'], PublicFile::class, ['url']);
+                if (!empty($thumbnail)) {
+                    $thumbnailUrl = $thumbnail->getUrl();
+                    $this->fileUt->createFileUse($thumbnail, Workspace::class, $workspace->getUuid());
+                }
+            }
+
+            $workspace->setThumbnail($thumbnailUrl);
+        }
+
+        if (array_key_exists('poster', $data)) {
+            $posterUrl = null;
+            if (!empty($data['poster'])) {
+                /** @var PublicFile $poster */
+                $poster = $this->om->getObject($data['poster'], PublicFile::class, ['url']);
+                if (!empty($poster)) {
+                    $posterUrl = $poster->getUrl();
+                    $this->fileUt->createFileUse($poster, Workspace::class, $workspace->getUuid());
+                }
+            }
+
+            $workspace->setPoster($posterUrl);
+        }
+
         if (isset($data['meta'])) {
+            $this->sipe('meta.personal', 'setPersonal', $data, $workspace);
             $this->sipe('meta.model', 'setModel', $data, $workspace);
             $this->sipe('meta.description', 'setDescription', $data, $workspace);
             $this->sipe('meta.lang', 'setLang', $data, $workspace);
 
-            if (empty($workspace->getCreated()) && !empty($data['meta']['created'])) {
-                $date = DateNormalizer::denormalize($data['meta']['created']);
-                $workspace->setCreated($date->getTimestamp());
+            if (array_key_exists('created', $data['meta'])) {
+                $workspace->setCreatedAt(DateNormalizer::denormalize($data['meta']['created']));
+            }
+            if (array_key_exists('updated', $data['meta'])) {
+                $workspace->setUpdatedAt(DateNormalizer::denormalize($data['meta']['updated']));
+            }
+
+            if (array_key_exists('creator', $data['meta'])) {
+                $creator = null;
+                if (!empty($data['meta']['creator'])) {
+                    /** @var User $creator */
+                    $creator = $this->om->getObject($data['meta']['creator'], User::class);
+                }
+
+                $workspace->setCreator($creator);
             }
         }
 
         $this->sipe('notifications.enabled', 'setNotifications', $data, $workspace);
 
-        $this->sipe('restrictions.hidden', 'setHidden', $data, $workspace);
-        $this->sipe('restrictions.code', 'setAccessCode', $data, $workspace);
-        $this->sipe('restrictions.allowedIps', 'setAllowedIps', $data, $workspace);
+        if (isset($data['registration'])) {
+            $this->sipe('registration.validation', 'setRegistrationValidation', $data, $workspace);
+            $this->sipe('registration.selfRegistration', 'setSelfRegistration', $data, $workspace);
+            $this->sipe('registration.selfUnregistration', 'setSelfUnregistration', $data, $workspace);
 
-        $this->sipe('registration.validation', 'setRegistrationValidation', $data, $workspace);
-        $this->sipe('registration.selfRegistration', 'setSelfRegistration', $data, $workspace);
-        $this->sipe('registration.selfUnregistration', 'setSelfUnregistration', $data, $workspace);
-
-        if (isset($data['registration']) && isset($data['registration']['defaultRole'])) {
-            /** @var Role $defaultRole */
-            $defaultRole = $this->om->getObject($data['registration']['defaultRole'], Role::class);
-            $workspace->setDefaultRole($defaultRole);
+            if (isset($data['registration']['defaultRole'])) {
+                /** @var Role $defaultRole */
+                $defaultRole = $this->om->getObject($data['registration']['defaultRole'], Role::class);
+                $workspace->setDefaultRole($defaultRole);
+            }
         }
 
         if (!empty($data['restrictions'])) {
-            // TODO : store raw file size to avoid this
-            if (isset($data['restrictions']['maxStorage'])) {
-                $workspace->setMaxStorageSize(
-                    $this->fileUt->formatFileSize($data['restrictions']['maxStorage'] ?? 0)
-                );
-            }
-
-            if (isset($data['restrictions']['maxUsers'])) {
-                $workspace->setMaxUsers($data['restrictions']['maxUsers'] ?? 0);
-            }
-
-            if (isset($data['restrictions']['maxResources'])) {
-                $workspace->setMaxUploadResources($data['restrictions']['maxResources'] ?? 0);
-            }
+            $this->sipe('restrictions.hidden', 'setHidden', $data, $workspace);
+            $this->sipe('restrictions.code', 'setAccessCode', $data, $workspace);
+            $this->sipe('restrictions.allowedIps', 'setAllowedIps', $data, $workspace);
 
             if (isset($data['restrictions']['dates'])) {
                 $dateRange = DateRangeNormalizer::denormalize($data['restrictions']['dates']);
@@ -445,6 +435,22 @@ class WorkspaceSerializer
             if (isset($data['breadcrumb']['items'])) {
                 $workspaceOptions->setBreadcrumbItems($data['breadcrumb']['items']);
             }
+        }
+
+        if (array_key_exists('organizations', $data)) {
+            $organizations = [];
+            if (!empty($data['organizations'])) {
+                foreach ($data['organizations'] as $organizationData) {
+                    if (isset($organizationData['id'])) {
+                        $organization = $this->om->getObject($organizationData, Organization::class);
+                        if ($organization) {
+                            $organizations[] = $organization;
+                        }
+                    }
+                }
+            }
+
+            $workspace->setOrganizations($organizations);
         }
 
         return $workspace;

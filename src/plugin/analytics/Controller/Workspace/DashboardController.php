@@ -25,7 +25,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * @Route("/dashboard")
@@ -223,65 +223,6 @@ class DashboardController
         return new JsonResponse(
             $this->finder->search(User::class, $options)['data']
         );
-    }
-
-    /**
-     * @Route("/{workspace}/progression/export", name="apiv2_workspace_export_progression", methods={"GET"})
-     * @EXT\ParamConverter("workspace", class="Claroline\CoreBundle\Entity\Workspace\Workspace", options={"mapping": {"workspace": "uuid"}})
-     */
-    public function exportProgressionAction(Workspace $workspace): StreamedResponse
-    {
-        if (!$this->checkDashboardToolAccess('EDIT', $workspace)) {
-            throw new AccessDeniedException();
-        }
-
-        /** @var Evaluation[] $workspaceEvaluations */
-        $workspaceEvaluations = $this->om->getRepository(Evaluation::class)->findBy(['workspace' => $workspace]);
-
-        $fileName = "progression-{$workspace->getName()}";
-        $fileName = TextNormalizer::toKey($fileName);
-
-        return new StreamedResponse(function () use ($workspaceEvaluations) {
-            // Prepare CSV file
-            $handle = fopen('php://output', 'w+');
-
-            // Create header
-            fputcsv($handle, [
-                $this->translator->trans('lastName', [], 'platform'),
-                $this->translator->trans('firstName', [], 'platform'),
-                $this->translator->trans('date', [], 'platform'),
-                $this->translator->trans('status', [], 'platform'),
-                $this->translator->trans('progression', [], 'platform'),
-                $this->translator->trans('progressionMax', [], 'platform'),
-                $this->translator->trans('score', [], 'platform'),
-                $this->translator->trans('score_total', [], 'platform'),
-                $this->translator->trans('duration', [], 'platform'),
-                $this->translator->trans('score_percent', [], 'platform'),
-            ], ';', '"');
-
-            foreach ($workspaceEvaluations as $workspaceEvaluation) {
-                // put Workspace evaluation
-                fputcsv($handle, [
-                    $workspaceEvaluation->getUser()->getLastName(),
-                    $workspaceEvaluation->getUser()->getFirstName(),
-                    DateNormalizer::normalize($workspaceEvaluation->getDate()),
-                    $workspaceEvaluation->getStatus(),
-                    $workspaceEvaluation->getProgression(),
-                    $workspaceEvaluation->getProgressionMax(),
-                    $workspaceEvaluation->getScore(),
-                    $workspaceEvaluation->getScoreMax(),
-                    $workspaceEvaluation->getDuration(),
-                    $workspaceEvaluation->getScoreMax() ? ($workspaceEvaluation->getScore() / $workspaceEvaluation->getScoreMax()) * 100 : null,
-                ], ';', '"');
-            }
-
-            fclose($handle);
-
-            return $handle;
-        }, 200, [
-            'Content-Type' => 'application/force-download',
-            'Content-Disposition' => 'attachment; filename="'.$fileName.'.csv"',
-        ]);
     }
 
     /**

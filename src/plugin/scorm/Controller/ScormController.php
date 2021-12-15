@@ -11,7 +11,7 @@
 namespace Claroline\ScormBundle\Controller;
 
 use Claroline\AppBundle\API\FinderProvider;
-use Claroline\AppBundle\Controller\AbstractApiController;
+use Claroline\AppBundle\Controller\RequestDecoderTrait;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
@@ -30,8 +30,9 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-class ScormController extends AbstractApiController
+class ScormController
 {
+    use RequestDecoderTrait;
     use PermissionCheckerTrait;
 
     /** @var AuthorizationCheckerInterface */
@@ -89,7 +90,7 @@ class ScormController extends AbstractApiController
     }
 
     /**
-     * @Route("/scorm/{scorm}/update", name="apiv2_scorm_update")
+     * @Route("/scorm/{scorm}", name="apiv2_scorm_update", methods={"PUT"})
      * @EXT\ParamConverter("scorm", class="ClarolineScormBundle:Scorm", options={"mapping": {"scorm": "uuid"}})
      */
     public function updateAction(Scorm $scorm, Request $request): JsonResponse
@@ -102,17 +103,17 @@ class ScormController extends AbstractApiController
     }
 
     /**
-     * @Route("/sco/{sco}/{mode}/commit", name="apiv2_scorm_sco_commit")
+     * @Route("/sco/{sco}/commit", name="apiv2_scormscotracking_update", methods={"PUT"})
      * @EXT\ParamConverter("sco", class="ClarolineScormBundle:Sco", options={"mapping": {"sco": "uuid"}})
      * @EXT\ParamConverter("user", converter="current_user", options={"allowAnonymous"=false})
      */
-    public function scoCommitAction(Sco $sco, $mode, User $user, Request $request): JsonResponse
+    public function updateTrackingAction(Sco $sco, User $user, Request $request): JsonResponse
     {
         $scorm = $sco->getScorm();
         $this->checkPermission('OPEN', $scorm->getResourceNode(), [], true);
 
         $data = $this->decodeRequest($request);
-        $tracking = $this->scormManager->updateScoTracking($sco, $user, $mode, $data);
+        $tracking = $this->scormManager->updateScoTracking($sco, $user, $data);
 
         return new JsonResponse(
             $this->scoTrackingSerializer->serialize($tracking)
