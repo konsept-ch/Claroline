@@ -139,5 +139,8 @@
     "subscription_managed_help": "Le statut sera validé et pris en compte dans le quota.",
     "quotas_insufficient": "Quotas insuffisant !",
     "cancellations": "Annulations",
-    "cancellation_date": "Date d'annulation"
+    "cancellation_date": "Date d'annulation",
+
+    "registation_requirements": "Informations manquantes",
+    "apply_registation_requirements": "Veuillez compléter votre profil avant de procéder à l'inscription."
 }

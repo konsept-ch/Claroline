@@ -132,5 +132,8 @@
     "subscription_validated_help": "The status will be validated.",
     "subscription_managed_help": "The status will be validated with quota",
     "cancellations": "Cancellations",
-    "cancellation_date": "Cancellation date"
+    "cancellation_date": "Cancellation date",
+
+    "registation_requirements": "Requirements before registration",
+    "apply_registation_requirements": "Please fill all account fields before registration"
 }
