@@ -108,6 +108,12 @@ class ProfileController
      */
     public function requirementsAction(User $user)
     {
+        /** @var Organization */
+        $organization = $user->getMainOrganization();
+        if ($organization == null || count($organization->getChildren()) > 0) {
+            return new JsonResponse(false);
+        }
+
         $facets = $this->profileSerializer->serialize();
         $serializedUser = $this->serializer->serialize($user, [Options::SERIALIZE_MINIMAL, Options::SERIALIZE_FACET]);
         $comparators = [
@@ -132,11 +138,7 @@ class ProfileController
         ];
         $profile = $serializedUser['profile'];
 
-        /** @var Organization */
-        $organization = $user->getMainOrganization();
-        if ($organization == null || count($organization->getChildren()) > 0) {
-            return new JsonResponse(false);
-        }
+        dd($facets);
 
         foreach ($facets as $facet) {
             foreach ($facet['sections'] as $section) {
@@ -144,9 +146,9 @@ class ProfileController
                     $condition = $field['display']['condition'];
                     $fieldId = $condition['field'];
                     $displayed = false;
-                    if ($fieldId && isset($profile[$fieldId])) {
+                    if ($fieldId) {
                         $value = $condition['value'];
-                        $displayed = $comparators[$condition['comparator']]($profile[$fieldId], is_array($value) ? $value : [$value]);
+                        $displayed = isset($profile[$fieldId]) ? $comparators[$condition['comparator']]($profile[$fieldId], is_array($value) ? $value : [$value]) : false;
                     }
                     else {
                         $displayed = true;
