@@ -138,8 +138,6 @@ class ProfileController
         ];
         $profile = $serializedUser['profile'];
 
-        dd($facets);
-
         foreach ($facets as $facet) {
             foreach ($facet['sections'] as $section) {
                 foreach ($section['fields'] as $field) {
@@ -162,10 +160,6 @@ class ProfileController
         }
 
         return new JsonResponse(true);
-        /*return new JsonResponse([
-            'facets' => $facets,
-            'user' => $serializedUser
-        ]);*/
     }
 
     /**
