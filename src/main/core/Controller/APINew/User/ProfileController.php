@@ -104,18 +104,22 @@ class ProfileController
 
     /**
      * @Route("/requirements", name="apiv2_profile_requirements", methods={"GET"})
-     * @EXT\ParamConverter("user", converter="current_user", options={"allowAnonymous"=false})
+     * @EXT\ParamConverter("user", converter="current_user", options={"allowAnonymous"=true})
      */
-    public function requirementsAction(User $user)
+    public function requirementsAction(User $user = null)
     {
+        if (!$user) return new JsonResponse(1);
+
         /** @var Organization */
         $organization = $user->getMainOrganization();
         if ($organization == null || count($organization->getChildren()) > 0) {
-            return new JsonResponse(false);
+            return new JsonResponse(2);
         }
 
-        $facets = $this->profileSerializer->serialize();
         $serializedUser = $this->serializer->serialize($user, [Options::SERIALIZE_MINIMAL, Options::SERIALIZE_FACET]);
+        if (!isset($serializedUser['profile'])) return new JsonResponse(2);
+
+        $facets = $this->profileSerializer->serialize();
         $comparators = [
             'equal' => function($a, $b) {
                 foreach ($b as $v) {
@@ -136,7 +140,6 @@ class ProfileController
                 return !empty($a);
             }
         ];
-        $profile = $serializedUser['profile'];
 
         foreach ($facets as $facet) {
             foreach ($facet['sections'] as $section) {
@@ -153,13 +156,13 @@ class ProfileController
                     }
             
                     if (!$field['restrictions']['hidden'] && $displayed && $field['required'] && !isset($profile[$field['id']])) {
-                        return new JsonResponse(false);
+                        return new JsonResponse(2);
                     }
                 }
             }
         }
 
-        return new JsonResponse(true);
+        return new JsonResponse(0);
     }
 
     /**

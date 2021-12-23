@@ -17,7 +17,7 @@ import {getInfo, isFull} from '#/plugin/cursus/utils'
 
 const RegistrationModal = props => {
   const [loaded, setLoaded] = useState(false)
-  const [hasRequirements, setHasRequirements] = useState(false)
+  const [requirements, setRequirements] = useState(false)
 
   useEffect(() => {
     fetch(url(['apiv2_profile_requirements']), {
@@ -26,7 +26,7 @@ const RegistrationModal = props => {
     })
       .then(response => response.json())
       .then(response => {
-        setHasRequirements(response)
+        setRequirements(response)
         setLoaded(true)
       })
   }, [])
@@ -99,7 +99,7 @@ const RegistrationModal = props => {
         </Fragment>
       }
 
-      {loaded && hasRequirements &&
+      {loaded && requirements == 0 &&
         <Button
           className="btn modal-btn"
           type={CALLBACK_BUTTON}
@@ -111,8 +111,7 @@ const RegistrationModal = props => {
           }}
         />
       }
-
-      {loaded && !hasRequirements &&
+      {loaded && requirements != 0 &&
         <Fragment>
           <AlertBlock type="danger" title={trans('registation_requirements', {}, 'cursus')} style={{marginBottom:0}}>
             {trans('apply_registation_requirements', {}, 'cursus')}
@@ -121,8 +120,8 @@ const RegistrationModal = props => {
             className="btn modal-btn"
             primary={true}
             type={LINK_BUTTON}
-            label={trans('my_account')}
-            target="/account"
+            label={requirements == 1 ? trans('login') : trans('my_account')}
+            target={requirements == 1 ? '/login' : '/account'}
             onClick={() => props.fadeModal()}
           />
         </Fragment>
