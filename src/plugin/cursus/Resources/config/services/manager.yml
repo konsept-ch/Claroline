@@ -24,7 +24,6 @@ services:
             - '@Claroline\CoreBundle\Manager\RoleManager'
             - '@Claroline\CoreBundle\Library\RoutingHelper'
             - '@Claroline\CoreBundle\Manager\Template\TemplateManager'
-            - '@security.token_storage'
             - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceManager'
             - '@Claroline\CursusBundle\Manager\EventManager'
 
@@ -38,10 +37,10 @@ services:
             - '@security.token_storage'
             - '@Claroline\AppBundle\Event\StrictDispatcher'
             - '@Claroline\CoreBundle\Manager\PlanningManager'
+            - '@Claroline\CursusBundle\Manager\EventPresenceManager'
 
     Claroline\CursusBundle\Manager\EventPresenceManager:
         arguments:
             - '@translator'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\CoreBundle\Manager\Template\TemplateManager'
-            - '@Claroline\CursusBundle\Manager\EventManager'
