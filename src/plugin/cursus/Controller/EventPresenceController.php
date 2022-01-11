@@ -14,14 +14,15 @@ namespace Claroline\CursusBundle\Controller;
 use Claroline\AppBundle\API\FinderProvider;
 use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\AppBundle\Controller\RequestDecoderTrait;
+use Claroline\AppBundle\Manager\PdfManager;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
 use Claroline\CursusBundle\Entity\Event;
 use Claroline\CursusBundle\Entity\EventPresence;
+use Claroline\CursusBundle\Manager\EventManager;
 use Claroline\CursusBundle\Manager\EventPresenceManager;
-use Dompdf\Dompdf;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -47,19 +48,27 @@ class EventPresenceController
     private $serializer;
     /** @var EventPresenceManager */
     private $manager;
+    /** @var EventManager */
+    private $eventManager;
+    /** @var PdfManager */
+    private $pdfManager;
 
     public function __construct(
         AuthorizationCheckerInterface $authorization,
         ObjectManager $om,
         FinderProvider $finder,
         SerializerProvider $serializer,
-        EventPresenceManager $manager
+        EventPresenceManager $manager,
+        EventManager $eventManager,
+        PdfManager $pdfManager
     ) {
         $this->authorization = $authorization;
         $this->om = $om;
         $this->finder = $finder;
         $this->serializer = $serializer;
         $this->manager = $manager;
+        $this->eventManager = $eventManager;
+        $this->pdfManager = $pdfManager;
     }
 
     /**
@@ -71,7 +80,7 @@ class EventPresenceController
         $this->checkPermission('OPEN', $event, [], true);
 
         // not optimal, as it will do it for each new search
-        $this->manager->generate($event);
+        $this->manager->generate($event, $this->eventManager->getRegisteredUsers($event));
 
         $params = $request->query->all();
         $params['hiddenFilters'] = [
@@ -108,18 +117,10 @@ class EventPresenceController
     {
         $this->checkPermission('EDIT', $event, [], true);
 
-        $domPdf = new Dompdf([
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true,
-        ]);
-
-        $domPdf->loadHtml($this->manager->download($event, $request->getLocale(), (bool) $filled));
-
-        // Render the HTML as PDF
-        $domPdf->render();
-
-        return new StreamedResponse(function () use ($domPdf) {
-            echo $domPdf->output();
+        return new StreamedResponse(function () use ($event, $request, $filled) {
+            echo $this->pdfManager->fromHtml(
+                $this->manager->download($event, $this->eventManager->getRegisteredUsers($event), $request->getLocale(), (bool) $filled)
+            );
         }, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename='.TextNormalizer::toKey($event->getName()).'-presences.pdf',
@@ -135,18 +136,10 @@ class EventPresenceController
     {
         $this->checkPermission('EDIT', $event, [], true);
 
-        $domPdf = new Dompdf([
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true,
-        ]);
-
-        $domPdf->loadHtml($this->manager->downloadUser($event, $request->getLocale(), $user));
-
-        // Render the HTML as PDF
-        $domPdf->render();
-
-        return new StreamedResponse(function () use ($domPdf) {
-            echo $domPdf->output();
+        return new StreamedResponse(function () use ($event, $request, $user) {
+            echo $this->pdfManager->fromHtml(
+                $this->manager->downloadUser($event, $request->getLocale(), $user)
+            );
         }, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename='.TextNormalizer::toKey($event->getName()).'-presence.pdf',
