@@ -102,6 +102,8 @@
     "session_info": "Session information",
     "download_presence": "Download the certificate of presence (.pdf)",
     "show_catalog": "Show training catalog",
+    "registation_requirements": "Requirements before registration",
+    "apply_registation_requirements": "Please fill all account fields before registration",
     "registration_auto": "All session participants are automatically registered for this event.",
     "session_days": "Days",
     "session_hours": "Hours",
