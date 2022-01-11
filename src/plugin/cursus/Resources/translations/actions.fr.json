@@ -1,4 +1,7 @@
 {
+  "nothing": "Ne fait rien",
+  "export_with_filter": "Exporter avec filtre",
+  "export_all": "Exporter tout",
   "show_other_sessions": "Voir les autres sessions",
   "show_sessions": "Voir les sessions",
   "show_training_events": "Voir les séances",
@@ -7,8 +10,5 @@
   "validate_registration": "Valider l'inscription",
   "send_invitation": "Envoyer une invitation",
   "open-training": "Ouvrir la formation",
-  "nothing": "Ne fait rien",
-  "move-pending": "Déplacer en liste d'attente",
-  "export_with_filter": "Exporter avec filtre",
-  "export_all": "Exporter tout"
+  "move-pending": "Déplacer en liste d'attente"
 }

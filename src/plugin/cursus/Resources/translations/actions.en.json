@@ -1,4 +1,6 @@
 {
+  "manage_quotas": "Manage quotas",
+  "validate_subscriptions": "Validate subscription",
   "show_other_sessions": "Show other sessions",
   "show_sessions": "Show sessions",
   "show_training_events": "Show events",
@@ -7,7 +9,5 @@
   "validate_registration": "Validate registration",
   "send_invitation": "Send an invitation",
   "open-training": "Open training",
-  "manage_quotas": "Manage quotas",
-  "validate_subscriptions": "Validate subscription",
   "move-pending": "Move on pending list"
 }

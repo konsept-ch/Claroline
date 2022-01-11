@@ -107,10 +107,6 @@
 
     "opening_session": "Displayed session",
 
-    "course_registration_pending": "You are on the pending list for this training.",
-    "course_registration_pending_help": "Please wait till a manager register you to a session.",
-    "hide_sessions": "Hide sessions to users",
-
     "new_quota": "New quota",
     "add_quota": "Add quota",
     "quota": "Quota",
@@ -131,5 +127,9 @@
     "subscription_pending_help": "The status will be pending.",
     "subscription_refused_help": "The status will be refused.",
     "subscription_validated_help": "The status will be validated.",
-    "subscription_managed_help": "The status will be validated with quota"
+    "subscription_managed_help": "The status will be validated with quota",
+
+    "course_registration_pending": "You are on the pending list for this training.",
+    "course_registration_pending_help": "Please wait till a manager register you to a session.",
+    "hide_sessions": "Hide sessions to users"
 }
