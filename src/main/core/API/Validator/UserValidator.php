@@ -11,6 +11,7 @@ use Claroline\CoreBundle\API\Serializer\User\ProfileSerializer;
 use Claroline\CoreBundle\Entity\Role;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler;
+use Claroline\CoreBundle\Manager\FacetManager;
 use Claroline\CoreBundle\Manager\UserManager;
 use Claroline\CoreBundle\Manager\Workspace\WorkspaceManager;
 use Claroline\CoreBundle\Security\PlatformRoles;
@@ -33,6 +34,8 @@ class UserValidator implements ValidatorInterface
     private $workspaceManager;
     /** @var ProfileSerializer */
     private $profileSerializer;
+    /** @var FacetManager */
+    private $facetManager;
 
     private $roleRepo;
 
@@ -133,10 +136,12 @@ class UserValidator implements ValidatorInterface
         if (in_array(Options::VALIDATE_FACET, $options)) {
             $facets = $this->profileSerializer->serialize([Options::REGISTRATION]);
             $required = [];
+            $allFields = [];
 
             foreach ($facets as $facet) {
                 foreach ($facet['sections'] as $section) {
                     foreach ($section['fields'] as $field) {
+                        $allFields[] = $field;
                         if ($field['required']) {
                             $required[] = $field;
                         }
@@ -145,7 +150,7 @@ class UserValidator implements ValidatorInterface
             }
 
             foreach ($required as $field) {
-                if (!ArrayUtils::has($data, 'profile.'.$field['id'])) {
+                if ($this->facetManager->isFieldDisplayed($field, $allFields, $data) && !ArrayUtils::has($data, 'profile.'.$field['id'])) {
                     $errors[] = [
                         'path' => 'profile/'.$field['id'],
                         'message' => 'The field '.$field['label'].' is required',
