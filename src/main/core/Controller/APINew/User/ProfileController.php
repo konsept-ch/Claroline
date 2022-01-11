@@ -20,12 +20,10 @@ use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\API\Serializer\ParametersSerializer;
 use Claroline\CoreBundle\API\Serializer\User\ProfileSerializer;
 use Claroline\CoreBundle\Entity\Facet\Facet;
-use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Entity\Organization\Organization;
+use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
-use Exception;
-use PHPMD\Renderer\JSONRenderer;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -108,38 +106,50 @@ class ProfileController
      */
     public function requirementsAction(User $user = null)
     {
-        if (!$user) return new JsonResponse(1);
+        if (!$user) {
+            return new JsonResponse(1);
+        }
 
         /** @var Organization */
         $organization = $user->getMainOrganization();
-        if ($organization == null || count($organization->getChildren()) > 0) {
+        if (null == $organization || count($organization->getChildren()) > 0) {
             return new JsonResponse(2);
         }
 
         $serializedUser = $this->serializer->serialize($user, [Options::SERIALIZE_MINIMAL, Options::SERIALIZE_FACET]);
-        if (!isset($serializedUser['profile'])) return new JsonResponse(2);
+        if (!isset($serializedUser['profile'])) {
+            return new JsonResponse(2);
+        }
 
         $facets = $this->profileSerializer->serialize();
         $comparators = [
-            'equal' => function($a, $b) {
+            'equal' => function ($a, $b) {
                 foreach ($b as $v) {
-                    if ($a != $v) return false;
+                    if ($a != $v) {
+                        return false;
+                    }
                 }
+
                 return true;
             },
-            'different' => function($a, $b) {
+            'different' => function ($a, $b) {
                 foreach ($b as $v) {
-                    if ($a == $v) return false;
+                    if ($a == $v) {
+                        return false;
+                    }
                 }
+
                 return true;
             },
-            'empty' => function($a, $b) {
+            'empty' => function ($a, $b) {
                 return empty($a);
             },
-            'not_empty' => function($a, $b) {
+            'not_empty' => function ($a, $b) {
                 return !empty($a);
-            }
+            },
         ];
+
+        $profile = $serializedUser['profile'];
 
         foreach ($facets as $facet) {
             foreach ($facet['sections'] as $section) {
@@ -150,11 +160,10 @@ class ProfileController
                     if ($fieldId) {
                         $value = $condition['value'];
                         $displayed = isset($profile[$fieldId]) ? $comparators[$condition['comparator']]($profile[$fieldId], is_array($value) ? $value : [$value]) : false;
-                    }
-                    else {
+                    } else {
                         $displayed = true;
                     }
-            
+
                     if (!$field['restrictions']['hidden'] && $displayed && $field['required'] && !isset($profile[$field['id']])) {
                         return new JsonResponse(2);
                     }
