@@ -192,6 +192,7 @@ class SessionController extends AbstractCrudController
         $params['hiddenFilters']['session'] = $session->getUuid();
         $params['hiddenFilters']['type'] = $type;
         $params['hiddenFilters']['pending'] = false;
+        $params['hiddenFilters']['ignored_status'] = SessionUser::STATUS_REFUSED;
 
         return new JsonResponse(
             $this->finder->search(SessionUser::class, $params)
