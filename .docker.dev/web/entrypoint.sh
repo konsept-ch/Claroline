@@ -2,10 +2,6 @@
 
 set -e
 
-echo "Copying initial vendor files to volume"
-mv ../initial/node_modules ./
-mv ../initial/vendor ./
-
 echo "Installing dependencies (or checking if correct ones are installed)"
 composer install # if composer.lock exists, this takes ~2 seconds (every subsequent run with no changes to deps)
 npm install --legacy-peer-deps # if package-lock.json exists, this takes ~3 seconds (every subsequent run with no changes to deps)
