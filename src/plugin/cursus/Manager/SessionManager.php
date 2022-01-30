@@ -20,6 +20,7 @@ use Claroline\CoreBundle\Event\CatalogEvents\MessageEvents;
 use Claroline\CoreBundle\Event\SendMessageEvent;
 use Claroline\CoreBundle\Library\Normalizer\DateRangeNormalizer;
 use Claroline\CoreBundle\Library\RoutingHelper;
+use Claroline\CoreBundle\Manager\MailManager;
 use Claroline\CoreBundle\Manager\RoleManager;
 use Claroline\CoreBundle\Manager\Template\TemplateManager;
 use Claroline\CoreBundle\Manager\Workspace\WorkspaceManager;
@@ -50,6 +51,8 @@ class SessionManager
     private $crud;
     /** @var PlatformManager */
     private $platformManager;
+    /** @var MailManager */
+    private $mailManager;
     /** @var RoleManager */
     private $roleManager;
     /** @var RoutingHelper */
@@ -72,6 +75,7 @@ class SessionManager
         UrlGeneratorInterface $router,
         Crud $crud,
         PlatformManager $platformManager,
+        MailManager $mailManager,
         RoleManager $roleManager,
         RoutingHelper $routingHelper,
         TemplateManager $templateManager,
@@ -84,6 +88,7 @@ class SessionManager
         $this->router = $router;
         $this->crud = $crud;
         $this->platformManager = $platformManager;
+        $this->mailManager = $mailManager;
         $this->roleManager = $roleManager;
         $this->routingHelper = $routingHelper;
         $this->templateManager = $templateManager;
@@ -595,14 +600,10 @@ class SessionManager
                 'username' => $user->getUsername()
             ];
 
-            $title = $this->templateManager->getTemplate('training_session_unregistred', $placeholders, $locale, 'title');
-            $content = $this->templateManager->getTemplate('training_session_unregistred', $placeholders, $locale);
+            $subject = $this->templateManager->getTemplate('training_session_unregistred', $placeholders, $locale, 'title');
+            $body = $this->templateManager->getTemplate('training_session_unregistred', $placeholders, $locale);
 
-            $this->eventDispatcher->dispatch(new SendMessageEvent(
-                $content,
-                $title,
-                [$user]
-            ), MessageEvents::MESSAGE_SENDING);
+            $this->mailManager->send($subject, $body, [$user], null, [], true);
         }
     }
 
