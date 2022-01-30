@@ -249,8 +249,10 @@ class SessionManager
 
             $this->eventDispatcher->dispatch(new LogSessionUserUnregistrationEvent($sessionUser), 'log');
         }
-
+        
         $this->om->flush();
+
+        $this->sendSessionUnregistration($sessionUsers);
     }
 
     /**
@@ -567,6 +569,34 @@ class SessionManager
 
             $title = $this->templateManager->getTemplate($templateName, $placeholders, $locale, 'title');
             $content = $this->templateManager->getTemplate($templateName, $placeholders, $locale);
+
+            $this->eventDispatcher->dispatch(new SendMessageEvent(
+                $content,
+                $title,
+                [$user]
+            ), MessageEvents::MESSAGE_SENDING);
+        }
+    }
+
+    /**
+     * @param SessionUser[] $sessionUsers
+     */
+    public function sendSessionUnregistration(array $sessionUsers)
+    {
+        foreach ($sessionUsers as $sessionUser) {
+            $user = $sessionUser->getUser();
+            $locale = $user->getLocale();
+            $placeholders = [
+                'session_name' => $sessionUser->getSession()->getName(),
+                'session_start' => $sessionUser->getSession()->getStartDate()->format('d/m/Y'),
+                'session_end' => $sessionUser->getSession()->getEndDate()->format('d/m/Y'),
+                'first_name' => $user->getFirstName(),
+                'last_name' => $user->getLastName(),
+                'username' => $user->getUsername()
+            ];
+
+            $title = $this->templateManager->getTemplate('training_session_unregistred', $placeholders, $locale, 'title');
+            $content = $this->templateManager->getTemplate('training_session_unregistred', $placeholders, $locale);
 
             $this->eventDispatcher->dispatch(new SendMessageEvent(
                 $content,
