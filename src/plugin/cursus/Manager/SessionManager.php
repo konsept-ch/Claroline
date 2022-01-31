@@ -84,7 +84,6 @@ class SessionManager
         TemplateManager $templateManager,
         WorkspaceManager $workspaceManager,
         EventManager $sessionEventManager,
-        MailManager $mailManager,
         LocaleManager $localeManager
     ) {
         $this->eventDispatcher = $eventDispatcher;
@@ -99,7 +98,6 @@ class SessionManager
         $this->templateManager = $templateManager;
         $this->workspaceManager = $workspaceManager;
         $this->sessionEventManager = $sessionEventManager;
-        $this->mailManager = $mailManager;
         $this->localeManager = $localeManager;
 
         $this->sessionRepo = $om->getRepository(Session::class);
