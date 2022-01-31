@@ -64,8 +64,6 @@ class SessionManager
     private $workspaceManager;
     /** @var EventManager */
     private $sessionEventManager;
-    /** @var MailManager */
-    private $mailManager;
     /** @var LocaleManager */
     private $localeManager;
 
