@@ -319,17 +319,34 @@ class QuotaController extends AbstractCrudController
             // Execute action, dispatch event, send mail, etc
             switch ($status) {
                 case SessionUser::STATUS_VALIDATED:
-                    $this->sessionManager->addUsers($sessionUser->getSession(), [$sessionUser->getUser()]);
+                    if ($oldStatus == SessionUser::STATUS_PENDING) {
+                        $this->sessionManager->addUsers($sessionUser->getSession(), [$sessionUser->getUser()]);
+                    }
+                    else if ($oldStatus == SessionUser::STATUS_REFUSED) {
+                        $sessionUser->setValidated(true);
+                        $sessionUser->setConfirmed(true);
+                        $this->sessionManager->checkUsersRegistration($sessionUser->getSession(), [$sessionUser]);
+                    }
                     $this->quotaManager->sendValidatedStatusMail($sessionUser);
                     break;
                 case SessionUser::STATUS_MANAGED:
                     if (null == $quota || !$quota->useQuotas()) {
                         return new JsonResponse('The status don\'t can be changed to managed.', 500);
                     }
-                    $this->sessionManager->addUsers($sessionUser->getSession(), [$sessionUser->getUser()]);
+                    if ($oldStatus == SessionUser::STATUS_PENDING) {
+                        $this->sessionManager->addUsers($sessionUser->getSession(), [$sessionUser->getUser()]);
+                    }
+                    else if ($oldStatus == SessionUser::STATUS_REFUSED) {
+                        $sessionUser->setValidated(true);
+                        $sessionUser->setConfirmed(true);
+                        $this->sessionManager->checkUsersRegistration($sessionUser->getSession(), [$sessionUser]);
+                    }
                     $this->quotaManager->sendManagedStatusMail($sessionUser);
                     break;
                 case SessionUser::STATUS_PENDING:
+                    $sessionUser->setValidated(false);
+                    $sessionUser->setConfirmed(false);
+                    $this->sessionManager->checkUsersRegistration($sessionUser->getSession(), [$sessionUser]);
                     break;
                 case SessionUser::STATUS_REFUSED:
                     if (SessionUser::STATUS_VALIDATED == $oldStatus || SessionUser::STATUS_MANAGED == $oldStatus) {
@@ -337,7 +354,9 @@ class QuotaController extends AbstractCrudController
                     } else {
                         $this->quotaManager->sendRefusedStatusMail($sessionUser);
                     }
-                    //$this->sessionManager->removeUsers($sessionUser->getSession(), [$sessionUser]);
+                    $sessionUser->setValidated(false);
+                    $sessionUser->setConfirmed(false);
+                    $this->sessionManager->checkUsersRegistration($sessionUser->getSession(), [$sessionUser]);
                     break;
             }
 
