@@ -51,9 +51,9 @@ class UserValidator implements ValidatorInterface
         PlatformConfigurationHandler $config,
         UserManager $manager,
         WorkspaceManager $workspaceManager,
-        FacetManager $facetManager,
         OrganizationManager $organizationManager,
-        ProfileSerializer $profileSerializer
+        ProfileSerializer $profileSerializer,
+        FacetManager $facetManager
     ) {
         $this->authorization = $authorization;
         $this->tokenStorage = $tokenStorage;
