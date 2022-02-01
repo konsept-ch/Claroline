@@ -102,16 +102,14 @@
     "session_info": "Session information",
     "download_presence": "Download the certificate of presence (.pdf)",
     "show_catalog": "Show training catalog",
+    "registation_requirements": "Requirements before registration",
+    "apply_registation_requirements": "Please fill all account fields before registration",
     "registration_auto": "All session participants are automatically registered for this event.",
-    "session_about": "Abbout session",
+    "session_days": "Days",
+    "session_hours": "Hours",
+    "session_about": "About session",
 
     "opening_session": "Displayed session",
-
-    "course_registration_pending": "You are on the pending list for this training.",
-    "course_registration_pending_help": "Please wait till a manager register you to a session.",
-    "hide_sessions": "Hide sessions to users",
-    "cancellations": "Cancellations",
-    "cancellation_date": "Cancellation date",
 
     "new_quota": "New quota",
     "add_quota": "Add quota",
@@ -133,5 +131,11 @@
     "subscription_pending_help": "The status will be pending.",
     "subscription_refused_help": "The status will be refused.",
     "subscription_validated_help": "The status will be validated.",
-    "subscription_managed_help": "The status will be validated with quota"
+    "subscription_managed_help": "The status will be validated with quota",
+
+    "course_registration_pending": "You are on the pending list for this training.",
+    "course_registration_pending_help": "Please wait till a manager register you to a session.",
+    "hide_sessions": "Hide sessions to users",
+    "cancellations": "Cancellations",
+    "cancellation_date": "Cancellation date"
 }

@@ -66,6 +66,12 @@ class SessionUserFinder extends AbstractFinder
                     $qb->setParameter($filterName, $filterValue);
                     break;
 
+                case 'organizations':
+                    $qb->leftJoin('u.userOrganizationReferences', 'oref');
+                    $qb->andWhere("oref.organization IN (:{$filterName})");
+                    $qb->setParameter($filterName, $filterValue);
+                    break;
+
                 case 'pending':
                     if ($filterValue) {
                         $qb->andWhere('(obj.confirmed = 0 OR obj.validated = 0)');

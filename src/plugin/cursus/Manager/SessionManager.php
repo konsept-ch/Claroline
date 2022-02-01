@@ -52,6 +52,8 @@ class SessionManager
     private $crud;
     /** @var PlatformManager */
     private $platformManager;
+    /** @var MailManager */
+    private $mailManager;
     /** @var RoleManager */
     private $roleManager;
     /** @var RoutingHelper */
@@ -62,8 +64,6 @@ class SessionManager
     private $workspaceManager;
     /** @var EventManager */
     private $sessionEventManager;
-    /** @var MailManager */
-    private $mailManager;
     /** @var LocaleManager */
     private $localeManager;
 
@@ -78,12 +78,12 @@ class SessionManager
         UrlGeneratorInterface $router,
         Crud $crud,
         PlatformManager $platformManager,
+        MailManager $mailManager,
         RoleManager $roleManager,
         RoutingHelper $routingHelper,
         TemplateManager $templateManager,
         WorkspaceManager $workspaceManager,
         EventManager $sessionEventManager,
-        MailManager $mailManager,
         LocaleManager $localeManager
     ) {
         $this->eventDispatcher = $eventDispatcher;
@@ -92,12 +92,12 @@ class SessionManager
         $this->router = $router;
         $this->crud = $crud;
         $this->platformManager = $platformManager;
+        $this->mailManager = $mailManager;
         $this->roleManager = $roleManager;
         $this->routingHelper = $routingHelper;
         $this->templateManager = $templateManager;
         $this->workspaceManager = $workspaceManager;
         $this->sessionEventManager = $sessionEventManager;
-        $this->mailManager = $mailManager;
         $this->localeManager = $localeManager;
 
         $this->sessionRepo = $om->getRepository(Session::class);
@@ -278,8 +278,10 @@ class SessionManager
 
             $this->eventDispatcher->dispatch(new LogSessionUserUnregistrationEvent($sessionUser), 'log');
         }
-
+        
         $this->om->flush();
+
+        $this->sendSessionUnregistration($sessionUsers);
     }
 
     /**
@@ -602,6 +604,30 @@ class SessionManager
                 $title,
                 [$user]
             ), MessageEvents::MESSAGE_SENDING);
+        }
+    }
+
+    /**
+     * @param SessionUser[] $sessionUsers
+     */
+    public function sendSessionUnregistration(array $sessionUsers)
+    {
+        foreach ($sessionUsers as $sessionUser) {
+            $user = $sessionUser->getUser();
+            $locale = $user->getLocale();
+            $placeholders = [
+                'session_name' => $sessionUser->getSession()->getName(),
+                'session_start' => $sessionUser->getSession()->getStartDate()->format('d/m/Y'),
+                'session_end' => $sessionUser->getSession()->getEndDate()->format('d/m/Y'),
+                'first_name' => $user->getFirstName(),
+                'last_name' => $user->getLastName(),
+                'username' => $user->getUsername()
+            ];
+
+            $subject = $this->templateManager->getTemplate('training_session_unregistred', $placeholders, $locale, 'title');
+            $body = $this->templateManager->getTemplate('training_session_unregistred', $placeholders, $locale);
+
+            $this->mailManager->send($subject, $body, [$user], null, [], true);
         }
     }
 

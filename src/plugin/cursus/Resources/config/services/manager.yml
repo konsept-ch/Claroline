@@ -21,12 +21,12 @@ services:
             - '@router'
             - '@Claroline\AppBundle\API\Crud'
             - '@Claroline\AppBundle\Manager\PlatformManager'
+            - '@Claroline\CoreBundle\Manager\MailManager'
             - '@Claroline\CoreBundle\Manager\RoleManager'
             - '@Claroline\CoreBundle\Library\RoutingHelper'
             - '@Claroline\CoreBundle\Manager\Template\TemplateManager'
             - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceManager'
             - '@Claroline\CursusBundle\Manager\EventManager'
-            - '@Claroline\CoreBundle\Manager\MailManager'
             - '@Claroline\CoreBundle\Manager\LocaleManager'
             - '@security.token_storage'
 
