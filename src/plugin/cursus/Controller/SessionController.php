@@ -192,7 +192,6 @@ class SessionController extends AbstractCrudController
         $params['hiddenFilters']['session'] = $session->getUuid();
         $params['hiddenFilters']['type'] = $type;
         $params['hiddenFilters']['pending'] = false;
-        $params['hiddenFilters']['ignored_status'] = SessionUser::STATUS_REFUSED;
 
         // only list participants of the same organization
         if (SessionUser::LEARNER === $type && !$this->authorization->isGranted('ROLE_ADMIN')) {
