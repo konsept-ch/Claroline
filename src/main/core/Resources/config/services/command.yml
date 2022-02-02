@@ -113,6 +113,13 @@ services:
         tags:
             - { name: 'console.command', command: 'claroline:workspace:import' }
 
+    Claroline\CoreBundle\Command\Workspace\GenerateCommand:
+        arguments:
+            - '@doctrine.orm.entity_manager'
+            - '@Claroline\CursusBundle\Manager\SessionManager'
+        tags:
+            - { name: 'console.command', command: 'claroline:workspace:generate' }
+
     # Common
 
     Claroline\CoreBundle\Command\ComputeStorageCommand:
