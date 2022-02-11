@@ -44,7 +44,7 @@ class FacetManager
         return $event->getFormattedValue();
     }
 
-    public function isFieldDisplayed($fieldDef, $allFields, $data)
+    public function isFieldDisplayed(array $fieldDef, array $allFields, array $data): bool
     {
         $condition = $fieldDef['display']['condition'];
 
@@ -58,7 +58,7 @@ class FacetManager
             }
 
             if ($parentField) {
-                $parentValue = ArrayUtils::get($data, 'profile.'.$parentField['id']);
+                $parentValue = ArrayUtils::get($data, 'profile.' . $parentField['id']);
 
                 $displayed = false;
 
@@ -78,11 +78,9 @@ class FacetManager
                 }
 
                 return $displayed;
-            } else {
-                return true;
             }
-        } else {
-            return true;
         }
+
+        return true;
     }
 }

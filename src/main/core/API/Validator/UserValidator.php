@@ -37,10 +37,10 @@ class UserValidator implements ValidatorInterface
     private $workspaceManager;
     /** @var OrganizationManager */
     private $organizationManager;
-    /** @var ProfileSerializer */
-    private $profileSerializer;
     /** @var FacetManager */
     private $facetManager;
+    /** @var ProfileSerializer */
+    private $profileSerializer;
 
     private $roleRepo;
 
@@ -52,8 +52,8 @@ class UserValidator implements ValidatorInterface
         UserManager $manager,
         WorkspaceManager $workspaceManager,
         OrganizationManager $organizationManager,
-        ProfileSerializer $profileSerializer,
-        FacetManager $facetManager
+        FacetManager $facetManager,
+        ProfileSerializer $profileSerializer
     ) {
         $this->authorization = $authorization;
         $this->tokenStorage = $tokenStorage;
@@ -62,8 +62,8 @@ class UserValidator implements ValidatorInterface
         $this->manager = $manager;
         $this->workspaceManager = $workspaceManager;
         $this->organizationManager = $organizationManager;
-        $this->profileSerializer = $profileSerializer;
         $this->facetManager = $facetManager;
+        $this->profileSerializer = $profileSerializer;
 
         $this->roleRepo = $om->getRepository(Role::class);
     }
@@ -140,6 +140,7 @@ class UserValidator implements ValidatorInterface
         // todo validate Facet values
         if (in_array(Options::VALIDATE_FACET, $options)) {
             $facets = $this->profileSerializer->serialize([Options::REGISTRATION]);
+            $allFields = [];
             $required = [];
             $allFields = [];
 

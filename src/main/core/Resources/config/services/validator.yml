@@ -21,8 +21,8 @@ services:
           - '@Claroline\CoreBundle\Manager\UserManager'
           - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceManager'
           - '@Claroline\CoreBundle\Manager\Organization\OrganizationManager'
-          - '@Claroline\CoreBundle\API\Serializer\User\ProfileSerializer'
           - '@Claroline\CoreBundle\Manager\FacetManager'
+          - '@Claroline\CoreBundle\API\Serializer\User\ProfileSerializer'
 
     Claroline\CoreBundle\API\Validator\GroupValidator:
         arguments:
