@@ -333,8 +333,8 @@ class EventManager
             'summary' => $event->getName(),
             'description' => $event->getDescription(),
             'location' => $locationAddress,
-            'dtstart' => DateNormalizer::normalize($event->getStartDate()),
-            'dtend' => DateNormalizer::normalize($event->getEndDate()),
+            'dtstart' => DateNormalizer::normalize($event->getStartDate()->setTimezone(new \DateTimeZone('UTC'))),
+            'dtend' => DateNormalizer::normalize($event->getEndDate()->setTimezone(new \DateTimeZone('UTC'))),
             'url' => null,
         ];
 
