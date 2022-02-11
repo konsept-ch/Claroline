@@ -79,6 +79,8 @@ class FacetManager
 
                 return $displayed;
             }
+
+            return true;
         }
 
         return true;
