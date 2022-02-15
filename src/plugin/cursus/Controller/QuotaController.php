@@ -312,6 +312,8 @@ class QuotaController extends AbstractCrudController
             return new JsonResponse('The status don\'t have been updated.', 500);
         }
 
+        $sessionUser->setRemark($remark);
+
         $oldStatus = $sessionUser->getStatus();
         if ($oldStatus != $status) {
             $this->eventDispatcher->dispatch(new LogSubscriptionSetStatusEvent($sessionUser), 'log');
@@ -360,7 +362,6 @@ class QuotaController extends AbstractCrudController
                     break;
             }
 
-            $sessionUser->setRemark($remark);
             $sessionUser->setStatus($status);
             $this->om->persist($sessionUser);
             $this->om->flush();
