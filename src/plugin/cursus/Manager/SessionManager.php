@@ -592,10 +592,16 @@ class SessionManager
         foreach ($sessionUsers as $sessionUser) {
             $user = $sessionUser->getUser();
             $locale = $user->getLocale();
+            $session = $sessionUser->getSession();
+            $course = $sessionUser->getSession()->getCourse();
             $placeholders = [
-                'session_name' => $sessionUser->getSession()->getName(),
-                'session_start' => $sessionUser->getSession()->getStartDate()->format('d/m/Y'),
-                'session_end' => $sessionUser->getSession()->getEndDate()->format('d/m/Y'),
+                'course_name' => $course->getName(),
+                'course_code' => $course->getCode(),
+                'course_description' => $course->getDescription(),
+                'session_name' => $session->getName(),
+                'session_description' => $session->getDescription(),
+                'session_start' => $session->getStartDate()->format('d/m/Y'),
+                'session_end' => $session->getEndDate()->format('d/m/Y'),
                 'first_name' => $user->getFirstName(),
                 'last_name' => $user->getLastName(),
                 'username' => $user->getUsername()
