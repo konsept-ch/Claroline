@@ -184,6 +184,7 @@ plugin:
               - user_last_name
               - session_start
               - session_end
+              - remark
 
         - name: training_quota_status_managed
           type: email
@@ -193,6 +194,7 @@ plugin:
               - user_last_name
               - session_start
               - session_end
+              - remark
 
         - name: training_quota_status_refused
           type: email
@@ -202,6 +204,7 @@ plugin:
               - user_last_name
               - session_start
               - session_end
+              - remark
 
         - name: training_quota_status_cancelled
           type: email
@@ -211,6 +214,7 @@ plugin:
               - user_last_name
               - session_start
               - session_end
+              - remark
 
         - name: training_quota_subscription_created
           type: email

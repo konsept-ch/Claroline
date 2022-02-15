@@ -56,6 +56,7 @@ class QuotaManager
             'user_last_name' => $user->getLastName(),
             'session_start' => $sessionUser->getSession()->getStartDate()->format('d/m/Y'),
             'session_end' => $sessionUser->getSession()->getEndDate()->format('d/m/Y'),
+            'remark' => $sessionUser->getRemark(),
         ];
         $subject = $this->templateManager->getTemplate('training_quota_status_validated', $placeholders, $locale, 'title');
         $body = $this->templateManager->getTemplate('training_quota_status_validated', $placeholders, $locale);
@@ -76,6 +77,7 @@ class QuotaManager
             'user_last_name' => $user->getLastName(),
             'session_start' => $sessionUser->getSession()->getStartDate()->format('d/m/Y'),
             'session_end' => $sessionUser->getSession()->getEndDate()->format('d/m/Y'),
+            'remark' => $sessionUser->getRemark(),
         ];
         $subject = $this->templateManager->getTemplate('training_quota_status_managed', $placeholders, $locale, 'title');
         $body = $this->templateManager->getTemplate('training_quota_status_managed', $placeholders, $locale);
@@ -96,6 +98,7 @@ class QuotaManager
             'user_last_name' => $user->getLastName(),
             'session_start' => $sessionUser->getSession()->getStartDate()->format('d/m/Y'),
             'session_end' => $sessionUser->getSession()->getEndDate()->format('d/m/Y'),
+            'remark' => $sessionUser->getRemark(),
         ];
         $subject = $this->templateManager->getTemplate('training_quota_status_refused', $placeholders, $locale, 'title');
         $body = $this->templateManager->getTemplate('training_quota_status_refused', $placeholders, $locale);
@@ -116,6 +119,7 @@ class QuotaManager
             'user_last_name' => $user->getLastName(),
             'session_start' => $sessionUser->getSession()->getStartDate()->format('d/m/Y'),
             'session_end' => $sessionUser->getSession()->getEndDate()->format('d/m/Y'),
+            'remark' => $sessionUser->getRemark(),
         ];
         $subject = $this->templateManager->getTemplate('training_quota_status_cancelled', $placeholders, $locale, 'title');
         $body = $this->templateManager->getTemplate('training_quota_status_cancelled', $placeholders, $locale);
