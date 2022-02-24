@@ -200,7 +200,7 @@ class Crud
      *
      * @throws InvalidDataException
      */
-    public function update($classOrObject, $data, array $options = [], $profileSerializer)
+    public function update($classOrObject, $data, array $options = [], $profileSerializer = null)
     {
         if (is_string($classOrObject)) {
             // class name received
@@ -234,11 +234,23 @@ class Crud
             }
 
             foreach ($required as $field) {
-                if ($this->facetManager->isFieldDisplayed($field, $allFields, $data) && !ArrayUtils::has($data, 'profile.'.$field['id'])) {
-                    $errors[] = [
-                        'path' => 'profile/'.$field['id'],
-                        'message' => 'The field '.$field['label'].' is required',
-                    ];
+                if ($this->facetManager->isFieldDisplayed($field, $allFields, $data) ) {
+                    if (!ArrayUtils::has($data, 'profile.'.$field['id'])) {
+                        $errors[] = [
+                            'path' => 'profile/'.$field['id'],
+                            'message' => 'The field '.$field['label'].' is required',
+                        ];
+                    }
+
+                    /** @var Organization */
+                    $organization = $classOrObject->getMainOrganization();
+
+                    if (null == $organization || count($organization->getChildren()) > 0) {
+                        $errors[] = [
+                            'path' => 'profile/'.$field['id'],
+                            'message' => 'The selected organization cannot have children as this field is required',
+                        ];
+                    }
                 }
             }
         }
