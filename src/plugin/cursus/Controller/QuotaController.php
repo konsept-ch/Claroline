@@ -104,19 +104,14 @@ class QuotaController extends AbstractCrudController
 
             // filter by organization
             if ($user instanceof User) {
-                $organizations = $user->getOrganizations();
+                $userOrganizations = $user->getOrganizations();
             } else {
-                $organizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
+                $userOrganizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
             }
 
-            $filters['organizations'] = array_unique(array_reduce($organizations, function (array $output, Organization $organization) {
-                $output[] = $organization->getUuid();
-                foreach ($organization->getChildren() as $child) {
-                    $output[] = $child->getUuid();
-                }
-
-                return $output;
-            }, []));
+            $organizations = [];
+            $this->getOrganizationIds($userOrganizations, $organizations);
+            $filters['organizations'] = $organizations;
         }
 
         return $filters;
