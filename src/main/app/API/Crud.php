@@ -7,6 +7,7 @@ use Claroline\AppBundle\Event\Crud\CrudEvent;
 use Claroline\AppBundle\Event\StrictDispatcher;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\AppBundle\Security\ObjectCollection;
+use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CoreBundle\Manager\FacetManager;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
 use Claroline\CoreBundle\Validator\Exception\InvalidDataException;
@@ -234,7 +235,7 @@ class Crud
             }
 
             foreach ($required as $field) {
-                if ($this->facetManager->isFieldDisplayed($field, $allFields, $data) ) {
+                if ($this->facetManager->isFieldDisplayed($field, $allFields, $data)) {
                     if (!ArrayUtils::has($data, 'profile.'.$field['id'])) {
                         $errors[] = [
                             'path' => 'profile/'.$field['id'],
@@ -242,14 +243,16 @@ class Crud
                         ];
                     }
 
-                    /** @var Organization */
-                    $organization = $classOrObject->getMainOrganization();
+                    if ($field['type'] === 'organization') {
+                        /** @var Organization */
+                        $organization = $this->om->getRepository(Organization::class)->findOneBy(['code' => $data['mainOrganization']['code']]);
 
-                    if (null == $organization || count($organization->getChildren()) > 0) {
-                        $errors[] = [
-                            'path' => 'profile/'.$field['id'],
-                            'message' => 'The selected organization cannot have children as this field is required',
-                        ];
+                        if (null == $organization || count($organization->getChildren()) > 0) {
+                            $errors[] = [
+                                'path' => 'profile/'.$field['id'],
+                                'message' => 'You must select the deepest organization level - main organization cannot have children',
+                            ];
+                        }
                     }
                 }
             }
