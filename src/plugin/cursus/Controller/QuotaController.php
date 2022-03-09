@@ -20,6 +20,7 @@ use Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler;
 use Claroline\CoreBundle\Manager\LocaleManager;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
 use Claroline\CursusBundle\Entity\Quota;
+use Claroline\CursusBundle\Entity\Registration\AbstractRegistration;
 use Claroline\CursusBundle\Entity\Registration\SessionUser;
 use Claroline\CursusBundle\Event\Log\LogSubscriptionSetStatusEvent;
 use Claroline\CursusBundle\Manager\QuotaManager;
@@ -197,6 +198,7 @@ class QuotaController extends AbstractCrudController
 
         $filters = $request->query->get('filters', []);
         $filters['organization'] = $quota->getOrganization();
+        $filters['type'] = AbstractRegistration::LEARNER;
 
         if (!$quota->useQuotas()) {
             $filters['ignored_status'] = SessionUser::STATUS_MANAGED;
@@ -251,6 +253,7 @@ class QuotaController extends AbstractCrudController
         $query = $request->query->all();
         $query['hiddenFilters'] = [
             'organization' => $organization,
+            'type' => AbstractRegistration::LEARNER,
         ];
 
         if (!$quota->useQuotas()) {

@@ -45,6 +45,11 @@ class SessionUserFinder extends AbstractFinder
                     $qb->setParameter($filterName, $filterValue);
                     break;
 
+                case 'type':
+                    $qb->andWhere("(obj.type = :{$filterName})");
+                    $qb->setParameter($filterName, $filterValue);
+                    break;
+
                 case 'organization':
                     $qb->leftJoin('u.userOrganizationReferences', 'oref');
                     $qb->andWhere("oref.organization = :{$filterName}");

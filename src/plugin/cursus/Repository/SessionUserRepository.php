@@ -12,6 +12,7 @@
 namespace Claroline\CursusBundle\Repository;
 
 use Claroline\CoreBundle\Entity\Organization\Organization;
+use Claroline\CursusBundle\Entity\Registration\AbstractRegistration;
 use Doctrine\ORM\EntityRepository;
 
 class SessionUserRepository extends EntityRepository
@@ -24,8 +25,12 @@ class SessionUserRepository extends EntityRepository
                 INNER JOIN su.user u
                 LEFT JOIN u.userOrganizationReferences oref
                 WHERE oref.organization = :organization
+                AND su.type = :type
             ')
-            ->setParameter('organization', $organization)
+            ->setParameters([
+                'type' => AbstractRegistration::LEARNER,
+                'organization' => $organization
+            ])
             ->getResult();
     }
 }
