@@ -49,6 +49,13 @@ class SessionCancellation
      */
     protected $user;
 
+    /**
+     * @ORM\Column(name="inscription_uuid", type="string", length=36)
+     *
+     * @var String
+     */
+    protected $inscriptionUuid;
+
     public function __construct()
     {
         $this->refreshUuid();
@@ -84,5 +91,15 @@ class SessionCancellation
     public function setUser(User $user)
     {
         $this->user = $user;
+    }
+
+    public function getInscriptionUuid(): String
+    {
+        return $this->inscriptionUuid;
+    }
+
+    public function setInscriptionUuid(String $inscriptionUuid)
+    {
+        $this->inscriptionUuid = $inscriptionUuid;
     }
 }
