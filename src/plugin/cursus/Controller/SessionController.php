@@ -253,6 +253,7 @@ class SessionController extends AbstractCrudController
             $cancellation = new SessionCancellation();
             $cancellation->setUser($sessionUser->getUser());
             $cancellation->setSession($sessionUser->getSession());
+            $cancellation->setInscriptionUuid($sessionUser->getUuid());
             $this->om->persist($cancellation);
         }
 
