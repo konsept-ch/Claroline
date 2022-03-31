@@ -122,7 +122,7 @@ class RegistrationController
             Options::ADD_NOTIFICATIONS,
             Options::WORKSPACE_VALIDATE_ROLES,
             Options::VALIDATE_FACET,
-        ]);
+        ], $this->profileSerializer);
 
         // error handling
         if (is_array($user)) {
