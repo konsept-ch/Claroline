@@ -145,7 +145,7 @@ class Crud
      *
      * @throws InvalidDataException
      */
-    public function create($classOrObject, $data, array $options = [])
+    public function create($classOrObject, $data, array $options = [], $profileSerializer = null)
     {
         if (is_string($classOrObject)) {
             // class name received
@@ -159,6 +159,48 @@ class Crud
 
         // validates submitted data.
         $errors = $this->validate($class, $data, ValidatorProvider::CREATE, $options);
+
+        // todo validate Facet values
+        if (in_array(Options::VALIDATE_FACET, $options)) {
+            $facets = $profileSerializer->serialize([Options::REGISTRATION]);
+            $allFields = [];
+            $required = [];
+
+            foreach ($facets as $facet) {
+                foreach ($facet['sections'] as $section) {
+                    foreach ($section['fields'] as $field) {
+                        $allFields[] = $field;
+                        if ($field['required']) {
+                            $required[] = $field;
+                        }
+                    }
+                }
+            }
+
+            foreach ($required as $field) {
+                if ($this->facetManager->isFieldDisplayed($field, $allFields, $data)) {
+                    if (!ArrayUtils::has($data, 'profile.'.$field['id'])) {
+                        $errors[] = [
+                            'path' => 'profile/'.$field['id'],
+                            'message' => 'The field '.$field['label'].' is required',
+                        ];
+                    }
+
+                    if ($field['type'] === 'organization') {
+                        /** @var Organization */
+                        $organization = $this->om->getRepository(Organization::class)->findOneBy(['code' => $data['mainOrganization']['code']]);
+
+                        if (null == $organization || count($organization->getChildren()) > 0) {
+                            $errors[] = [
+                                'path' => 'profile/'.$field['id'],
+                                'message' => 'You must select the deepest organization level - main organization cannot have children',
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
         if (count($errors) > 0) {
             // TODO : it should always throw exception
             if (in_array(self::THROW_EXCEPTION, $options)) {
