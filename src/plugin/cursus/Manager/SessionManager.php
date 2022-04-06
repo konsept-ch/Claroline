@@ -223,7 +223,7 @@ class SessionManager
                 ];
                 $subject = $this->templateManager->getTemplate('training_quota_subscription_created', $placeholders, $locale, 'title');
                 $body = $this->templateManager->getTemplate('training_quota_subscription_created', $placeholders, $locale);
-                $this->mailManager->send($subject, $body, $managers);
+                $this->mailManager->send($subject, $body, $managers, null, [], true);
 
                 $results[] = $sessionUser;
             }
