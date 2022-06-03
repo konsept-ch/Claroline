@@ -44,8 +44,14 @@ COPY ./.docker/web/files/apache2/claroline.conf /etc/apache2/sites-available/
 COPY ./.docker/web/files/apache2/claroline-ssl.conf /etc/apache2/sites-available/
 RUN a2dissite 000-default && a2dissite default-ssl && a2ensite claroline.conf
 
+RUN chown -R www-data:www-data var files config
+RUN chmod -R 750 var files config
+RUN chmod -R 755 public
+
 COPY . /var/www/html/claroline
 WORKDIR /var/www/html/claroline
+
+RUN chmod 644 ./.docker/mysql
 
 RUN composer install --no-dev --optimize-autoloader
 RUN rm ./config/parameters.yml
@@ -53,7 +59,7 @@ RUN rm ./config/parameters.yml
 RUN npm install --legacy-peer-deps
 RUN npm run webpack
 
-RUN chmod 644 ./.docker/mysql
+COPY ./config /var/www/html/initial/config
 
 COPY ./.docker/web/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
