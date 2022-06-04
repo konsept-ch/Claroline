@@ -333,8 +333,8 @@ class EventManager
             'summary' => $event->getName(),
             'description' => $event->getDescription(),
             'location' => $locationAddress,
-            'dtstart' => DateNormalizer::normalize($event->getStartDate()),
-            'dtend' => DateNormalizer::normalize($event->getEndDate()),
+            'dtstart' => DateNormalizer::normalize($event->getStartDate()->setTimezone(new \DateTimeZone('UTC'))),
+            'dtend' => DateNormalizer::normalize($event->getEndDate()->setTimezone(new \DateTimeZone('UTC'))),
             'url' => null,
         ];
 
@@ -429,8 +429,8 @@ class EventManager
             'event_name' => $event->getName(),
             'event_description' => $event->getDescription(),
             'event_code' => $event->getCode(),
-            'event_start' => $event->getStartDate()->format('d/m/Y H:i'),
-            'event_end' => $event->getEndDate()->format('d/m/Y H:i'),
+            'event_start' => $event->getStartDate()->setTimezone(new \DateTimeZone('Europe/Zurich'))->format('d/m/Y H:i'),
+            'event_end' => $event->getEndDate()->setTimezone(new \DateTimeZone('Europe/Zurich'))->format('d/m/Y H:i'),
             'event_location_name' => $locationName,
             'event_location_address' => $locationAddress,
             'event_trainers' => $trainersList,
