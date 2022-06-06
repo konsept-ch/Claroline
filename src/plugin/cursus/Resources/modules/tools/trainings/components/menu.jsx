@@ -22,11 +22,6 @@ const TrainingsMenu = (props) =>
           label: trans('catalog', {}, 'cursus'),
           target: `${props.path}/catalog`
         }, {
-          name: 'public',
-          type: LINK_BUTTON,
-          label: trans('public_events', {}, 'cursus'),
-          target: props.path + '/events/public'
-        }, {
           name: 'all',
           type: LINK_BUTTON,
           label: trans('all_events', {}, 'cursus'),
