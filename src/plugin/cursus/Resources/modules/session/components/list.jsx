@@ -152,7 +152,7 @@ const SessionList = (props) =>
       return actions
     }}
     display={{
-      current: listConst.DISPLAY_LIST
+      current: listConst.DISPLAY_TABLE
     }}
   />
 
