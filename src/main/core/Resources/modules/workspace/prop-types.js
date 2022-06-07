@@ -1,7 +1,7 @@
 import {PropTypes as T} from 'prop-types'
 
 import {ResourceNode} from '#/main/core/resource/prop-types'
-import {Role, User} from '#/main/core/user/prop-types'
+import {User} from '#/main/core/user/prop-types'
 
 const Workspace = {
   propTypes: {
@@ -15,6 +15,8 @@ const Workspace = {
     contactEmail: T.string,
     meta: T.shape({
       description: T.string,
+      created: T.string,
+      updated: T.string,
       creator: T.shape(
         User.propTypes
       ),
@@ -43,22 +45,12 @@ const Workspace = {
     }),
     notifications: T.shape({
       enabled: T.bool
-    }),
-    roles: T.arrayOf(T.shape({
-      id: T.string.isRequired,
-      name: T.string.isRequired,
-      translationKey: T.string.isRequired
-    }))
+    })
   },
   defaultProps: {
     meta: {
       model: false,
       personal: false
-    },
-    roles: [],
-    opening: {
-      type: 'tool',
-      target: 'home'
     },
     display: {
       showProgression: true,
@@ -80,17 +72,6 @@ const Workspace = {
     notifications: {
       enabled: false
     }
-  }
-}
-
-const Requirements = {
-  propTypes: {
-    id: T.string,
-    role: T.shape(Role.propTypes),
-    user: T.shape(User.propTypes)
-  },
-  defaultProps: {
-
   }
 }
 
@@ -119,6 +100,5 @@ const UserEvaluation = {
 
 export {
   Workspace,
-  Requirements,
   UserEvaluation
 }

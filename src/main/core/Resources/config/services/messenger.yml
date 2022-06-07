@@ -1,19 +1,17 @@
 services:
+    _defaults:
+        tags: [messenger.message_handler]
+
     Claroline\CoreBundle\Messenger\DisableInactiveUsersHandler:
-        tags: [ messenger.message_handler ]
         arguments:
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\CoreBundle\Manager\UserManager'
 
-    Claroline\CoreBundle\Messenger\SendMessageHandler:
-        tags: [messenger.message_handler]
+    Claroline\CoreBundle\Messenger\ImportWorkspaceHandler:
         arguments:
-            - '@Claroline\AppBundle\Event\StrictDispatcher'
+            - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceManager'
 
-    Claroline\CoreBundle\Messenger\ExecuteScheduledTaskHandler:
-        tags: [ messenger.message_handler ]
+    Claroline\CoreBundle\Messenger\SendMessageHandler:
         arguments:
             - '@Claroline\AppBundle\Event\StrictDispatcher'
-            - '@Claroline\CoreBundle\Manager\Task\ScheduledTaskManager'
-            - '@Claroline\CoreBundle\Manager\MailManager'
             - '@Claroline\AppBundle\Persistence\ObjectManager'

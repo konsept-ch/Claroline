@@ -6,11 +6,11 @@ use Claroline\AppBundle\API\Crud;
 use Claroline\AppBundle\Event\Crud\CreateEvent;
 use Claroline\AppBundle\Event\Crud\UpdateEvent;
 use Claroline\AppBundle\Persistence\ObjectManager;
+use Claroline\ClacoFormBundle\Entity\Category;
 use Claroline\ClacoFormBundle\Entity\Entry;
 use Claroline\ClacoFormBundle\Entity\Field;
 use Claroline\ClacoFormBundle\Entity\FieldChoiceCategory;
-use Claroline\ClacoFormBundle\Manager\ClacoFormManager;
-use Claroline\CoreBundle\Entity\Facet\FieldFacet;
+use Claroline\ClacoFormBundle\Manager\CategoryManager;
 use Claroline\CoreBundle\Entity\User;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -19,8 +19,10 @@ class EntrySubscriber implements EventSubscriberInterface
 {
     /** @var TokenStorageInterface */
     private $tokenStorage;
-    /** @var ClacoFormManager */
-    private $clacoFormManager;
+    /** @var ObjectManager */
+    private $om;
+    /** @var CategoryManager */
+    private $categoryManager;
 
     private $fieldRepo;
     private $fieldChoiceCategoryRepo;
@@ -28,10 +30,11 @@ class EntrySubscriber implements EventSubscriberInterface
     public function __construct(
         TokenStorageInterface $tokenStorage,
         ObjectManager $om,
-        ClacoFormManager $clacoFormManager
+        CategoryManager $categoryManager
     ) {
         $this->tokenStorage = $tokenStorage;
-        $this->clacoFormManager = $clacoFormManager;
+        $this->om = $om;
+        $this->categoryManager = $categoryManager;
 
         $this->fieldRepo = $om->getRepository(Field::class);
         $this->fieldChoiceCategoryRepo = $om->getRepository(FieldChoiceCategory::class);
@@ -95,33 +98,22 @@ class EntrySubscriber implements EventSubscriberInterface
     {
         $oldCategories = $entry->getCategories();
 
-        /** @var Field[] $fields */
-        $fields = $this->fieldRepo->findBy(['clacoForm' => $entry->getClacoForm()]);
+        $categories = $this->om->getRepository(Category::class)->findAutoCategories($entry->getClacoForm());
+        foreach ($categories as $category) {
+            $this->categoryManager->manageCategory($category, $entry);
+        }
 
-        foreach ($fields as $field) {
-            /** @var FieldChoiceCategory[] $fieldsCategories */
-            $fieldsCategories = $this->fieldChoiceCategoryRepo->findBy(['field' => $field]);
-
-            $fieldValue = $entry->getFieldValue($field);
-            if ($fieldValue) {
-                foreach ($fieldsCategories as $fieldCategory) {
-                    switch ($field->getType()) {
-                        case FieldFacet::NUMBER_TYPE:
-                            $isCategoryValue = floatval($fieldValue->getValue()) === floatval($fieldCategory->getValue());
-                            break;
-                        default:
-                            $isCategoryValue = $fieldValue->getValue() === $fieldCategory->getValue();
-                    }
-
-                    if ($isCategoryValue) {
-                        $entry->addCategory($fieldCategory->getCategory());
-                    } elseif ($entry->hasCategory($fieldCategory->getCategory())) {
-                        $entry->removeCategory($fieldCategory->getCategory());
-                    }
-                }
+        // notify category managers the entry has been edited
+        // NB. we filter newly added categories because there is another notification for that
+        $editedCategories = [];
+        foreach ($oldCategories as $oldCategory) {
+            if (in_array($oldCategory, $entry->getCategories())) {
+                $editedCategories[] = $oldCategory;
             }
         }
 
-        $this->clacoFormManager->notifyCategoriesManagers($entry, $oldCategories, $entry->getCategories());
+        if (!empty($editedCategories)) {
+            $this->categoryManager->notifyEditedEntry($entry, $editedCategories);
+        }
     }
 }

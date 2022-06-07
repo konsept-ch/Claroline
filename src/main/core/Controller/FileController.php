@@ -20,7 +20,8 @@ use Claroline\CoreBundle\Entity\Resource\File;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
-use Claroline\CoreBundle\Library\Utilities\FileUtilities;
+use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
+use Claroline\CoreBundle\Manager\FileManager;
 use Claroline\CoreBundle\Manager\ResourceManager;
 use Claroline\CoreBundle\Manager\RoleManager;
 use Claroline\CoreBundle\Security\Collection\ResourceCollection;
@@ -31,6 +32,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -50,16 +52,14 @@ class FileController
     private $session;
     /** @var ObjectManager */
     private $om;
-    /** @var string */
-    private $fileDir;
     /** @var ResourceNodeSerializer */
     private $serializer;
     /** @var ResourceManager */
     private $resourceManager;
     /** @var RoleManager */
     private $roleManager;
-    /** @var FileUtilities */
-    private $fileUtils;
+    /** @var FileManager */
+    private $fileManager;
     /** @var FinderProvider */
     private $finder;
     /** @var TokenStorageInterface */
@@ -68,11 +68,10 @@ class FileController
     public function __construct(
         SessionInterface $session,
         ObjectManager $om,
-        string $fileDir,
         ResourceNodeSerializer $serializer,
         ResourceManager $resourceManager,
         RoleManager $roleManager,
-        FileUtilities $fileUtils,
+        FileManager $fileManager,
         FinderProvider $finder,
         TokenStorageInterface $tokenStorage,
         AuthorizationCheckerInterface $authorization
@@ -80,11 +79,10 @@ class FileController
         $this->tokenStorage = $tokenStorage;
         $this->session = $session;
         $this->om = $om;
-        $this->fileDir = $fileDir;
         $this->serializer = $serializer;
         $this->resourceManager = $resourceManager;
         $this->roleManager = $roleManager;
-        $this->fileUtils = $fileUtils;
+        $this->fileManager = $fileManager;
         $this->finder = $finder;
         $this->authorization = $authorization;
     }
@@ -218,7 +216,7 @@ class FileController
         $sourceType = $request->get('sourceType');
 
         if ($request->files->get('file')) {
-            $publicFile = $this->fileUtils->createFile(
+            $publicFile = $this->fileManager->createFile(
                 $request->files->get('file'),
                 $fileName,
                 $objectClass,
@@ -248,14 +246,20 @@ class FileController
 
         /** @var File $file */
         $file = $this->resourceManager->getResourceFromNode($resourceNode);
-        $path = $this->fileDir.DIRECTORY_SEPARATOR.$file->getHashName();
+        $path = $this->fileManager->getDirectory().DIRECTORY_SEPARATOR.$file->getHashName();
 
         if (!file_exists($path)) {
             return new JsonResponse(['File not found'], 500);
         }
 
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+
         $response = new BinaryFileResponse($path);
         $response->headers->set('Content-Type', $resourceNode->getMimeType());
+        $response->setContentDisposition(
+            ResponseHeaderBag::DISPOSITION_INLINE,
+            TextNormalizer::toKey($resourceNode->getName()).'.'.$extension
+        );
 
         return $response;
     }

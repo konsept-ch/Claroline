@@ -9,8 +9,6 @@ import {ContentSummary} from '#/main/app/content/components/summary'
 
 import {Tab as TabTypes} from '#/plugin/home/prop-types'
 
-// TODO : fix tab colors
-
 const PlayerMenu = (props) => {
   function getTabSummary(tab) {
     return {
@@ -22,6 +20,7 @@ const PlayerMenu = (props) => {
       activeStyle: {
         borderColor: get(tab, 'display.color')
       },
+      displayed: !tab.restrictions || !tab.restrictions.hidden,
       children: tab.children ? tab.children.map(getTabSummary) : [],
       onClick: (e) => {
         props.autoClose(e)
