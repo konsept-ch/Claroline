@@ -71,4 +71,25 @@ class Updater130100 extends Updater
 
         $this->om->flush();
     }
+
+    public function postUpdate()
+    {
+        $this->om->startFlushSuite();
+
+        /** @var Course[] $courses */
+        $courses = $this->om->getRepository(Course::class)->findAll();
+        foreach ($courses as $course) {
+            $duration = $course->getDefaultSessionDays();
+            $dayPart = floor($duration);
+            $hourPart = $duration - $dayPart;
+
+            if ($hourPart > 0.0) {
+                $course->setDefaultSessionHours($hourPart * 24);
+            }
+
+            $course->setDefaultSessionDays($dayPart);
+        }
+
+        $this->om->endFlushSuite();
+    }
 }
