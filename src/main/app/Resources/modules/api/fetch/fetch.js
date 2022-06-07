@@ -101,26 +101,30 @@ function handleResponseError(dispatch, responseError, originalRequest, error) {
       throw responseError
     }
 
-    if (401 === responseError.status) {
+    if (401 === responseError.status && originalRequest.forceReauthenticate) {
       // authentication needed
       return new Promise(function (resolve, reject) {
         dispatch(modalActions.showModal(MODAL_LOGIN, {
           onLogin: () => resolve(apiFetch(originalRequest, dispatch)), // re-execute original request
           onAbort: () => {
-            error('Authentication required', responseError.status, dispatch)
+            // user still not logged, forward the original error
+            return getResponseData(responseError) // get error data if any
+              .then(errorData => {
+                error(errorData, responseError.status, dispatch)
 
-            return reject('Authentication required')
+                return reject(errorData)
+              })
           }
         }))
       })
-    } else {
-      return getResponseData(responseError) // get error data if any
-        .then(errorData => {
-          error(errorData, responseError.status, dispatch)
-
-          return Promise.reject(errorData)
-        })
     }
+
+    return getResponseData(responseError) // get error data if any
+      .then(errorData => {
+        error(errorData, responseError.status, dispatch)
+
+        return Promise.reject(errorData)
+      })
   }
 }
 
@@ -138,15 +142,14 @@ function getResponseData(response) {
       if (contentType.indexOf('application/json') !== -1) {
         // Decode JSON
         return response.json()
-      } else {
-        if (contentType.indexOf('text') !== -1) {
-          return response.text()
-        } else {
-          return handleDownload(response)
-        }
       }
-    }
 
+      if (contentType.indexOf('text') !== -1) {
+        return response.text()
+      }
+
+      return handleDownload(response)
+    }
   }
 
   return Promise.resolve(null)

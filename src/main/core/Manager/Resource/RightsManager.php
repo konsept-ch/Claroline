@@ -152,12 +152,14 @@ class RightsManager implements LoggerAwareInterface
 
             if ('directory' === $resourceNode->getResourceType()->getName()) {
                 // ugly hack to only get create rights for directories (it's the only one that can handle it).
-                $permissions = array_merge(
-                    $permissions,
-                    ['create' => $this->getCreatableTypes([$role->getName()], $resourceNode)]
-                );
+                $permissions = array_merge($permissions, [
+                    'create' => array_map(function (ResourceType $creatableType) {
+                        return $creatableType->getName();
+                    }, $rights->getCreatableResourceTypes()->toArray()),
+                ]);
             }
 
+            // TODO : do not flatten role data. Use RoleSerializer instead
             $data = [
                 'id' => $rights->getId(),
                 'name' => $role->getName(),
@@ -223,7 +225,7 @@ class RightsManager implements LoggerAwareInterface
         $creatable = [];
         if ($this->isManager($resourceNode)) {
             /** @var ResourceType[] $resourceTypes */
-            $resourceTypes = $this->om->getRepository('ClarolineCoreBundle:Resource\ResourceType')->findAll();
+            $resourceTypes = $this->om->getRepository(ResourceType::class)->findAll();
 
             foreach ($resourceTypes as $resourceType) {
                 $creatable[] = $resourceType->getName();

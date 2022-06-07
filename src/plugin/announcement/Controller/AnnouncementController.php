@@ -26,7 +26,7 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
  * @Route("/announcement/{aggregateId}", options={"expose"=true})
  * @EXT\ParamConverter(
  *      "aggregate",
- *      class="ClarolineAnnouncementBundle:AnnouncementAggregate",
+ *      class="Claroline\AnnouncementBundle\Entity\AnnouncementAggregate",
  *      options={"mapping": {"aggregateId": "uuid"}}
  * )
  */
@@ -79,13 +79,13 @@ class AnnouncementController
     public function createAction(AnnouncementAggregate $aggregate, Request $request): JsonResponse
     {
         $this->checkPermission('CREATE-ANNOUNCE', $aggregate->getResourceNode(), [], true);
-        $data = $this->decodeRequest($request);
-        $data['aggregate'] = ['id' => $aggregate->getUuid()];
 
-        /** @var Announcement $announcement */
-        $announcement = $this->crud->create($this->getClass(), $data, [
+        $announcement = new Announcement();
+        $announcement->setAggregate($aggregate);
+
+        $this->crud->create($announcement, $this->decodeRequest($request), [
             Crud::NO_PERMISSIONS, // this has already been checked
-            'announcement_aggregate' => $aggregate,
+            Crud::THROW_EXCEPTION,
         ]);
 
         return new JsonResponse(
@@ -100,7 +100,7 @@ class AnnouncementController
      * @Route("/{id}", name="claro_announcement_update", methods={"PUT"})
      * @EXT\ParamConverter(
      *      "announcement",
-     *      class="ClarolineAnnouncementBundle:Announcement",
+     *      class="Claroline\AnnouncementBundle\Entity\Announcement",
      *      options={"mapping": {"id": "uuid"}}
      * )
      */
@@ -108,9 +108,8 @@ class AnnouncementController
     {
         $this->checkPermission('EDIT', $aggregate->getResourceNode(), [], true);
 
-        /** @var Announcement $announcement */
-        $announcement = $this->crud->update($this->getClass(), $this->decodeRequest($request), [
-          'announcement_aggregate' => $aggregate,
+        $this->crud->update($announcement, $this->decodeRequest($request), [
+            Crud::NO_PERMISSIONS, // this has already been checked
         ]);
 
         return new JsonResponse(
@@ -125,7 +124,7 @@ class AnnouncementController
      * @Route("/{id}", name="claro_announcement_delete", methods={"DELETE"})
      * @EXT\ParamConverter(
      *      "announcement",
-     *      class="ClarolineAnnouncementBundle:Announcement",
+     *      class="Claroline\AnnouncementBundle\Entity\Announcement",
      *      options={"mapping": {"id": "uuid"}}
      * )
      */
@@ -133,7 +132,9 @@ class AnnouncementController
     {
         $this->checkPermission('EDIT', $aggregate->getResourceNode(), [], true);
 
-        $this->crud->delete($announcement, ['announcement_aggregate' => $aggregate]);
+        $this->crud->delete($announcement, [
+            Crud::NO_PERMISSIONS, // this has already been checked
+        ]);
 
         return new JsonResponse(null, 204);
     }
@@ -144,7 +145,7 @@ class AnnouncementController
      * @Route("/{id}/validate", name="claro_announcement_validate", methods={"GET"})
      * @EXT\ParamConverter(
      *      "announcement",
-     *      class="ClarolineAnnouncementBundle:Announcement",
+     *      class="Claroline\AnnouncementBundle\Entity\Announcement",
      *      options={"mapping": {"id": "uuid"}}
      * )
      */

@@ -17,14 +17,14 @@ use Claroline\AppBundle\Event\StrictDispatcher;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\Entity\Resource\File;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
-use Claroline\CoreBundle\Event\ExportObjectEvent;
-use Claroline\CoreBundle\Event\ImportObjectEvent;
 use Claroline\CoreBundle\Event\Resource\DeleteResourceEvent;
 use Claroline\CoreBundle\Event\Resource\DownloadResourceEvent;
+use Claroline\CoreBundle\Event\Resource\ExportResourceEvent;
 use Claroline\CoreBundle\Event\Resource\File\LoadFileEvent;
+use Claroline\CoreBundle\Event\Resource\ImportResourceEvent;
 use Claroline\CoreBundle\Event\Resource\LoadResourceEvent;
 use Claroline\CoreBundle\Event\Resource\ResourceActionEvent;
-use Claroline\CoreBundle\Library\Utilities\FileUtilities;
+use Claroline\CoreBundle\Manager\FileManager;
 use Claroline\CoreBundle\Manager\ResourceManager;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\Filesystem\Filesystem;
@@ -52,38 +52,33 @@ class FileListener
     /** @var ResourceManager */
     private $resourceManager;
 
-    /** @var string */
-    private $filesDir;
-
     /** @var SerializerProvider */
     private $serializer;
 
-    /** @var FileUtilities */
-    private $fileUtils;
+    /** @var FileManager */
+    private $fileManager;
 
     public function __construct(
         TokenStorageInterface $tokenStorage,
         ObjectManager $om,
         StrictDispatcher $eventDispatcher,
-        string $filesDir,
         SerializerProvider $serializer,
         ResourceManager $resourceManager,
-        FileUtilities $fileUtils
+        FileManager $fileManager
     ) {
         $this->tokenStorage = $tokenStorage;
         $this->om = $om;
         $this->eventDispatcher = $eventDispatcher;
-        $this->filesDir = $filesDir;
         $this->serializer = $serializer;
         $this->resourceManager = $resourceManager;
-        $this->fileUtils = $fileUtils;
+        $this->fileManager = $fileManager;
     }
 
     public function onLoad(LoadResourceEvent $event)
     {
         /** @var File $resource */
         $resource = $event->getResource();
-        $path = $this->filesDir.DIRECTORY_SEPARATOR.$resource->getHashName();
+        $path = $this->fileManager->getDirectory().DIRECTORY_SEPARATOR.$resource->getHashName();
 
         $additionalFileData = [];
 
@@ -153,7 +148,7 @@ class FileListener
         /** @var File $file */
         $file = $event->getResource();
 
-        $pathName = $this->filesDir.DIRECTORY_SEPARATOR.$file->getHashName();
+        $pathName = $this->fileManager->getDirectory().DIRECTORY_SEPARATOR.$file->getHashName();
         if (file_exists($pathName)) {
             $event->setFiles([$pathName]);
         }
@@ -161,61 +156,55 @@ class FileListener
         $event->stopPropagation();
     }
 
-    public function onImportBefore(ImportObjectEvent $event)
+    public function onExport(ExportResourceEvent $event)
     {
-        $data = $event->getData();
-        $replaced = json_encode($event->getExtra());
+        /** @var File $file */
+        $file = $event->getResource();
+        $path = $this->fileManager->getDirectory().DIRECTORY_SEPARATOR.$file->getHashName();
 
-        $hashName = pathinfo($data['hashName'], PATHINFO_BASENAME);
-        $uuid = Uuid::uuid4()->toString();
-        $replaced = str_replace($hashName, $uuid, $replaced);
-
-        $data = json_decode($replaced, true);
-        $event->setExtra($data);
+        $event->addFile($file->getHashName(), $path);
     }
 
-    public function onExportFile(ExportObjectEvent $exportEvent)
+    public function onImport(ImportResourceEvent $event)
     {
-        $file = $exportEvent->getObject();
-        $path = $this->filesDir.DIRECTORY_SEPARATOR.$file->getHashName();
+        /** @var File $file */
+        $file = $event->getResource();
 
-        $newPath = uniqid().'.'.pathinfo($file->getHashName(), PATHINFO_EXTENSION);
-
-        $exportEvent->addFile($newPath, $path);
-        $exportEvent->overwrite('_path', $newPath);
-    }
-
-    public function onImportFile(ImportObjectEvent $event)
-    {
-        $data = $event->getData();
         $bag = $event->getFileBag();
-        if ($bag) {
-            $fileSystem = new Filesystem();
-            try {
-                $ds = DIRECTORY_SEPARATOR;
-                $fileSystem->copy($bag->get($data['_path']), $this->filesDir.$ds.$data['hashName']);
-            } catch (\Exception $e) {
-            }
+
+        $fileSystem = new Filesystem();
+        try {
+            $newHash = Uuid::uuid4()->toString();
+            $fileSystem->copy($bag->get($file->getHashName()), $this->fileManager->getDirectory().DIRECTORY_SEPARATOR.$newHash);
+            $file->setHashName($newHash);
+
+            $this->om->persist($file);
+            $this->om->flush();
+        } catch (\Exception $e) {
         }
-        //move filebags elements here
     }
 
     public function onCopy(CopyEvent $event)
     {
+        /** @var File $resource */
         $resource = $event->getObject();
+        /** @var File $newFile */
+        $newFile = $event->getCopy();
+
         $destParent = $resource->getResourceNode();
         $workspace = $destParent->getWorkspace();
-        $newFile = $event->getCopy();
-        $newFile->setMimeType($resource->getMimeType());
+
         $hashName = join('.', [
             'WORKSPACE_'.$workspace->getId(),
             Uuid::uuid4()->toString(),
             pathinfo($resource->getHashName(), PATHINFO_EXTENSION),
         ]);
         $newFile->setHashName($hashName);
-        $filePath = $this->filesDir.DIRECTORY_SEPARATOR.$resource->getHashName();
-        $newPath = $this->filesDir.DIRECTORY_SEPARATOR.$hashName;
-        $workspaceDir = $this->filesDir.DIRECTORY_SEPARATOR.'WORKSPACE_'.$workspace->getId();
+        $newFile->setSize($resource->getSize());
+
+        $filePath = $this->fileManager->getDirectory().DIRECTORY_SEPARATOR.$resource->getHashName();
+        $newPath = $this->fileManager->getDirectory().DIRECTORY_SEPARATOR.$hashName;
+        $workspaceDir = $this->fileManager->getDirectory().DIRECTORY_SEPARATOR.'WORKSPACE_'.$workspace->getId();
 
         if (!is_dir($workspaceDir)) {
             mkdir($workspaceDir);
@@ -235,7 +224,7 @@ class FileListener
         $file = $event->getResource();
 
         $event->setItem(
-            $this->filesDir.DIRECTORY_SEPARATOR.$file->getHashName()
+            $this->fileManager->getDirectory().DIRECTORY_SEPARATOR.$file->getHashName()
         );
 
         $event->stopPropagation();

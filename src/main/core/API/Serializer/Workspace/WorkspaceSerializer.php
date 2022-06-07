@@ -2,7 +2,7 @@
 
 namespace Claroline\CoreBundle\API\Serializer\Workspace;
 
-use Claroline\AppBundle\API\Options;
+use Claroline\AppBundle\API\Serializer\SerializerInterface;
 use Claroline\AppBundle\API\Serializer\SerializerTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\API\Serializer\File\PublicFileSerializer;
@@ -15,10 +15,11 @@ use Claroline\CoreBundle\Entity\Resource\ResourceNode;
 use Claroline\CoreBundle\Entity\Role;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
+use Claroline\CoreBundle\Event\GenericDataEvent;
 use Claroline\CoreBundle\Library\Normalizer\DateNormalizer;
 use Claroline\CoreBundle\Library\Normalizer\DateRangeNormalizer;
-use Claroline\CoreBundle\Library\Utilities\FileUtilities;
 use Claroline\CoreBundle\Manager\Workspace\WorkspaceManager;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
@@ -32,14 +33,13 @@ class WorkspaceSerializer
     /** @var AuthorizationCheckerInterface */
     private $tokenStorage;
 
+    private $eventDispatcher;
+
     /** @var ObjectManager */
     private $om;
 
     /** @var WorkspaceManager */
     private $workspaceManager;
-
-    /** @var FileUtilities */
-    private $fileUt;
 
     /** @var OrganizationSerializer */
     private $organizationSerializer;
@@ -56,9 +56,9 @@ class WorkspaceSerializer
     public function __construct(
         AuthorizationCheckerInterface $authorization,
         TokenStorageInterface $tokenStorage,
+        EventDispatcherInterface $eventDispatcher,
         ObjectManager $om,
         WorkspaceManager $workspaceManager,
-        FileUtilities $fileUt,
         UserSerializer $userSerializer,
         OrganizationSerializer $organizationSerializer,
         PublicFileSerializer $publicFileSerializer,
@@ -66,13 +66,18 @@ class WorkspaceSerializer
     ) {
         $this->tokenStorage = $tokenStorage;
         $this->authorization = $authorization;
+        $this->eventDispatcher = $eventDispatcher;
         $this->om = $om;
         $this->workspaceManager = $workspaceManager;
-        $this->fileUt = $fileUt;
         $this->userSerializer = $userSerializer;
         $this->organizationSerializer = $organizationSerializer;
         $this->publicFileSerializer = $publicFileSerializer;
         $this->resNodeSerializer = $resNodeSerializer;
+    }
+
+    public function getClass()
+    {
+        return Workspace::class;
     }
 
     public function getName()
@@ -103,8 +108,6 @@ class WorkspaceSerializer
             ]);
         }
 
-        $editPerm = $this->authorization->isGranted('EDIT', $workspace);
-
         $serialized = [
             'id' => $this->getUuid($workspace, $options),
             'autoId' => $workspace->getId(),
@@ -112,19 +115,24 @@ class WorkspaceSerializer
             'code' => $workspace->getCode(),
             'slug' => $workspace->getSlug(),
             'thumbnail' => $thumbnail ? $this->publicFileSerializer->serialize($thumbnail) : null,
-            'permissions' => [
+            'meta' => $this->getMeta($workspace, $options),
+            'contactEmail' => $workspace->getContactEmail(),
+        ];
+
+        if (!in_array(SerializerInterface::SERIALIZE_TRANSFER, $options)) {
+            $editPerm = $this->authorization->isGranted('EDIT', $workspace);
+
+            $serialized['permissions'] = [
                 'open' => $this->authorization->isGranted('OPEN', $workspace),
                 'delete' => $this->authorization->isGranted('DELETE', $workspace),
                 'configure' => $editPerm,
                 'administrate' => $editPerm,
                 'export' => $this->authorization->isGranted('EXPORT', $workspace),
                 'archive' => $this->authorization->isGranted('ARCHIVE', $workspace),
-            ],
-            'meta' => $this->getMeta($workspace, $options),
-            'contactEmail' => $workspace->getContactEmail(),
-        ];
+            ];
+        }
 
-        if (!in_array(Options::SERIALIZE_MINIMAL, $options)) {
+        if (!in_array(SerializerInterface::SERIALIZE_MINIMAL, $options)) {
             $poster = null;
             if ($workspace->getPoster()) {
                 /** @var PublicFile $poster */
@@ -134,8 +142,8 @@ class WorkspaceSerializer
             }
 
             $serialized = array_merge($serialized, [
+                'tags' => $this->serializeTags($workspace),
                 'poster' => $poster ? $this->publicFileSerializer->serialize($poster) : null,
-                'registered' => $this->isRegistered($workspace),
                 'opening' => $this->getOpening($workspace),
                 'display' => $this->getDisplay($workspace),
                 'breadcrumb' => $this->getBreadcrumb($workspace),
@@ -144,20 +152,14 @@ class WorkspaceSerializer
                 'notifications' => $this->getNotifications($workspace),
             ]);
 
-            if (!in_array(Options::SERIALIZE_LIST, $options)) {
-                $serialized['organizations'] = array_map(function (Organization $organization) {
-                    return $this->organizationSerializer->serialize($organization, [Options::SERIALIZE_MINIMAL]);
-                }, $workspace->getOrganizations()->toArray());
+            if (!in_array(SerializerInterface::SERIALIZE_TRANSFER, $options)) {
+                $serialized['registered'] = $this->isRegistered($workspace);
+            }
 
-                // TODO : remove me. Used by workspace transfer
-                $serialized['roles'] = array_map(function (Role $role) {
-                    return [
-                        'id' => $role->getUuid(),
-                        'name' => $role->getName(),
-                        'type' => $role->getType(),
-                        'translationKey' => $role->getTranslationKey(),
-                    ];
-                }, $workspace->getRoles()->toArray());
+            if (!in_array(SerializerInterface::SERIALIZE_LIST, $options)) {
+                $serialized['organizations'] = array_map(function (Organization $organization) {
+                    return $this->organizationSerializer->serialize($organization, [SerializerInterface::SERIALIZE_MINIMAL]);
+                }, $workspace->getOrganizations()->toArray());
             }
         }
 
@@ -185,7 +187,7 @@ class WorkspaceSerializer
             'description' => $workspace->getDescription(),
             'created' => DateNormalizer::normalize($workspace->getCreatedAt()),
             'updated' => DateNormalizer::normalize($workspace->getUpdatedAt()),
-            'creator' => $workspace->getCreator() ? $this->userSerializer->serialize($workspace->getCreator(), [Options::SERIALIZE_MINIMAL]) : null,
+            'creator' => $workspace->getCreator() ? $this->userSerializer->serialize($workspace->getCreator(), [SerializerInterface::SERIALIZE_MINIMAL]) : null,
         ];
     }
 
@@ -215,12 +217,10 @@ class WorkspaceSerializer
         }
         if ('resource' === $openingData['type'] && isset($details['workspace_opening_resource']) && $details['workspace_opening_resource']) {
             /** @var ResourceNode $resource */
-            $resource = $this->om
-                ->getRepository(ResourceNode::class)
-                ->findOneBy(['id' => $details['workspace_opening_resource']]);
+            $resource = $this->om->find(ResourceNode::class, $details['workspace_opening_resource']);
 
             if (!empty($resource)) {
-                $openingData['target'] = $this->resNodeSerializer->serialize($resource, [Options::SERIALIZE_MINIMAL]);
+                $openingData['target'] = $this->resNodeSerializer->serialize($resource, [SerializerInterface::SERIALIZE_MINIMAL]);
             }
         }
 
@@ -273,13 +273,18 @@ class WorkspaceSerializer
             ];
         }
 
-        return [
+        $serialized = [
             'validation' => $workspace->getRegistrationValidation(),
-            'waitingForRegistration' => $workspace->getSelfRegistration() ? $this->waitingForRegistration($workspace) : false,
             'selfRegistration' => $workspace->getSelfRegistration(),
             'selfUnregistration' => $workspace->getSelfUnregistration(),
             'defaultRole' => $defaultRole,
         ];
+
+        if (!in_array(SerializerInterface::SERIALIZE_TRANSFER, $options)) {
+            $serialized['waitingForRegistration'] = $workspace->getSelfRegistration() ? $this->waitingForRegistration($workspace) : false;
+        }
+
+        return $serialized;
     }
 
     private function getNotifications(Workspace $workspace)
@@ -289,26 +294,34 @@ class WorkspaceSerializer
         ];
     }
 
+    private function serializeTags(Workspace $workspace)
+    {
+        $event = new GenericDataEvent([
+            'class' => Workspace::class,
+            'ids' => [$workspace->getUuid()],
+        ]);
+        $this->eventDispatcher->dispatch($event, 'claroline_retrieve_used_tags_by_class_and_ids');
+
+        return $event->getResponse() ?? [];
+    }
+
     /**
      * Deserializes Workspace data into entities.
      */
     public function deserialize(array $data, Workspace $workspace, array $options = []): Workspace
     {
-        //not sure if keep that. Might be troublesome later for rich texts
-        if (!in_array(Options::REFRESH_UUID, $options)) {
+        if (!in_array(SerializerInterface::REFRESH_UUID, $options)) {
             $this->sipe('id', 'setUuid', $data, $workspace);
         } else {
             $workspace->refreshUuid();
         }
 
-        if (array_key_exists('model', $data)) {
-            $model = null;
-            if (!empty($data['model'])) {
-                /** @var Workspace $model */
-                $model = $this->om->getObject($data['model'], Workspace::class, ['code']);
+        if (!empty($data['model'])) {
+            /** @var Workspace $model */
+            $model = $this->om->getObject($data['model'], Workspace::class, ['code']);
+            if (!empty($model)) {
+                $workspace->setWorkspaceModel($model);
             }
-
-            $workspace->setWorkspaceModel($model);
         }
 
         $this->sipe('code', 'setCode', $data, $workspace);
@@ -317,13 +330,8 @@ class WorkspaceSerializer
 
         if (array_key_exists('thumbnail', $data)) {
             $thumbnailUrl = null;
-            if (!empty($data['thumbnail'])) {
-                /** @var PublicFile $thumbnail */
-                $thumbnail = $this->om->getObject($data['thumbnail'], PublicFile::class, ['url']);
-                if (!empty($thumbnail)) {
-                    $thumbnailUrl = $thumbnail->getUrl();
-                    $this->fileUt->createFileUse($thumbnail, Workspace::class, $workspace->getUuid());
-                }
+            if (!empty($data['thumbnail']) && !empty($data['thumbnail']['url'])) {
+                $thumbnailUrl = $data['thumbnail']['url'];
             }
 
             $workspace->setThumbnail($thumbnailUrl);
@@ -331,13 +339,8 @@ class WorkspaceSerializer
 
         if (array_key_exists('poster', $data)) {
             $posterUrl = null;
-            if (!empty($data['poster'])) {
-                /** @var PublicFile $poster */
-                $poster = $this->om->getObject($data['poster'], PublicFile::class, ['url']);
-                if (!empty($poster)) {
-                    $posterUrl = $poster->getUrl();
-                    $this->fileUt->createFileUse($poster, Workspace::class, $workspace->getUuid());
-                }
+            if (!empty($data['poster']) && !empty($data['poster']['url'])) {
+                $posterUrl = $data['poster']['url'];
             }
 
             $workspace->setPoster($posterUrl);
@@ -394,7 +397,7 @@ class WorkspaceSerializer
             }
         }
 
-        $workspaceOptions = $workspace->getOptions();
+        $workspaceOptions = $this->workspaceManager->getWorkspaceOptions($workspace);
 
         if (isset($data['display']) || isset($data['opening'])) {
             $details = $workspaceOptions->getDetails();
@@ -409,15 +412,15 @@ class WorkspaceSerializer
 
             if (isset($data['opening'])) {
                 $details['hide_tools_menu'] = isset($data['opening']['menu']) ? $data['opening']['menu'] : null;
-                $details['opening_type'] = isset($data['opening']['type']) && isset($data['opening']['target']) && !empty($data['opening']['target']) ?
+                $details['opening_type'] = isset($data['opening']['type']) && !empty($data['opening']['target']) ?
                     $data['opening']['type'] :
                     'tool';
-                $details['opening_target'] = isset($data['opening']['target']) && !empty($data['opening']['target']) ?
+                $details['opening_target'] = !empty($data['opening']['target']) ?
                     $data['opening']['target'] :
                     'home';
 
-                if ('resource' === $data['opening']['type'] && isset($data['opening']['target']['autoId'])) {
-                    $details['workspace_opening_resource'] = $data['opening']['target']['autoId'];
+                if ('resource' === $data['opening']['type'] && isset($data['opening']['target']['id'])) {
+                    $details['workspace_opening_resource'] = $data['opening']['target']['id'];
                     $details['use_workspace_opening_resource'] = true;
                 } else {
                     $details['workspace_opening_resource'] = null;
