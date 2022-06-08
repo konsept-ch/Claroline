@@ -29,7 +29,7 @@ class SessionUserRepository extends EntityRepository
             ')
             ->setParameters([
                 'type' => AbstractRegistration::LEARNER,
-                'organization' => $organization
+                'organization' => $organization,
             ])
             ->getResult();
     }
