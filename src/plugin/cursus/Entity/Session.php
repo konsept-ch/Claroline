@@ -76,6 +76,11 @@ class Session extends AbstractTraining implements IdentifiableInterface
     protected $endDate;
 
     /**
+     * @ORM\Column(name="quota_days", type="float", nullable=true, options={"default" = 0})
+     */
+    protected $quotaDays;
+
+    /**
      * @ORM\ManyToMany(targetEntity="Claroline\CoreBundle\Entity\Resource\ResourceNode", orphanRemoval=true)
      * @ORM\JoinTable(name="claro_cursusbundle_course_session_resources",
      *      joinColumns={@ORM\JoinColumn(name="resource_id", referencedColumnName="id")},
@@ -111,6 +116,11 @@ class Session extends AbstractTraining implements IdentifiableInterface
         $this->resources = new ArrayCollection();
         $this->events = new ArrayCollection();
     }
+
+    /**
+     * @ORM\Column(name="used_by_quotas", type="boolean")
+     */
+    private $usedByQuotas = false;
 
     /**
      * @return Course
@@ -181,6 +191,16 @@ class Session extends AbstractTraining implements IdentifiableInterface
         $this->endDate = $endDate;
     }
 
+    public function getQuotaDays()
+    {
+        return $this->quotaDays;
+    }
+
+    public function setQuotaDays($quotaDays)
+    {
+        $this->quotaDays = $quotaDays;
+    }
+
     public function isTerminated()
     {
         $now = new \DateTime();
@@ -226,7 +246,7 @@ class Session extends AbstractTraining implements IdentifiableInterface
     }
 
     /**
-     * @return Event[]|ArrayCollection
+     * @return Event[]|ArrayCollectioe
      */
     public function getEvents()
     {
@@ -241,6 +261,16 @@ class Session extends AbstractTraining implements IdentifiableInterface
     public function setEventRegistrationType($eventRegistrationType)
     {
         $this->eventRegistrationType = $eventRegistrationType;
+    }
+
+    public function setUsedByQuotas(bool $usedByQuotas)
+    {
+        $this->usedByQuotas = $usedByQuotas;
+    }
+
+    public function usedByQuotas()
+    {
+        return $this->usedByQuotas;
     }
 
     public function __toString()

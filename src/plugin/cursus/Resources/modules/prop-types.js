@@ -2,6 +2,10 @@ import {PropTypes as T} from 'prop-types'
 
 import {Role as RoleTypes} from '#/main/core/user/prop-types'
 import {Workspace as WorkspaceTypes} from '#/main/core/workspace/prop-types'
+import {
+  Organization as OrganizationTypes,
+  User as UserTypes
+} from '#/main/core/user/prop-types'
 
 import {constants} from '#/plugin/cursus/constants'
 
@@ -160,8 +164,42 @@ const Event = {
   }
 }
 
+const Quota = {
+  propTypes: {
+    id: T.string,
+    organization: T.shape(OrganizationTypes.propTypes),
+    threshold: T.number,
+    useQuotas: T.bool
+  },
+  defaultProps: {
+    threshold: 0.0
+  }
+}
+
+const Subscription = {
+  propTypes: {
+    id: T.string,
+    session: T.shape(Session.propTypes),
+    user: T.shape(UserTypes.propTypes)
+  }
+}
+
+const Statistics = {
+  propTypes: {
+    total: T.number,
+    pending: T.number,
+    refused: T.number,
+    validated: T.number,
+    managed: T.number,
+    calculated: T.number
+  }
+}
+
 export {
   Course,
   Session,
-  Event
+  Event,
+  Quota,
+  Subscription,
+  Statistics
 }

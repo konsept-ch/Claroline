@@ -17,6 +17,7 @@ use Claroline\CoreBundle\API\Serializer\User\UserSerializer;
 use Claroline\CursusBundle\Entity\Registration\AbstractUserRegistration;
 use Claroline\CursusBundle\Entity\Registration\SessionUser;
 use Claroline\CursusBundle\Serializer\SessionSerializer;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class SessionUserSerializer extends AbstractUserSerializer
 {
@@ -25,11 +26,18 @@ class SessionUserSerializer extends AbstractUserSerializer
     /** @var SessionSerializer */
     private $sessionSerializer;
 
-    public function __construct(UserSerializer $userSerializer, SessionSerializer $sessionSerializer)
-    {
+    /** @var TranslatorInterface */
+    private $translator;
+
+    public function __construct(
+        UserSerializer $userSerializer,
+        SessionSerializer $sessionSerializer,
+        TranslatorInterface $translator
+    ) {
         parent::__construct($userSerializer);
 
         $this->sessionSerializer = $sessionSerializer;
+        $this->translator = $translator;
     }
 
     public function getClass()
@@ -44,6 +52,8 @@ class SessionUserSerializer extends AbstractUserSerializer
     {
         return array_merge(parent::serialize($sessionUser, $options), [
             'session' => $this->sessionSerializer->serialize($sessionUser->getSession(), [Options::SERIALIZE_MINIMAL]),
+            'status' => $sessionUser->getStatus(),
+            'remark' => $sessionUser->getRemark(),
         ]);
     }
 }

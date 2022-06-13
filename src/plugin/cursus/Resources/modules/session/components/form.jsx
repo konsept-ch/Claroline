@@ -250,6 +250,28 @@ const SessionForm = (props) =>
             ]
           }
         ]
+      }, {
+        icon: 'fa fa-fw fa-chart-pie',
+        title: trans('quotas', {}, 'cursus'),
+        displayed: param('quotas.enabled'),
+        fields: [
+          {
+            name: 'quotas.used',
+            label: trans('used_by_quotas', {}, 'cursus'),
+            type: 'boolean'
+          },
+          {
+            name: 'quotas.days',
+            type: 'number',
+            label: trans('days'),
+            required: true,
+            options: {
+              value: 0,
+              min: 0,
+              unit: trans('days')
+            }
+          }
+        ]
       }
     ]}
   >

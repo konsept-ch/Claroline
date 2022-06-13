@@ -24,65 +24,65 @@ class SessionUserFinder extends AbstractFinder
 
     public function configureQueryBuilder(QueryBuilder $qb, array $searches = [], array $sortBy = null, array $options = ['count' => false, 'page' => 0, 'limit' => -1])
     {
-        $userJoin = false;
-        $sessionJoin = false;
+        $qb->join('obj.user', 'u');
+        $qb->join('obj.session', 's');
+        $qb->join('s.course', 'c');
 
         if (!array_key_exists('userDisabled', $searches) && !array_key_exists('user', $searches)) {
-            // don't show registrations of disabled/deleted users
-            $qb->join('obj.user', 'u');
-            $userJoin = true;
-
             $qb->andWhere('u.isEnabled = TRUE');
             $qb->andWhere('u.isRemoved = FALSE');
         }
 
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
+                case 'start_date':
+                    $qb->andWhere("year(s.startDate) = :{$filterName}");
+                    $qb->setParameter($filterName, $filterValue);
+                    break;
+
+                case 'status':
+                    $qb->andWhere("(obj.status = :{$filterName})");
+                    $qb->setParameter($filterName, $filterValue);
+                    break;
+
+                case 'ignored_status':
+                    $qb->andWhere("obj.status != :{$filterName}");
+                    $qb->setParameter($filterName, $filterValue);
+                    break;
+
+                case 'type':
+                    $qb->andWhere("(obj.type = :{$filterName})");
+                    $qb->setParameter($filterName, $filterValue);
+                    break;
+
+                case 'organization':
+                    $qb->leftJoin('u.userOrganizationReferences', 'oref');
+                    $qb->andWhere("oref.organization = :{$filterName}");
+                    $qb->setParameter($filterName, $filterValue);
+                    break;
+
                 case 'course':
-                    if (!$sessionJoin) {
-                        $qb->join('obj.session', 's');
-                        $sessionJoin = true;
-                    }
-                    $qb->join('s.course', 'c');
                     $qb->andWhere("c.uuid = :{$filterName}");
                     $qb->setParameter($filterName, $filterValue);
                     break;
 
                 case 'session':
-                    if (!$sessionJoin) {
-                        $qb->join('obj.session', 's');
-                        $sessionJoin = true;
-                    }
                     $qb->andWhere("s.uuid = :{$filterName}");
                     $qb->setParameter($filterName, $filterValue);
                     break;
 
                 case 'user':
-                    if (!$userJoin) {
-                        $qb->join('obj.user', 'u');
-                        $userJoin = true;
-                    }
-
                     $qb->andWhere("u.uuid = :{$filterName}");
                     $qb->setParameter($filterName, $filterValue);
                     break;
 
                 case 'userDisabled':
-                    if (!$userJoin) {
-                        $qb->join('obj.user', 'u');
-                        $userJoin = true;
-                    }
                     $qb->andWhere('u.isEnabled = :isEnabled');
                     $qb->andWhere('u.isRemoved = FALSE');
                     $qb->setParameter('isEnabled', !$filterValue);
                     break;
 
                 case 'organizations':
-                    if (!$userJoin) {
-                        $qb->join('obj.user', 'u');
-                        $userJoin = true;
-                    }
-
                     $qb->join('u.organizations', 'o');
                     $qb->andWhere("o.uuid IN (:{$filterName})");
                     $qb->setParameter($filterName, $filterValue);
