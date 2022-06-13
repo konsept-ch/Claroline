@@ -33,5 +33,16 @@
     "session_name_desc": "Le nom de la session de formation",
     "session_start_desc": "La date de début de la session de formation",
     "session_trainers_desc": "La liste des formateurs de la session de formation",
-    "registration_confirmation_url": "Le lien de confirmation de l'inscription"
+    "registration_confirmation_url": "Le lien de confirmation de l'inscription",
+
+    "training_quota_status_validated": "Validation de votre inscription",
+    "training_quota_status_managed": "Validation de votre inscription",
+    "training_quota_status_refused": "Refus de votre inscription",
+    "training_quota_status_cancelled": "Annulation de votre inscription",
+    "training_quota_subscription_created": "Nouvelle inscription",
+    "training_quota_status_validated_desc": "Template utilisé lorsqu'une inscription à été validée.",
+    "training_quota_status_managed_desc": "Template utilié lorsqu'une inscription à été validée avec quotas.",
+    "training_quota_status_refused_desc": "Template utilié lorsqu'une inscription à été refusée.",
+    "training_quota_status_cancelled_desc": "Template utilié lorsqu'une inscription à été annulée.",
+    "training_quota_subscription_created_desc": "Template utilié lorsqu'une inscription à été créée."
 }
