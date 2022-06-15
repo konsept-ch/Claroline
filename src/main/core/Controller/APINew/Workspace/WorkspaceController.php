@@ -12,9 +12,11 @@
 namespace Claroline\CoreBundle\Controller\APINew\Workspace;
 
 use Claroline\AppBundle\Annotations\ApiDoc;
+use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\Controller\AbstractCrudController;
 use Claroline\AppBundle\Event\StrictDispatcher;
-use Claroline\CoreBundle\API\Crud\WorkspaceCrud;
+use Claroline\AppBundle\Manager\File\TempFileManager;
+use Claroline\AuthenticationBundle\Messenger\Stamp\AuthenticationStamp;
 use Claroline\CoreBundle\Controller\APINew\Model\HasGroupsTrait;
 use Claroline\CoreBundle\Controller\APINew\Model\HasOrganizationsTrait;
 use Claroline\CoreBundle\Controller\APINew\Model\HasRolesTrait;
@@ -29,11 +31,14 @@ use Claroline\CoreBundle\Manager\LogConnectManager;
 use Claroline\CoreBundle\Manager\ResourceManager;
 use Claroline\CoreBundle\Manager\RoleManager;
 use Claroline\CoreBundle\Manager\Workspace\WorkspaceManager;
+use Claroline\CoreBundle\Messenger\Message\ImportWorkspace;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
+use Claroline\CoreBundle\Validator\Exception\InvalidDataException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -56,6 +61,8 @@ class WorkspaceController extends AbstractCrudController
     private $authorization;
     /** @var StrictDispatcher */
     private $dispatcher;
+    /** @var MessageBusInterface */
+    private $messageBus;
     /** @var RoleManager */
     private $roleManager;
     /** @var ResourceManager */
@@ -66,25 +73,30 @@ class WorkspaceController extends AbstractCrudController
     private $workspaceManager;
     /** @var LogConnectManager */
     private $logConnectManager;
+    private $tempManager;
 
     public function __construct(
         TokenStorageInterface $tokenStorage,
         AuthorizationCheckerInterface $authorization,
         StrictDispatcher $dispatcher,
+        MessageBusInterface $messageBus,
         RoleManager $roleManager,
         ResourceManager $resourceManager,
         TranslatorInterface $translator,
         WorkspaceManager $workspaceManager,
-        LogConnectManager $logConnectManager
+        LogConnectManager $logConnectManager,
+        TempFileManager $tempManager
     ) {
         $this->tokenStorage = $tokenStorage;
         $this->authorization = $authorization;
         $this->dispatcher = $dispatcher;
+        $this->messageBus = $messageBus;
         $this->roleManager = $roleManager;
         $this->resourceManager = $resourceManager;
         $this->translator = $translator;
         $this->workspaceManager = $workspaceManager;
         $this->logConnectManager = $logConnectManager;
+        $this->tempManager = $tempManager;
     }
 
     public function getName()
@@ -230,7 +242,7 @@ class WorkspaceController extends AbstractCrudController
     {
         $options = $this->getOptions()['copyBulk'];
         if (1 === (int) $request->query->get('model') || 'true' === $request->query->get('model')) {
-            $options[] = WorkspaceCrud::AS_MODEL;
+            $options[] = Options::AS_MODEL;
         }
 
         $copies = $this->crud->copyBulk(
@@ -241,6 +253,30 @@ class WorkspaceController extends AbstractCrudController
         return new JsonResponse(array_map(function ($copy) {
             return $this->serializer->serialize($copy, $this->getOptions()['get']);
         }, $copies), 200);
+    }
+
+    /**
+     * @Route("/import", name="apiv2_workspace_import", methods={"POST"})
+     */
+    public function importAction(Request $request): JsonResponse
+    {
+        $this->checkPermission('CREATE', new Workspace(), [], true);
+
+        $files = $request->files->all();
+        if (empty($files)) {
+            throw new InvalidDataException('No archive to import.', [['path' => '/archive', 'message' => 'Archive is required']]);
+        }
+
+        $archiveFile = array_shift($files);
+        $tempPath = $this->tempManager->copy($archiveFile, true);
+
+        $this->messageBus->dispatch(new ImportWorkspace(
+            $tempPath,
+            !empty($request->request->get('name')) ? $request->request->get('name') : null,
+            !empty($request->request->get('code')) ? $request->request->get('code') : null
+        ), [new AuthenticationStamp($this->tokenStorage->getToken()->getUser()->getId())]);
+
+        return new JsonResponse(null, 204);
     }
 
     /**
@@ -454,7 +490,7 @@ class WorkspaceController extends AbstractCrudController
      *     }
      * )
      * @Route("/{slug}/close", name="apiv2_workspace_close", methods={"PUT"})
-     * @EXT\ParamConverter("workspace", class="ClarolineCoreBundle:Workspace\Workspace", options={"mapping": {"slug": "slug"}})
+     * @EXT\ParamConverter("workspace", class="Claroline\CoreBundle\Entity\Workspace\Workspace", options={"mapping": {"slug": "slug"}})
      * @EXT\ParamConverter("user", converter="current_user", options={"allowAnonymous"=true})
      */
     public function closeAction(Workspace $workspace, User $user = null): JsonResponse

@@ -29,7 +29,7 @@ class ToolManager implements LoggerAwareInterface
     use LoggableTrait;
 
     // todo adds a config in tools to avoid this
-    const WORKSPACE_MODEL_TOOLS = ['home', 'resources', 'community'];
+    const WORKSPACE_MODEL_TOOLS = ['home', 'resources', 'community', 'badges'];
 
     /** @var AuthorizationCheckerInterface */
     private $authorization;
@@ -85,19 +85,15 @@ class ToolManager implements LoggerAwareInterface
                 while ($offset < $total) {
                     /** @var Workspace $workspaces */
                     $workspaces = $this->om->getRepository(Workspace::class)->findBy([], [], 500, $offset);
-                    $ot = [];
 
                     foreach ($workspaces as $workspace) {
-                        $ot[] = $this->setWorkspaceTool($tool, $totalTools, $workspace);
+                        $this->setWorkspaceTool($tool, $totalTools, $workspace);
                         ++$offset;
                         $this->log('Adding tool '.$offset.'/'.$total);
                     }
+
                     $this->log('Flush');
                     $this->om->forceFlush();
-
-                    foreach ($ot as $toDetach) {
-                        $this->om->detach($toDetach);
-                    }
                 }
 
                 $this->om->endFlushSuite();
@@ -135,6 +131,9 @@ class ToolManager implements LoggerAwareInterface
         return $perms;
     }
 
+    /**
+     * @deprecated can be done by the ToolRightsSerializer
+     */
     public function setPermissions(array $perms, OrderedTool $orderedTool, Role $role)
     {
         $mask = $this->toolMaskManager->encodeMask($perms, $orderedTool->getTool());

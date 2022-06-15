@@ -11,21 +11,16 @@ use JVal\Walker;
 
 class SchemaProvider
 {
-    /**
-     * The list of registered serializers in the platform.
-     *
-     * @var array
-     */
-    private $serializers = [];
+    const IGNORE_COLLECTIONS = 'ignore_collections';
+
+    /** @var SerializerProvider */
+    private $serializer;
     /** @var string */
     private $projectDir;
     /** @var string */
     private $baseUri;
 
-    /**
-     * @param string $projectDir
-     */
-    public function __construct($projectDir, SerializerProvider $serializer)
+    public function __construct(string $projectDir, SerializerProvider $serializer)
     {
         $this->projectDir = $projectDir;
         $this->baseUri = 'https://github.com/claroline/Distribution/tree/master';
@@ -57,14 +52,8 @@ class SchemaProvider
 
     /**
      * Gets a registered serializer instance.
-     *
-     * @param string $class
-     *
-     * @return mixed
-     *
-     * @throws \Exception
      */
-    public function get($class)
+    public function get(string $class)
     {
         foreach ($this->serializer->all() as $serializer) {
             if ($class === $this->getSchemaHandledClass($serializer)) {
@@ -78,23 +67,10 @@ class SchemaProvider
 
     /**
      * Check if serializer instance exists.
-     *
-     * @param string $class
-     *
-     * @return bool
-     *
-     * @throws \Exception
      */
-    public function has($class)
+    public function has(string $class): bool
     {
-        // search for the correct serializer
-        foreach ($this->serializers as $serializer) {
-            if ($class === $this->getSchemaHandledClass($serializer)) {
-                return true;
-            }
-        }
-
-        return false;
+        return !empty($this->get($class));
     }
 
     /**
@@ -138,7 +114,7 @@ class SchemaProvider
 
             $schema = $this->loadSchema($absolutePath);
 
-            if (in_array(Options::IGNORE_COLLECTIONS, $options) && isset($schema->properties)) {
+            if (in_array(static::IGNORE_COLLECTIONS, $options) && isset($schema->properties)) {
                 foreach ($schema->properties as $key => $property) {
                     if (isset($property->type) && 'array' === $property->type) {
                         unset($schema->properties->{$key});

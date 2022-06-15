@@ -65,9 +65,30 @@ class ParametersModal extends Component {
                   label: trans('thumbnail'),
                   type: 'image'
                 }, {
+                  name: 'display.order',
+                  type: 'number',
+                  label: trans('order'),
+                  options: {
+                    min: 0
+                  }
+                }, {
                   name: 'display.showIcon',
                   label: trans('resource_showIcon', {}, 'resource'),
                   type: 'boolean'
+                }, {
+                  name: 'display.fullscreen',
+                  label: trans('resource_fullscreen', {}, 'resource'),
+                  type: 'boolean'
+                }
+              ]
+            }, {
+              icon: 'fa fa-fw fa-key',
+              title: trans('access_restrictions'),
+              fields: [
+                {
+                  name: 'restrictions.hidden',
+                  type: 'boolean',
+                  label: trans('restrict_hidden')
                 }
               ]
             }

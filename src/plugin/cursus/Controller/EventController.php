@@ -102,7 +102,7 @@ class EventController extends AbstractCrudController
 
     /**
      * @Route("/{workspace}", name="apiv2_cursus_event_list", methods={"GET"})
-     * @EXT\ParamConverter("workspace", class="ClarolineCoreBundle:Workspace\Workspace", options={"mapping": {"workspace": "uuid"}})
+     * @EXT\ParamConverter("workspace", class="Claroline\CoreBundle\Entity\Workspace\Workspace", options={"mapping": {"workspace": "uuid"}})
      */
     public function listAction(Request $request, $class = Event::class, Workspace $workspace = null): JsonResponse
     {
@@ -121,7 +121,7 @@ class EventController extends AbstractCrudController
 
     /**
      * @Route("/public/{workspace}", name="apiv2_cursus_event_public", methods={"GET"})
-     * @EXT\ParamConverter("workspace", class="ClarolineCoreBundle:Workspace\Workspace", options={"mapping": {"workspace": "uuid"}})
+     * @EXT\ParamConverter("workspace", class="Claroline\CoreBundle\Entity\Workspace\Workspace", options={"mapping": {"workspace": "uuid"}})
      */
     public function listPublicAction(Request $request, Workspace $workspace = null): JsonResponse
     {
@@ -271,6 +271,23 @@ class EventController extends AbstractCrudController
         }
         $params['hiddenFilters']['event'] = $sessionEvent->getUuid();
         $params['hiddenFilters']['type'] = $type;
+
+        // only list participants of the same organization
+        if (EventUser::LEARNER === $type && !$this->authorization->isGranted('ROLE_ADMIN')) {
+            /** @var User $user */
+            $user = $this->tokenStorage->getToken()->getUser();
+
+            // filter by organizations
+            if ($user instanceof User) {
+                $organizations = $user->getOrganizations();
+            } else {
+                $organizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
+            }
+
+            $params['hiddenFilters']['organizations'] = array_map(function (Organization $organization) {
+                return $organization->getUuid();
+            }, $organizations);
+        }
 
         return new JsonResponse(
             $this->finder->search(EventUser::class, $params)

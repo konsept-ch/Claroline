@@ -1,6 +1,8 @@
 import {connect} from 'react-redux'
+import get from 'lodash/get'
 import merge from 'lodash/merge'
 
+import {param} from '#/main/app/config'
 import {withReducer} from '#/main/app/store/components/withReducer'
 import {actions as listActions} from '#/main/app/content/list/store/actions'
 import {actions as formActions, selectors as formSelectors} from '#/main/app/content/form/store'
@@ -12,6 +14,7 @@ import {actions, reducer, selectors} from '#/plugin/announcement/resources/annou
 const SendingModal = withReducer(selectors.STORE_NAME, reducer)(
   connect(
     (state) => ({
+      schedulerEnabled: param('schedulerEnabled'),
       formData: formSelectors.data(formSelectors.form(state, selectors.STORE_NAME+'.form')),
       workspace: resourceSelectors.workspace(state)
     }),
@@ -23,10 +26,17 @@ const SendingModal = withReducer(selectors.STORE_NAME, reducer)(
         dispatch(formActions.updateProp(selectors.STORE_NAME+'.form', prop, value))
       },
       reset(announcement, workspaceRoles) {
-        let data = announcement
+        let data = merge({}, announcement)
+
+        if (!get(announcement, 'meta.notifyUsers')) {
+          data = merge(data, {
+            meta: {notifyUsers: 1}
+          })
+        }
+
         if (!announcement.roles || 0 === announcement.roles.length) {
           // by default select all ws roles for sending
-          data = merge({}, announcement, {
+          data = merge({}, data, {
             roles: workspaceRoles
           })
         }

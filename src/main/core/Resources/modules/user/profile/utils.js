@@ -4,6 +4,7 @@ import cloneDeep from 'lodash/cloneDeep'
 
 import {trans} from '#/main/app/intl/translation'
 import {hasPermission} from '#/main/app/security/permissions'
+import {param} from '#/main/app/config'
 
 function getMainFacet(facets) {
   return facets.find(facet => facet.meta.main)
@@ -22,17 +23,6 @@ function getDefaultFacet() {
 }
 
 function getDetailsDefaultSection(parameters, user) {
-  let displayEmail = false
-
-  const showEmailRoles = get(parameters, 'show_email', []) || []
-  showEmailRoles.forEach(role => {
-    user.roles.forEach(userRole => {
-      if (userRole.name === role) {
-        displayEmail = true
-      }
-    })
-  })
-
   return {
     id: 'default-props',
     title: trans('general'),
@@ -42,12 +32,12 @@ function getDetailsDefaultSection(parameters, user) {
         name: 'email',
         type: 'email',
         label: trans('email'),
-        displayed: displayEmail
+        displayed: !isEmpty(user.email)
       }, {
         name: 'phone',
         type: 'string',
         label: trans('phone'),
-        displayed: displayEmail
+        displayed: !isEmpty(user.email)
       }, {
         name: 'meta.description',
         type: 'html',
@@ -60,7 +50,7 @@ function getDetailsDefaultSection(parameters, user) {
   }
 }
 
-function getFormDefaultSections(userData, isNew = false) {
+function getFormDefaultSections(user, isNew = false) {
   return [
     {
       id: 'default-props',
@@ -91,7 +81,8 @@ function getFormDefaultSections(userData, isNew = false) {
           type: 'username',
           label: trans('username'),
           required: true,
-          disabled: !isNew && !hasPermission('administrate', userData)
+          displayed: param('community.username'),
+          disabled: !isNew && !hasPermission('administrate', user)
         }, {
           name: 'plainPassword',
           type: 'password',

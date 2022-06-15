@@ -2,8 +2,8 @@ framework:
     messenger:
         failure_transport: failed
         transports:
-            async:
-                dsn: '%messenger.dsn%'
+            default:
+                dsn: 'doctrine://default' # overridden in MessengerConfigPass
 
                 # default configuration
                 retry_strategy:
@@ -20,5 +20,10 @@ framework:
 
             failed: 'doctrine://default?queue_name=failed'
 
+        buses:
+            messenger.bus.default:
+                middleware:
+                    - 'Claroline\AuthenticationBundle\Messenger\Middleware\AuthenticationMiddleware'
+
         routing:
-            'Claroline\AppBundle\Message\AsyncInterface': async
+            'Claroline\AppBundle\Messenger\Message\AsyncMessageInterface': default

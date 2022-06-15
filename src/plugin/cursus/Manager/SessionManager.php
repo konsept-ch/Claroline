@@ -600,7 +600,8 @@ class SessionManager
             $this->eventDispatcher->dispatch(new SendMessageEvent(
                 $content,
                 $title,
-                [$user]
+                [$user],
+                $session->getCreator()
             ), MessageEvents::MESSAGE_SENDING);
         }
     }

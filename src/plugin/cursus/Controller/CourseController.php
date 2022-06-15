@@ -128,7 +128,7 @@ class CourseController extends AbstractCrudController
 
     /**
      * @Route("/{slug}/open", name="apiv2_cursus_course_open", methods={"GET"})
-     * @EXT\ParamConverter("course", class="ClarolineCursusBundle:Course", options={"mapping": {"slug": "slug"}})
+     * @EXT\ParamConverter("course", class="Claroline\CursusBundle\Entity\Course", options={"mapping": {"slug": "slug"}})
      */
     public function openAction(Course $course): JsonResponse
     {
@@ -211,7 +211,7 @@ class CourseController extends AbstractCrudController
 
     /**
      * @Route("/{id}/pdf", name="apiv2_cursus_course_download_pdf", methods={"GET"})
-     * @EXT\ParamConverter("course", class="ClarolineCursusBundle:Course", options={"mapping": {"id": "uuid"}})
+     * @EXT\ParamConverter("course", class="Claroline\CursusBundle\Entity\Course", options={"mapping": {"id": "uuid"}})
      */
     public function downloadPdfAction(Course $course, Request $request): StreamedResponse
     {
@@ -229,7 +229,7 @@ class CourseController extends AbstractCrudController
 
     /**
      * @Route("/{id}/sessions", name="apiv2_cursus_course_list_sessions", methods={"GET"})
-     * @EXT\ParamConverter("course", class="ClarolineCursusBundle:Course", options={"mapping": {"id": "uuid"}})
+     * @EXT\ParamConverter("course", class="Claroline\CursusBundle\Entity\Course", options={"mapping": {"id": "uuid"}})
      */
     public function listSessionsAction(Course $course, Request $request): JsonResponse
     {
@@ -265,6 +265,23 @@ class CourseController extends AbstractCrudController
             $params['hiddenFilters'] = [];
         }
         $params['hiddenFilters']['course'] = $course->getUuid();
+
+        // only list participants of the same organization
+        if (!$this->authorization->isGranted('ROLE_ADMIN')) {
+            /** @var User $user */
+            $user = $this->tokenStorage->getToken()->getUser();
+
+            // filter by organizations
+            if ($user instanceof User) {
+                $organizations = $user->getOrganizations();
+            } else {
+                $organizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
+            }
+
+            $params['hiddenFilters']['organizations'] = array_map(function (Organization $organization) {
+                return $organization->getUuid();
+            }, $organizations);
+        }
 
         return new JsonResponse(
             $this->finder->search(CourseUser::class, $params)

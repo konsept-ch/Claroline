@@ -8,26 +8,89 @@ services:
             - method: setObjectManager
               arguments:
                   - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - method: setFileManager
+              arguments:
+                  - '@Claroline\CoreBundle\Manager\FileManager'
             - method: setPlanningManager
               arguments:
                   - '@Claroline\CoreBundle\Manager\PlanningManager'
 
+    Claroline\CoreBundle\Subscriber\Crud\File\PublicFileSubscriber:
+        tags: [kernel.event_subscriber]
+        arguments:
+            - '@Claroline\CoreBundle\Manager\FileManager'
+
+    Claroline\CoreBundle\Subscriber\Crud\ResourceNodeSubscriber:
+        tags: [ kernel.event_subscriber ]
+        arguments:
+            - '@security.token_storage'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\AppBundle\API\Crud'
+            - '@Claroline\CoreBundle\Manager\FileManager'
+            - '@Claroline\CoreBundle\Manager\Resource\ResourceLifecycleManager'
+            - '@Claroline\CoreBundle\Manager\ResourceManager'
+            - '@Claroline\CoreBundle\Manager\Resource\RightsManager'
+            - '@Claroline\CoreBundle\API\Serializer\Resource\ResourceNodeSerializer'
+
+    Claroline\CoreBundle\Subscriber\Crud\UserSubscriber:
+        tags: [ kernel.event_subscriber ]
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceManager'
+            - '@Claroline\CoreBundle\Manager\ResourceManager'
+
+    Claroline\CoreBundle\Subscriber\Crud\WorkspaceSubscriber:
+        tags: [ kernel.event_subscriber ]
+        arguments:
+            - '@security.token_storage'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\AppBundle\API\Crud'
+            - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceManager'
+            - '@Claroline\CoreBundle\Manager\FileManager'
+            - '@Claroline\CoreBundle\Manager\Tool\ToolManager'
+            - '@Claroline\CoreBundle\Manager\ResourceManager'
+            - '@Claroline\CoreBundle\Manager\Organization\OrganizationManager'
+            - '@Claroline\CoreBundle\API\Serializer\Workspace\WorkspaceSerializer'
+            - '@Claroline\CoreBundle\Manager\Workspace\TransferManager'
+
     Claroline\CoreBundle\Subscriber\GlobalSearchSubscriber:
+        tags: [kernel.event_subscriber]
         arguments:
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\AppBundle\API\SerializerProvider'
-        tags:
-            - { name: kernel.event_subscriber }
 
     Claroline\CoreBundle\Subscriber\Location\RoomPlanningSubscriber:
+        tags: [kernel.event_subscriber]
         arguments:
             - '@Claroline\AppBundle\Persistence\ObjectManager'
-        tags:
-            - { name: kernel.event_subscriber }
 
     Claroline\CoreBundle\Subscriber\Facet\OrganizationFieldSubscriber:
+        tags: [kernel.event_subscriber]
         arguments:
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\AppBundle\API\SerializerProvider'
-        tags:
-            - { name: kernel.event_subscriber }
+
+    Claroline\CoreBundle\Subscriber\Scheduler\SendEmailSubscriber:
+        tags: [kernel.event_subscriber]
+        arguments:
+            - '@Claroline\CoreBundle\Manager\MailManager'
+
+    # Tools
+    Claroline\CoreBundle\Subscriber\Tool\LocationsSubscriber:
+        tags: [kernel.event_subscriber]
+
+    Claroline\CoreBundle\Subscriber\Tool\ResourcesSubscriber:
+        tags: [kernel.event_subscriber]
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\AppBundle\Event\StrictDispatcher'
+            - '@Claroline\AppBundle\API\SerializerProvider'
+            - '@Claroline\AppBundle\API\Crud'
+
+    Claroline\CoreBundle\Subscriber\Tool\ResourceTrashSubscriber:
+        tags: [kernel.event_subscriber]
+
+    Claroline\CoreBundle\Subscriber\Tool\WorkspacesSubscriber:
+        tags: [kernel.event_subscriber]
+        arguments:
+            - '@security.authorization_checker'

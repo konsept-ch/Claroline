@@ -11,21 +11,23 @@
 
 namespace Claroline\CoreBundle\Messenger\Message;
 
+use Claroline\AppBundle\Messenger\Message\AsyncMessageInterface;
+
 /**
  * Disable all users which have not logged in since the selected date.
  */
-class DisableInactiveUsers
+class DisableInactiveUsers implements AsyncMessageInterface
 {
     /** @var \DateTimeInterface */
-    private $lastLogin;
+    private $lastActivity;
 
-    public function __construct(\DateTimeInterface $lastLogin)
+    public function __construct(\DateTimeInterface $lastActivity)
     {
-        $this->lastLogin = $lastLogin;
+        $this->lastActivity = $lastActivity;
     }
 
-    public function getLastLogin(): \DateTimeInterface
+    public function getLastActivity(): \DateTimeInterface
     {
-        return $this->lastLogin;
+        return $this->lastActivity;
     }
 }

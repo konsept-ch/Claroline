@@ -12,6 +12,7 @@ import {AlertBlock} from '#/main/app/alert/components/alert-block'
 import {Routes} from '#/main/app/router/components/routes'
 import {ListData} from '#/main/app/content/list/containers/data'
 import {Vertical} from '#/main/app/content/tabs/components/vertical'
+import {ContentCounter} from '#/main/app/content/components/counter'
 import {MODAL_USERS} from '#/main/core/modals/users'
 import {MODAL_GROUPS} from '#/main/core/modals/groups'
 import {UserCard} from '#/main/core/user/components/card'
@@ -150,58 +151,48 @@ CourseGroups.propTypes = {
 
 const CourseParticipants = (props) =>
   <Fragment>
-    <div className="row" style={{marginTop: '-20px'}}>
-      <div className="analytics-card">
-        <span className="fa fa-chalkboard-teacher" style={{backgroundColor: schemeCategory20c[1]}} />
+    <div className="row" style={{marginTop: -20}}>
+      <ContentCounter
+        icon="fa fa-chalkboard-teacher"
+        label={trans('tutors', {}, 'cursus')}
+        color={schemeCategory20c[1]}
+        value={get(props.activeSession, 'participants.tutors', 0)}
+      />
 
-        <h1 className="h3">
-          <small>{trans('tutors', {}, 'cursus')}</small>
-          {get(props.activeSession, 'participants.tutors', 0)}
-        </h1>
-      </div>
-
-      <div className="analytics-card">
-        <span className="fa fa-user" style={{backgroundColor: schemeCategory20c[5]}} />
-
-        <h1 className="h3">
-          <small>{trans('users')}</small>
-          {get(props.activeSession, 'participants.learners', 0)}
-        </h1>
-      </div>
+      <ContentCounter
+        icon="fa fa-chalkboard-teacher"
+        label={trans('users')}
+        color={schemeCategory20c[5]}
+        value={get(props.activeSession, 'participants.learners', 0)}
+      />
 
       {hasPermission('register', props.activeSession) &&
-        <div className="analytics-card">
-          <span className="fa fa-hourglass-half" style={{backgroundColor: schemeCategory20c[9]}} />
-
-          <h1 className="h3">
-            <small>{trans('En attente')}</small>
-            {get(props.activeSession, 'participants.pending', 0)}
-          </h1>
-        </div>
+        <ContentCounter
+          icon="fa fa-hourglass-half"
+          label={trans('En attente')}
+          color={schemeCategory20c[9]}
+          value={get(props.activeSession, 'participants.pending', 0)}
+        />
       }
 
       {hasPermission('register', props.activeSession) &&
-        <div className="analytics-card">
-          <span className="fa fa-ban label-danger" />
-
-          <h1 className="h3">
-            <small>{trans('cancellations', {}, 'cursus')}</small>
-            {get(props.activeSession, 'participants.cancellations', 0)}
-          </h1>
-        </div>
+        <ContentCounter
+          icon="fa fa-ban label-danger"
+          label={trans('cancellations', {}, 'cursus')}
+          color="rgb(169, 68, 66)"
+          value={get(props.activeSession, 'participants.cancellations', 0)}
+        />
       }
 
-      <div className="analytics-card">
-        <span className="fa fa-user-plus" style={{backgroundColor: schemeCategory20c[13]}} />
-
-        <h1 className="h3">
-          <small>{trans('available_seats', {}, 'cursus')}</small>
-          {get(props.activeSession, 'restrictions.users') ?
-            (get(props.activeSession, 'restrictions.users') - get(props.activeSession, 'participants.learners', 0)) + ' / ' + get(props.activeSession, 'restrictions.users')
-            : <span className="fa fa-fw fa-infinity" />
-          }
-        </h1>
-      </div>
+      <ContentCounter
+        icon="fa fa-user-plus"
+        label={trans('available_seats', {}, 'cursus')}
+        color={schemeCategory20c[13]}
+        value={get(props.activeSession, 'restrictions.users') ?
+          (get(props.activeSession, 'restrictions.users') - get(props.activeSession, 'participants.learners', 0)) + ' / ' + get(props.activeSession, 'restrictions.users')
+          : <span className="fa fa-fw fa-infinity" />
+        }
+      />
     </div>
 
     <div className="row">
