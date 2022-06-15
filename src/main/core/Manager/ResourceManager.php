@@ -104,7 +104,7 @@ class ResourceManager implements LoggerAwareInterface
     public function create(
         AbstractResource $resource,
         ResourceType $resourceType,
-        User $creator,
+        User $creator = null,
         Workspace $workspace = null,
         ResourceNode $parent = null,
         array $rights = [],
@@ -121,7 +121,12 @@ class ResourceManager implements LoggerAwareInterface
             $resource->getMimeType();
         $node->setMimeType($mimeType);
         $node->setName($resource->getName());
-        $node->setCreator($creator);
+
+        if (!empty($creator)) {
+            $node->setCreator($creator);
+        } else {
+            $node->setCreator($this->security->getUser());
+        }
         if (!$workspace && $parent && $parent->getWorkspace()) {
             $workspace = $parent->getWorkspace();
         }
@@ -243,7 +248,10 @@ class ResourceManager implements LoggerAwareInterface
             $mimeTypeGuesser = new MimeTypes();
 
             if (!$hasExtension) {
-                $extension = $mimeTypeGuesser->getExtensions($nodes[0]->getMimeType())[0];
+                $guessedExtension = $mimeTypeGuesser->getExtensions($nodes[0]->getMimeType());
+                if (!empty($guessedExtension)) {
+                    $extension = $guessedExtension[0];
+                }
             }
 
             $data['name'] = $hasExtension ?

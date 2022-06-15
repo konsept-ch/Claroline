@@ -85,7 +85,7 @@ class AssertionController extends AbstractCrudController
 
     /**
      * @Route("/{assertion}/evidences", name="apiv2_assertion_evidences", methods={"GET"})
-     * @EXT\ParamConverter("assertion", class="ClarolineOpenBadgeBundle:Assertion", options={"mapping": {"assertion": "uuid"}})
+     * @EXT\ParamConverter("assertion", class="Claroline\OpenBadgeBundle\Entity\Assertion", options={"mapping": {"assertion": "uuid"}})
      */
     public function listEvidencesAction(Request $request, Assertion $assertion): JsonResponse
     {
@@ -103,7 +103,7 @@ class AssertionController extends AbstractCrudController
      * Downloads pdf version of assertion.
      *
      * @Route("/{assertion}/pdf/download", name="apiv2_assertion_pdf_download", methods={"GET"})
-     * @EXT\ParamConverter("assertion", class="ClarolineOpenBadgeBundle:Assertion", options={"mapping": {"assertion": "uuid"}})
+     * @EXT\ParamConverter("assertion", class="Claroline\OpenBadgeBundle\Entity\Assertion", options={"mapping": {"assertion": "uuid"}})
      */
     public function downloadPdfAction(Assertion $assertion): StreamedResponse
     {
@@ -122,5 +122,21 @@ class AssertionController extends AbstractCrudController
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename='.$fileName.'.pdf',
         ]);
+    }
+
+    protected function getDefaultHiddenFilters()
+    {
+        if (!$this->authorization->isGranted('IS_AUTHENTICATED_FULLY')) {
+            throw new AccessDeniedException();
+        }
+
+        if (!$this->authorization->isGranted('ROLE_ADMIN')) {
+            // only get assertions for the badges the current user can grant
+            return [
+                'fromGrantableBadges' => true,
+            ];
+        }
+
+        return [];
     }
 }

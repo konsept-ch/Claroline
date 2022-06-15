@@ -14,6 +14,7 @@ namespace Claroline\CoreBundle\Security\Voter;
 use Claroline\AppBundle\Security\ObjectCollection;
 use Claroline\CoreBundle\Entity\Resource\AbstractResource;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
+use Claroline\CoreBundle\Entity\Resource\ResourceRights;
 use Claroline\CoreBundle\Manager\Resource\MaskManager;
 use Claroline\CoreBundle\Manager\Resource\ResourceRestrictionsManager;
 use Claroline\CoreBundle\Manager\Resource\RightsManager;
@@ -24,7 +25,7 @@ use Claroline\CoreBundle\Security\Collection\ResourceCollection;
 use Doctrine\ORM\EntityManager;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * This voter is involved in access decisions for AbstractResource instances.
@@ -55,7 +56,7 @@ class ResourceVoter implements VoterInterface
         ResourceRestrictionsManager $restrictionsManager
     ) {
         $this->em = $em;
-        $this->repository = $em->getRepository('ClarolineCoreBundle:Resource\ResourceRights');
+        $this->repository = $em->getRepository(ResourceRights::class);
         $this->translator = $translator;
         $this->specialActions = ['move', 'create', 'copy'];
         $this->maskManager = $maskManager;

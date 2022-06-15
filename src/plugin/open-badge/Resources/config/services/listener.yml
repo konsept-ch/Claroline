@@ -1,24 +1,9 @@
 services:
-    _defaults:
-        autowire: false
-        autoconfigure: false
-        public: false
-
-    Claroline\OpenBadgeBundle\Listener\LayoutListener:
-        arguments:
-            - '@twig'
-        tags:
-            - { name: kernel.event_listener, event: layout.inject.javascript, method: onInjectJs }
-
-    # Tools
-    Claroline\OpenBadgeBundle\Listener\Tool\BadgesListener:
-        tags:
-            - { name: kernel.event_listener, event: open_tool_desktop_badges, method: onDisplayDesktop }
-            - { name: kernel.event_listener, event: open_tool_workspace_badges, method: onDisplayWorkspace }
-
     # DataSources
     Claroline\OpenBadgeBundle\Listener\DataSource\BadgesSource:
         arguments:
+            - '@security.authorization_checker'
+            - '@security.token_storage'
             - '@Claroline\AppBundle\API\FinderProvider'
         tags:
             - { name: kernel.event_listener, event: data_source.badges.load, method: getData }

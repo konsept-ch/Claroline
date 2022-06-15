@@ -3,8 +3,6 @@
 namespace Claroline\LogBundle\Messenger\Message;
 
 use Claroline\AppBundle\Messenger\Message\AsyncMessageInterface;
-use Claroline\CoreBundle\Entity\Role;
-use Claroline\CoreBundle\Entity\User;
 
 class CreateRoleChangeLogs implements AsyncMessageInterface
 {
@@ -12,37 +10,29 @@ class CreateRoleChangeLogs implements AsyncMessageInterface
     private $date;
     /** @var string */
     private $action;
-    /** @var Role */
-    private $role;
+    /** @var int */
+    private $roleId;
     /** @var string */
     private $doerIp;
-    /** @var User */
-    private $doer;
+    /** @var int */
+    private $doerId;
     /** @var array */
-    private $targets;
-    /** @var string|null */
-    private $doerCountry;
-    /** @var string|null */
-    private $doerCity;
+    private $targetIds;
 
     public function __construct(
         \DateTimeInterface $date,
         string $action,
-        Role $role,
+        int $roleId,
         string $doerIp,
-        ?User $doer = null,
-        array $targets = [],
-        ?string $doerCountry = null,
-        ?string $doerCity = null
+        ?int $doerId = null,
+        array $targetIds = []
     ) {
         $this->date = $date;
         $this->action = $action;
-        $this->role = $role;
+        $this->roleId = $roleId;
         $this->doerIp = $doerIp;
-        $this->doer = $doer;
-        $this->targets = $targets;
-        $this->doerCountry = $doerCountry;
-        $this->doerCity = $doerCity;
+        $this->doerId = $doerId;
+        $this->targetIds = $targetIds;
     }
 
     public function getDate(): \DateTimeInterface
@@ -55,9 +45,9 @@ class CreateRoleChangeLogs implements AsyncMessageInterface
         return $this->action;
     }
 
-    public function getRole(): Role
+    public function getRoleId(): int
     {
-        return $this->role;
+        return $this->roleId;
     }
 
     public function getDoerIp(): string
@@ -65,23 +55,13 @@ class CreateRoleChangeLogs implements AsyncMessageInterface
         return $this->doerIp;
     }
 
-    public function getDoer(): ?User
+    public function getDoerId(): ?int
     {
-        return $this->doer;
+        return $this->doerId;
     }
 
-    public function getTargets(): array
+    public function getTargetIds(): array
     {
-        return $this->targets;
-    }
-
-    public function getDoerCountry(): ?string
-    {
-        return $this->doerCountry;
-    }
-
-    public function getDoerCity(): ?string
-    {
-        return $this->doerCity;
+        return $this->targetIds;
     }
 }

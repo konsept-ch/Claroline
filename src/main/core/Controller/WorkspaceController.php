@@ -96,7 +96,7 @@ class WorkspaceController
      * @Route("/{slug}", name="claro_workspace_open")
      * @EXT\ParamConverter("user", converter="current_user", options={"allowAnonymous"=true})
      */
-    public function openAction(string $slug, User $user = null, Request $request): JsonResponse
+    public function openAction(string $slug, Request $request, ?User $user = null): JsonResponse
     {
         /** @var Workspace $workspace */
         $workspace = $this->om->getRepository(Workspace::class)->findOneBy(['slug' => $slug]);
@@ -158,6 +158,13 @@ class WorkspaceController
             ]);
         }
 
+        $statusCode = 403;
+        if (!$workspace->getSelfRegistration() && !$this->authorization->isGranted('IS_AUTHENTICATED_FULLY') && !$this->restrictionsManager->hasRights($workspace)) {
+            // let the API handles the access error
+            $statusCode = 401;
+        }
+
+        // return the details of access errors to display it to users
         return new JsonResponse([
             'impersonated' => $this->manager->isImpersonated($this->tokenStorage->getToken()),
             'roles' => array_map(function (Role $role) {
@@ -165,7 +172,7 @@ class WorkspaceController
             }, $this->manager->getTokenRoles($this->tokenStorage->getToken(), $workspace)),
             'workspace' => $this->serializer->serialize($workspace),
             'accessErrors' => $accessErrors,
-        ]);
+        ], $statusCode);
     }
 
     /**
@@ -174,7 +181,7 @@ class WorkspaceController
      * @Route("/{id}/tool/{toolName}", name="claro_workspace_open_tool")
      * @EXT\ParamConverter(
      *      "workspace",
-     *      class="ClarolineCoreBundle:Workspace\Workspace",
+     *      class="Claroline\CoreBundle\Entity\Workspace\Workspace",
      *      options={"mapping": {"id": "uuid"}}
      * )
      */
@@ -198,14 +205,14 @@ class WorkspaceController
         ];
 
         $this->strictDispatcher->dispatch(
-            ToolEvents::TOOL_OPEN,
+            ToolEvents::OPEN,
             OpenToolEvent::class,
             $eventParams
         );
 
         /** @var OpenToolEvent $event */
         $event = $this->strictDispatcher->dispatch(
-            'open_tool_workspace_'.$toolName,
+            ToolEvents::getEventName(ToolEvents::OPEN, AbstractTool::WORKSPACE, $toolName),
             OpenToolEvent::class,
             $eventParams
         );
@@ -221,7 +228,7 @@ class WorkspaceController
      * @Route("/unlock/{id}", name="claro_workspace_unlock", methods={"POST"})
      * @EXT\ParamConverter(
      *     "workspace",
-     *     class="ClarolineCoreBundle:Workspace\Workspace",
+     *     class="Claroline\CoreBundle\Entity\Workspace\Workspace",
      *     options={"mapping": {"id": "uuid"}}
      * )
      */
