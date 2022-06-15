@@ -15,7 +15,7 @@ use Claroline\AppBundle\API\Crud;
 use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\AppBundle\Persistence\ObjectManager;
-use Claroline\CoreBundle\API\Serializer\ParametersSerializer;
+use Claroline\CoreBundle\Entity\File\PublicFile;
 use Claroline\CoreBundle\Entity\Resource\AbstractResource;
 use Claroline\CoreBundle\Entity\Resource\Directory;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
@@ -23,6 +23,7 @@ use Claroline\CoreBundle\Entity\Role;
 use Claroline\CoreBundle\Event\Resource\DeleteResourceEvent;
 use Claroline\CoreBundle\Event\Resource\LoadResourceEvent;
 use Claroline\CoreBundle\Event\Resource\ResourceActionEvent;
+use Claroline\CoreBundle\Manager\FileManager;
 use Claroline\CoreBundle\Manager\Resource\ResourceActionManager;
 use Claroline\CoreBundle\Manager\Resource\RightsManager;
 use Claroline\CoreBundle\Manager\ResourceManager;
@@ -41,31 +42,31 @@ class DirectoryListener
     private $serializer;
     /** @var Crud */
     private $crud;
+    /** @var FileManager */
+    private $fileManager;
     /** @var ResourceManager */
     private $resourceManager;
     /** @var ResourceActionManager */
     private $actionManager;
     /** @var RightsManager */
     private $rightsManager;
-    /** @var ParametersSerializer */
-    private $parametersSerializer;
 
     public function __construct(
         ObjectManager $om,
         SerializerProvider $serializer,
         Crud $crud,
+        FileManager $fileManager,
         ResourceManager $resourceManager,
         ResourceActionManager $actionManager,
-        RightsManager $rightsManager,
-        ParametersSerializer $parametersSerializer
+        RightsManager $rightsManager
     ) {
         $this->om = $om;
         $this->serializer = $serializer;
         $this->crud = $crud;
+        $this->fileManager = $fileManager;
         $this->resourceManager = $resourceManager;
         $this->rightsManager = $rightsManager;
         $this->actionManager = $actionManager;
-        $this->parametersSerializer = $parametersSerializer;
     }
 
     /**
@@ -73,15 +74,9 @@ class DirectoryListener
      */
     public function onLoad(LoadResourceEvent $event)
     {
-        $parameters = $this->parametersSerializer->serialize([Options::SERIALIZE_MINIMAL]);
-        $storageLock = isset($parameters['restrictions']['storage']) &&
-            isset($parameters['restrictions']['max_storage_reached']) &&
-            $parameters['restrictions']['storage'] &&
-            $parameters['restrictions']['max_storage_reached'];
-
         $event->setData([
             'directory' => $this->serializer->serialize($event->getResource()),
-            'storageLock' => $storageLock,
+            'storageLock' => $this->fileManager->isStorageFull(),
         ]);
 
         $event->stopPropagation();
@@ -103,12 +98,75 @@ class DirectoryListener
             throw new AccessDeniedException($collection->getErrorsForDisplay());
         }
 
-        $options = $event->getOptions();
-
         // create the resource node
+        $created = $this->createResource($parent, $data['resourceNode'], !empty($data['resource']) ? $data['resource'] : [], $event->getOptions());
 
+        $event->setResponse(new JsonResponse([
+            'resourceNode' => $this->serializer->serialize($created['resourceNode']),
+            'resource' => $this->serializer->serialize($created['resource']),
+        ], 201));
+    }
+
+    /**
+     * Adds multiple files inside a directory.
+     */
+    public function onAddFiles(ResourceActionEvent $event)
+    {
+        $files = $event->getFiles();
+        $parent = $event->getResourceNode();
+
+        $add = $this->actionManager->get($parent, 'add');
+
+        $collection = new ResourceCollection([$parent], ['type' => 'file']);
+        if (!$this->actionManager->hasPermission($add, $collection)) {
+            throw new AccessDeniedException($collection->getErrorsForDisplay());
+        }
+
+        $publicFiles = [];
+        foreach ($files as $file) {
+            $publicFiles[] = $this->crud->create(PublicFile::class, [], ['file' => $file, Crud::THROW_EXCEPTION]);
+        }
+
+        $this->om->startFlushSuite();
+
+        $resourceType = $this->resourceManager->getResourceTypeByName('file');
+        $resources = [];
+        foreach ($publicFiles as $publicFile) {
+            $created = $this->createResource($parent, [
+                'name' => $publicFile->getFilename(),
+                'meta' => [
+                    'type' => $resourceType->getName(),
+                    'mimeType' => $publicFile->getMimeType(),
+                ],
+            ], [
+                'size' => $publicFile->getSize(),
+                'hashName' => $publicFile->getUrl(),
+            ], $event->getOptions());
+
+            $resources[] = $created['resourceNode'];
+        }
+        $this->om->endFlushSuite();
+
+        $event->setResponse(new JsonResponse(array_map(function (ResourceNode $fileNode) {
+            return $this->serializer->serialize($fileNode);
+        }, $resources)));
+    }
+
+    public function onDelete(DeleteResourceEvent $event)
+    {
+        // delete all children of the current directory
+        // this may be interesting to put it in the messenger bus
+        $resourceNode = $event->getResource()->getResourceNode();
+
+        if (!empty($resourceNode->getChildren())) {
+            $this->crud->deleteBulk($resourceNode->getChildren()->toArray(), $event->isSoftDelete() ? [Options::SOFT_DELETE] : []);
+        }
+    }
+
+    private function createResource(ResourceNode $parent, array $nodeData, ?array $resourceData = [], ?array $options = [])
+    {
         /** @var ResourceNode $resourceNode */
-        $resourceNode = $this->crud->create(ResourceNode::class, $data['resourceNode'], $options);
+        $resourceNode = $this->crud->create(ResourceNode::class, $nodeData, $options);
         $resourceNode->setParent($parent);
         $resourceNode->setWorkspace($parent->getWorkspace());
 
@@ -116,12 +174,11 @@ class DirectoryListener
         $resourceClass = $resourceNode->getResourceType()->getClass();
 
         /** @var AbstractResource $resource */
-        $resource = $this->crud->create($resourceClass, !empty($data['resource']) ? $data['resource'] : [], $options);
+        $resource = $this->crud->create($resourceClass, $resourceData, $options);
         $resource->setResourceNode($resourceNode);
 
-        // maybe do it in the serializer (if it can be done without intermediate flush)
-        if (!empty($data['resourceNode']['rights'])) {
-            foreach ($data['resourceNode']['rights'] as $rights) {
+        if (!empty($nodeData['rights'])) {
+            foreach ($nodeData['rights'] as $rights) {
                 /** @var Role $role */
                 $role = $this->om->getRepository(Role::class)->findOneBy(['name' => $rights['name']]);
 
@@ -133,7 +190,8 @@ class DirectoryListener
                 $this->rightsManager->update($rights['permissions'], $role, $resourceNode, false, $creation);
             }
         } else {
-            // todo : initialize default rights
+            // copy parent rights on the new resource
+            $this->rightsManager->copy($parent, $resourceNode);
         }
 
         $this->om->persist($resource);
@@ -141,24 +199,9 @@ class DirectoryListener
 
         $this->om->flush();
 
-        // todo : dispatch get/load action instead
-        $event->setResponse(new JsonResponse(
-            [
-                'resourceNode' => $this->serializer->serialize($resourceNode),
-                'resource' => $this->serializer->serialize($resource),
-            ],
-            201
-        ));
-    }
-
-    public function onDelete(DeleteResourceEvent $event)
-    {
-        // delete all children of the current directory
-        // this may by interesting to put it in the messenger bus
-        $resourceNode = $event->getResource()->getResourceNode();
-
-        if (!empty($resourceNode->getChildren())) {
-            $this->crud->deleteBulk($resourceNode->getChildren()->toArray(), $event->isSoftDelete() ? [Options::SOFT_DELETE] : []);
-        }
+        return [
+            'resourceNode' => $resourceNode,
+            'resource' => $resource,
+        ];
     }
 }

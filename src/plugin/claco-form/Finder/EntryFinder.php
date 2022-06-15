@@ -14,6 +14,7 @@ namespace Claroline\ClacoFormBundle\Finder;
 use Claroline\AppBundle\API\Finder\AbstractFinder;
 use Claroline\ClacoFormBundle\Entity\ClacoForm;
 use Claroline\ClacoFormBundle\Entity\Entry;
+use Claroline\ClacoFormBundle\Entity\Field;
 use Claroline\CoreBundle\Entity\Facet\FieldFacet;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Manager\LocationManager;
@@ -55,8 +56,8 @@ class EntryFinder extends AbstractFinder
     {
         $this->usedJoin = [];
 
-        $clacoFormRepo = $this->om->getRepository('ClarolineClacoFormBundle:ClacoForm');
-        $fieldRepo = $this->om->getRepository('ClarolineClacoFormBundle:Field');
+        $clacoFormRepo = $this->om->getRepository(ClacoForm::class);
+        $fieldRepo = $this->om->getRepository(Field::class);
 
         // TODO : rights should not be checked here
         $currentUser = $this->tokenStorage->getToken()->getUser();
@@ -289,6 +290,7 @@ class EntryFinder extends AbstractFinder
 
                 case FieldFacet::CHOICE_TYPE:
                 case FieldFacet::CASCADE_TYPE:
+                default:
                     $qb->andWhere("UPPER(fvffv{$parsedFilterName}.value) LIKE :value{$parsedFilterName}");
 
                     // a little of black magic because Doctrine Json type stores unicode seq for special chars
@@ -297,10 +299,6 @@ class EntryFinder extends AbstractFinder
 
                     $qb->setParameter("value{$parsedFilterName}", '%'.addslashes(strtoupper($value)).'%');
                     break;
-
-                default:
-                    $qb->andWhere("UPPER(fvffv{$parsedFilterName}.value) LIKE :value{$parsedFilterName}");
-                    $qb->setParameter("value{$parsedFilterName}", '%'.strtoupper($filterValue).'%');
             }
         }
     }

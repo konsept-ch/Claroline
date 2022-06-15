@@ -1,4 +1,5 @@
 import isEmpty from 'lodash/isEmpty'
+import merge from 'lodash/merge'
 import set from 'lodash/set'
 import moment from 'moment'
 
@@ -118,7 +119,7 @@ function url(/*value*/) {
 
 function email(value) {
   // we use same regex than W3C <input type="email" />
-  if (match(value, {regex: /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/ig})) {
+  if (match(value, {regex: /^[a-zA-Z0-9.!#$%&'’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/ig})) {
     return tval('This value should be a valid email.')
   }
 }
@@ -260,8 +261,15 @@ function unique(value, options = {}) {
 }
 
 function notExist(value, options = {}) {
-  if (options.unique) {
-    return fetch(urlGenerator([options.unique.check, {field: options.unique.name, value: value}]), {
+  if (options.unique && value) {
+    let existUrl
+    if (Array.isArray(options.unique.check)) {
+      existUrl = [options.unique.check[0], merge({}, options.unique.check[1] || {}, {value: value})]
+    } else {
+      existUrl = options.unique.check
+    }
+
+    return fetch(urlGenerator(existUrl), {
       credentials: 'include',
       headers: new Headers({
         'Content-Type': 'application/json; charset=utf-8',

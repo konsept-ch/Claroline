@@ -3,7 +3,6 @@
 namespace Claroline\LogBundle\Messenger\Message;
 
 use Claroline\AppBundle\Messenger\Message\AsyncMessageInterface;
-use Claroline\CoreBundle\Entity\User;
 
 class CreateSecurityLog implements AsyncMessageInterface
 {
@@ -15,33 +14,25 @@ class CreateSecurityLog implements AsyncMessageInterface
     private $details;
     /** @var string */
     private $doerIp;
-    /** @var User */
-    private $doer;
-    /** @var User */
-    private $target;
-    /** @var string|null */
-    private $doerCountry;
-    /** @var string|null */
-    private $doerCity;
+    /** @var int */
+    private $doerId;
+    /** @var int */
+    private $targetId;
 
     public function __construct(
         \DateTimeInterface $date,
         string $action,
         string $details,
         string $doerIp,
-        ?User $doer = null,
-        ?User $target = null,
-        ?string $doerCountry = null,
-        ?string $doerCity = null
+        ?int $doerId = null,
+        ?int $targetId = null
     ) {
         $this->date = $date;
         $this->action = $action;
         $this->details = $details;
         $this->doerIp = $doerIp;
-        $this->doer = $doer;
-        $this->target = $target;
-        $this->doerCountry = $doerCountry;
-        $this->doerCity = $doerCity;
+        $this->doerId = $doerId;
+        $this->targetId = $targetId;
     }
 
     public function getDate(): \DateTimeInterface
@@ -64,23 +55,13 @@ class CreateSecurityLog implements AsyncMessageInterface
         return $this->doerIp;
     }
 
-    public function getDoer(): ?User
+    public function getDoerId(): ?int
     {
-        return $this->doer;
+        return $this->doerId;
     }
 
-    public function getTarget(): ?User
+    public function getTargetId(): ?int
     {
-        return $this->target;
-    }
-
-    public function getDoerCountry(): ?string
-    {
-        return $this->doerCountry;
-    }
-
-    public function getDoerCity(): ?string
-    {
-        return $this->doerCity;
+        return $this->targetId;
     }
 }

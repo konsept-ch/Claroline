@@ -140,7 +140,7 @@ class LogConnectController
      * )
      * @EXT\ParamConverter(
      *     "workspace",
-     *     class="ClarolineCoreBundle:Workspace\Workspace",
+     *     class="Claroline\CoreBundle\Entity\Workspace\Workspace",
      *     options={"mapping": {"workspace": "uuid"}}
      * )
      *
@@ -170,7 +170,7 @@ class LogConnectController
      * )
      * @EXT\ParamConverter(
      *     "workspace",
-     *     class="ClarolineCoreBundle:Workspace\Workspace",
+     *     class="Claroline\CoreBundle\Entity\Workspace\Workspace",
      *     options={"mapping": {"workspace": "uuid"}}
      * )
      *
@@ -206,8 +206,8 @@ class LogConnectController
      * )
      * @EXT\ParamConverter(
      *     "resource",
-     *     class="ClarolineCoreBundle:Resource\ResourceNode",
-     *     options={"mapping": {"resource": "id"}}
+     *     class="Claroline\CoreBundle\Entity\Resource\ResourceNode",
+     *     options={"mapping": {"resource": "uuid"}}
      * )
      * @EXT\ParamConverter("user", converter="current_user", options={"allowAnonymous"=false})
      *
@@ -237,8 +237,8 @@ class LogConnectController
      * )
      * @EXT\ParamConverter(
      *     "resource",
-     *     class="ClarolineCoreBundle:Resource\ResourceNode",
-     *     options={"mapping": {"resource": "id"}}
+     *     class="Claroline\CoreBundle\Entity\Resource\ResourceNode",
+     *     options={"mapping": {"resource": "uuid"}}
      * )
      * @EXT\ParamConverter("user", converter="current_user", options={"allowAnonymous"=false})
      *

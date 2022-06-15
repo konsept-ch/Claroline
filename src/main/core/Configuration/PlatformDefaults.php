@@ -42,6 +42,9 @@ class PlatformDefaults implements ParameterProviderInterface
             'logs' => [
                 'enabled' => true,
             ],
+            'community' => [
+                'username' => true,
+            ],
             //database_restoration section is not configurable nor documented
             'database_restoration' => [
                 'auto_validate_email' => false,
@@ -172,14 +175,10 @@ class PlatformDefaults implements ParameterProviderInterface
             ],
             'show_about_button' => true,
             'notifications_refresh_delay' => 0, // in ms
-            'is_cron_configured' => false,
             'javascripts' => [],
             'restrictions' => [
-                'users' => false,
-                'storage' => false,
-                'max_users' => null,
-                'max_storage_size' => null,
-                'max_storage_reached' => false,
+                'users' => null,
+                'storage' => null,
                 'used_storage' => null,
             ],
             'privacy' => [
@@ -205,7 +204,7 @@ class PlatformDefaults implements ParameterProviderInterface
                 'maxmind_license_key' => null,
             ],
             'job_queue' => [
-                'enabled' => true,
+                'enabled' => false,
             ],
             'changelogMessage' => [
                 // display a connection message when a new minor version is installed

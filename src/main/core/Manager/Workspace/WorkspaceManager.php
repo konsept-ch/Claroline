@@ -100,9 +100,9 @@ class WorkspaceManager implements LoggerAwareInterface
         return $this->container->get(TransferManager::class)->export($workspace);
     }
 
-    public function import(string $archivePath)
+    public function import(string $archivePath, ?Workspace $workspace = null)
     {
-        return $this->container->get(TransferManager::class)->import($archivePath);
+        return $this->container->get(TransferManager::class)->import($archivePath, $workspace ?? new Workspace());
     }
 
     public function hasAccess(Workspace $workspace, TokenInterface $token, string $toolName = null, string $permission = 'open'): bool
@@ -182,7 +182,7 @@ class WorkspaceManager implements LoggerAwareInterface
             $workspace->setOptions($workspaceOptions);
             $this->om->persist($workspaceOptions);
             $this->om->persist($workspace);
-            $this->om->flush();
+            //$this->om->flush();
         }
 
         return $workspaceOptions;
@@ -292,7 +292,7 @@ class WorkspaceManager implements LoggerAwareInterface
             $workspace->setCode($name);
 
             /** @var Workspace $workspace */
-            $workspace = $this->container->get(TransferManager::class)->import(
+            $workspace = $this->import(
                 $this->container->getParameter('claroline.param.workspace.default'),
                 $workspace
             );

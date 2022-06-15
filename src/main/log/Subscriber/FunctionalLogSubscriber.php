@@ -31,7 +31,7 @@ class FunctionalLogSubscriber implements EventSubscriberInterface
         return [
             EvaluationEvents::RESOURCE => ['logEvent', 10],
             ResourceEvents::RESOURCE_OPEN => ['logEvent', 10],
-            ToolEvents::TOOL_OPEN => ['logEvent', 10],
+            ToolEvents::OPEN => ['logEvent', 10],
         ];
     }
 
@@ -42,13 +42,13 @@ class FunctionalLogSubscriber implements EventSubscriberInterface
                 new \DateTime(),
                 $eventName,
                 $event->getMessage($this->translator), // this should not be done by the symfony event
-                $event->getUser(),
-                method_exists($event, 'getWorkspace') ? $event->getWorkspace() : null,
-                method_exists($event, 'getResourceNode') ? $event->getResourceNode() : null
+                $event->getUser()->getId(),
+                method_exists($event, 'getWorkspace') && $event->getWorkspace() ? $event->getWorkspace()->getId() : null,
+                method_exists($event, 'getResourceNode') && $event->getResourceNode() ? $event->getResourceNode()->getId() : null
             ));
         }
 
-        // Hack because of ToolEvents::TOOL_OPEN implements the DataConveyorEventInterface
+        // Hack because of ToolEvents::OPEN implements the DataConveyorEventInterface
         if (method_exists($event, 'setData')) {
             $event->setData([]);
         }

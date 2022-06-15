@@ -17,8 +17,8 @@ registry.add('ClarolineCoreBundle', {
    * Provides menu which can be used in the main header menu.
    */
   header: {
-    'search': () => { return import(/* webpackChunkName: "core-header-search" */ '#/main/core/header/search') }/*,
-    'tools' : () => { return import(/!* webpackChunkName: "core-header-tools" *!/  '#/main/core/header/tools') }*/
+    'search': () => { return import(/* webpackChunkName: "core-header-search" */ '#/main/core/header/search') },
+    'tools' : () => { return import(/* webpackChunkName: "core-header-tools" */  '#/main/core/header/tools') }
   },
 
   integration: {
@@ -125,7 +125,6 @@ registry.add('ClarolineCoreBundle', {
     'resources'      : () => { return import(/* webpackChunkName: "core-tool-resources" */  '#/main/core/tools/resources') },
     'parameters'     : () => { return import(/* webpackChunkName: "core-tool-parameters" */ '#/main/core/tools/parameters') },
     'community'      : () => { return import(/* webpackChunkName: "core-tool-users" */      '#/main/core/tools/community') },
-    'transfer'       : () => { return import(/* webpackChunkName: "core-tool-transfer" */   '#/main/core/tools/transfer') },
     'resource_trash' : () => { return import(/* webpackChunkName: "core-tool-trash" */      '#/main/core/tools/trash') },
     'locations'      : () => { return import(/* webpackChunkName: "core-tool-locations" */  '#/main/core/tools/locations') }
   },
@@ -137,9 +136,7 @@ registry.add('ClarolineCoreBundle', {
     'community'       : () => { return import(/* webpackChunkName: "core-admin-users" */          '#/main/core/administration/community') },
     'main_settings'   : () => { return import(/* webpackChunkName: "core-admin-parameters" */     '#/main/core/administration/parameters') },
     'templates'       : () => { return import(/* webpackChunkName: "core-admin-template" */       '#/main/core/administration/template') },
-    'tasks_scheduling': () => { return import(/* webpackChunkName: "core-admin-scheduled-task" */ '#/main/core/administration/scheduled-task') },
-    'integration'     : () => { return import(/* webpackChunkName: "core-admin-integration" */    '#/main/core/administration/integration') },
-    'transfer'        : () => { return import(/* webpackChunkName: "core-tool-transfer" */        '#/main/core/tools/transfer') }
+    'integration'     : () => { return import(/* webpackChunkName: "core-admin-integration" */    '#/main/core/administration/integration') }
   },
 
   /**

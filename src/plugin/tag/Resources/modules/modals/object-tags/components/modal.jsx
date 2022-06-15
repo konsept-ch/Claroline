@@ -24,7 +24,12 @@ const ObjectTagsModal = props =>
   >
     <div className="modal-body">
       <TagTypeahead
-        select={(tagName) => props.addTag(props.objectClass, props.objects, {name: tagName})}
+        canCreate={props.canCreate}
+        select={(tagName) => props.addTag(props.objectClass, props.objects, {name: tagName}).then(() => {
+          if (props.update) {
+            props.update(props.objects)
+          }
+        })}
       />
 
       {0 === props.tags.length &&
@@ -51,7 +56,11 @@ const ObjectTagsModal = props =>
                 icon="fa fa-times"
                 label={trans('delete', {}, 'actions')}
                 tooltip="left"
-                callback={() => props.removeTag(props.objectClass, props.objects, tag)}
+                callback={() => props.removeTag(props.objectClass, props.objects, tag).then(() => {
+                  if (props.update) {
+                    props.update(props.objects)
+                  }
+                })}
               />
             </li>
           )}
@@ -73,7 +82,8 @@ ObjectTagsModal.propTypes = {
   )),
   loadTags: T.func.isRequired,
   removeTag: T.func.isRequired,
-  addTag: T.func.isRequired
+  addTag: T.func.isRequired,
+  canCreate: T.bool.isRequired
 }
 
 ObjectTagsModal.defaultProps = {

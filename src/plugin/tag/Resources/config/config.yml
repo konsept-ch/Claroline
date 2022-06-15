@@ -1,10 +1,14 @@
 plugin:
-  admin_tools:
-    - name: claroline_tag_admin_tool
-      class: tags
+    tools:
+        - name: tags
+          class: tags
+          is_displayable_in_workspace: false
+          is_displayable_in_desktop: true
+          tool_rights:
+              - name: create
 
-  resource_actions:
-    - name: tags
-      group: management
-      decoder: administrate
-      scope: [object, collection]
+    resource_actions:
+        - name: tags
+          group: management
+          decoder: administrate
+          scope: [object, collection]
