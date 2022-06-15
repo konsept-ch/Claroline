@@ -2,6 +2,7 @@
 
 namespace Claroline\OpenBadgeBundle\Manager;
 
+use Claroline\AppBundle\Manager\PlatformManager;
 use Claroline\CoreBundle\Entity\Location\Location;
 use Claroline\CoreBundle\Manager\Template\TemplateManager;
 use Claroline\OpenBadgeBundle\Entity\Assertion;
@@ -18,38 +19,47 @@ class BadgeManager
     private $templating;
     /** @var MessageBusInterface */
     private $messageBus;
+    /** @var PlatformManager */
+    private $platformManager;
 
     public function __construct(
         TemplateManager $templateManager,
         Environment $templating,
-        MessageBusInterface $messageBus
+        MessageBusInterface $messageBus,
+        PlatformManager $platformManager
     ) {
         $this->templateManager = $templateManager;
         $this->templating = $templating;
         $this->messageBus = $messageBus;
+        $this->platformManager = $platformManager;
     }
 
-    public function generateCertificate(Assertion $assertion, $basePath)
+    public function generateCertificate(Assertion $assertion)
     {
         $user = $assertion->getRecipient();
         $badge = $assertion->getBadge();
         $organization = $badge->getIssuer();
 
         /** @var Location $location */
-        $location = 0 < count($organization->getLocations()) ? $organization->getLocations()->toArray()[0] : null;
+        $location = $organization && 0 < count($organization->getLocations()) ? $organization->getLocations()->toArray()[0] : null;
 
         $placeholders = [
+            // recipient
             'first_name' => $user->getFirstName(),
             'last_name' => $user->getLastName(),
             'username' => $user->getUsername(),
+            // badge
             'badge_name' => $badge->getName(),
             'badge_description' => $badge->getDescription(),
-            'badge_image' => '<img src="'.$basePath.'/'.$badge->getImage().'" style="max-width: 100px; max-height: 50px;"/>',
+            'badge_image' => '<img src="'.$this->platformManager->getUrl().'/'.$badge->getImage().'" style="max-width: 100px; max-height: 50px;"/>',
+            'badge_image_url' => $this->platformManager->getUrl().'/'.$badge->getImage(),
             'badge_duration' => $badge->getDurationValidation(),
+            // assertion
             'assertion_id' => $assertion->getUuid(),
             'issued_on' => $assertion->getIssuedOn()->format('d-m-Y'),
-            'issuer_name' => $organization->getName(),
-            'issuer_email' => $organization->getEmail(),
+            // issuer
+            'issuer_name' => $organization ? $organization->getName() : '',
+            'issuer_email' => $organization ? $organization->getEmail() : '',
             'issuer_phone' => $location ? $location->getPhone() : null,
             'issuer_street' => $location ? $location->getAddressStreet1().' '.$location->getAddressStreet2() : null,
             'issuer_pc' => $location ? $location->getAddressPostalCode() : null,
@@ -69,6 +79,6 @@ class BadgeManager
 
     public function grantAll(BadgeClass $badge)
     {
-        $this->messageBus->dispatch(new GrantBadge($badge->getUuid()));
+        $this->messageBus->dispatch(new GrantBadge($badge->getId()));
     }
 }

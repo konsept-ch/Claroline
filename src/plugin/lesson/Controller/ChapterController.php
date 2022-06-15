@@ -3,11 +3,10 @@
 namespace Icap\LessonBundle\Controller;
 
 use Claroline\AppBundle\API\FinderProvider;
+use Claroline\AppBundle\Manager\PdfManager;
 use Claroline\AppBundle\Persistence\ObjectManager;
-use Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler;
 use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
-use Dompdf\Dompdf;
 use Icap\LessonBundle\Entity\Chapter;
 use Icap\LessonBundle\Entity\Lesson;
 use Icap\LessonBundle\Manager\ChapterManager;
@@ -24,7 +23,7 @@ use Twig\Environment;
 
 /**
  * @Route("/lesson/{lessonId}/chapters")
- * @EXT\ParamConverter("lesson", class="IcapLessonBundle:Lesson", options={"mapping": {"lessonId": "uuid"}})
+ * @EXT\ParamConverter("lesson", class="Icap\LessonBundle\Entity\Lesson", options={"mapping": {"lessonId": "uuid"}})
  *
  * @todo refactor using AbstractCrudController
  */
@@ -34,42 +33,40 @@ class ChapterController
 
     /** @var ObjectManager */
     private $om;
-    /** @var PlatformConfigurationHandler */
-    private $config;
     /** @var Environment */
     private $templating;
     /** @var FinderProvider */
     private $finder;
     /** @var ChapterManager */
     private $chapterManager;
+    /** @var ChapterSerializer */
+    private $chapterSerializer;
+    /** @var AuthorizationCheckerInterface */
+    private $authorization;
+    /** @var PdfManager */
+    private $pdfManager;
 
     /** @var ChapterRepository */
     private $chapterRepository;
 
-    /** @var ChapterSerializer */
-    private $chapterSerializer;
-
-    /** @var AuthorizationCheckerInterface */
-    private $authorization;
-
     public function __construct(
         ObjectManager $om,
-        PlatformConfigurationHandler $config,
         Environment $templating,
         FinderProvider $finder,
         ChapterSerializer $chapterSerializer,
         ChapterManager $chapterManager,
-        AuthorizationCheckerInterface $authorization
+        AuthorizationCheckerInterface $authorization,
+        PdfManager $pdfManager
     ) {
         $this->om = $om;
-        $this->config = $config;
         $this->templating = $templating;
         $this->finder = $finder;
         $this->chapterSerializer = $chapterSerializer;
         $this->chapterManager = $chapterManager;
         $this->authorization = $authorization;
+        $this->pdfManager = $pdfManager;
 
-        $this->chapterRepository = $this->om->getRepository('IcapLessonBundle:Chapter');
+        $this->chapterRepository = $this->om->getRepository(Chapter::class);
     }
 
     /**
@@ -135,7 +132,7 @@ class ChapterController
      * Create new chapter.
      *
      * @Route("/{slug}", name="apiv2_lesson_chapter_create", methods={"POST"})
-     * @EXT\ParamConverter("parent", class="IcapLessonBundle:Chapter", options={"mapping": {"slug": "slug"}})
+     * @EXT\ParamConverter("parent", class="Icap\LessonBundle\Entity\Chapter", options={"mapping": {"slug": "slug"}})
      */
     public function createAction(Request $request, Lesson $lesson, Chapter $parent): JsonResponse
     {
@@ -151,7 +148,7 @@ class ChapterController
      * Update existing chapter.
      *
      * @Route("/{slug}", name="apiv2_lesson_chapter_update", methods={"PUT"})
-     * @EXT\ParamConverter("chapter", class="IcapLessonBundle:Chapter", options={"mapping": {"slug": "slug"}})
+     * @EXT\ParamConverter("chapter", class="Icap\LessonBundle\Entity\Chapter", options={"mapping": {"slug": "slug"}})
      */
     public function editAction(Request $request, Lesson $lesson, Chapter $chapter): JsonResponse
     {
@@ -167,7 +164,7 @@ class ChapterController
      * Delete existing chapter.
      *
      * @Route("/{slug}", name="apiv2_lesson_chapter_delete", methods={"DELETE"})
-     * @EXT\ParamConverter("chapter", class="IcapLessonBundle:Chapter", options={"mapping": {"slug": "slug"}})
+     * @EXT\ParamConverter("chapter", class="Icap\LessonBundle\Entity\Chapter", options={"mapping": {"slug": "slug"}})
      */
     public function deleteAction(Request $request, Lesson $lesson, Chapter $chapter): JsonResponse
     {
@@ -189,7 +186,7 @@ class ChapterController
 
     /**
      * @Route("/{chapter}/pdf", name="icap_lesson_chapter_export_pdf")
-     * @EXT\ParamConverter("chapter", class="IcapLessonBundle:Chapter", options={"mapping": {"chapter": "uuid"}})
+     * @EXT\ParamConverter("chapter", class="Icap\LessonBundle\Entity\Chapter", options={"mapping": {"chapter": "uuid"}})
      */
     public function downloadPdfAction(Chapter $chapter): StreamedResponse
     {
@@ -197,22 +194,15 @@ class ChapterController
 
         $this->checkPermission('EXPORT', $lesson->getResourceNode(), [], true);
 
-        $domPdf = new Dompdf();
-        $domPdf->set_option('isHtml5ParserEnabled', true);
-        $domPdf->set_option('isRemoteEnabled', true);
-        $domPdf->set_option('tempDir', $this->config->getParameter('server.tmp_dir'));
-        $domPdf->loadHtml($this->templating->render('@IcapLesson/lesson/open.pdf.twig', [
-            '_resource' => $lesson,
-            'tree' => $this->chapterRepository->getChapterTree($chapter),
-        ]));
-
-        // Render the HTML as PDF
-        $domPdf->render();
-
         $fileName = TextNormalizer::toKey($lesson->getResourceNode()->getName().'-'.$chapter->getTitle());
 
-        return new StreamedResponse(function () use ($domPdf) {
-            echo $domPdf->output();
+        return new StreamedResponse(function () use ($lesson, $chapter) {
+            echo $this->pdfManager->fromHtml(
+                $this->templating->render('@IcapLesson/lesson/open.pdf.twig', [
+                    '_resource' => $lesson,
+                    'tree' => $this->chapterRepository->getChapterTree($chapter),
+                ])
+            );
         }, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename='.$fileName.'.pdf',

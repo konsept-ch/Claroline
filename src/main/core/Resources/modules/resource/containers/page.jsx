@@ -19,6 +19,7 @@ const ResourcePage = withRouter(
   connect(
     (state) => ({
       currentUser: securitySelectors.currentUser(state),
+      authenticated: securitySelectors.isAuthenticated(state),
       // tool params
       basePath: selectors.basePath(state),
       contextType: toolSelectors.contextType(state),
@@ -35,7 +36,7 @@ const ResourcePage = withRouter(
         dispatch(actions.setResourceLoaded(false))
       },
       dismissRestrictions() {
-        dispatch(actions.dismissRestrictions(true))
+        dispatch(actions.dismissRestrictions())
       },
       checkAccessCode(resourceNode, code, embedded = false) {
         dispatch(actions.checkAccessCode(resourceNode, code, embedded))

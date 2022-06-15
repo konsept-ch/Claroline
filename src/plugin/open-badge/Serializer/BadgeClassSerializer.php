@@ -15,8 +15,6 @@ use Claroline\CoreBundle\Entity\Template\Template;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\CoreBundle\Event\GenericDataEvent;
 use Claroline\CoreBundle\Library\Normalizer\DateNormalizer;
-use Claroline\CoreBundle\Library\Utilities\FileUtilities;
-use Claroline\CoreBundle\Manager\Organization\OrganizationManager;
 use Claroline\OpenBadgeBundle\Entity\BadgeClass;
 use Claroline\OpenBadgeBundle\Entity\Rules\Rule;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -31,10 +29,8 @@ class BadgeClassSerializer
     /** @var AuthorizationCheckerInterface */
     private $authorization;
     private $router;
-    private $fileUt;
     private $workspaceSerializer;
     private $om;
-    private $organizationManager;
     private $criteriaSerializer;
     private $imageSerializer;
     private $eventDispatcher;
@@ -45,10 +41,8 @@ class BadgeClassSerializer
 
     public function __construct(
         AuthorizationCheckerInterface $authorization,
-        FileUtilities $fileUt,
         RouterInterface $router,
         ObjectManager $om,
-        OrganizationManager $organizationManager,
         CriteriaSerializer $criteriaSerializer,
         EventDispatcherInterface $eventDispatcher,
         WorkspaceSerializer $workspaceSerializer,
@@ -60,10 +54,8 @@ class BadgeClassSerializer
     ) {
         $this->authorization = $authorization;
         $this->router = $router;
-        $this->fileUt = $fileUt;
         $this->workspaceSerializer = $workspaceSerializer;
         $this->om = $om;
-        $this->organizationManager = $organizationManager;
         $this->criteriaSerializer = $criteriaSerializer;
         $this->imageSerializer = $imageSerializer;
         $this->eventDispatcher = $eventDispatcher;
@@ -106,7 +98,7 @@ class BadgeClassSerializer
             'criteria' => $badge->getCriteria(),
             'duration' => $badge->getDurationValidation(),
             'image' => $image ? $this->publicFileSerializer->serialize($image) : null,
-            'issuer' => $this->organizationSerializer->serialize($badge->getIssuer() ? $badge->getIssuer() : $this->organizationManager->getDefault(true)),
+            'issuer' => $badge->getIssuer() ? $this->organizationSerializer->serialize($badge->getIssuer(), [APIOptions::SERIALIZE_MINIMAL]) : null,
             'tags' => $this->serializeTags($badge),
         ];
 
@@ -122,6 +114,7 @@ class BadgeClassSerializer
             }
         } else {
             $data['workspace'] = $badge->getWorkspace() ? $this->workspaceSerializer->serialize($badge->getWorkspace(), [APIOptions::SERIALIZE_MINIMAL]) : null;
+            $data['permissions'] = $this->serializePermissions($badge);
             $data['meta'] = [
                 'created' => DateNormalizer::normalize($badge->getCreated()),
                 'updated' => DateNormalizer::normalize($badge->getUpdated()),
@@ -129,11 +122,11 @@ class BadgeClassSerializer
             ];
 
             if (!in_array(APIOptions::SERIALIZE_MINIMAL, $options)) {
+                $data['notifyGrant'] = $badge->getNotifyGrant();
                 $data['issuingPeer'] = $badge->hasIssuingPeer();
                 $data['restrictions'] = [
                     'hideRecipients' => $badge->getHideRecipients(),
                 ];
-                $data['permissions'] = $this->serializePermissions($badge);
                 $data['rules'] = array_map(function (Rule $rule) {
                     return $this->ruleSerializer->serialize($rule);
                 }, $badge->getRules()->toArray());
@@ -155,6 +148,7 @@ class BadgeClassSerializer
         $this->sipe('criteria', 'setCriteria', $data, $badge);
         $this->sipe('duration', 'setDurationValidation', $data, $badge);
         $this->sipe('issuingPeer', 'setIssuingPeer', $data, $badge);
+        $this->sipe('notifyGrant', 'setNotifyGrant', $data, $badge);
         $this->sipe('meta.enabled', 'setEnabled', $data, $badge);
         $this->sipe('restrictions.hideRecipients', 'setHideRecipients', $data, $badge);
 
@@ -164,20 +158,18 @@ class BadgeClassSerializer
             $badge->setIssuer($organization);
         }
 
-        if (isset($data['image']) && isset($data['image']['id'])) {
-            /** @var PublicFile $thumbnail */
-            $thumbnail = $this->om->getObject($data['image'], PublicFile::class);
-            $badge->setImage($data['image']['url']);
-            $this->fileUt->createFileUse(
-                $thumbnail,
-                BadgeClass::class,
-                $badge->getUuid()
-            );
+        if (array_key_exists('image', $data)) {
+            $imageUrl = null;
+            if (!empty($data['image']) && !empty($data['image']['url'])) {
+                $imageUrl = $data['image']['url'];
+            }
+
+            $badge->setImage($imageUrl);
         }
 
-        if (isset($data['workspace'])) {
+        if (array_key_exists('workspace', $data)) {
             $workspace = null;
-            if (isset($data['workspace']['id'])) {
+            if (!empty($data['workspace']) && !empty($data['workspace']['id'])) {
                 /** @var Workspace $workspace */
                 $workspace = $this->om->getRepository(Workspace::class)->findOneBy(['uuid' => $data['workspace']['id']]);
             }
@@ -185,9 +177,9 @@ class BadgeClassSerializer
             $badge->setWorkspace($workspace);
         }
 
-        if (isset($data['template'])) {
+        if (array_key_exists('template', $data)) {
             $template = null;
-            if (isset($data['template']['id'])) {
+            if (!empty($data['template']) && !empty($data['template']['id'])) {
                 /** @var Template $template */
                 $template = $this->om->getRepository(Template::class)->findOneBy(['uuid' => $data['template']['id']]);
             }

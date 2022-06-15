@@ -11,16 +11,15 @@
 
 namespace Claroline\AnnouncementBundle;
 
-use Claroline\AnnouncementBundle\Installation\AdditionalInstaller;
 use Claroline\KernelBundle\Bundle\DistributionPluginBundle;
+use Claroline\SchedulerBundle\ClarolineSchedulerBundle;
 
-/**
- * Bundle class.
- */
 class ClarolineAnnouncementBundle extends DistributionPluginBundle
 {
-    public function getAdditionalInstaller()
+    public function getRequiredPlugins()
     {
-        return new AdditionalInstaller();
+        return [
+            ClarolineSchedulerBundle::class,
+        ];
     }
 }

@@ -12,6 +12,7 @@
 namespace Claroline\CoreBundle\Manager;
 
 use Claroline\AppBundle\Persistence\ObjectManager;
+use Claroline\CoreBundle\Entity\Widget\Widget;
 use Claroline\CoreBundle\Repository\Widget\WidgetRepository;
 
 class WidgetManager
@@ -25,16 +26,13 @@ class WidgetManager
     /** @var PluginManager */
     private $pluginManager;
 
-    /**
-     * WidgetManager constructor.
-     */
     public function __construct(
         ObjectManager $om,
         PluginManager $pluginManager
     ) {
         $this->om = $om;
         $this->pluginManager = $pluginManager;
-        $this->widgetRepository = $om->getRepository('ClarolineCoreBundle:Widget\Widget');
+        $this->widgetRepository = $om->getRepository(Widget::class);
     }
 
     /**
@@ -46,7 +44,7 @@ class WidgetManager
      */
     public function getAvailable($context = null)
     {
-        $enabledPlugins = $this->pluginManager->getEnabled(true);
+        $enabledPlugins = $this->pluginManager->getEnabled();
 
         return $this->widgetRepository->findAllAvailable($enabledPlugins, $context);
     }

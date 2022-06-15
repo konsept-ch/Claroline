@@ -16,7 +16,9 @@ use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\Entity\Resource\Directory;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
+use Claroline\CoreBundle\Entity\Resource\ResourceType;
 use Claroline\CoreBundle\Entity\Role;
+use Claroline\CoreBundle\Entity\Tool\OrderedTool;
 use Claroline\CoreBundle\Entity\Tool\Tool;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
@@ -55,9 +57,9 @@ class TeamManager
         $this->roleManager = $roleManager;
         $this->toolRightsManager = $toolRightsManager;
 
-        $this->resourceNodeRepo = $om->getRepository('Claroline\CoreBundle\Entity\Resource\ResourceNode');
-        $this->teamRepo = $om->getRepository('ClarolineTeamBundle:Team');
-        $this->workspaceTeamParamsRepo = $om->getRepository('ClarolineTeamBundle:WorkspaceTeamParameters');
+        $this->resourceNodeRepo = $om->getRepository(ResourceNode::class);
+        $this->teamRepo = $om->getRepository(Team::class);
+        $this->workspaceTeamParamsRepo = $om->getRepository(WorkspaceTeamParameters::class);
     }
 
     /**
@@ -133,10 +135,10 @@ class TeamManager
                 $defaultResource,
                 $creatableResources
             );
-            $team->setDirectory($directory);
+            $team->setDirectory($directory->getResourceNode());
             $this->om->persist($team);
 
-            $node = $team->getDirectory()->getResourceNode();
+            $node = $team->getDirectory();
             $node->setIndex(1);
             $this->om->persist($node);
             $teams[] = $team;
@@ -194,7 +196,7 @@ class TeamManager
         $this->rightsManager->update(['open' => true], $role, $root);
         $tool = $this->om->getRepository(Tool::class)->findOneBy(['name' => 'resources']);
         $orderedTool = $this->om
-            ->getRepository('ClarolineCoreBundle:Tool\OrderedTool')
+            ->getRepository(OrderedTool::class)
             ->findOneBy(['workspace' => $workspace, 'tool' => $tool]);
 
         if (!empty($orderedTool)) {
@@ -286,7 +288,7 @@ class TeamManager
     public function deleteTeamDirectory(Team $team)
     {
         if ($team->isDirDeletable() && !empty($team->getDirectory())) {
-            $this->crud->delete($team->getDirectory()->getResourceNode());
+            $this->crud->delete($team->getDirectory());
         }
     }
 
@@ -308,9 +310,8 @@ class TeamManager
         $workspace = $team->getWorkspace();
         $teamRole = $team->getRole();
         $teamManagerRole = $team->getTeamManagerRole();
-        $resourceNode = !is_null($team->getDirectory()) ? $team->getDirectory()->getResourceNode() : null;
 
-        if (!is_null($resourceNode)) {
+        if (!empty($team->getDirectory())) {
             $workspaceRoles = $this->roleManager->getWorkspaceRoles($workspace);
             $rights = [];
 
@@ -323,7 +324,7 @@ class TeamManager
                     ];
                 }
             }
-            $this->applyRightsToResourceNode($resourceNode, $rights);
+            $this->applyRightsToResourceNode($team->getDirectory(), $rights);
         }
     }
 
@@ -332,9 +333,7 @@ class TeamManager
      */
     public function updateTeamDirectoryPerms(Team $team)
     {
-        $directory = $team->getDirectory();
-
-        if (!is_null($directory)) {
+        if (!is_null($team->getDirectory())) {
             $this->om->startFlushSuite();
 
             $workspace = $team->getWorkspace();
@@ -345,7 +344,7 @@ class TeamManager
             foreach ($workspaceRoles as $role) {
                 if (!in_array($role->getUuid(), [$teamRole->getUuid(), $teamManagerRole->getUuid()])) {
                     $rights = ['open' => $team->isPublic()];
-                    $this->rightsManager->update($rights, $role, $directory->getResourceNode(), true);
+                    $this->rightsManager->update($rights, $role, $team->getDirectory(), true);
                 }
             }
             $this->om->endFlushSuite();
@@ -357,19 +356,17 @@ class TeamManager
      */
     public function initializeTeamPerms(Team $team, array $roles)
     {
-        $directory = $team->getDirectory();
-
-        if (!is_null($directory)) {
+        if (!is_null($team->getDirectory())) {
             $this->om->startFlushSuite();
-            $node = $directory->getResourceNode();
+            $node = $team->getDirectory();
 
             foreach ($roles as $role) {
                 if ($role === $team->getRole()) {
                     $perms = ['open' => true, 'edit' => true, 'export' => true, 'copy' => true];
-                    $creatable = $this->om->getRepository('ClarolineCoreBundle:Resource\ResourceType')->findAll();
+                    $creatable = $this->om->getRepository(ResourceType::class)->findAll();
                 } elseif ($role === $team->getTeamManagerRole()) {
                     $perms = ['open' => true, 'edit' => true, 'export' => true, 'copy' => true, 'delete' => true, 'administrate' => true];
-                    $creatable = $this->om->getRepository('ClarolineCoreBundle:Resource\ResourceType')->findAll();
+                    $creatable = $this->om->getRepository(ResourceType::class)->findAll();
                 } elseif ($team->isPublic()) {
                     $perms = ['open' => true];
                     $creatable = [];
@@ -575,15 +572,13 @@ class TeamManager
         $teams = $this->teamRepo->findBy(['workspace' => $workspace]);
 
         foreach ($teams as $team) {
-            $directory = $team->getDirectory();
-
-            if ($team->isPublic() && !is_null($directory)) {
+            if ($team->isPublic() && !is_null($team->getDirectory())) {
                 $rights = [];
                 $rights['open'] = true;
                 $this->rightsManager->update(
                     $rights,
                     $role,
-                    $directory->getResourceNode(),
+                    $team->getDirectory(),
                     true
                 );
             }

@@ -3,6 +3,7 @@
 namespace Claroline\CoreBundle\API\Serializer\User;
 
 use Claroline\AppBundle\API\Options;
+use Claroline\AppBundle\API\Serializer\SerializerInterface;
 use Claroline\AppBundle\API\Serializer\SerializerTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\API\Serializer\Workspace\WorkspaceSerializer;
@@ -10,6 +11,7 @@ use Claroline\CoreBundle\Entity\Role;
 use Claroline\CoreBundle\Entity\Tool\AdminTool;
 use Claroline\CoreBundle\Entity\Tool\OrderedTool;
 use Claroline\CoreBundle\Entity\Tool\Tool;
+use Claroline\CoreBundle\Entity\Tool\ToolRights;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\CoreBundle\Manager\Tool\ToolMaskDecoderManager;
@@ -59,9 +61,9 @@ class RoleSerializer
         $this->workspaceSerializer = $workspaceSerializer;
         $this->userSerializer = $userSerializer;
 
-        $this->orderedToolRepo = $this->om->getRepository('ClarolineCoreBundle:Tool\OrderedTool');
-        $this->toolRightsRepo = $this->om->getRepository('ClarolineCoreBundle:Tool\ToolRights');
-        $this->userRepo = $this->om->getRepository('ClarolineCoreBundle:User');
+        $this->orderedToolRepo = $this->om->getRepository(OrderedTool::class);
+        $this->toolRightsRepo = $this->om->getRepository(ToolRights::class);
+        $this->userRepo = $this->om->getRepository(User::class);
     }
 
     public function getName(): string
@@ -88,16 +90,16 @@ class RoleSerializer
             'translationKey' => $role->getTranslationKey(),
         ];
 
-        if (!in_array(Options::SERIALIZE_MINIMAL, $options)) {
+        if (!in_array(SerializerInterface::SERIALIZE_MINIMAL, $options) && !in_array(SerializerInterface::SERIALIZE_TRANSFER, $options)) {
             $serialized['meta'] = $this->serializeMeta($role);
 
             if ($role->getWorkspace()) {
-                $serialized['workspace'] = $this->workspaceSerializer->serialize($role->getWorkspace(), [Options::SERIALIZE_MINIMAL]);
+                $serialized['workspace'] = $this->workspaceSerializer->serialize($role->getWorkspace(), [SerializerInterface::SERIALIZE_MINIMAL]);
             }
 
             if (Role::USER_ROLE === $role->getType()) {
                 if (count($role->getUsers()->toArray()) > 0) {
-                    $serialized['user'] = $this->userSerializer->serialize($role->getUsers()->toArray()[0], [Options::SERIALIZE_MINIMAL]);
+                    $serialized['user'] = $this->userSerializer->serialize($role->getUsers()->toArray()[0], [SerializerInterface::SERIALIZE_MINIMAL]);
                 } else {
                     //if we removed some user roles... for some reason.
                     $serialized['user'] = null;
@@ -123,7 +125,7 @@ class RoleSerializer
                 $adminTools = [];
 
                 /** @var AdminTool $adminTool */
-                foreach ($this->om->getRepository('ClarolineCoreBundle:Tool\AdminTool')->findAll() as $adminTool) {
+                foreach ($this->om->getRepository(AdminTool::class)->findAll() as $adminTool) {
                     $adminTools[$adminTool->getName()] = $role->getAdminTools()->contains($adminTool);
                 }
 
@@ -173,8 +175,14 @@ class RoleSerializer
         return $tools;
     }
 
-    public function deserialize(array $data, Role $role): Role
+    public function deserialize(array $data, Role $role, ?array $options = []): Role
     {
+        if (!in_array(SerializerInterface::REFRESH_UUID, $options)) {
+            $this->sipe('id', 'setUuid', $data, $role);
+        } else {
+            $role->refreshUuid();
+        }
+
         if (!$role->isReadOnly()) {
             $this->sipe('name', 'setName', $data, $role);
             $this->sipe('type', 'setType', $data, $role);
@@ -185,7 +193,7 @@ class RoleSerializer
 
         // we should test role type before trying to set the workspace
         if (!empty($data['workspace']) && !empty($data['workspace']['id'])) {
-            $workspace = $this->om->getRepository('ClarolineCoreBundle:Workspace\Workspace')
+            $workspace = $this->om->getRepository(Workspace::class)
                 ->findOneBy(['uuid' => $data['workspace']['id']]);
             if ($workspace) {
                 $role->setWorkspace($workspace);
@@ -201,8 +209,9 @@ class RoleSerializer
             }
         }
 
+        // Tools should not be managed here
         if (isset($data['adminTools'])) {
-            $adminTools = $this->om->getRepository('ClarolineCoreBundle:Tool\AdminTool')->findAll();
+            $adminTools = $this->om->getRepository(AdminTool::class)->findAll();
 
             /** @var AdminTool $adminTool */
             foreach ($adminTools as $adminTool) {

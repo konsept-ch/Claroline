@@ -1,4 +1,5 @@
 {
+  "badge": "Badge",
   "all_badges": "Tous les badges",
   "allowed_issuers": "Utilisateurs pouvant attribuer le badge",
   "required_validation": "Validation requise par un administrateur",
@@ -34,7 +35,7 @@
   "evidence_narrative_workspace_score_above": "L'espace d'activités a été complété le %date%",
   "evidence_narrative_workspace_completed_above": "L'espace d'activités a été complété le %date%",
   "evidence_narrative_add_group": "Groupe assigné par %doer% le %date%",
-  "evidence_narrative_add_role": "Role assigné par %doer% le %date%",
+  "evidence_narrative_add_role": "Rôle assigné par %doer% le %date%",
   "resource_status": "Statut de la ressource est ...",
   "resource_score_above": "Score de la ressource supérieur à ...",
   "resource_completed_above": "Resource effectuée à ... %",
@@ -42,7 +43,7 @@
   "workspace_score_above": "Score de l'espace d'activités supérieur à ..",
   "workspace_completed_above": "Espace d'activités effectué à ... %",
   "in_group": "Fait parti du groupe",
-  "in_role": "Possède le role",
+  "in_role": "Possède le rôle",
   "profile_completed": "Profile complété",
   "granted_at": "obtenu le %date%",
   "granted_date": "Date d'obtention",
@@ -53,5 +54,6 @@
   "hide_recipients": "Cacher la liste des utilisateurs ayant obtenu le badge",
   "score_above_help": "Cette valeur représente le pourcentage du score total à obtenir.",
   "addBadge": "Le badge badgeName a été ajouté à l'utilisateur userName",
-  "removeBadge": "Le badge badgeName a été retiré de l'utilisateur userName"
+  "removeBadge": "Le badge badgeName a été retiré de l'utilisateur userName",
+  "notify_grant": "Notifier les utilisateurs lors de l'attribution du badge"
 }

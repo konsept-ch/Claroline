@@ -256,7 +256,6 @@ class Persister
         $user->setFirstName($username);
         $user->setLastName($username);
         $user->setUsername($username);
-        $user->setPublicUrl($username);
         $user->setPlainPassword($username);
         $user->setEmail($username.'@email.com');
         $user->setIsMailValidated(true);
@@ -292,7 +291,7 @@ class Persister
      */
     public function role($name)
     {
-        $role = $this->om->getRepository('ClarolineCoreBundle:Role')->findOneBy([
+        $role = $this->om->getRepository(Role::class)->findOneBy([
             'name' => $name,
         ]);
 

@@ -78,7 +78,7 @@ class Subject
      *     targetEntity="Claroline\CoreBundle\Entity\User",
      *     cascade={"persist"}
      * )
-     * @ORM\JoinColumn(name="user_id")
+     * @ORM\JoinColumn(name="user_id", onDelete="SET NULL")
      *
      * @var User
      */
@@ -285,7 +285,7 @@ class Subject
         $this->viewCount = $viewCount;
     }
 
-    public function setPoster(PublicFile $file)
+    public function setPoster(?PublicFile $file = null)
     {
         $this->poster = $file;
     }

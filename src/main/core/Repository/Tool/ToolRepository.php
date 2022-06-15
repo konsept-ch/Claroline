@@ -25,9 +25,9 @@ class ToolRepository extends ServiceEntityRepository
     /**
      * ToolRepository constructor.
      */
-    public function __construct(ManagerRegistry $registry, PluginManager $manager)
+    public function __construct(ManagerRegistry $registry, PluginManager $pluginManager)
     {
-        $this->bundles = $manager->getEnabled(true);
+        $this->bundles = $pluginManager->getEnabled();
 
         parent::__construct($registry, Tool::class);
     }
@@ -45,8 +45,9 @@ class ToolRepository extends ServiceEntityRepository
             LEFT JOIN tool.plugin p
             WHERE tool.isDisplayableInWorkspace = true
             AND tool NOT IN (
-                SELECT tool_2 FROM Claroline\CoreBundle\Entity\Tool\Tool tool_2
-                JOIN tool_2.orderedTools ot
+                SELECT tool_2 
+                FROM Claroline\CoreBundle\Entity\Tool\OrderedTool ot
+                JOIN ot.tool tool_2
                 JOIN ot.workspace ws
                 WHERE ws.id = :workspaceId
                 AND tool.isDisplayableInWorkspace = true
@@ -72,8 +73,8 @@ class ToolRepository extends ServiceEntityRepository
     {
         $query = $this->_em->createQuery('
             SELECT count(tool)
-            FROM Claroline\CoreBundle\Entity\Tool\Tool tool
-            JOIN tool.orderedTools ot
+            FROM Claroline\CoreBundle\Entity\Tool\OrderedTool ot
+            JOIN ot.tool tool
             JOIN ot.workspace ws
             LEFT JOIN tool.plugin p
             WHERE ws.id = :workspaceId

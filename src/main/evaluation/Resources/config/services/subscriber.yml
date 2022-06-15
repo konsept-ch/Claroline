@@ -1,6 +1,8 @@
 services:
     Claroline\EvaluationBundle\Subscriber\ResourceEvaluationSubscriber:
         arguments:
+            - '@messenger.default_bus'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\EvaluationBundle\Manager\ResourceEvaluationManager'
         tags:
             - { name: kernel.event_subscriber }
@@ -8,13 +10,38 @@ services:
     Claroline\EvaluationBundle\Subscriber\WorkspaceEvaluationSubscriber:
         arguments:
             - '@security.token_storage'
+            - '@messenger.default_bus'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\EvaluationBundle\Manager\WorkspaceEvaluationManager'
         tags:
             - { name: kernel.event_subscriber }
 
-    Claroline\EvaluationBundle\Subscriber\WorkspaceRequirementsSubscriber:
+    # Tools
+    Claroline\EvaluationBundle\Subscriber\Tool\EvaluationToolSubscriber:
+        tags:
+            - { name: kernel.event_subscriber }
+
+    # Data sources
+    Claroline\EvaluationBundle\Subscriber\DataSource\ResourceAttemptSource:
         arguments:
-            - '@message_bus'
-            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@security.token_storage'
+            - '@security.authorization_checker'
+            - '@Claroline\AppBundle\API\FinderProvider'
+        tags:
+            - { name: kernel.event_subscriber }
+
+    Claroline\EvaluationBundle\Subscriber\DataSource\ResourceEvaluationSource:
+        arguments:
+            - '@security.token_storage'
+            - '@security.authorization_checker'
+            - '@Claroline\AppBundle\API\FinderProvider'
+        tags:
+            - { name: kernel.event_subscriber }
+
+    Claroline\EvaluationBundle\Subscriber\DataSource\WorkspaceEvaluationSource:
+        arguments:
+            - '@security.token_storage'
+            - '@security.authorization_checker'
+            - '@Claroline\AppBundle\API\FinderProvider'
         tags:
             - { name: kernel.event_subscriber }

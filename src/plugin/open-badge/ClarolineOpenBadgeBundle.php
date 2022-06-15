@@ -12,17 +12,7 @@
 namespace Claroline\OpenBadgeBundle;
 
 use Claroline\KernelBundle\Bundle\DistributionPluginBundle;
-use Claroline\OpenBadgeBundle\Installation\AdditionalInstaller;
 
 class ClarolineOpenBadgeBundle extends DistributionPluginBundle
 {
-    public function getAdditionalInstaller()
-    {
-        return new AdditionalInstaller();
-    }
-
-    public function getPostInstallFixturesDirectory(string $environment): string
-    {
-        return 'DataFixtures/PostInstall';
-    }
 }

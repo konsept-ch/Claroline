@@ -1,37 +1,55 @@
-import React from 'react'
+import React, {Component} from 'react'
 import {PropTypes as T} from 'prop-types'
 import omit from 'lodash/omit'
 
 import BaseModal from 'react-bootstrap/lib/Modal'
 
-import {LoginForm} from '#/main/app/security/login/containers/form'
+import {LoginMain} from '#/main/app/security/login/containers/main'
 
-const LoginModal = props =>
-  <BaseModal
-    {...omit(props, 'fadeModal', 'hideModal', 'onLogin', 'onAbort')}
-    autoFocus={true}
-    enforceFocus={false}
-    dialogClassName="login-modal"
-    bsSize="lg"
-    onHide={props.fadeModal}
-    onExited={() => {
-      if (props.onAbort) {
-        props.onAbort()
-      }
+class LoginModal extends Component {
+  constructor(props) {
+    super(props)
 
-      props.hideModal()
-    }}
-  >
-    <LoginForm
-      onLogin={(response) => {
-        if (props.onLogin) {
-          props.onLogin(response)
-        }
+    this.state = {
+      aborted: true
+    }
+  }
 
-        props.fadeModal()
-      }}
-    />
-  </BaseModal>
+  render() {
+    return (
+      <BaseModal
+        {...omit(this.props, 'fadeModal', 'hideModal', 'onLogin', 'onAbort')}
+        autoFocus={true}
+        enforceFocus={false}
+        dialogClassName="login-modal"
+        bsSize="lg"
+        onHide={this.props.fadeModal}
+        onExited={() => {
+          if (this.props.onAbort && this.state.aborted) {
+            this.props.onAbort()
+          }
+
+          this.props.hideModal()
+        }}
+      >
+        <LoginMain
+          onLogin={(response) => {
+            this.setState({
+              aborted: false
+            }, () => {
+              if (this.props.onLogin) {
+                this.props.onLogin(response)
+              }
+
+              this.props.fadeModal()
+            })
+          }}
+        />
+      </BaseModal>
+    )
+  }
+}
+
 
 LoginModal.propTypes = {
   onLogin: T.func,

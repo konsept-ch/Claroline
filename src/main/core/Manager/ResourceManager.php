@@ -25,10 +25,7 @@ use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\CoreBundle\Event\CatalogEvents\ResourceEvents;
 use Claroline\CoreBundle\Event\Resource\DownloadResourceEvent;
 use Claroline\CoreBundle\Event\Resource\LoadResourceEvent;
-use Claroline\CoreBundle\Exception\ExportResourceException;
-use Claroline\CoreBundle\Exception\ResourceMoveException;
 use Claroline\CoreBundle\Exception\ResourceNotFoundException;
-use Claroline\CoreBundle\Exception\ResourceTypeNotFoundException;
 use Claroline\CoreBundle\Library\Utilities\ClaroUtilities;
 use Claroline\CoreBundle\Manager\Resource\RightsManager;
 use Claroline\CoreBundle\Repository\Resource\ResourceNodeRepository;
@@ -93,11 +90,6 @@ class ResourceManager implements LoggerAwareInterface
         $this->roleRepo = $om->getRepository(Role::class);
     }
 
-    public function getLogger()
-    {
-        return $this->logger;
-    }
-
     /**
      * Creates a resource.
      *
@@ -112,7 +104,7 @@ class ResourceManager implements LoggerAwareInterface
     public function create(
         AbstractResource $resource,
         ResourceType $resourceType,
-        User $creator,
+        User $creator = null,
         Workspace $workspace = null,
         ResourceNode $parent = null,
         array $rights = [],
@@ -129,7 +121,12 @@ class ResourceManager implements LoggerAwareInterface
             $resource->getMimeType();
         $node->setMimeType($mimeType);
         $node->setName($resource->getName());
-        $node->setCreator($creator);
+
+        if (!empty($creator)) {
+            $node->setCreator($creator);
+        } else {
+            $node->setCreator($this->security->getUser());
+        }
         if (!$workspace && $parent && $parent->getWorkspace()) {
             $workspace = $parent->getWorkspace();
         }
@@ -191,23 +188,16 @@ class ResourceManager implements LoggerAwareInterface
         }
     }
 
-    /**
-     * Moves a resource.
-     *
-     * @throws ResourceMoveException
-     *
-     * @return ResourceNode
-     */
-    public function move(ResourceNode $child, ResourceNode $parent)
+    public function move(ResourceNode $child, ResourceNode $parent): ResourceNode
     {
         if ($parent === $child) {
-            throw new ResourceMoveException('You cannot move a directory into itself');
+            throw new \RuntimeException('You cannot move a directory into itself');
         }
 
         $descendants = $this->resourceNodeRepo->findDescendants($child);
         foreach ($descendants as $descendant) {
             if ($parent === $descendant) {
-                throw new ResourceMoveException('You cannot move a directory into its descendants');
+                throw new \RuntimeException('You cannot move a directory into its descendants');
             }
         }
 
@@ -230,17 +220,13 @@ class ResourceManager implements LoggerAwareInterface
      * Returns an archive with the required content.
      *
      * @param ResourceNode[] $elements - the nodes being exported
-     *
-     * @throws ExportResourceException
-     *
-     * @return array
      */
-    public function download(array $elements, $forceArchive = false)
+    public function download(array $elements, ?bool $forceArchive = false): array
     {
         $data = [];
 
         if (0 === count($elements)) {
-            throw new ExportResourceException('No resources were selected.');
+            throw new \RuntimeException('No resources were selected.');
         }
 
         $pathArch = $this->tempManager->generate();
@@ -262,7 +248,10 @@ class ResourceManager implements LoggerAwareInterface
             $mimeTypeGuesser = new MimeTypes();
 
             if (!$hasExtension) {
-                $extension = $mimeTypeGuesser->getExtensions($nodes[0]->getMimeType())[0];
+                $guessedExtension = $mimeTypeGuesser->getExtensions($nodes[0]->getMimeType());
+                if (!empty($guessedExtension)) {
+                    $extension = $guessedExtension[0];
+                }
             }
 
             $data['name'] = $hasExtension ?
@@ -584,8 +573,6 @@ class ResourceManager implements LoggerAwareInterface
      * Expects an array of types array(array('name' => 'type'),...).
      *
      * @return array
-     *
-     * @throws ResourceTypeNotFoundException
      */
     private function checkResourceTypes(array $resourceTypes)
     {
@@ -605,7 +592,7 @@ class ResourceManager implements LoggerAwareInterface
                 return true;
             });
 
-            throw new ResourceTypeNotFoundException(sprintf('The resource type(s) %s were not found.', implode(', ', $unknownTypes)));
+            throw new \RuntimeException(sprintf('The resource type(s) %s were not found.', implode(', ', $unknownTypes)));
         }
 
         return $validTypes;

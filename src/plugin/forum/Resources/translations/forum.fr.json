@@ -1,6 +1,5 @@
 {
     "activate_global_notifications": "Activer les notifications par email pour ce forum",
-    "add_comment": "Commenter",
     "answer_message": "Réponse",
     "all_message_moderated": "Modérer tous les messages",
     "blocked_messages": "Messages modérés",
@@ -60,7 +59,6 @@
     "post_the_subject": "Poster le sujet",
     "no": "Non",
     "overview_message": "Message d'accueil",
-    "participating_users": "Utilisateurs participants",
     "please_connect_to_answer": "Il est nécessaire de se connecter pour participer au forum.",
     "posted_by": "Posté par %author% le %date%.",
     "posts": "Messages",

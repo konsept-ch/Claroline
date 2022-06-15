@@ -2,12 +2,15 @@
 
 namespace Claroline\CoreBundle\API\Serializer\Resource\Types;
 
+use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\Serializer\SerializerTrait;
 use Claroline\CoreBundle\Entity\Resource\File;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
 use Claroline\CoreBundle\Event\GenericDataEvent;
 use Claroline\CoreBundle\Event\Resource\File\LoadFileEvent;
+use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Mime\MimeTypes;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 
@@ -23,14 +26,9 @@ class FileSerializer
     /** @var EventDispatcherInterface */
     protected $eventDispatcher;
 
-    /**
-     * ResourceNodeManager constructor.
-     *
-     * @param string $filesDir
-     */
     public function __construct(
         RouterInterface $router,
-        $filesDir,
+        string $filesDir,
         EventDispatcherInterface $eventDispatcher
     ) {
         $this->router = $router;
@@ -50,13 +48,25 @@ class FileSerializer
      *
      * @return array - the serialized representation of the file
      */
-    public function serialize(File $file)
+    public function serialize(File $file): array
     {
-        $options = [
-            'id' => $file->getId(),
+        $ext = pathinfo($file->getHashName(), PATHINFO_EXTENSION);
+        if (empty($ext)) {
+            $mimeTypeGuesser = new MimeTypes();
+            $guessedExtension = $mimeTypeGuesser->getExtensions($file->getResourceNode()->getMimeType());
+            if (!empty($guessedExtension)) {
+                $ext = $guessedExtension[0];
+            }
+        }
+
+        $fileName = TextNormalizer::toKey(str_replace('.'.$ext, '', $file->getResourceNode()->getName())).'.'.$ext;
+
+        $serialized = [
+            'id' => $file->getUuid(),
             'size' => $file->getSize(),
             'opening' => $file->getOpening(),
             'commentsActivated' => $file->getResourceNode()->isCommentsActivated(),
+            'name' => $fileName, // the name of the file which will be used for file download
             'hashName' => $file->getHashName(),
 
             // We generate URL here because the stream API endpoint uses ResourceNode ID,
@@ -79,11 +89,17 @@ class FileSerializer
             $additionalFileData = $fallBackEvent->getData();
         }
 
-        return array_merge($additionalFileData, $options);
+        return array_merge($additionalFileData, $serialized);
     }
 
-    public function deserialize($data, File $file, array $options = [])
+    public function deserialize($data, File $file, array $options = []): File
     {
+        if (!in_array(Options::REFRESH_UUID, $options)) {
+            $this->sipe('id', 'setUuid', $data, $file);
+        } else {
+            $file->refreshUuid();
+        }
+
         $this->sipe('size', 'setSize', $data, $file);
         $this->sipe('hashName', 'setHashName', $data, $file);
         $this->sipe('opening', 'setOpening', $data, $file);
@@ -99,9 +115,11 @@ class FileSerializer
             ]);
             $this->eventDispatcher->dispatch($dataEvent, 'resource.file.deserialize');
         }
+
+        return $file;
     }
 
-    private function generateEventName(ResourceNode $node, $event)
+    private function generateEventName(ResourceNode $node, $event): string
     {
         $mimeType = $node->getMimeType();
         $mimeElements = explode('/', $mimeType);

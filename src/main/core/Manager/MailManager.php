@@ -65,20 +65,28 @@ class MailManager
     {
         $this->dispatcher->dispatch(SecurityEvents::FORGOT_PASSWORD, ForgotPasswordEvent::class, [$user]);
 
-        $this->userManager->initializePassword($user);
-        $hash = $user->getResetPasswordHash();
-        $link = $this->router->generate(
-            'claro_index',
-            [],
-            UrlGeneratorInterface::ABSOLUTE_URL
-        )."#/newpassword/{$hash}";
+        $locale = $this->localeManager->getLocale($user);
         $placeholders = [
             'first_name' => $user->getFirstName(),
             'last_name' => $user->getLastName(),
             'username' => $user->getUsername(),
-            'password_reset_link' => $link,
         ];
-        $locale = $this->localeManager->getLocale($user);
+
+        if (!$user->isEnabled()) {
+            $subject = $this->templateManager->getTemplate('user_disabled', $placeholders, $locale, 'title');
+            $body = $this->templateManager->getTemplate('user_disabled', $placeholders, $locale);
+
+            return $this->send($subject, $body, [$user], null, [], true);
+        }
+
+        $this->userManager->initializePassword($user);
+
+        $placeholders['password_reset_link'] = $this->router->generate(
+            'claro_index',
+            [],
+            UrlGeneratorInterface::ABSOLUTE_URL
+        )."#/newpassword/{$user->getResetPasswordHash()}";
+
         $subject = $this->templateManager->getTemplate('forgotten_password', $placeholders, $locale, 'title');
         $body = $this->templateManager->getTemplate('forgotten_password', $placeholders, $locale);
 
@@ -142,8 +150,8 @@ class MailManager
             'username' => $user->getUsername(),
             'validation_mail' => $url,
         ];
-        $subject = $this->templateManager->getTemplate('claro_mail_validation', $placeholders, $locale, 'title');
-        $body = $this->templateManager->getTemplate('claro_mail_validation', $placeholders, $locale);
+        $subject = $this->templateManager->getTemplate('user_email_validation', $placeholders, $locale, 'title');
+        $body = $this->templateManager->getTemplate('user_email_validation', $placeholders, $locale);
 
         $this->send($subject, $body, [$user], null, [], true);
     }
@@ -166,8 +174,8 @@ class MailManager
             'password' => $user->getPlainPassword(),
             'validation_mail' => $url,
         ];
-        $subject = $this->templateManager->getTemplate('claro_mail_registration', $placeholders, $locale, 'title');
-        $body = $this->templateManager->getTemplate('claro_mail_registration', $placeholders, $locale);
+        $subject = $this->templateManager->getTemplate('user_registration', $placeholders, $locale, 'title');
+        $body = $this->templateManager->getTemplate('user_registration', $placeholders, $locale);
 
         return $this->send($subject, $body, [$user], null, [], true);
     }
@@ -189,8 +197,7 @@ class MailManager
                 $locale = $this->localeManager->getDefault();
             }
 
-            $body = $this->templateManager->getTemplate('claro_mail_layout', ['content' => $body], $locale);
-            $body = str_replace('%platform_name%', $this->config->getParameter('display.name'), $body);
+            $body = $this->templateManager->getTemplate('email_layout', ['content' => $body], $locale);
 
             if ($from) {
                 $body = str_replace('%first_name%', $from->getFirstName(), $body);

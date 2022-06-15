@@ -3,10 +3,14 @@ import {PropTypes as T} from 'prop-types'
 import get from 'lodash/get'
 
 import {Routes} from '#/main/app/router/components/routes'
-
 import {route} from '#/plugin/cursus/routing'
+import {hasPermission} from '#/main/app/security'
 import {Course as CourseTypes, Session as SessionTypes} from '#/plugin/cursus/prop-types'
 import {CourseDetails} from '#/plugin/cursus/course/components/details'
+import {CourseForm} from '#/plugin/cursus/course/containers/form'
+
+// should be moved inside the current module instead
+import {selectors} from '#/plugin/cursus/tools/trainings/catalog/store'
 
 const CourseMain = (props) =>
   <Routes
@@ -28,6 +32,17 @@ const CourseMain = (props) =>
             activeSessionRegistration={null}
             availableSessions={props.availableSessions}
             courseRegistration={props.courseRegistration}
+            isAuthenticated={props.isAuthenticated}
+          />
+        )
+      }, {
+        path: '/edit',
+        onEnter: () => props.openForm(props.course.slug),
+        disabled: !hasPermission('edit', props.course),
+        render: () => (
+          <CourseForm
+            path={props.path}
+            name={selectors.FORM_NAME}
           />
         )
       }, {
@@ -41,6 +56,7 @@ const CourseMain = (props) =>
             activeSessionRegistration={props.activeSessionRegistration}
             availableSessions={props.availableSessions}
             courseRegistration={props.courseRegistration}
+            isAuthenticated={props.isAuthenticated}
           />
         )
       }
@@ -49,6 +65,7 @@ const CourseMain = (props) =>
 
 CourseMain.propTypes = {
   path: T.string.isRequired,
+  isAuthenticated: T.bool.isRequired,
   course: T.shape(
     CourseTypes.propTypes
   ).isRequired,
@@ -65,7 +82,8 @@ CourseMain.propTypes = {
     // TODO : propTypes
   }),
   courseRegistration: T.shape({}),
-  openSession: T.func.isRequired
+  openSession: T.func.isRequired,
+  openForm: T.func.isRequired
 }
 
 export {

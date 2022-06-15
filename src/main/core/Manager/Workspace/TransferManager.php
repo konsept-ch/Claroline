@@ -3,128 +3,106 @@
 namespace Claroline\CoreBundle\Manager\Workspace;
 
 use Claroline\AppBundle\API\Crud;
-use Claroline\AppBundle\API\FinderProvider;
 use Claroline\AppBundle\API\Options;
+use Claroline\AppBundle\API\Serializer\SerializerInterface;
 use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\AppBundle\API\Utils\FileBag;
 use Claroline\AppBundle\Event\StrictDispatcher;
 use Claroline\AppBundle\Log\LoggableTrait;
-use Claroline\AppBundle\Manager\File\TempFileManager;
+use Claroline\AppBundle\Manager\File\ArchiveManager;
 use Claroline\AppBundle\Persistence\ObjectManager;
-use Claroline\CoreBundle\Entity\File\PublicFile;
 use Claroline\CoreBundle\Entity\Role;
+use Claroline\CoreBundle\Entity\Tool\AbstractTool;
 use Claroline\CoreBundle\Entity\Tool\OrderedTool;
+use Claroline\CoreBundle\Entity\Tool\Tool;
+use Claroline\CoreBundle\Entity\Tool\ToolRights;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
-use Claroline\CoreBundle\Event\ExportObjectEvent;
-use Claroline\CoreBundle\Library\Utilities\FileUtilities;
-use Claroline\CoreBundle\Listener\Log\LogListener;
-use Claroline\CoreBundle\Manager\Workspace\Transfer\OrderedToolTransfer;
-use Claroline\CoreBundle\Security\PermissionCheckerTrait;
+use Claroline\CoreBundle\Event\CatalogEvents\ToolEvents;
+use Claroline\CoreBundle\Event\Tool\ExportToolEvent;
+use Claroline\CoreBundle\Event\Tool\ImportToolEvent;
+use Claroline\CoreBundle\Manager\FileManager;
 use Psr\Log\LoggerAwareInterface;
 use Ramsey\Uuid\Uuid;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
-use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\HttpFoundation\File\File;
 
 class TransferManager implements LoggerAwareInterface
 {
-    use PermissionCheckerTrait;
     use LoggableTrait;
 
     /** @var ObjectManager */
     private $om;
     /** @var StrictDispatcher */
     private $dispatcher;
-    /** @var TempFileManager */
-    private $tempFileManager;
+    /** @var ArchiveManager */
+    private $archiveManager;
+    /** @var FileManager */
+    private $fileManager;
     /** @var SerializerProvider */
     private $serializer;
-    /** @var FinderProvider */
-    private $finder;
     /** @var Crud */
     private $crud;
-    /** @var TokenStorageInterface */
-    private $tokenStorage;
-    /** @var OrderedToolTransfer */
-    private $ots;
-    /** @var FileUtilities */
-    private $fileUts;
-    /** @var LogListener */
-    private $logListener;
 
-    /**
-     * TransferManager constructor.
-     */
     public function __construct(
         ObjectManager $om,
         StrictDispatcher $dispatcher,
-        TempFileManager $tempFileManager,
+        ArchiveManager $archiveManager,
+        FileManager $fileManager,
         SerializerProvider $serializer,
-        OrderedToolTransfer $ots,
-        FinderProvider $finder,
-        Crud $crud,
-        TokenStorageInterface $tokenStorage,
-        FileUtilities $fileUts,
-        LogListener $logListener,
-        AuthorizationCheckerInterface $authorization
+        Crud $crud
     ) {
         $this->om = $om;
         $this->dispatcher = $dispatcher;
-        $this->tempFileManager = $tempFileManager;
+        $this->archiveManager = $archiveManager;
+        $this->fileManager = $fileManager;
         $this->serializer = $serializer;
-        $this->finder = $finder;
         $this->crud = $crud;
-        $this->tokenStorage = $tokenStorage;
-        $this->ots = $ots;
-        $this->fileUts = $fileUts;
-        $this->logListener = $logListener;
-        $this->authorization = $authorization;
     }
 
-    /**
-     * @param array $data - the serialized data of the object to create
-     *
-     * @return object
-     */
-    public function create(array $data, Workspace $workspace)
+    public function import(string $archivePath, ?Workspace $workspace = null): Workspace
     {
-        $options = [Options::REFRESH_UUID];
-        // gets entity from raw data.
-        $workspace = $this->deserialize($data, $workspace, $options);
-        // creates the entity if allowed
-        $this->checkPermission('CREATE', $workspace, [], true);
+        $archive = new \ZipArchive();
+        $archive->open($archivePath);
 
-        if ($this->dispatch('create', 'pre', [$workspace, $options])) {
+        $json = $archive->getFromName('workspace.json');
+        $data = json_decode($json, true);
+        // todo : put it in an event
+        $data = $this->replaceResourceIds($data);
+
+        $options = [Options::NO_MODEL];
+        $fileBag = $this->archiveManager->extractFiles($archive);
+
+        $defaultRole = $data['registration']['defaultRole'];
+        unset($data['registration']['defaultRole']);
+
+        $workspace = $this->importWorkspace($data, $workspace, $fileBag, $options);
+
+        if ($this->crud->dispatch('create', 'pre', [$workspace, $options, $data])) {
             $this->om->persist($workspace);
             $this->om->flush();
 
-            $this->dispatch('create', 'post', [$workspace, $options]);
+            $roles = $this->importRoles($data, $workspace, $defaultRole);
+            $this->importTools($data, $workspace, $roles, $fileBag);
+
+            $this->crud->dispatch('create', 'post', [$workspace, $options, $data]);
         }
 
         return $workspace;
     }
 
-    public function dispatch($action, $when, array $args)
+    public function export(Workspace $workspace): string
     {
-        return $this->crud->dispatch($action, $when, $args);
-    }
-
-    public function export(Workspace $workspace)
-    {
+        // get data
         $fileBag = new FileBag();
-        $data = $this->serialize($workspace);
-        $data = $this->exportFiles($data, $fileBag, $workspace);
-        $archive = new \ZipArchive();
-        $pathArch = $this->tempFileManager->generate();
-        $archive->open($pathArch, \ZipArchive::CREATE);
+        $data = $this->serialize($workspace, $fileBag);
+
+        // create archive
+        $archive = $this->archiveManager->create(null, $fileBag);
+        $archivePath = $archive->filename; // we cannot read the filename once the archive is closed
+
         $archive->addFromString('workspace.json', json_encode($data, JSON_PRETTY_PRINT));
-
-        foreach ($fileBag->all() as $archPath => $realPath) {
-            $archive->addFile($realPath, $archPath);
-        }
-
         $archive->close();
 
-        return $pathArch;
+        return $archivePath;
     }
 
     /**
@@ -134,174 +112,210 @@ class TransferManager implements LoggerAwareInterface
      *
      * @return array - the serialized representation of the workspace
      */
-    public function serialize(Workspace $workspace)
+    public function serialize(Workspace $workspace, FileBag $fileBag): array
     {
-        $serialized = $this->serializer->serialize($workspace, [Options::REFRESH_UUID]);
+        $serialized = $this->serializer->serialize($workspace, [SerializerInterface::SERIALIZE_TRANSFER]);
 
+        if (!empty($workspace->getPoster())) {
+            $fileBag->add($workspace->getUuid().'-poster', $workspace->getPoster());
+        }
+
+        if (!empty($workspace->getThumbnail())) {
+            $fileBag->add($workspace->getUuid().'-thumbnail', $workspace->getThumbnail());
+        }
+
+        $serialized['roles'] = $this->exportRoles($workspace);
+        $serialized['tools'] = $this->exportTools($workspace, $fileBag);
+
+        return $serialized;
+    }
+
+    public function deserialize(array $data, Workspace $workspace, FileBag $bag, array $options = []): Workspace
+    {
+        // todo : put it in an event
+        $data = $this->replaceResourceIds($data);
+
+        $defaultRole = $data['registration']['defaultRole'];
+        unset($data['registration']['defaultRole']);
+
+        $this->importWorkspace($data, $workspace, $bag, $options);
+        $roles = $this->importRoles($data, $workspace, $defaultRole);
+        $this->importTools($data, $workspace, $roles, $bag);
+
+        return $workspace;
+    }
+
+    private function importWorkspace(array $data, Workspace $workspace, FileBag $bag, array $options = []): Workspace
+    {
+        if ($workspace->getCode()) {
+            unset($data['code']);
+        }
+
+        if ($workspace->getName()) {
+            unset($data['name']);
+        }
+
+        $poster = $bag->get($data['id'].'-poster');
+        if ($poster && !$this->fileManager->exists($poster)) {
+            $file = $this->fileManager->createFile(new File($poster));
+            $data['poster'] = ['url' => $file->getUrl()];
+        }
+
+        $thumbnail = $bag->get($data['id'].'-thumbnail');
+        if ($thumbnail && !$this->fileManager->exists($thumbnail)) {
+            $file = $this->fileManager->createFile(new File($thumbnail));
+            $data['thumbnail'] = ['url' => $file->getUrl()];
+        }
+
+        /** @var Workspace $workspace */
+        $workspace = $this->serializer->deserialize($data, $workspace, array_merge($options, [Options::REFRESH_UUID]));
+        $this->om->persist($workspace);
+
+        return $workspace;
+    }
+
+    private function exportRoles(Workspace $workspace): array
+    {
+        return array_map(function (Role $role) {
+            return $this->serializer->serialize($role, [SerializerInterface::SERIALIZE_TRANSFER]);
+        }, $workspace->getRoles()->toArray());
+    }
+
+    private function importRoles(array $data, Workspace $workspace, array $defaultRole): array
+    {
+        $roles = [];
+
+        $this->log(sprintf('Deserializing the roles : %s', implode(', ', array_map(function ($r) { return $r['translationKey']; }, $data['roles']))));
+        foreach ($data['roles'] as $roleData) {
+            unset($roleData['name']);
+            $roleData['workspace']['id'] = $workspace->getUuid();
+            $role = new Role();
+
+            $role->setWorkspace($workspace);
+            $workspace->addRole($role);
+
+            $this->crud->create($role, $roleData, [Crud::NO_PERMISSIONS, Crud::NO_VALIDATION, Options::REFRESH_UUID, Options::FORCE_FLUSH]);
+            if ($defaultRole['translationKey'] === $role->getTranslationKey()) {
+                $workspace->setDefaultRole($role);
+            }
+
+            $roles[$roleData['id']] = $role;
+        }
+
+        $this->om->persist($workspace);
+        $this->om->flush();
+
+        return $roles;
+    }
+
+    private function exportTools(Workspace $workspace, FileBag $fileBag): array
+    {
         // we want to load the resources first
-        /** @var OrderedTool[] $ot */
-        $ot = $workspace->getOrderedTools()->toArray();
+        /** @var OrderedTool[] $orderedTools */
+        $orderedTools = $workspace->getOrderedTools()->toArray();
 
-        $idx = 0;
-
-        foreach ($ot as $key => $tool) {
+        $idx = null;
+        foreach ($orderedTools as $key => $tool) {
             if ('resources' === $tool->getTool()->getName()) {
                 $idx = $key;
             }
         }
 
-        $first = $ot[$idx];
-        unset($ot[$idx]);
-        array_unshift($ot, $first);
+        if ($idx) {
+            $first = $orderedTools[$idx];
+            unset($orderedTools[$idx]);
+            $orderedTools = array_values($orderedTools);
+            array_unshift($orderedTools, $first);
+        }
 
-        $serialized['orderedTools'] = array_map(function (OrderedTool $tool) {
-            $data = $this->ots->serialize($tool, [Options::SERIALIZE_TOOL, Options::REFRESH_UUID]);
+        return array_map(function (OrderedTool $orderedTool) use ($fileBag) {
+            // get custom tool data
+            /** @var ExportToolEvent $event */
+            $event = $this->dispatcher->dispatch(ToolEvents::getEventName(ToolEvents::EXPORT, AbstractTool::WORKSPACE, $orderedTool->getTool()->getName()), ExportToolEvent::class, [
+                $orderedTool->getTool()->getName(), AbstractTool::WORKSPACE, $orderedTool->getWorkspace(), $fileBag,
+            ]);
 
-            return $data;
-        }, $ot);
-
-        return $serialized;
+            return [
+                'name' => $orderedTool->getTool()->getName(),
+                'orderedTool' => $this->serializer->serialize($orderedTool, [SerializerInterface::SERIALIZE_TRANSFER]),
+                'rights' => array_map(function (ToolRights $rights) {
+                    return $this->serializer->serialize($rights, [SerializerInterface::SERIALIZE_TRANSFER]);
+                }, $orderedTool->getRights()->toArray()),
+                'data' => $event->getData(),
+            ];
+        }, $orderedTools);
     }
 
-    /**
-     * Deserializes Workspace data into entities.
-     *
-     * @param FileBag $bag
-     *
-     * @return Workspace
-     */
-    public function deserialize(array $data, Workspace $workspace, array $options = [], FileBag $bag = null)
+    private function importTools(array $data, Workspace $workspace, array $roles, FileBag $fileBag): array
     {
-        $this->logListener->disable();
-        $data = $this->replaceResourceIds($data);
-
-        $defaultRole = $data['registration']['defaultRole'];
-
-        unset($data['registration']['defaultRole']);
-        //we don't want new workspaces to be considered as models
-        $data['meta']['model'] = false;
-
-        /** @var Workspace $workspace */
-        $workspace = $this->serializer->deserialize($data, $workspace, $options);
-        $this->om->persist($workspace);
-
-        $this->log('Deserializing the roles...');
-        $roles = [];
-        foreach ($data['roles'] as $roleData) {
-            $roleData['workspace']['id'] = $workspace->getUuid();
-            $role = new Role();
-            $this->om->persist($role);
-
-            $role->setWorkspace($workspace);
-            $workspace->addRole($role);
-
-            $roles[] = $this->crud->create($role, $roleData, [Crud::NO_PERMISSIONS, Options::FORCE_FLUSH]);
-        }
-
-        foreach ($roles as $role) {
-            if ($defaultRole['translationKey'] === $role->getTranslationKey()) {
-                $workspace->setDefaultRole($role);
-            }
-        }
-
-        $this->om->forceFlush();
-
-        $data['root']['meta']['workspace']['id'] = $workspace->getUuid();
-
-        $this->log('Get filebag');
-
-        if (!$bag) {
-            $bag = $this->getFileBag($data);
-        }
-
-        $this->log('Pre import data update...');
-
-        foreach ($data['orderedTools'] as $orderedToolData) {
-            $this->ots->setLogger($this->logger);
-            $data = $this->ots->dispatchPreEvent($data, $orderedToolData);
-        }
-
         $this->log('Deserializing the tools...');
 
-        foreach ($data['orderedTools'] as $orderedToolData) {
-            $orderedTool = new OrderedTool();
-            $this->ots->setLogger($this->logger);
-            $this->ots->deserialize($orderedToolData, $orderedTool, [], $workspace, $bag);
-        }
+        $createdObjects = $roles; // keep a map of old ID => new object for all imported objects
+        foreach ($data['tools'] as $orderedToolData) {
+            $tool = $this->om->getRepository(Tool::class)->findOneBy(['name' => $orderedToolData['name']]);
+            if ($tool) {
+                $orderedTool = $this->serializer->deserialize($orderedToolData['orderedTool'], new OrderedTool(), [SerializerInterface::REFRESH_UUID]);
+                $orderedTool->setWorkspace($workspace);
+                $orderedTool->setTool($tool);
+                $this->om->persist($orderedTool);
 
-        $this->logListener->enable();
-
-        return $workspace;
-    }
-
-    //once everything is serialized, we add files to the archive.
-    public function exportFiles($data, FileBag $fileBag, Workspace $workspace)
-    {
-        foreach ($data['orderedTools'] as $key => $orderedToolData) {
-            //copied from crud
-            $name = 'export_tool_'.$orderedToolData['tool'];
-            //use an other even. StdClass is not pretty
-            if (isset($orderedToolData['data'])) {
-                /** @var ExportObjectEvent $event */
-                $event = $this->dispatcher->dispatch($name, ExportObjectEvent::class, [
-                    new \StdClass(), $fileBag, $orderedToolData['data'], $workspace,
-                ]);
-                $data['orderedTools'][$key]['data'] = $event->getData();
-            }
-        }
-
-        return $data;
-    }
-
-    private function getFileBag(array $data = [])
-    {
-        $filebag = new FileBag();
-
-        if (isset($data['archive'])) {
-            $this->log('Get filebag from the archive...');
-            $object = $this->om->getObject($data['archive'], PublicFile::class);
-
-            $archive = new \ZipArchive();
-            if ($archive->open($this->fileUts->getPath($object))) {
-                $dest = sys_get_temp_dir().'/'.uniqid();
-                if (!file_exists($dest)) {
-                    mkdir($dest, 0777, true);
-                }
-                $archive->extractTo($dest);
-
-                foreach (new \DirectoryIterator($dest) as $fileInfo) {
-                    if ($fileInfo->isDot()) {
+                foreach ($orderedToolData['rights'] as $rightsData) {
+                    if (empty($createdObjects[$rightsData['role']['id']])) {
                         continue;
                     }
 
-                    $location = $fileInfo->getPathname();
-                    $fileName = $fileInfo->getFilename();
+                    $rights = new ToolRights();
+                    $rights->setOrderedTool($orderedTool);
+                    unset($rightsData['orderedToolId']);
 
-                    $filebag->add($fileName, $location);
+                    $this->serializer->deserialize(array_merge($rightsData, [
+                        'role' => [
+                            'id' => $createdObjects[$rightsData['role']['id']]->getUuid(),
+                        ],
+                    ]), $rights);
+
+                    $this->om->persist($rights);
                 }
+
+                /* @var ImportToolEvent $event */
+                $event = $this->dispatcher->dispatch(
+                    ToolEvents::getEventName(ToolEvents::IMPORT, AbstractTool::WORKSPACE, $orderedTool->getTool()->getName()),
+                    ImportToolEvent::class,
+                    [$orderedTool->getTool()->getName(), AbstractTool::WORKSPACE, $orderedTool->getWorkspace(), $fileBag, $orderedToolData['data'] ?? [], $createdObjects]
+                );
+
+                $createdObjects = array_merge([], $createdObjects, $event->getCreatedEntities());
             }
         }
 
-        return $filebag;
+        $this->om->flush();
+
+        return $createdObjects;
     }
 
-    //todo: move in resourcemanager tool transfer
-    public function replaceResourceIds($serialized)
+    private function replaceResourceIds(array $data)
     {
-        $replaced = json_encode($serialized);
+        if (empty($data['tools'])) {
+            return $data;
+        }
 
-        foreach ($serialized['orderedTools'] as $tool) {
-            if ('resources' === $tool['tool']) {
-                $nodes = $tool['data']['nodes'];
+        $replaced = json_encode($data);
 
-                foreach ($nodes as $data) {
+        foreach ($data['tools'] as $tool) {
+            if ('resources' === $tool['name']) {
+                if (empty($tool['data']) || empty($tool['data']['resources'])) {
+                    break;
+                }
+
+                foreach ($tool['data']['resources'] as $resourceData) {
                     $uuid = Uuid::uuid4()->toString();
 
-                    if (isset($data['id'])) {
-                        $replaced = str_replace($data['id'], $uuid, $replaced);
-                        $this->log('Replacing id '.$data['id'].' by '.$uuid);
+                    if (isset($resourceData['resourceNode']['id'])) {
+                        $replaced = str_replace($resourceData['resourceNode']['id'], $uuid, $replaced);
                     }
                 }
+
+                break;
             }
         }
 

@@ -12,7 +12,7 @@
 namespace Claroline\CoreBundle\Library\Installation\Plugin;
 
 use Claroline\CoreBundle\Entity\Resource\AbstractResource;
-use Claroline\KernelBundle\Bundle\PluginBundle;
+use Claroline\KernelBundle\Bundle\PluginBundleInterface;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
@@ -26,7 +26,7 @@ class Configuration implements ConfigurationInterface
     private $updateMode;
     private $listResourceActions;
 
-    public function __construct(PluginBundle $plugin, array $resourceNames, array $listTools, array $listResourceActions, array $listWidgets)
+    public function __construct(PluginBundleInterface $plugin, array $resourceNames, array $listTools, array $listResourceActions, array $listWidgets)
     {
         $this->plugin = $plugin;
         $this->listNames = $resourceNames;
@@ -279,13 +279,6 @@ class Configuration implements ConfigurationInterface
                         ->booleanNode('is_displayable_in_workspace')->isRequired()->end()
                         ->booleanNode('is_displayable_in_desktop')->isRequired()->end()
                         ->scalarNode('class')->end()
-                        ->scalarNode('is_exportable')->defaultValue(false)->end()
-                        ->scalarNode('is_desktop_required')->defaultValue(false)->end()
-                        ->scalarNode('is_workspace_required')->defaultValue(false)->end()
-                        ->scalarNode('is_configurable_in_workspace')->defaultValue(false)->end()
-                        ->scalarNode('is_configurable_in_desktop')->defaultValue(false)->end()
-                        ->scalarNode('is_locked_for_admin')->defaultValue(false)->end()
-                        ->scalarNode('is_anonymous_excluded')->defaultValue(true)->end()
                         ->arrayNode('tool_rights')
                             ->prototype('array')
                                 ->children()
@@ -333,6 +326,7 @@ class Configuration implements ConfigurationInterface
                 ->prototype('array')
                     ->children()
                         ->scalarNode('name')->isRequired()->end()
+                        ->scalarNode('type')->isRequired()->end()
                         ->arrayNode('placeholders')
                             ->prototype('scalar')->end()
                             ->defaultValue([])

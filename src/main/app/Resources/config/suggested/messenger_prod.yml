@@ -1,0 +1,29 @@
+framework:
+    messenger:
+        failure_transport: failed
+        transports:
+            default:
+                dsn: 'doctrine://default' # overridden in MessengerConfigPass
+
+                # default configuration
+                retry_strategy:
+                    max_retries: 3
+                    # milliseconds delay
+                    delay: 1000
+                    # causes the delay to be higher before each retry
+                    # e.g. 1 second delay, 2 seconds, 4 seconds
+                    multiplier: 2
+                    max_delay: 0
+                    # override all of this with a service that
+                    # implements Symfony\Component\Messenger\Retry\RetryStrategyInterface
+                    # service: null
+
+            failed: 'doctrine://default?queue_name=failed'
+
+        buses:
+            messenger.bus.default:
+                middleware:
+                    - 'Claroline\AuthenticationBundle\Messenger\Middleware\AuthenticationMiddleware'
+
+        routing:
+            'Claroline\AppBundle\Messenger\Message\AsyncMessageInterface': default

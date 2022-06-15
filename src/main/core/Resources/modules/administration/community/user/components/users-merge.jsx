@@ -57,23 +57,19 @@ const UserCompare = props =>
                 time: true
               }
             }, {
-              name: 'meta.lastLogin',
-              label: trans('last_login'),
+              name: 'meta.lastActivity',
+              label: trans('last_activity'),
               type: 'date',
               options: {
                 time: true
               }
-            }, {
-              name: 'cas_data.id',
-              label: trans('cas_id'),
-              type: 'string'
             }, {
               name: 'meta.mailValidated',
               label: trans('email_validated'),
               type: 'boolean'
             }, {
               name: 'restrictions.disabled',
-              label: trans('user_disabled'),
+              label: trans('disabled'),
               type: 'boolean'
             }
           ]

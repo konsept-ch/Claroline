@@ -61,6 +61,16 @@ abstract class AdditionalInstaller implements LoggerAwareInterface, ContainerAwa
         return $this->shouldReplayUpdaters;
     }
 
+    public function hasMigrations(): bool
+    {
+        return true;
+    }
+
+    public function hasFixtures(): bool
+    {
+        return false;
+    }
+
     public function preInstall()
     {
     }
@@ -85,6 +95,7 @@ abstract class AdditionalInstaller implements LoggerAwareInterface, ContainerAwa
                 continue;
             }
 
+            $this->log(sprintf('Executing "%s" preUpdate.', $updaterClass));
             $updater = $this->updaterLocator->get($updaterClass);
             $updater->preUpdate();
         }
@@ -106,6 +117,7 @@ abstract class AdditionalInstaller implements LoggerAwareInterface, ContainerAwa
                 return;
             }
 
+            $this->log(sprintf('Executing "%s" postUpdate.', $updaterClass));
             $updater = $this->updaterLocator->get($updaterClass);
             $updater->postUpdate();
 

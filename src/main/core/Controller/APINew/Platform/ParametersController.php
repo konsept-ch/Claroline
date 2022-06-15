@@ -13,6 +13,7 @@ namespace Claroline\CoreBundle\Controller\APINew\Platform;
 
 use Claroline\AnalyticsBundle\Manager\AnalyticsManager;
 use Claroline\AppBundle\API\Utils\ArrayUtils;
+use Claroline\AppBundle\Controller\AbstractSecurityController;
 use Claroline\AppBundle\Controller\RequestDecoderTrait;
 use Claroline\AppBundle\Event\Platform\EnableEvent;
 use Claroline\AppBundle\Event\Platform\ExtendEvent;
@@ -20,6 +21,7 @@ use Claroline\AppBundle\Event\StrictDispatcher;
 use Claroline\CoreBundle\API\Serializer\ParametersSerializer;
 use Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler;
 use Claroline\CoreBundle\Library\Normalizer\DateNormalizer;
+use Claroline\CoreBundle\Manager\FileManager;
 use Claroline\CoreBundle\Manager\VersionManager;
 use Claroline\CoreBundle\Security\PlatformRoles;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -31,7 +33,7 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 /**
  * REST API to manage platform parameters.
  */
-class ParametersController
+class ParametersController extends AbstractSecurityController
 {
     use RequestDecoderTrait;
 
@@ -45,6 +47,8 @@ class ParametersController
     private $analyticsManager;
     /** @var VersionManager */
     private $versionManager;
+    /** @var FileManager */
+    private $fileManager;
     /** @var ParametersSerializer */
     private $serializer;
 
@@ -54,6 +58,7 @@ class ParametersController
         PlatformConfigurationHandler $ch,
         AnalyticsManager $analyticsManager,
         VersionManager $versionManager,
+        FileManager $fileManager,
         ParametersSerializer $serializer
     ) {
         $this->authorization = $authorization;
@@ -61,6 +66,7 @@ class ParametersController
         $this->config = $ch;
         $this->serializer = $serializer;
         $this->versionManager = $versionManager;
+        $this->fileManager = $fileManager;
         $this->analyticsManager = $analyticsManager;
     }
 
@@ -69,6 +75,8 @@ class ParametersController
      */
     public function updateAction(Request $request): JsonResponse
     {
+        $this->canOpenAdminTool('main_settings');
+
         $parametersData = $this->decodeRequest($request);
 
         // easy way to protect locked parameters (this may be done elsewhere)
@@ -89,11 +97,12 @@ class ParametersController
     /**
      * @Route("/version", name="apiv2_platform_version", methods={"GET"})
      */
-    public function getVersionAction(): JsonResponse
+    public function getVersionAction(Request $request): JsonResponse
     {
-        return new JsonResponse(
-            $this->versionManager->getCurrent()
-        );
+        return new JsonResponse([
+            'version' => $this->versionManager->getCurrent(),
+            'changelogs' => $this->versionManager->getChangelogs($request->getLocale()),
+        ]);
     }
 
     /**
@@ -101,21 +110,16 @@ class ParametersController
      */
     public function getAction(): JsonResponse
     {
-        $parameters = $this->serializer->serialize();
-
         $analytics = $this->analyticsManager->count();
 
         // TODO : not the correct place to do it
-        $usedStorage = $analytics['storage'];
-        $parameters['restrictions']['used_storage'] = $usedStorage;
-        $parameters['restrictions']['max_storage_reached'] = isset($parameters['restrictions']['max_storage_size']) &&
-            $parameters['restrictions']['max_storage_size'] &&
-            $usedStorage >= $parameters['restrictions']['max_storage_size'];
-        $this->serializer->deserialize($parameters);
+        $this->fileManager->updateUsedStorage(
+            $analytics['storage']
+        );
 
         return new JsonResponse([
             'version' => $this->versionManager->getCurrent(),
-            'meta' => $parameters['meta'],
+            'meta' => $this->config->getParameter('meta'),
             'analytics' => $analytics, // TODO : add analytics through eventing to avoid hard dependency to a plugin
         ]);
     }

@@ -1,7 +1,9 @@
 import get from 'lodash/get'
 import isEmpty from 'lodash/isEmpty'
 
-import {API_REQUEST} from '#/main/app/api'
+// don't load it from the `api` barrel to avoid circular dependency
+import {constants as apiConst} from '#/main/app/api/constants'
+
 import {makeActionCreator} from '#/main/app/store/actions'
 import {actions as modalActions} from '#/main/app/overlays/modal/store'
 
@@ -33,8 +35,9 @@ actions.changeUser = (user, impersonated = false, administration = false) => (di
 }
 
 actions.login = (username, password, rememberMe) => ({
-  [API_REQUEST]: {
+  [apiConst.API_REQUEST]: {
     silent: true,
+    forceReauthenticate: false,
     url: ['claro_security_login'],
     request: {
       method: 'POST',
@@ -59,7 +62,7 @@ actions.onLogin = (response) => (dispatch) => {
 }
 
 actions.logout = () => ({
-  [API_REQUEST]: {
+  [apiConst.API_REQUEST]: {
     silent: true,
     url: ['claro_security_logout'],
     success: (response, dispatch) => dispatch(actions.changeUser(null, false, false))
@@ -67,7 +70,7 @@ actions.logout = () => ({
 })
 
 actions.linkExternalAccount = (service, username, onSuccess) => ({
-  [API_REQUEST]: {
+  [apiConst.API_REQUEST]: {
     url: ['claro_oauth_link_account', {service: service, username: username}],
     request: {
       method: 'POST'

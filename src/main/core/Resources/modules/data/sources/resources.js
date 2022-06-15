@@ -34,7 +34,7 @@ export default {
         }
       }, {
         name: 'parent',
-        label: trans('parent'),
+        label: trans('parent', {}, 'resource'),
         type: 'resource'
       }, {
         name: 'meta.views',
@@ -63,6 +63,11 @@ export default {
         type: 'user',
         label: trans('creator'),
         displayed: true
+      }, {
+        name: 'evaluation.required',
+        label: trans('required_resource', {}, 'resource'),
+        type: 'boolean',
+        alias: 'required'
       }, {
         name: 'tags',
         type: 'tag',

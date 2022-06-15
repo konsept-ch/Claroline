@@ -22,6 +22,7 @@
         "ext-dom": "*",
         "ext-fileinfo": "*",
         "ext-gd": "*",
+        "ext-iconv": "*",
         "ext-intl": "*",
         "ext-json": "*",
         "ext-mbstring": "*",
@@ -108,7 +109,7 @@
             "Claroline\\CoreBundle\\": "src/main/core",
             "Claroline\\AppBundle\\": "src/main/app",
             "Claroline\\AuthenticationBundle\\": "src/main/authentication",
-            "Claroline\\BundleRecorder\\": "src/main/recorder",
+            "Claroline\\CommunityBundle\\": "src/main/community",
             "Claroline\\InstallationBundle\\": "src/main/installation",
             "Claroline\\MigrationBundle\\": "src/main/migration",
             "Claroline\\KernelBundle\\": "src/main/kernel",
@@ -155,7 +156,9 @@
             "Claroline\\CursusBundle\\": "src/plugin/cursus",
             "Claroline\\BigBlueButtonBundle\\": "src/integration/big-blue-button",
             "Claroline\\DocumentationBundle\\": "src/plugin/documentation",
-            "Claroline\\LogBundle\\": "src/main/log"
+            "Claroline\\LogBundle\\": "src/main/log",
+            "Claroline\\SchedulerBundle\\": "src/main/scheduler",
+            "Claroline\\TransferBundle\\": "src/main/transfer"
         }
     },
     "scripts": {
@@ -169,7 +172,7 @@
             "rm -rf ./var/cache/*"
         ],
         "bundles": [
-            "Claroline\\BundleRecorder\\ScriptHandler::buildBundleFile"
+            "Claroline\\KernelBundle\\ScriptHandler::buildBundleFile"
         ],
         "setup-geoip": [
             "php bin/console claroline:geoip:download"

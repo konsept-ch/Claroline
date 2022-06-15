@@ -11,7 +11,8 @@ import {getFile} from '#/main/core/files'
 import {File as FileTypes} from '#/main/core/files/prop-types'
 
 import {constants} from '#/main/core/resources/file/constants'
-import {Comments} from '#/main/app/content/components/comments'
+import {ContentComments} from '#/main/app/content/components/comments'
+import {PlayerOverview} from '#/main/core/resources/file/player/components/overview'
 
 // TODO : display a standard player with file info if no custom one
 const PlayerMain = (props) => {
@@ -39,14 +40,14 @@ const PlayerMain = (props) => {
               }
 
               {props.file && props.file.commentsActivated &&
-                <Comments
+                <ContentComments
                   currentUser={props.currentUser}
                   comments={props.resourceNode.comments}
                   canComment={!!props.currentUser}
-                  createComment={(content) => props.createComment(content, props.resourceNode, props.currentUser)}
-                  editComment={(commentId, content) => props.editComment(commentId, content, props.resourceNode)}
+                  createComment={(comment) => props.createComment(comment, props.resourceNode)}
+                  editComment={(comment) => props.editComment(comment, props.resourceNode)}
                   canEditComment={(comment) => props.currentUser && comment.user.id === props.currentUser.id}
-                  deleteComment={(commentId) => props.deleteComment(commentId)}
+                  deleteComment={(comment) => props.deleteComment(comment.id)}
                   canManage={props.canEdit}
                 />
               }
@@ -55,6 +56,17 @@ const PlayerMain = (props) => {
         }
 
         props.download(props.resourceNode)
+
+        console.log(props.mimeType)
+
+        return (
+          <PlayerOverview
+            file={props.file}
+            resourceNode={props.resourceNode}
+            workspace={props.workspace}
+            download={props.download}
+          />
+        )
       }}
     />
   )
@@ -70,6 +82,7 @@ PlayerMain.propTypes = {
   file: T.shape(
     FileTypes.propTypes
   ).isRequired,
+  workspace: T.object,
   createComment: T.func.isRequired,
   editComment: T.func.isRequired,
   deleteComment: T.func.isRequired

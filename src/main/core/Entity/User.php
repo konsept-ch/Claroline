@@ -21,9 +21,6 @@ use Claroline\CoreBundle\Entity\Model\GroupsTrait;
 use Claroline\CoreBundle\Entity\Model\OrganizationsTrait;
 use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CoreBundle\Entity\Organization\UserOrganizationReference;
-use Claroline\CoreBundle\Entity\Task\ScheduledTask;
-use Claroline\CoreBundle\Entity\Workspace\WorkspaceRegistrationQueue;
-use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
@@ -160,7 +157,6 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
      *
      * @ORM\OneToOne(
      *     targetEntity="Claroline\CoreBundle\Entity\Workspace\Workspace",
-     *     inversedBy="personalUser",
      *     cascade={"persist", "remove"}
      * )
      * @ORM\JoinColumn(name="workspace_id", onDelete="SET NULL")
@@ -178,9 +174,9 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
     /**
      * @var \DateTime
      *
-     * @ORM\Column(name="last_login", type="datetime", nullable=true)
+     * @ORM\Column(name="last_activity", type="datetime", nullable=true)
      */
-    protected $lastLogin;
+    protected $lastActivity;
 
     /**
      * @var \DateTime
@@ -247,21 +243,6 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
     protected $isMailValidated = false;
 
     /**
-     * @var string
-     *
-     * @Assert\Regex("/^[^\/]+$/")
-     * @ORM\Column(name="public_url", type="string", nullable=true, unique=true)
-     */
-    protected $publicUrl;
-
-    /**
-     * @var bool
-     *
-     * @ORM\Column(name="has_tuned_public_url", type="boolean")
-     */
-    protected $hasTunedPublicUrl = false;
-
-    /**
      * @var \DateTime
      *
      * @ORM\Column(name="expiration_date", type="datetime", nullable=true)
@@ -302,26 +283,6 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
     protected $userOrganizationReferences;
 
     /**
-     * @ORM\ManyToMany(
-     *     targetEntity="Claroline\CoreBundle\Entity\Task\ScheduledTask",
-     *     inversedBy="users"
-     * )
-     * @ORM\JoinTable(name="claro_scheduled_task_users")
-     *
-     * @var ArrayCollection
-     *
-     * @todo relation should not be declared here (only use Unidirectional)
-     */
-    private $scheduledTasks;
-
-    /**
-     * @ORM\OneToMany(targetEntity="Claroline\CoreBundle\Entity\Workspace\WorkspaceRegistrationQueue", mappedBy="user")
-     *
-     * @todo relation should not be declared here (only use Unidirectional)
-     */
-    protected $wkUserQueues;
-
-    /**
      * @var string
      *
      * @ORM\Column(nullable=true)
@@ -337,10 +298,8 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
 
         $this->roles = new ArrayCollection();
         $this->groups = new ArrayCollection();
-        $this->wkUserQueues = new ArrayCollection();
         $this->locations = new ArrayCollection();
         $this->salt = base_convert(sha1(uniqid(mt_rand(), true)), 16, 36);
-        $this->fieldsFacetValue = new ArrayCollection();
         $this->scheduledTasks = new ArrayCollection();
         $this->administratedOrganizations = new ArrayCollection();
         $this->userOrganizationReferences = new ArrayCollection();
@@ -494,9 +453,6 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
     public function setUsername($username)
     {
         $this->username = $username;
-        if (empty($this->publicUrl)) {
-            $this->publicUrl = $this->generatePublicUrl();
-        }
 
         return $this;
     }
@@ -851,53 +807,6 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
         return $this->isMailNotified;
     }
 
-    /**
-     * @param string $publicUrl
-     *
-     * @return User
-     */
-    public function setPublicUrl($publicUrl)
-    {
-        $this->publicUrl = $publicUrl;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getPublicUrl()
-    {
-        return $this->publicUrl;
-    }
-
-    private function generatePublicUrl()
-    {
-        return TextNormalizer::stripDiacritics(
-            strtolower(str_replace(' ', '-', $this->username))
-        );
-    }
-
-    /**
-     * @param mixed $hasTunedPublicUrl
-     *
-     * @return User
-     */
-    public function setHasTunedPublicUrl($hasTunedPublicUrl)
-    {
-        $this->hasTunedPublicUrl = $hasTunedPublicUrl;
-
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function hasTunedPublicUrl()
-    {
-        return $this->hasTunedPublicUrl;
-    }
-
     public function setExpirationDate($expirationDate)
     {
         $this->expirationDate = $expirationDate;
@@ -1095,34 +1004,19 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
         }
     }
 
-    public function setLastLogin(\DateTime $date)
+    public function setLastActivity(\DateTime $date)
     {
-        $this->lastLogin = $date;
+        $this->lastActivity = $date;
     }
 
-    public function getLastLogin()
+    public function getLastActivity()
     {
-        return $this->lastLogin;
+        return $this->lastActivity;
     }
 
     public function getLocations()
     {
         return $this->locations;
-    }
-
-    public function addScheduledTask(ScheduledTask $task)
-    {
-        $this->scheduledTasks->add($task);
-    }
-
-    public function removeScheduledTask(ScheduledTask $task)
-    {
-        $this->scheduledTasks->removeElement($task);
-    }
-
-    public function addWorkspaceUserQueue(WorkspaceRegistrationQueue $wkUserQueue)
-    {
-        $this->wkUserQueues->add($wkUserQueue);
     }
 
     public function setCode($code)

@@ -14,6 +14,7 @@ use Claroline\CoreBundle\Entity\File\PublicFile;
 use Claroline\CoreBundle\Entity\Role;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
+use Claroline\CoreBundle\Library\Normalizer\DateRangeNormalizer;
 use Claroline\HomeBundle\Entity\HomeTab;
 use Claroline\HomeBundle\Entity\Type\AbstractTab;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -99,7 +100,12 @@ class HomeTabSerializer
                 'delete' => $this->authorization->isGranted('DELETE', $homeTab),
             ],
             'restrictions' => [
-                'hidden' => !$homeTab->isVisible(),
+                'hidden' => $homeTab->isHidden(),
+                'dates' => DateRangeNormalizer::normalize(
+                    $homeTab->getAccessibleFrom(),
+                    $homeTab->getAccessibleUntil()
+                ),
+                'code' => $homeTab->getAccessCode(),
                 'roles' => array_map(function (Role $role) {
                     return $this->roleSerializer->serialize($role, [Options::SERIALIZE_MINIMAL]);
                 }, $homeTab->getRoles()->toArray()),
@@ -109,6 +115,7 @@ class HomeTabSerializer
                 'centerTitle' => $homeTab->isCenterTitle(),
                 'showTitle' => $homeTab->getShowTitle(),
             ],
+            'workspace' => $homeTab->getWorkspace() ? $this->workspaceSerializer->serialize($homeTab->getWorkspace(), [Options::SERIALIZE_MINIMAL]) : null,
             'user' => $homeTab->getUser() ? $this->userSerializer->serialize($homeTab->getUser(), [Options::SERIALIZE_MINIMAL]) : null,
 
             // TODO : should no longer be exposed here (still required by update and ws import)
@@ -117,12 +124,8 @@ class HomeTabSerializer
             }, $homeTab->getChildren()->toArray()),
         ];
 
-        if (!in_array(Options::REFRESH_UUID, $options)) {
-            $data['workspace'] = $homeTab->getWorkspace() ? $this->workspaceSerializer->serialize($homeTab->getWorkspace(), [Options::SERIALIZE_MINIMAL]) : null;
-        }
-
-        // retrieves the custom configuration of the widget if any
-        if ($homeTab->getClass()) {
+        // retrieves the custom configuration of the tab if any
+        if (!in_array(Options::SERIALIZE_MINIMAL, $options) && $homeTab->getClass()) {
             // loads configuration entity for the current instance
             $typeParameters = $this->om
                 ->getRepository($homeTab->getClass())
@@ -163,8 +166,14 @@ class HomeTabSerializer
         $this->sipe('display.showTitle', 'setShowTitle', $data, $homeTab);
 
         if (isset($data['restrictions'])) {
-            if (isset($data['restrictions']['hidden'])) {
-                $homeTab->setVisible(!$data['restrictions']['hidden']);
+            $this->sipe('restrictions.code', 'setAccessCode', $data, $homeTab);
+            $this->sipe('restrictions.hidden', 'setHidden', $data, $homeTab);
+
+            if (isset($data['restrictions']['dates'])) {
+                $dateRange = DateRangeNormalizer::denormalize($data['restrictions']['dates']);
+
+                $homeTab->setAccessibleFrom($dateRange[0]);
+                $homeTab->setAccessibleUntil($dateRange[1]);
             }
 
             if (isset($data['restrictions']['roles'])) {

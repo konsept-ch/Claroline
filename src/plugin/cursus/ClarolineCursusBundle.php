@@ -11,26 +11,17 @@
 
 namespace Claroline\CursusBundle;
 
-use Claroline\CursusBundle\Installation\AdditionalInstaller;
 use Claroline\KernelBundle\Bundle\DistributionPluginBundle;
+use Claroline\MessageBundle\ClarolineMessageBundle;
+use Claroline\TagBundle\ClarolineTagBundle;
 
 class ClarolineCursusBundle extends DistributionPluginBundle
 {
-    public function getAdditionalInstaller()
-    {
-        return new AdditionalInstaller($this->getUpdaterServiceLocator());
-    }
-
-    public function getPostInstallFixturesDirectory(string $environment): ?string
-    {
-        return 'DataFixtures/PostInstall';
-    }
-
     public function getRequiredPlugins()
     {
         return [
-            'Claroline\\MessageBundle\\ClarolineMessageBundle',
-            'Claroline\\TagBundle\\ClarolineTagBundle',
+            ClarolineMessageBundle::class,
+            ClarolineTagBundle::class,
         ];
     }
 }

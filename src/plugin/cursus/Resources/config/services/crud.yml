@@ -1,10 +1,4 @@
 services:
-    _defaults:
-        autowire: false
-        autoconfigure: false
-        public: true
-        tags: ['claroline.crud']
-
     Claroline\CursusBundle\Crud\CourseCrud:
         arguments:
             - '@event_dispatcher'
@@ -28,3 +22,10 @@ services:
             - { name: kernel.event_listener, event: crud_pre_update_object_claroline_cursusbundle_entity_session, method: preUpdate }
             - { name: kernel.event_listener, event: crud_post_update_object_claroline_cursusbundle_entity_session, method: postUpdate }
             - { name: kernel.event_listener, event: crud_pre_delete_object_claroline_cursusbundle_entity_session, method: preDelete }
+
+    Claroline\CursusBundle\Crud\EventCrud:
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\CursusBundle\Manager\EventManager'
+        tags:
+            - { name: kernel.event_listener, event: crud_post_create_object_claroline_cursusbundle_entity_event, method: postCreate }

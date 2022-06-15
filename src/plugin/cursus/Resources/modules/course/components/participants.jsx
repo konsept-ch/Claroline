@@ -10,6 +10,7 @@ import {CALLBACK_BUTTON, MODAL_BUTTON} from '#/main/app/buttons'
 import {AlertBlock} from '#/main/app/alert/components/alert-block'
 import {Routes} from '#/main/app/router/components/routes'
 import {Vertical} from '#/main/app/content/tabs/components/vertical'
+import {ContentCounter} from '#/main/app/content/components/counter'
 import {MODAL_USERS} from '#/main/core/modals/users'
 import {MODAL_GROUPS} from '#/main/core/modals/groups'
 
@@ -56,7 +57,7 @@ const CourseUsers = (props) =>
         type: CALLBACK_BUTTON,
         icon: 'fa fa-fw fa-hourglass-half',
         label: trans('move-pending', {}, 'actions'),
-        displayed: hasPermission('register', props.activeSession),
+        displayed: props.hasPendingRegistrations && hasPermission('register', props.activeSession),
         group: trans('management'),
         callback: () => props.movePending(rows)
       }
@@ -81,6 +82,7 @@ CourseUsers.propTypes = {
   activeSession: T.shape(
     SessionTypes.propTypes
   ),
+  hasPendingRegistrations: T.bool,
   addUsers: T.func.isRequired,
   moveUsers: T.func.isRequired,
   inviteUsers: T.func.isRequired,
@@ -146,47 +148,39 @@ CourseGroups.propTypes = {
 
 const CourseParticipants = (props) =>
   <Fragment>
-    <div className="row" style={{marginTop: '-20px'}}>
-      <div className="analytics-card">
-        <span className="fa fa-chalkboard-teacher" style={{backgroundColor: schemeCategory20c[1]}} />
+    <div className="row" style={{marginTop: -20}}>
+      <ContentCounter
+        icon="fa fa-chalkboard-teacher"
+        label={trans('tutors', {}, 'cursus')}
+        color={schemeCategory20c[1]}
+        value={get(props.activeSession, 'participants.tutors', 0)}
+      />
 
-        <h1 className="h3">
-          <small>{trans('tutors', {}, 'cursus')}</small>
-          {get(props.activeSession, 'participants.tutors', 0)}
-        </h1>
-      </div>
-
-      <div className="analytics-card">
-        <span className="fa fa-user" style={{backgroundColor: schemeCategory20c[5]}} />
-
-        <h1 className="h3">
-          <small>{trans('users')}</small>
-          {get(props.activeSession, 'participants.learners', 0)}
-        </h1>
-      </div>
+      <ContentCounter
+        icon="fa fa-chalkboard-teacher"
+        label={trans('users')}
+        color={schemeCategory20c[5]}
+        value={get(props.activeSession, 'participants.learners', 0)}
+      />
 
       {hasPermission('register', props.activeSession) &&
-        <div className="analytics-card">
-          <span className="fa fa-hourglass-half" style={{backgroundColor: schemeCategory20c[9]}} />
-
-          <h1 className="h3">
-            <small>{trans('En attente')}</small>
-            {get(props.activeSession, 'participants.pending', 0)}
-          </h1>
-        </div>
+        <ContentCounter
+          icon="fa fa-hourglass-half"
+          label={trans('En attente')}
+          color={schemeCategory20c[9]}
+          value={get(props.activeSession, 'participants.pending', 0)}
+        />
       }
 
-      <div className="analytics-card">
-        <span className="fa fa-user-plus" style={{backgroundColor: schemeCategory20c[13]}} />
-
-        <h1 className="h3">
-          <small>{trans('available_seats', {}, 'cursus')}</small>
-          {get(props.activeSession, 'restrictions.users') ?
-            (get(props.activeSession, 'restrictions.users') - get(props.activeSession, 'participants.learners', 0)) + ' / ' + get(props.activeSession, 'restrictions.users')
-            : <span className="fa fa-fw fa-infinity" />
-          }
-        </h1>
-      </div>
+      <ContentCounter
+        icon="fa fa-user-plus"
+        label={trans('available_seats', {}, 'cursus')}
+        color={schemeCategory20c[13]}
+        value={get(props.activeSession, 'restrictions.users') ?
+          (get(props.activeSession, 'restrictions.users') - get(props.activeSession, 'participants.learners', 0)) + ' / ' + get(props.activeSession, 'restrictions.users')
+          : <span className="fa fa-fw fa-infinity" />
+        }
+      />
     </div>
 
     <div className="row">
@@ -234,6 +228,7 @@ const CourseParticipants = (props) =>
                     inviteUsers={props.inviteUsers}
                     moveUsers={props.moveUsers}
                     movePending={(sessionUsers) => props.movePending(props.course.id, sessionUsers)}
+                    hasPendingRegistrations={false}
                   />
                 )
 
@@ -266,6 +261,7 @@ const CourseParticipants = (props) =>
                       addUsers={props.addUsers}
                       inviteUsers={props.inviteUsers}
                       moveUsers={props.moveUsers}
+                      hasPendingRegistrations={get(props.course, 'registration.pendingRegistrations', false)}
                       movePending={(sessionUsers) => props.movePending(props.course.id, sessionUsers)}
                     />
                   </Fragment>
@@ -345,7 +341,7 @@ const CourseParticipants = (props) =>
                           type: CALLBACK_BUTTON,
                           icon: 'fa fa-fw fa-hourglass-half',
                           label: trans('move-pending', {}, 'actions'),
-                          displayed: hasPermission('register', props.activeSession),
+                          displayed: get(props.course, 'registration.pendingRegistrations') && hasPermission('register', props.activeSession),
                           group: trans('management'),
                           callback: () => props.movePending(props.course.id, rows)
                         }

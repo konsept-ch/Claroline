@@ -31,6 +31,7 @@ class Assertion
 
     /**
      * @ORM\ManyToOne(targetEntity="Claroline\CoreBundle\Entity\User")
+     * @ORM\JoinColumn(onDelete="CASCADE")
      *
      * @var User
      */
@@ -144,14 +145,7 @@ class Assertion
      */
     public function setBadge($badge)
     {
-        if ($this->badge) {
-            $this->badge->removeAssertion($this);
-        }
-
         $this->badge = $badge;
-        if ($badge) {
-            $badge->addAssertion($this);
-        }
 
         return $this;
     }

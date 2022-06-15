@@ -11,7 +11,6 @@
 
 namespace Claroline\CoreBundle\Manager\Resource;
 
-use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\Event\StrictDispatcher;
 use Claroline\AppBundle\Log\LoggableTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
@@ -145,35 +144,36 @@ class RightsManager implements LoggerAwareInterface
     }
 
     // TODO : this should be done by a serializer
-    public function getRights(ResourceNode $resourceNode, array $options = [])
+    public function getRights(ResourceNode $resourceNode): array
     {
-        return array_map(function (ResourceRights $rights) use ($resourceNode, $options) {
+        return array_map(function (ResourceRights $rights) use ($resourceNode) {
             $role = $rights->getRole();
             $permissions = $this->maskManager->decodeMask($rights->getMask(), $resourceNode->getResourceType());
 
             if ('directory' === $resourceNode->getResourceType()->getName()) {
                 // ugly hack to only get create rights for directories (it's the only one that can handle it).
-                $permissions = array_merge(
-                    $permissions,
-                    ['create' => $this->getCreatableTypes([$role->getName()], $resourceNode)]
-                );
+                $permissions = array_merge($permissions, [
+                    'create' => array_map(function (ResourceType $creatableType) {
+                        return $creatableType->getName();
+                    }, $rights->getCreatableResourceTypes()->toArray()),
+                ]);
             }
 
+            // TODO : do not flatten role data. Use RoleSerializer instead
             $data = [
                 'id' => $rights->getId(),
+                'name' => $role->getName(),
                 'translationKey' => $role->getTranslationKey(),
                 'permissions' => $permissions,
                 'workspace' => null,
             ];
 
-            if (!in_array(Options::REFRESH_UUID, $options)) {
-                $data['name'] = $role->getName();
-            }
-
             if ($role->getWorkspace()) {
-                $data['workspace']['id'] = $role->getWorkspace()->getUuid();
-                $data['workspace']['code'] = $role->getWorkspace()->getCode();
-                $data['workspace']['name'] = $role->getWorkspace()->getName();
+                $data['workspace'] = [
+                    'id' => $role->getWorkspace()->getUuid(),
+                    'code' => $role->getWorkspace()->getCode(),
+                    'name' => $role->getWorkspace()->getName(),
+                ];
             }
 
             return $data;
@@ -225,7 +225,7 @@ class RightsManager implements LoggerAwareInterface
         $creatable = [];
         if ($this->isManager($resourceNode)) {
             /** @var ResourceType[] $resourceTypes */
-            $resourceTypes = $this->om->getRepository('ClarolineCoreBundle:Resource\ResourceType')->findAll();
+            $resourceTypes = $this->om->getRepository(ResourceType::class)->findAll();
 
             foreach ($resourceTypes as $resourceType) {
                 $creatable[] = $resourceType->getName();

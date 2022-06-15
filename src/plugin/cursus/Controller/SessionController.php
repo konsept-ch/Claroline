@@ -12,6 +12,7 @@
 namespace Claroline\CursusBundle\Controller;
 
 use Claroline\AppBundle\Controller\AbstractCrudController;
+use Claroline\AppBundle\Manager\PdfManager;
 use Claroline\CoreBundle\Entity\Group;
 use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CoreBundle\Entity\Tool\Tool;
@@ -27,7 +28,6 @@ use Claroline\CursusBundle\Entity\Registration\SessionGroup;
 use Claroline\CursusBundle\Entity\Registration\SessionUser;
 use Claroline\CursusBundle\Entity\Session;
 use Claroline\CursusBundle\Manager\SessionManager;
-use Dompdf\Dompdf;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -56,6 +56,8 @@ class SessionController extends AbstractCrudController
     private $toolManager;
     /** @var SessionManager */
     private $manager;
+    /** @var PdfManager */
+    private $pdfManager;
 
     public function __construct(
         AuthorizationCheckerInterface $authorization,
@@ -63,7 +65,8 @@ class SessionController extends AbstractCrudController
         TranslatorInterface $translator,
         RoutingHelper $routingHelper,
         ToolManager $toolManager,
-        SessionManager $manager
+        SessionManager $manager,
+        PdfManager $pdfManager
     ) {
         $this->authorization = $authorization;
         $this->tokenStorage = $tokenStorage;
@@ -71,6 +74,7 @@ class SessionController extends AbstractCrudController
         $this->routingHelper = $routingHelper;
         $this->toolManager = $toolManager;
         $this->manager = $manager;
+        $this->pdfManager = $pdfManager;
     }
 
     public function getName()
@@ -145,17 +149,10 @@ class SessionController extends AbstractCrudController
     {
         $this->checkPermission('OPEN', $session, [], true);
 
-        $domPdf = new Dompdf([
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true,
-        ]);
-        $domPdf->loadHtml($this->manager->generateFromTemplate($session, $request->getLocale()));
-
-        // Render the HTML as PDF
-        $domPdf->render();
-
-        return new StreamedResponse(function () use ($domPdf) {
-            echo $domPdf->output();
+        return new StreamedResponse(function () use ($session, $request) {
+            echo $this->pdfManager->fromHtml(
+                $this->manager->generateFromTemplate($session, $request->getLocale())
+            );
         }, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename='.TextNormalizer::toKey($session->getName()).'.pdf',
@@ -194,6 +191,23 @@ class SessionController extends AbstractCrudController
         $params['hiddenFilters']['session'] = $session->getUuid();
         $params['hiddenFilters']['type'] = $type;
         $params['hiddenFilters']['pending'] = false;
+
+        // only list participants of the same organization
+        if (SessionUser::LEARNER === $type && !$this->authorization->isGranted('ROLE_ADMIN')) {
+            /** @var User $user */
+            $user = $this->tokenStorage->getToken()->getUser();
+
+            // filter by organizations
+            if ($user instanceof User) {
+                $organizations = $user->getOrganizations();
+            } else {
+                $organizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
+            }
+
+            $params['hiddenFilters']['organizations'] = array_map(function (Organization $organization) {
+                return $organization->getUuid();
+            }, $organizations);
+        }
 
         return new JsonResponse(
             $this->finder->search(SessionUser::class, $params)
@@ -314,6 +328,23 @@ class SessionController extends AbstractCrudController
         }
         $params['hiddenFilters']['session'] = $session->getUuid();
         $params['hiddenFilters']['pending'] = true;
+
+        // only list participants of the same organization
+        if (!$this->authorization->isGranted('ROLE_ADMIN')) {
+            /** @var User $user */
+            $user = $this->tokenStorage->getToken()->getUser();
+
+            // filter by organizations
+            if ($user instanceof User) {
+                $organizations = $user->getOrganizations();
+            } else {
+                $organizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
+            }
+
+            $params['hiddenFilters']['organizations'] = array_map(function (Organization $organization) {
+                return $organization->getUuid();
+            }, $organizations);
+        }
 
         return new JsonResponse(
             $this->finder->search(SessionUser::class, $params)

@@ -18,10 +18,8 @@ services:
         tags: [claroline.serializer]
         arguments:
             - '@security.authorization_checker'
-            - '@Claroline\CoreBundle\Library\Utilities\FileUtilities'
             - '@router'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
-            - '@claroline.manager.organization.organization_manager'
             - '@Claroline\OpenBadgeBundle\Serializer\CriteriaSerializer'
             - '@event_dispatcher'
             - '@Claroline\CoreBundle\API\Serializer\Workspace\WorkspaceSerializer'

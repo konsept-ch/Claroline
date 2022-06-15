@@ -2,7 +2,6 @@ import {connect} from 'react-redux'
 import cloneDeep from 'lodash/cloneDeep'
 import set from 'lodash/set'
 
-import {makeId} from '#/main/core/scaffolding/id'
 import {trans} from '#/main/app/intl/translation'
 import {hasPermission} from '#/main/app/security'
 import {selectors as securitySelectors} from '#/main/app/security/store'
@@ -20,6 +19,7 @@ const PlayerMain = connect(
     mimeType: selectors.mimeType(state),
     file: selectors.file(state),
     resourceNode: resourceSelectors.resourceNode(state),
+    workspace: resourceSelectors.workspace(state),
     canEdit: hasPermission('edit', resourceSelectors.resourceNode(state))
   }),
   (dispatch) => ({
@@ -28,7 +28,6 @@ const PlayerMain = connect(
     },
     createComment(content, resourceNode, user) {
       dispatch(actions.createComment({
-        id: makeId(),
         content: content,
         user: user,
         resourceNode: resourceNode

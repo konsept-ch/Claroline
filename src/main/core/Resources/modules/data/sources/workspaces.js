@@ -26,8 +26,14 @@ export default {
         name: 'meta.created',
         label: trans('creation_date'),
         type: 'date',
-        alias: 'created',
+        alias: 'createdAt',
         displayed: true,
+        filterable: false
+      }, {
+        name: 'meta.updated',
+        label: trans('modification_date'),
+        type: 'date',
+        alias: 'updatedAt',
         filterable: false
       }, {
         name: 'meta.personal',
@@ -64,7 +70,7 @@ export default {
         name: 'tags',
         type: 'tag',
         label: trans('tags'),
-        displayable: false,
+        displayable: true,
         sortable: false,
         options: {
           objectClass: 'Claroline\\CoreBundle\\Entity\\Workspace\\Workspace'

@@ -130,11 +130,19 @@ class ResourceController
             );
         }
 
+        // UX quality of life : if the user is anonymous and has no rights on the resource
+        // we want to directly display the login modal (by throwing a 401, the app will do it for us)
+        $statusCode = 403;
+        if (!$embedded && !$this->authorization->isGranted('IS_AUTHENTICATED_FULLY') && !$this->restrictionsManager->hasRights($resourceNode, $this->tokenStorage->getToken()->getRoleNames())) {
+            // we check if the resource is embedded to avoid multiple modals in homes and paths
+            $statusCode = 401;
+        }
+
         return new JsonResponse([
             'managed' => $isManager,
             'resourceNode' => $this->serializer->serialize($resourceNode, [Options::SERIALIZE_MINIMAL]),
             'accessErrors' => $accessErrors,
-        ], 403);
+        ], $statusCode);
     }
 
     /**
@@ -162,14 +170,11 @@ class ResourceController
     /**
      * Downloads a list of Resources.
      *
-     * @Route("/download", name="claro_resource_download", defaults={"forceArchive"=false})
-     * @Route("/download/{forceArchive}", name="claro_resource_download", requirements={"forceArchive"="^(true|false|0|1)$"})
-     *
-     * @param bool $forceArchive
+     * @Route("/download", name="claro_resource_download")
      *
      * @return JsonResponse|BinaryFileResponse
      */
-    public function downloadAction(Request $request, $forceArchive = false)
+    public function downloadAction(Request $request)
     {
         $nodes = $this->decodeIdsString($request, ResourceNode::class);
 
@@ -178,7 +183,7 @@ class ResourceController
             throw new AccessDeniedException($collection->getErrorsForDisplay());
         }
 
-        $data = $this->manager->download($nodes, $forceArchive);
+        $data = $this->manager->download($nodes);
 
         $file = $data['file'];
         $fileName = $data['name'];
@@ -201,7 +206,7 @@ class ResourceController
      * Submit access code.
      *
      * @Route("/unlock/{id}", name="claro_resource_unlock", methods={"POST"})
-     * @EXT\ParamConverter("resourceNode", class="ClarolineCoreBundle:Resource\ResourceNode", options={"mapping": {"id": "uuid"}})
+     * @EXT\ParamConverter("resourceNode", class="Claroline\CoreBundle\Entity\Resource\ResourceNode", options={"mapping": {"id": "uuid"}})
      */
     public function unlockAction(ResourceNode $resourceNode, Request $request): JsonResponse
     {
@@ -251,26 +256,10 @@ class ResourceController
     }
 
     /**
-     * @Route("/share/{id}", name="claro_resource_share")
-     * @EXT\ParamConverter("resourceNode", class="ClarolineCoreBundle:Resource\ResourceNode", options={"mapping": {"id": "uuid"}})
-     */
-    public function shareAction(ResourceNode $resourceNode): Response
-    {
-        return new Response(
-            $this->templating->render('@ClarolineApp/share.html.twig', [
-                'url' => $this->routing->resourceUrl($resourceNode),
-                'title' => $resourceNode->getName(),
-                'thumbnail' => $resourceNode->getThumbnail(),
-                'description' => $resourceNode->getDescription(),
-            ])
-        );
-    }
-
-    /**
      * Executes an action on one resource.
      *
      * @Route("/{action}/{id}", name="claro_resource_action")
-     * @EXT\ParamConverter("resourceNode", class="ClarolineCoreBundle:Resource\ResourceNode", options={"mapping": {"id": "uuid"}})
+     * @EXT\ParamConverter("resourceNode", class="Claroline\CoreBundle\Entity\Resource\ResourceNode", options={"mapping": {"id": "uuid"}})
      */
     public function executeAction(string $action, ResourceNode $resourceNode, Request $request): Response
     {

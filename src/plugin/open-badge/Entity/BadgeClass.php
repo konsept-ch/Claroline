@@ -111,13 +111,6 @@ class BadgeClass
     private $hideRecipients = false;
 
     /**
-     * @ORM\OneToMany(targetEntity="Claroline\OpenBadgeBundle\Entity\Assertion", mappedBy="badge")
-     *
-     * @var Assertion[]|ArrayCollection
-     */
-    private $assertions;
-
-    /**
      * @ORM\Column(type="datetime")
      * @Gedmo\Timestampable(on="update")
      *
@@ -141,6 +134,15 @@ class BadgeClass
      * @var bool
      */
     private $issuingPeer = false;
+
+    /**
+     * Notifies users when they are granted the badge.
+     *
+     * @ORM\Column(type="boolean")
+     *
+     * @var bool
+     */
+    private $notifyGrant = false;
 
     public function __construct()
     {
@@ -335,6 +337,16 @@ class BadgeClass
         return $this->issuingPeer;
     }
 
+    public function setNotifyGrant(bool $notifyGrant)
+    {
+        $this->notifyGrant = $notifyGrant;
+    }
+
+    public function getNotifyGrant(): bool
+    {
+        return $this->notifyGrant;
+    }
+
     /**
      * @return Rule[]|ArrayCollection
      */
@@ -356,28 +368,6 @@ class BadgeClass
         if ($this->rules->contains($rule)) {
             $this->rules->removeElement($rule);
             $rule->setBadge(null);
-        }
-    }
-
-    /**
-     * @return Assertion[]|ArrayCollection
-     */
-    public function getAssertions()
-    {
-        return $this->assertions;
-    }
-
-    public function addAssertion(Assertion $assertion)
-    {
-        if (!$this->assertions->contains($assertion)) {
-            $this->assertions->add($assertion);
-        }
-    }
-
-    public function removeAssertion(Assertion $assertion)
-    {
-        if ($this->assertions->contains($assertion)) {
-            $this->assertions->removeElement($assertion);
         }
     }
 

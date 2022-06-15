@@ -19,7 +19,7 @@ import {selectors as toolSelectors} from '#/main/core/tool/store'
 
 import {actions, selectors} from '#/main/core/administration/community/organization/store'
 import {GroupList} from '#/main/core/administration/community/group/components/group-list'
-import {UserList} from '#/main/core/administration/community/user/components/user-list'
+import {UserList} from '#/main/core/user/components/list'
 import workspacesSource from '#/main/core/data/sources/workspaces'
 
 const OrganizationForm = props =>
@@ -89,23 +89,31 @@ const OrganizationForm = props =>
         title: trans('access_restrictions'),
         fields: [
           {
-            name: 'limit.enabled',
+            name: 'restrictions.public',
             type: 'boolean',
-            label: trans('access_max_users'),
-            calculated: (organization) => get(organization, 'limit.enabled') || get(organization, 'limit.users', -1) > -1,
+            label: trans('make_organization_public', {}, 'user'),
+            help: [
+              trans('make_organization_public_help1', {}, 'user'),
+              trans('make_organization_public_help2', {}, 'user')
+            ]
+          }, {
+            name: 'restrictions.maxUsers',
+            type: 'boolean',
+            label: trans('restrict_users_count'),
+            calculated: (organization) => get(organization, 'restrictions.maxUsers') || get(organization, 'restrictions.users', -1) > -1,
             onChange: (enabled) => {
               if (!enabled) {
-                props.updateProp('limit.users', -1)
+                props.updateProp('restrictions.users', -1)
               } else {
-                props.updateProp('limit.users', null)
+                props.updateProp('restrictions.users', null)
               }
             },
             linked: [
               {
-                name: 'limit.users',
+                name: 'restrictions.users',
                 type: 'number',
-                label: trans('maxUsers'),
-                displayed: get(props.organization, 'limit.enabled') || get(props.organization, 'limit.users', -1) > -1
+                label: trans('users_count'),
+                displayed: (organization) => get(organization, 'restrictions.maxUsers') || get(organization, 'restrictions.users', -1) > -1
               }
             ]
           }
@@ -120,7 +128,7 @@ const OrganizationForm = props =>
         className="embedded-list-section"
         icon="fa fa-fw fa-user-cog"
         title={trans('managers')}
-        disabled={props.new}
+        disabled={!props.organization.id || props.new}
         actions={[
           {
             name: 'add',
@@ -138,23 +146,20 @@ const OrganizationForm = props =>
           }
         ]}
       >
-        <ListData
-          name={`${baseSelectors.STORE_NAME}.organizations.current.managers`}
-          fetch={{
-            url: ['apiv2_organization_list_managers', {id: props.organization.id}],
-            autoload: props.organization.id && !props.new
-          }}
-          primaryAction={(row) => ({
-            type: LINK_BUTTON,
-            target: `${props.path}/users/form/${row.id}`,
-            label: trans('edit', {}, 'actions')
-          })}
-          delete={{
-            url: ['apiv2_organization_remove_managers', {id: props.organization.id}]
-          }}
-          definition={UserList.definition}
-          card={UserList.card}
-        />
+        {props.organization.id && !props.new &&
+          <UserList
+            name={`${baseSelectors.STORE_NAME}.organizations.current.managers`}
+            url={['apiv2_organization_list_managers', {id: props.organization.id}]}
+            primaryAction={(row) => ({
+              type: LINK_BUTTON,
+              target: `${props.path}/users/form/${row.id}`,
+              label: trans('edit', {}, 'actions')
+            })}
+            delete={{
+              url: ['apiv2_organization_remove_managers', {id: props.organization.id}]
+            }}
+          />
+        }
       </FormSection>
 
       <FormSection
@@ -198,7 +203,7 @@ const OrganizationForm = props =>
         className="embedded-list-section"
         icon="fa fa-fw fa-user"
         title={trans('users')}
-        disabled={props.new}
+        disabled={!props.organization.id || props.new}
         actions={[
           {
             name: 'add',
@@ -216,23 +221,20 @@ const OrganizationForm = props =>
           }
         ]}
       >
-        <ListData
-          name={`${baseSelectors.STORE_NAME}.organizations.current.users`}
-          fetch={{
-            url: ['apiv2_organization_list_users', {id: props.organization.id}],
-            autoload: props.organization.id && !props.new
-          }}
-          primaryAction={(row) => ({
-            type: LINK_BUTTON,
-            target: `${props.path}/users/form/${row.id}`,
-            label: trans('edit', {}, 'actions')
-          })}
-          delete={{
-            url: ['apiv2_organization_remove_users', {id: props.organization.id}]
-          }}
-          definition={UserList.definition}
-          card={UserList.card}
-        />
+        {props.organization.id && !props.new &&
+          <UserList
+            name={`${baseSelectors.STORE_NAME}.organizations.current.users`}
+            url={['apiv2_organization_list_users', {id: props.organization.id}]}
+            primaryAction={(row) => ({
+              type: LINK_BUTTON,
+              target: `${props.path}/users/form/${row.id}`,
+              label: trans('edit', {}, 'actions')
+            })}
+            delete={{
+              url: ['apiv2_organization_remove_users', {id: props.organization.id}]
+            }}
+          />
+        }
       </FormSection>
 
       <FormSection
@@ -282,11 +284,7 @@ OrganizationForm.propTypes = {
   path: T.string.isRequired,
   new: T.bool.isRequired,
   organization: T.shape({
-    id: T.string,
-    limit: T.shape({
-      enable: T.boolean,
-      users: T.number
-    })
+    id: T.string
   }).isRequired,
   addUsers: T.func.isRequired,
   addGroups: T.func.isRequired,

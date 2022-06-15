@@ -98,7 +98,7 @@ const UserMenu = props =>
     }
 
     {props.authenticated &&
-      <div className="app-current-user-tools list-group">
+      <div className="list-group">
         <Button
           type={LINK_BUTTON}
           className="list-group-item"
@@ -165,7 +165,6 @@ UserMenu.propTypes = {
     name: T.string,
     username: T.string,
     email: T.string,
-    publicUrl: T.string,
     picture: T.shape({
       url: T.string.isRequired
     }),
@@ -249,7 +248,6 @@ HeaderUser.propTypes = {
     name: T.string,
     username: T.string,
     email: T.string,
-    publicUrl: T.string,
     picture: T.shape({
       url: T.string.isRequired
     }),

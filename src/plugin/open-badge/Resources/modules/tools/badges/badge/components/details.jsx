@@ -90,8 +90,7 @@ const BadgeDetailsComponent = (props) => {
                 name: 'user',
                 type: 'user',
                 label: trans('user'),
-                displayed: true,
-                sortable: false
+                displayed: true
               }, {
                 name: 'user.email',
                 type: 'email',
@@ -107,6 +106,13 @@ const BadgeDetailsComponent = (props) => {
                 options: {
                   time: true
                 }
+              }, {
+                name: 'userDisabled',
+                label: trans('user_disabled'),
+                type: 'boolean',
+                displayable: false,
+                sortable: false,
+                filterable: true
               }
             ]}
             actions={(rows) => [

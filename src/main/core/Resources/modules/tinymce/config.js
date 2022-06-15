@@ -44,9 +44,9 @@ const config = getExternalPlugins().then(extPlugins => {
     autoresize_min_height: 160,
     autoresize_max_height: 500,
 
-    //allow to fetch tinymce plugins
+    // allow to fetch tinymce plugins
     baseURL: asset('packages/tinymce'),
-    relative_urls : false,
+    relative_urls: false,
 
     // plugin : paste
     paste_data_images: true,
