@@ -605,7 +605,7 @@ class SessionManager
                 'session_end' => $session->getEndDate()->format('d/m/Y'),
                 'first_name' => $user->getFirstName(),
                 'last_name' => $user->getLastName(),
-                'username' => $user->getUsername()
+                'username' => $user->getUsername(),
             ];
 
             $subject = $this->templateManager->getTemplate('training_session_unregistred', $placeholders, $locale, 'title');
