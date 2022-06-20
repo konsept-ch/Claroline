@@ -10,7 +10,7 @@ import {ContentPlaceholder} from '#/main/app/content/components/placeholder'
 import {OrganizationCard} from '#/main/core/user/data/components/organization-card'
 import {Organization as OrganizationTypes} from '#/main/core/user/prop-types'
 import {MODAL_ORGANIZATIONS} from '#/main/core/modals/organizations'
-import {OrganizationChoice} from '#/main/core/data/types/organization/components/choice'
+import {OrganizationChoice} from '#/main/core/data/types/organization/containers/choice'
 
 const OrganizationButton = props =>
   <Button
@@ -21,7 +21,7 @@ const OrganizationButton = props =>
     label={trans('add_organization')}
     disabled={props.disabled}
     modal={[MODAL_ORGANIZATIONS, {
-      url: ['apiv2_organization_list'],
+      url: [props.url],
       title: props.title,
       selectAction: (selected) => ({
         type: CALLBACK_BUTTON,
@@ -35,7 +35,12 @@ OrganizationButton.propTypes = {
   title: T.string,
   onChange: T.func.isRequired,
   size: T.string,
-  disabled: T.bool
+  disabled: T.bool,
+  url: T.string
+}
+
+OrganizationButton.defaultProps = {
+  url: 'apiv2_organization_list'
 }
 
 const OrganizationInput = props => {
@@ -71,6 +76,7 @@ const OrganizationInput = props => {
           disabled={props.disabled}
           size={props.size}
           onChange={props.onChange}
+          url={props.url}
         />
       </Fragment>
     )
@@ -87,6 +93,7 @@ const OrganizationInput = props => {
         disabled={props.disabled}
         size={props.size}
         onChange={props.onChange}
+        url={props.url}
       />
     </ContentPlaceholder>
   )
@@ -94,6 +101,7 @@ const OrganizationInput = props => {
 
 implementPropTypes(OrganizationInput, DataInputTypes, {
   value: T.shape(OrganizationTypes.propTypes),
+  url: T.string,
   picker: T.shape({
     title: T.string
   }),
@@ -102,6 +110,10 @@ implementPropTypes(OrganizationInput, DataInputTypes, {
   value: null,
   mode: 'picker'
 })
+
+OrganizationInput.defaultProps = {
+  url: 'apiv2_organization_list'
+}
 
 export {
   OrganizationInput

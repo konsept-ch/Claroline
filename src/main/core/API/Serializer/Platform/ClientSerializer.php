@@ -135,7 +135,10 @@ class ClientSerializer
             ],
             'privacy' => $this->config->getParameter('privacy'),
             'pricing' => $this->config->getParameter('pricing'),
-            'plugins' => $this->pluginManager->getEnabled(),
+            'plugins' => $this->pluginManager->getEnabled(true),
+            'quotas' => [
+                'enabled' => $this->config->getParameter('quotas.enabled'),
+            ],
         ];
 
         $event = new GenericDataEvent();
