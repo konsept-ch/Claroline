@@ -93,12 +93,12 @@ class SessionCancellation
         $this->user = $user;
     }
 
-    public function getInscriptionUuid(): String
+    public function getInscriptionUuid(): string
     {
         return $this->inscriptionUuid;
     }
 
-    public function setInscriptionUuid(String $inscriptionUuid)
+    public function setInscriptionUuid(string $inscriptionUuid)
     {
         $this->inscriptionUuid = $inscriptionUuid;
     }
