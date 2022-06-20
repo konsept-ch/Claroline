@@ -52,6 +52,8 @@ class SessionManager
     private $crud;
     /** @var PlatformManager */
     private $platformManager;
+    /** @var MailManager */
+    private $mailManager;
     /** @var RoleManager */
     private $roleManager;
     /** @var RoutingHelper */
@@ -78,6 +80,7 @@ class SessionManager
         UrlGeneratorInterface $router,
         Crud $crud,
         PlatformManager $platformManager,
+        MailManager $mailManager,
         RoleManager $roleManager,
         RoutingHelper $routingHelper,
         TemplateManager $templateManager,
@@ -92,6 +95,7 @@ class SessionManager
         $this->router = $router;
         $this->crud = $crud;
         $this->platformManager = $platformManager;
+        $this->mailManager = $mailManager;
         $this->roleManager = $roleManager;
         $this->routingHelper = $routingHelper;
         $this->templateManager = $templateManager;
@@ -277,6 +281,8 @@ class SessionManager
         }
 
         $this->om->flush();
+
+        $this->sendSessionUnregistration($sessionUsers);
     }
 
     /**
@@ -600,6 +606,36 @@ class SessionManager
                 [$user],
                 $session->getCreator()
             ), MessageEvents::MESSAGE_SENDING);
+        }
+    }
+
+    /**
+     * @param SessionUser[] $sessionUsers
+     */
+    public function sendSessionUnregistration(array $sessionUsers)
+    {
+        foreach ($sessionUsers as $sessionUser) {
+            $user = $sessionUser->getUser();
+            $locale = $user->getLocale();
+            $session = $sessionUser->getSession();
+            $course = $sessionUser->getSession()->getCourse();
+            $placeholders = [
+                'course_name' => $course->getName(),
+                'course_code' => $course->getCode(),
+                'course_description' => $course->getDescription(),
+                'session_name' => $session->getName(),
+                'session_description' => $session->getDescription(),
+                'session_start' => $session->getStartDate()->format('d/m/Y'),
+                'session_end' => $session->getEndDate()->format('d/m/Y'),
+                'first_name' => $user->getFirstName(),
+                'last_name' => $user->getLastName(),
+                'username' => $user->getUsername(),
+            ];
+
+            $subject = $this->templateManager->getTemplate('training_session_unregistred', $placeholders, $locale, 'title');
+            $body = $this->templateManager->getTemplate('training_session_unregistred', $placeholders, $locale);
+
+            $this->mailManager->send($subject, $body, [$user], null, [], true);
         }
     }
 
