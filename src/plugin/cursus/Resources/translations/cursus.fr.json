@@ -101,6 +101,8 @@
     "no_course": "Aucune formation",
     "session_info": "Informations sur la session",
     "download_presence": "Télécharger l'attestation de présence (.pdf)",
+    "cancellations": "Annulations",
+    "cancellation_date": "Date d'annulation",
     "show_catalog": "Voir le catalogue de formations",
     "registration_auto": "Tous les participants de la session sont automatiquement insrit à cette séance.",
     "session_about": "A propos de la session",
@@ -115,8 +117,6 @@
     "course_registration_pending": "Vous êtes en liste d'attente pour cette formation.",
     "course_registration_pending_help": "Veuillez patienter le temps qu'un gestionnaire vous inscrive à une session.",
     "hide_sessions": "Cacher les sessions aux utilisateurs",
-    "cancellations": "Annulations",
-    "cancellation_date": "Date d'annulation",
 
     "new_quota": "Nouveau quota",
     "add_quota": "Ajouter quota",

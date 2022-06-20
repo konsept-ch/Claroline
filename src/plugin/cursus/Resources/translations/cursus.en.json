@@ -101,6 +101,8 @@
     "no_course": "No training",
     "session_info": "Session information",
     "download_presence": "Download the certificate of presence (.pdf)",
+    "cancellations": "Cancellations",
+    "cancellation_date": "Cancellation date",
     "show_catalog": "Show training catalog",
     "registration_auto": "All session participants are automatically registered for this event.",
     "session_about": "About session",
@@ -110,8 +112,6 @@
     "course_registration_pending": "You are on the pending list for this training.",
     "course_registration_pending_help": "Please wait till a manager register you to a session.",
     "hide_sessions": "Hide sessions to users",
-    "cancellations": "Cancellations",
-    "cancellation_date": "Cancellation date",
 
     "new_quota": "New quota",
     "add_quota": "Add quota",

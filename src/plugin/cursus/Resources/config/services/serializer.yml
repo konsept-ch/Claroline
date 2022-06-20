@@ -58,14 +58,14 @@ services:
             - '@Claroline\CursusBundle\Serializer\SessionSerializer'
             - '@translator'
 
-    Claroline\CursusBundle\Serializer\Registration\SessionCancellationSerializer:
-        arguments:
-            - '@Claroline\CoreBundle\API\Serializer\User\UserSerializer'
-            - '@Claroline\CursusBundle\Serializer\SessionSerializer'
-
     Claroline\CursusBundle\Serializer\Registration\SessionGroupSerializer:
         arguments:
             - '@Claroline\CoreBundle\API\Serializer\User\GroupSerializer'
+            - '@Claroline\CursusBundle\Serializer\SessionSerializer'
+
+    Claroline\CursusBundle\Serializer\Registration\SessionCancellationSerializer:
+        arguments:
+            - '@Claroline\CoreBundle\API\Serializer\User\UserSerializer'
             - '@Claroline\CursusBundle\Serializer\SessionSerializer'
 
     Claroline\CursusBundle\Serializer\Registration\EventUserSerializer:
