@@ -181,10 +181,6 @@ class SessionManager
         $course = $session->getCourse();
         $registrationDate = new \DateTime();
 
-        $managers = array_reduce($course->getOrganizations()->toArray(), function ($acc, $organization) {
-            return array_merge($acc, $organization->getAdministrators()->toArray());
-        }, []);
-
         $this->om->startFlushSuite();
 
         foreach ($users as $user) {
@@ -216,6 +212,7 @@ class SessionManager
 
                 $this->eventDispatcher->dispatch(new LogSessionUserRegistrationEvent($sessionUser), 'log');
 
+                $managers = $user->getMainOrganization()->getAdministrators()->toArray();
                 $locale = $this->localeManager->getLocale($user);
                 $placeholders = [
                     'session_name' => $sessionUser->getSession()->getName(),
@@ -226,7 +223,7 @@ class SessionManager
                 ];
                 $subject = $this->templateManager->getTemplate('training_quota_subscription_created', $placeholders, $locale, 'title');
                 $body = $this->templateManager->getTemplate('training_quota_subscription_created', $placeholders, $locale);
-                $this->mailManager->send($subject, $body, $managers);
+                $this->mailManager->send($subject, $body, $managers, null, [], true);
 
                 $results[] = $sessionUser;
             }

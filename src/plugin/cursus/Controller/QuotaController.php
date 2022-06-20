@@ -20,6 +20,7 @@ use Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler;
 use Claroline\CoreBundle\Manager\LocaleManager;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
 use Claroline\CursusBundle\Entity\Quota;
+use Claroline\CursusBundle\Entity\Registration\AbstractRegistration;
 use Claroline\CursusBundle\Entity\Registration\SessionUser;
 use Claroline\CursusBundle\Event\Log\LogSubscriptionSetStatusEvent;
 use Claroline\CursusBundle\Manager\QuotaManager;
@@ -104,19 +105,14 @@ class QuotaController extends AbstractCrudController
 
             // filter by organization
             if ($user instanceof User) {
-                $organizations = $user->getOrganizations();
+                $userOrganizations = $user->getOrganizations();
             } else {
-                $organizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
+                $userOrganizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
             }
 
-            $filters['organizations'] = array_unique(array_reduce($organizations, function (array $output, Organization $organization) {
-                $output[] = $organization->getUuid();
-                foreach ($organization->getChildren() as $child) {
-                    $output[] = $child->getUuid();
-                }
-
-                return $output;
-            }, []));
+            $organizations = [];
+            $this->getOrganizationIds($userOrganizations, $organizations);
+            $filters['organizations'] = $organizations;
         }
 
         return $filters;
@@ -202,6 +198,7 @@ class QuotaController extends AbstractCrudController
 
         $filters = $request->query->get('filters', []);
         $filters['organization'] = $quota->getOrganization();
+        $filters['type'] = AbstractRegistration::LEARNER;
 
         if (!$quota->useQuotas()) {
             $filters['ignored_status'] = SessionUser::STATUS_MANAGED;
@@ -256,6 +253,7 @@ class QuotaController extends AbstractCrudController
         $query = $request->query->all();
         $query['hiddenFilters'] = [
             'organization' => $organization,
+            'type' => AbstractRegistration::LEARNER,
         ];
 
         if (!$quota->useQuotas()) {
@@ -312,6 +310,8 @@ class QuotaController extends AbstractCrudController
             return new JsonResponse('The status don\'t have been updated.', 500);
         }
 
+        $sessionUser->setRemark($remark);
+
         $oldStatus = $sessionUser->getStatus();
         if ($oldStatus != $status) {
             $this->eventDispatcher->dispatch(new LogSubscriptionSetStatusEvent($sessionUser), 'log');
@@ -341,7 +341,6 @@ class QuotaController extends AbstractCrudController
                     break;
             }
 
-            $sessionUser->setRemark($remark);
             $sessionUser->setStatus($status);
             $this->om->persist($sessionUser);
             $this->om->flush();

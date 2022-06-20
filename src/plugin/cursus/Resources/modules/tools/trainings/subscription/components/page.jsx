@@ -5,6 +5,7 @@ import get from 'lodash/get'
 
 import {LINK_BUTTON, DOWNLOAD_BUTTON} from '#/main/app/buttons'
 import {trans} from '#/main/app/intl/translation'
+import {ContentCounter} from '#/main/app/content/components/counter'
 import {ContentLoader} from '#/main/app/content/components/loader'
 import {PageFull} from '#/main/app/page/components/full'
 import {getToolBreadcrumb, showToolBreadcrumb} from '#/main/core/tool/utils'
@@ -71,51 +72,45 @@ const SubscriptionPage = (props) => {
     >
       <Fragment>
         <div className="row">
-          <div className="analytics-card">
-            <span className="fa fa-chalkboard-teacher label-info" />
-            <h1 className="h3">
-              <small>{trans('subscription_total', {}, 'cursus')}</small>
-              {props.statistics.total}
-            </h1>
-          </div>
-          <div className="analytics-card">
-            <span className="fa fa-pause label-default" />
-            <h1 className="h3">
-              <small>{trans('subscription_pending', {}, 'cursus')}</small>
-              {props.statistics.pending}
-            </h1>
-          </div>
-          <div className="analytics-card">
-            <span className="fa fa-times label-danger" />
-            <h1 className="h3">
-              <small>{trans('subscription_refused', {}, 'cursus')}</small>
-              {props.statistics.refused}
-            </h1>
-          </div>
-          <div className="analytics-card">
-            <span className="fa fa-check label-warning" />
-            <h1 className="h3">
-              <small>{trans('subscription_validated', {}, 'cursus')}</small>
-              {props.statistics.validated}
-            </h1>
-          </div>
+          <ContentCounter
+            icon="fa fa-chalkboard-teacher"
+            label={trans('subscription_total', {}, 'cursus')}
+            color="rgb(51, 87, 104)"
+            value={props.statistics.total}
+          />
+          <ContentCounter
+            icon="fa fa-pause"
+            label={trans('subscription_pending', {}, 'cursus')}
+            color="rgb(119, 119, 119)"
+            value={props.statistics.pending}
+          />
+          <ContentCounter
+            icon="fa fa-times"
+            label={trans('subscription_refused', {}, 'cursus')}
+            color="rgb(191, 4, 4)"
+            value={props.statistics.refused}
+          />
+          <ContentCounter
+            icon="fa fa-check"
+            label={trans('subscription_validated', {}, 'cursus')}
+            color="rgb(237, 158, 47)"
+            value={props.statistics.validated}
+          />
           {props.quota.useQuotas && props.statistics.calculated != undefined &&
-            <div className="analytics-card">
-              <span className="fa fa-check-double label-success" />
-              <h1 className="h3">
-                <small>{trans('subscription_managed', {}, 'cursus')}</small>
-                {props.statistics.managed}
-              </h1>
-            </div>
+            <ContentCounter
+              icon="fa fa-check-double"
+              label={trans('subscription_managed', {}, 'cursus')}
+              color="rgb(79, 115, 2)"
+              value={props.statistics.pending}
+            />
           }
           {props.quota.useQuotas && props.statistics.calculated != undefined &&
-            <div className="analytics-card">
-              <span className="fa fa-chart-pie label-primary" />
-              <h1 className="h3">
-                <small>{trans('subscription_quota', {}, 'cursus')}</small>
-                {props.statistics.calculated.toFixed(2)} / {get(props.quota, 'threshold')} 
-              </h1>
-            </div>
+            <ContentCounter
+              icon="fa fa-chart-pie"
+              label={trans('subscription_quota', {}, 'cursus')}
+              color="rgb(51, 122, 183)"
+              value={`${props.statistics.calculated.toFixed(2)} / ${get(props.quota, 'threshold')}`}
+            />
           }
         </div>
 

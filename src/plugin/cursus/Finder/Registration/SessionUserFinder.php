@@ -29,7 +29,6 @@ class SessionUserFinder extends AbstractFinder
         $qb->join('s.course', 'c');
 
         if (!array_key_exists('userDisabled', $searches) && !array_key_exists('user', $searches)) {
-            // don't show registrations of disabled/deleted users
             $qb->andWhere('u.isEnabled = TRUE');
             $qb->andWhere('u.isRemoved = FALSE');
         }
@@ -48,6 +47,11 @@ class SessionUserFinder extends AbstractFinder
 
                 case 'ignored_status':
                     $qb->andWhere("obj.status != :{$filterName}");
+                    $qb->setParameter($filterName, $filterValue);
+                    break;
+
+                case 'type':
+                    $qb->andWhere("(obj.type = :{$filterName})");
                     $qb->setParameter($filterName, $filterValue);
                     break;
 
