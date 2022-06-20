@@ -84,6 +84,20 @@ plugin:
               - session_end
               - session_trainers
 
+        - name: training_session_unregistred
+          type: email
+          placeholders:
+              - course_name
+              - course_code
+              - course_description
+              - session_name
+              - session_description
+              - session_start
+              - session_end
+              - first_name
+              - last_name
+              - username
+
         - name: training_session_confirmation
           type: email
           placeholders:
