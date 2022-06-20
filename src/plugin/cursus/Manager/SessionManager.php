@@ -52,8 +52,6 @@ class SessionManager
     private $crud;
     /** @var PlatformManager */
     private $platformManager;
-    /** @var MailManager */
-    private $mailManager;
     /** @var RoleManager */
     private $roleManager;
     /** @var RoutingHelper */
@@ -80,7 +78,6 @@ class SessionManager
         UrlGeneratorInterface $router,
         Crud $crud,
         PlatformManager $platformManager,
-        MailManager $mailManager,
         RoleManager $roleManager,
         RoutingHelper $routingHelper,
         TemplateManager $templateManager,
@@ -95,7 +92,6 @@ class SessionManager
         $this->router = $router;
         $this->crud = $crud;
         $this->platformManager = $platformManager;
-        $this->mailManager = $mailManager;
         $this->roleManager = $roleManager;
         $this->routingHelper = $routingHelper;
         $this->templateManager = $templateManager;
