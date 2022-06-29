@@ -606,7 +606,7 @@ class SessionManager
     /**
      * @param SessionUser[] $sessionUsers
      */
-    private function checkUsersRegistration(Session $session, array $sessionUsers)
+    public function checkUsersRegistration(Session $session, array $sessionUsers)
     {
         $fullyRegistered = [
             AbstractRegistration::TUTOR => [],
