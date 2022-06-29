@@ -337,7 +337,9 @@ class QuotaController extends AbstractCrudController
                     } else {
                         $this->quotaManager->sendRefusedStatusMail($sessionUser);
                     }
-                    //$this->sessionManager->removeUsers($sessionUser->getSession(), [$sessionUser]);
+                    $sessionUser->setValidated(false);
+                    $sessionUser->setConfirmed(false);
+                    $this->sessionManager->checkUsersRegistration($sessionUser->getSession(), [$sessionUser]);
                     break;
             }
 

@@ -83,8 +83,8 @@ class SessionUserFinder extends AbstractFinder
                     break;
 
                 case 'organizations':
-                    $qb->join('u.organizations', 'o');
-                    $qb->andWhere("o.uuid IN (:{$filterName})");
+                    $qb->leftJoin('u.userOrganizationReferences', 'oref');
+                    $qb->andWhere("oref.organization IN (:{$filterName})");
                     $qb->setParameter($filterName, $filterValue);
                     break;
 
