@@ -52,7 +52,7 @@ class SessionCancellation
     /**
      * @ORM\Column(name="inscription_uuid", type="string", length=36)
      *
-     * @var String
+     * @var string
      */
     protected $inscriptionUuid;
 
