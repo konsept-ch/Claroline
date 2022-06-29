@@ -608,7 +608,6 @@ class SessionManager
     /**
      * @param SessionUser[] $sessionUsers
      */
-
     public function sendSessionUnregistration(array $sessionUsers)
     {
         foreach ($sessionUsers as $sessionUser) {
