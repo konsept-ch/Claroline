@@ -104,9 +104,12 @@
     "cancellations": "Annulations",
     "cancellation_date": "Date d'annulation",
     "show_catalog": "Voir le catalogue de formations",
+    "registation_requirements": "Informations manquantes",
+    "apply_registation_requirements": "Veuillez compléter votre profil avant de procéder à l'inscription.",
     "registration_auto": "Tous les participants de la session sont automatiquement insrit à cette séance.",
+    "session_days": "Jours",
+    "session_hours": "Heures",
     "session_about": "A propos de la session",
-
     "opening_session": "Session affichée",
     "opening_session_none": "Aucune (Seule les informations relatives à la formation sont affichées)",
     "opening_session_first_available": "La première session en cours ou la prochaine disponible",

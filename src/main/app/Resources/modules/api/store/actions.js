@@ -77,7 +77,7 @@ actions.receiveResponse = (apiRequest, status, statusText) => dispatch => {
 }
 
 // file actions
-actions.uploadFile = (file, uploadUrl = ['apiv2_file_upload'], onSuccess = () => {}) => {
+actions.uploadFile = (file, uploadUrl = ['apiv2_file_upload']) => {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('fileName', file.name)
@@ -94,8 +94,7 @@ actions.uploadFile = (file, uploadUrl = ['apiv2_file_upload'], onSuccess = () =>
           //no Content type for automatic detection of boundaries.
           'X-Requested-With': 'XMLHttpRequest'
         })
-      },
-      success: (response) => Array.isArray(response) ? onSuccess(response[0]) : onSuccess(response)
+      }
     }
   })
 }

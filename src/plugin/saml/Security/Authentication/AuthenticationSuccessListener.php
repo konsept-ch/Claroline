@@ -52,7 +52,12 @@ class AuthenticationSuccessListener extends BaseAuthenticationSuccessListener
         $user = $token->getUser();
 
         // apply IDP config
-        $idpEntityId = $request->getSession()->get('authIdp');
+        $sessions = $request->getSession()->get('samlsso')->getSsoSessions();
+        if (empty($sessions)) {
+            return parent::onAuthenticationSuccess($request, $token);
+        }
+        $session = $sessions[count($sessions) - 1];
+        $idpEntityId = $session->getIdpEntityId();
 
         // register user to the Organizations and Groups defined on the IDP
         if ($idpEntityId) {
@@ -61,7 +66,7 @@ class AuthenticationSuccessListener extends BaseAuthenticationSuccessListener
 
             // attach user to the defined organization
             $organization = $this->idpManager->getOrganization($idpEntityId, $user->getEmail(), $attributes);
-            if ($organization && (empty($user->getMainOrganization()) || $organization->getId() !== $user->getMainOrganization()->getId())) {
+            if ($organization && (empty($user->getMainOrganization()) || $user->getMainOrganization()->isDefault())) {
                 // reset organization if it has changed or has not been set (eg. user has just been created)
                 $this->crud->replace($user, 'mainOrganization', $organization, [Crud::THROW_EXCEPTION, Crud::NO_PERMISSIONS, Options::NO_EMAIL]);
             }
