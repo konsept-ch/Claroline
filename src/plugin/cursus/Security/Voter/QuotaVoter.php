@@ -12,6 +12,7 @@
 namespace Claroline\CursusBundle\Security\Voter;
 
 use Claroline\CoreBundle\Security\Voter\AbstractVoter;
+use Claroline\CursusBundle\Entity\Quota;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
