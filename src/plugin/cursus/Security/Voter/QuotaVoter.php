@@ -36,4 +36,9 @@ class QuotaVoter extends AbstractVoter
 
         return VoterInterface::ACCESS_DENIED;
     }
+
+    public function getSupportedActions()
+    {
+        return [self::MANAGE_QUOTAS, self::VALIDATE_SUBSCRIPTIONS];
+    }
 }
