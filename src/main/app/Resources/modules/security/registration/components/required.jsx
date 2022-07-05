@@ -45,6 +45,7 @@ const Required = () =>
             label: trans('username'),
             required: true,
             displayed: param('community.username'),
+            help: trans('username_help'),
             options: {
               unique: {
                 check: ['apiv2_user_exist', {field: 'username'}]
