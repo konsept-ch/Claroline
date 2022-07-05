@@ -107,6 +107,15 @@ const UserMenu = props =>
           onClick={props.closeMenu}
         />
 
+        <Button
+          type={LINK_BUTTON}
+          className="list-group-item"
+          icon="fa fa-fw fa-graduation-cap"
+          label={trans('my_courses', {}, 'cursus')}
+          target="/home/mes-formations"
+          onClick={props.closeMenu}
+        />
+
         {props.administration &&
           <Button
             type={LINK_BUTTON}
