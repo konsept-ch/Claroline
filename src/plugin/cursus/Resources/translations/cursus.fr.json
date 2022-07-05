@@ -69,7 +69,7 @@
     "show_pending_list": "Voir la liste d'attente",
     "not_limited": "Non limité",
     "session_full": "La session est complète.",
-    "session_full_help": "Toutes les nouvelles inscriptions seront automatiquement ajoutées en liste d'attente.",
+    "session_full_help": "Nous vous prions de bien vouloir sélectionner une autre session.",
     "session_registration_tutor": "Vous êtes formateur pour cette session.",
     "session_registration": "Vous êtes inscrit à cette session.",
     "session_registration_pending": "Vous êtes en liste d'attente pour cette session.",
