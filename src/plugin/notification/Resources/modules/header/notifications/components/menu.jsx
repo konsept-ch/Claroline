@@ -110,39 +110,42 @@ class NotificationsMenu extends Component {
       return null
     }
 
-    return (
-      <Button
-        id="app-notifications"
-        type={MENU_BUTTON}
-        className="app-header-btn app-header-item"
-        icon={!this.props.loaded && this.state.opened ?
-          'fa fa-fw fa-spinner fa-spin' :
-          'fa fa-fw fa-bell'
-        }
-        label={trans('notifications', {}, 'notification')}
-        tooltip="bottom"
-        opened={this.props.loaded && this.state.opened}
-        onToggle={(opened) => {
-          if (opened) {
-            this.props.getNotifications()
-          }
+    
+    // Remove notif button as per custom client request
+    return null
+    // return (
+    //   <Button
+    //     id="app-notifications"
+    //     type={MENU_BUTTON}
+    //     className="app-header-btn app-header-item"
+    //     icon={!this.props.loaded && this.state.opened ?
+    //       'fa fa-fw fa-spinner fa-spin' :
+    //       'fa fa-fw fa-bell'
+    //     }
+    //     label={trans('notifications', {}, 'notification')}
+    //     tooltip="bottom"
+    //     opened={this.props.loaded && this.state.opened}
+    //     onToggle={(opened) => {
+    //       if (opened) {
+    //         this.props.getNotifications()
+    //       }
 
-          this.setOpened(opened)
-        }}
-        menu={
-          <NotificationsDropdown
-            count={this.props.count}
-            results={this.props.results}
-            closeMenu={() => this.setOpened(false)}
-          />
-        }
-        subscript={0 !== this.props.count ? {
-          type: 'label',
-          status: 'primary',
-          value: 100 > this.props.count ? this.props.count : '99+'
-        } : undefined}
-      />
-    )
+    //       this.setOpened(opened)
+    //     }}
+    //     menu={
+    //       <NotificationsDropdown
+    //         count={this.props.count}
+    //         results={this.props.results}
+    //         closeMenu={() => this.setOpened(false)}
+    //       />
+    //     }
+    //     subscript={0 !== this.props.count ? {
+    //       type: 'label',
+    //       status: 'primary',
+    //       value: 100 > this.props.count ? this.props.count : '99+'
+    //     } : undefined}
+    //   />
+    // )
   }
 }
 
