@@ -132,7 +132,7 @@ class ValidatorProvider
 
         foreach ($uniqueFields as $dataProp => $entityProp) {
             if (isset($data[$dataProp])) {
-                $entityProp = $entityProp == 'id' ? 'uuid' : $entityProp;
+                $entityProp = 'id' == $entityProp ? 'uuid' : $entityProp;
 
                 $qb = $this->om->createQueryBuilder();
                 $qb
