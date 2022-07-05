@@ -968,6 +968,7 @@
     "user_subscription_notification_for_admin": "subscribed to the workspace %workspace%",
     "user_visit": "Audience/user visits",
     "username": "Username",
+    "username_help": "Accepted characters: uppercase and lowercase letters, numbers, special characters: @-_.]*$",
     "username_already_used": "Username %username% is already used",
     "username_or_email": "Username or email",
     "users": "Users",
