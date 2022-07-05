@@ -993,6 +993,7 @@
     "user_subscription_notification_for_admin": "s'est inscrit dans l'espace d'activités %workspace%",
     "user_visit": "Audience/Visites utilisateurs",
     "username": "Nom d'utilisateur",
+    "username_help": "Caractères acceptés: lettres majuscules et minuscules, chiffres, signes spéciaux: @-_.]*$",
     "username_already_used": "L'identifiant %username% est déjà utilisé",
     "username_or_email": "Nom d'utilisateur ou courriel",
     "users": "Utilisateurs",
