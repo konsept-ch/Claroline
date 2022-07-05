@@ -4,7 +4,7 @@ import isEmpty from 'lodash/isEmpty'
 
 import {trans} from '#/main/app/intl/translation'
 import {Button} from '#/main/app/action/components/button'
-import {LINK_BUTTON, MENU_BUTTON} from '#/main/app/buttons'
+import {LINK_BUTTON} from '#/main/app/buttons'
 import {route as toolRoute} from '#/main/core/tool/routing'
 
 import {NotificationCard} from '#/plugin/notification/components/card'
