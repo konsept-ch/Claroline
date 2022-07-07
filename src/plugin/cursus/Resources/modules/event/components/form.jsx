@@ -141,7 +141,7 @@ const EventForm = (props) =>
         ]
       }, {
         icon: 'fa fa-fw fa-sign-in',
-        title: trans('registration'),
+        title: trans('subscription'),
         fields: [
           {
             name: 'registration.registrationType',
