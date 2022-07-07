@@ -175,6 +175,15 @@ const CourseParticipants = (props) =>
         />
       }
 
+      {hasPermission('register', props.activeSession) &&
+        <ContentCounter
+          icon="fa fa-ban label-danger"
+          label={trans('cancellations', {}, 'cursus')}
+          color="rgb(169, 68, 66)"
+          value={get(props.activeSession, 'participants.cancellations', 0)}
+        />
+      }
+
       <ContentCounter
         icon="fa fa-user-plus"
         label={trans('available_seats', {}, 'cursus')}
@@ -194,12 +203,12 @@ const CourseParticipants = (props) =>
             {
               icon: 'fa fa-fw fa-chalkboard-teacher',
               title: trans('tutors', {}, 'cursus'),
-              path: '/',
-              exact: true
+              path: '/tutors'
             }, {
               icon: 'fa fa-fw fa-user',
               title: trans('users'),
-              path: '/users'
+              path: '/',
+              exact: true
             }, {
               icon: 'fa fa-fw fa-users',
               title: trans('groups'),
@@ -224,8 +233,7 @@ const CourseParticipants = (props) =>
           path={props.path+'/'+props.course.slug+(props.activeSession ? '/'+props.activeSession.id : '')+'/participants'}
           routes={[
             {
-              path: '/',
-              exact: true,
+              path: '/tutors',
               render() {
                 const Tutors = (
                   <CourseUsers
@@ -243,7 +251,8 @@ const CourseParticipants = (props) =>
                 return Tutors
               }
             }, {
-              path: '/users',
+              path: '/',
+              exact: true,
               render() {
                 const Users = (
                   <Fragment>
