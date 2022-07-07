@@ -36,7 +36,7 @@ class SessionRepository extends EntityRepository
         return [
             'tutors' => $this->countTutors($session),
             'learners' => $this->countLearners($session),
-            'pending' => $this->countPending($session)
+            'pending' => $this->countPending($session),
         ];
     }
 
