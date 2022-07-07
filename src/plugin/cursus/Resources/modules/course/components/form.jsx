@@ -139,7 +139,7 @@ const CourseForm = (props) =>
         ]
       }, {
         icon: 'fa fa-fw fa-user-plus',
-        title: trans('registration'),
+        title: trans('subscription'),
         fields: [
           {
             name: 'registration.selfRegistration',

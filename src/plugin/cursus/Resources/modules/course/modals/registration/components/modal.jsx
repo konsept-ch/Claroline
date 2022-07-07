@@ -35,7 +35,7 @@ const RegistrationModal = props => {
     <Modal
       {...omit(props, 'course')}
       icon="fa fa-fw fa-user-plus"
-      title={trans('registration')}
+      title={trans('subscription')}
       subtitle={getInfo(props.course, props.session, 'name')}
       poster={getInfo(props.course, props.session, 'poster.url')}
     >

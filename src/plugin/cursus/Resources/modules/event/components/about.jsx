@@ -64,7 +64,7 @@ const EventAbout = (props) =>
       <div className="panel panel-default">
         <ul className="list-group list-group-values">
           <li className="list-group-item">
-            {trans('registration')}
+            {trans('subscription')}
             <span className="value">
               {constants.REGISTRATION_TYPES[get(props.event, 'registration.registrationType', constants.REGISTRATION_MANUAL)]}
             </span>
