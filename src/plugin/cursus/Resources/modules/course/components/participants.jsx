@@ -175,15 +175,6 @@ const CourseParticipants = (props) =>
         />
       }
 
-      {hasPermission('register', props.activeSession) &&
-        <ContentCounter
-          icon="fa fa-ban label-danger"
-          label={trans('cancellations', {}, 'cursus')}
-          color="rgb(169, 68, 66)"
-          value={get(props.activeSession, 'participants.cancellations', 0)}
-        />
-      }
-
       <ContentCounter
         icon="fa fa-user-plus"
         label={trans('available_seats', {}, 'cursus')}
