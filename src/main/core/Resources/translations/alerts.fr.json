@@ -207,11 +207,11 @@
   },
   "register": {
     "pending": {
-      "title": "Inscription en cours",
+      "title": "Création du compte en cours",
       "message": "Veuillez patienter pendant que nous créons votre compte."
     },
     "success": {
-      "title": "Inscription réussie",
+      "title": "Création du compte réussie",
       "message": "Votre compte a correctement été créé."
     },
     "warning": {

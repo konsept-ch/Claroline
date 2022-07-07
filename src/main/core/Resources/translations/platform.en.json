@@ -699,6 +699,7 @@
     "registered_user_amount": "Number of subscriber(s)",
     "registered_users": "Registered users",
     "registration": "Registration",
+    "registration_modal": "Registration",
     "registration_mail_content_override": "You can redefine the content of the registration email here",
     "registration_mail_validation": "User registration validation",
     "registration_to_workspaces": "Registration to workspaces",
