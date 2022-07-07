@@ -121,6 +121,8 @@
     "course_registration_pending_help": "Veuillez patienter le temps qu'un gestionnaire vous inscrive à une session.",
     "hide_sessions": "Cacher les sessions aux utilisateurs",
 
+    "occupation": "Occupation"
+
     "new_quota": "Nouveau quota",
     "add_quota": "Ajouter quota",
     "quota": "Quota",
