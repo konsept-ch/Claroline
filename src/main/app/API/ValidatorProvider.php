@@ -132,8 +132,9 @@ class ValidatorProvider
 
         foreach ($uniqueFields as $dataProp => $entityProp) {
             if (isset($data[$dataProp])) {
-                $qb = $this->om->createQueryBuilder();
+                $entityProp = 'id' == $entityProp ? 'uuid' : $entityProp;
 
+                $qb = $this->om->createQueryBuilder();
                 $qb
                     ->select('COUNT(DISTINCT o)')
                     ->from($class, 'o')
