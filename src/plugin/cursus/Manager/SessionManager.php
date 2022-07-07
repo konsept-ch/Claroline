@@ -20,6 +20,8 @@ use Claroline\CoreBundle\Event\CatalogEvents\MessageEvents;
 use Claroline\CoreBundle\Event\SendMessageEvent;
 use Claroline\CoreBundle\Library\Normalizer\DateRangeNormalizer;
 use Claroline\CoreBundle\Library\RoutingHelper;
+use Claroline\CoreBundle\Manager\LocaleManager;
+use Claroline\CoreBundle\Manager\MailManager;
 use Claroline\CoreBundle\Manager\RoleManager;
 use Claroline\CoreBundle\Manager\Template\TemplateManager;
 use Claroline\CoreBundle\Manager\Workspace\WorkspaceManager;
@@ -60,6 +62,10 @@ class SessionManager
     private $workspaceManager;
     /** @var EventManager */
     private $sessionEventManager;
+    /** @var MailManager */
+    private $mailManager;
+    /** @var LocaleManager */
+    private $localeManager;
 
     private $sessionRepo;
     private $sessionUserRepo;
@@ -76,7 +82,9 @@ class SessionManager
         RoutingHelper $routingHelper,
         TemplateManager $templateManager,
         WorkspaceManager $workspaceManager,
-        EventManager $sessionEventManager
+        EventManager $sessionEventManager,
+        MailManager $mailManager,
+        LocaleManager $localeManager
     ) {
         $this->eventDispatcher = $eventDispatcher;
         $this->translator = $translator;
@@ -89,6 +97,8 @@ class SessionManager
         $this->templateManager = $templateManager;
         $this->workspaceManager = $workspaceManager;
         $this->sessionEventManager = $sessionEventManager;
+        $this->mailManager = $mailManager;
+        $this->localeManager = $localeManager;
 
         $this->sessionRepo = $om->getRepository(Session::class);
         $this->sessionUserRepo = $om->getRepository(SessionUser::class);
@@ -165,6 +175,9 @@ class SessionManager
     {
         $results = [];
 
+        /**
+         * @var Course
+         */
         $course = $session->getCourse();
         $registrationDate = new \DateTime();
 
@@ -198,6 +211,19 @@ class SessionManager
                 $this->om->persist($sessionUser);
 
                 $this->eventDispatcher->dispatch(new LogSessionUserRegistrationEvent($sessionUser), 'log');
+
+                $managers = $user->getMainOrganization()->getAdministrators()->toArray();
+                $locale = $this->localeManager->getLocale($user);
+                $placeholders = [
+                    'session_name' => $sessionUser->getSession()->getName(),
+                    'user_first_name' => $user->getFirstName(),
+                    'user_last_name' => $user->getLastName(),
+                    'session_start' => $sessionUser->getSession()->getStartDate()->format('d/m/Y'),
+                    'session_end' => $sessionUser->getSession()->getEndDate()->format('d/m/Y'),
+                ];
+                $subject = $this->templateManager->getTemplate('training_quota_subscription_created', $placeholders, $locale, 'title');
+                $body = $this->templateManager->getTemplate('training_quota_subscription_created', $placeholders, $locale);
+                $this->mailManager->send($subject, $body, $managers, null, [], true);
 
                 $results[] = $sessionUser;
             }
@@ -251,6 +277,8 @@ class SessionManager
         }
 
         $this->om->flush();
+
+        $this->sendSessionUnregistration($sessionUsers);
     }
 
     /**
@@ -580,7 +608,37 @@ class SessionManager
     /**
      * @param SessionUser[] $sessionUsers
      */
-    private function checkUsersRegistration(Session $session, array $sessionUsers)
+    public function sendSessionUnregistration(array $sessionUsers)
+    {
+        foreach ($sessionUsers as $sessionUser) {
+            $user = $sessionUser->getUser();
+            $locale = $user->getLocale();
+            $session = $sessionUser->getSession();
+            $course = $sessionUser->getSession()->getCourse();
+            $placeholders = [
+                'course_name' => $course->getName(),
+                'course_code' => $course->getCode(),
+                'course_description' => $course->getDescription(),
+                'session_name' => $session->getName(),
+                'session_description' => $session->getDescription(),
+                'session_start' => $session->getStartDate()->format('d/m/Y'),
+                'session_end' => $session->getEndDate()->format('d/m/Y'),
+                'first_name' => $user->getFirstName(),
+                'last_name' => $user->getLastName(),
+                'username' => $user->getUsername(),
+            ];
+
+            $subject = $this->templateManager->getTemplate('training_session_unregistred', $placeholders, $locale, 'title');
+            $body = $this->templateManager->getTemplate('training_session_unregistred', $placeholders, $locale);
+
+            $this->mailManager->send($subject, $body, [$user], null, [], true);
+        }
+    }
+
+    /**
+     * @param SessionUser[] $sessionUsers
+     */
+    public function checkUsersRegistration(Session $session, array $sessionUsers)
     {
         $fullyRegistered = [
             AbstractRegistration::TUTOR => [],
