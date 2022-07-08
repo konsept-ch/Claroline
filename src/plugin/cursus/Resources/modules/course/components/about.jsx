@@ -127,6 +127,14 @@ const CourseAbout = (props) => {
                   }
                 </span>
               </li>
+
+              <li className="list-group-item align-items-start">
+                {trans('tutors', {}, 'cursus')}
+
+                <div>
+                  {props.activeSession.tutors.map(tutor => <div key={tutor.id} className="value">{ tutor.name }</div>)}
+                </div>
+              </li>
             </ul>
           </div>
         }
