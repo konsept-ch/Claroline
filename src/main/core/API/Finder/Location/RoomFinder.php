@@ -17,17 +17,6 @@ use Doctrine\ORM\QueryBuilder;
 
 class RoomFinder extends AbstractFinder
 {
-    /*
-    SELECT DISTINCT r.event_name FROM claro_location_room AS r
-    WHERE r.location_id = 2
-    AND r.id NOT IN (
-	    SELECT r2.id FROM claro_location_room AS r2
-	    INNER JOIN claro_planned_object AS o2 ON o2.room_id = r2.id
-	    WHERE '2022-08-22 17:00:00' > o2.start_date
-	    AND '2022-08-22 08:30:00' < o2.end_date
-    )
-    */
-
     public static function getClass(): string
     {
         return Room::class;
