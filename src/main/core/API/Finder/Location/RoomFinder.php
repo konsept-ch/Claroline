@@ -24,11 +24,10 @@ class RoomFinder extends AbstractFinder
 
     public function configureQueryBuilder(QueryBuilder $qb, array $searches = [], array $sortBy = null, array $options = ['count' => false, 'page' => 0, 'limit' => -1])
     {
-        $qb->join('obj.location', 'l');
-
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
                 case 'location':
+                    $qb->join('obj.location', 'l');
                     $qb->andWhere("l.uuid = :{$filterName}");
                     $qb->setParameter($filterName, $filterValue);
                     break;
