@@ -112,7 +112,7 @@ const EventForm = (props) =>
                         locked: true
                       }, {
                         property: 'range',
-                        value: [props.event.start, props.event.end],
+                        value: [props.event.start || '', props.event.end || ''],
                         locked: true
                       }
                     ]

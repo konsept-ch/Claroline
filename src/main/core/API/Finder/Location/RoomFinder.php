@@ -34,7 +34,7 @@ class RoomFinder extends AbstractFinder
                     break;
 
                 case 'range':
-                    if ('undefined' != $filterValue[0] && 'undefined' != $filterValue[1])
+                    if (!empty($filterValue[0]) && !empty($filterValue[1]))
                     {
                         $qb->andWhere('obj.id NOT IN (
 	                        SELECT r.id FROM Claroline\CoreBundle\Entity\Location\Room r
