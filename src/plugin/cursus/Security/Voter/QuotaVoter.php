@@ -29,6 +29,8 @@ class QuotaVoter extends AbstractVoter
     public function checkPermission(TokenInterface $token, $object, array $attributes, array $options)
     {
         switch ($attributes[0]) {
+            case self::EDIT:
+                return VoterInterface::ACCESS_GRANTED;
             case self::MANAGE_QUOTAS:
             case self::VALIDATE_SUBSCRIPTIONS:
                 return $this->isToolGranted($attributes[0], 'trainings') ? VoterInterface::ACCESS_GRANTED : VoterInterface::ACCESS_DENIED;
@@ -39,6 +41,6 @@ class QuotaVoter extends AbstractVoter
 
     public function getSupportedActions()
     {
-        return [self::MANAGE_QUOTAS, self::VALIDATE_SUBSCRIPTIONS];
+        return [self::EDIT, self::MANAGE_QUOTAS, self::VALIDATE_SUBSCRIPTIONS];
     }
 }
