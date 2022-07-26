@@ -122,6 +122,8 @@ class SessionManager
 
     public function generateFromTemplate(Session $session, string $locale)
     {
+        $location = $session->getLocation();
+
         $placeholders = [
             'session_url' => $this->routingHelper->desktopUrl('trainings').'/catalog/'.$session->getCourse()->getSlug().'/'.$session->getUuid(),
             'session_name' => $session->getName(),
@@ -132,6 +134,7 @@ class SessionManager
             'session_max_users' => $session->getMaxUsers(),
             'session_start' => $session->getStartDate()->format('d/m/Y'),
             'session_end' => $session->getEndDate()->format('d/m/Y'),
+            'session_location_description' => $location ? $location->getDescription() : ''
         ];
 
         return $this->templateManager->getTemplate('training_session', $placeholders, $locale);
@@ -571,6 +574,8 @@ class SessionManager
             $trainersList .= '</ul>';
         }
 
+        $location = $session->getLocation();
+
         $basicPlaceholders = [
             'course_name' => $course->getName(),
             'course_code' => $course->getCode(),
@@ -583,6 +588,7 @@ class SessionManager
             'session_end' => $session->getEndDate()->format('d/m/Y'),
             'session_trainers' => $trainersList,
             'registration_confirmation_url' => $this->router->generate('apiv2_cursus_session_self_confirm', ['id' => $session->getUuid()], UrlGeneratorInterface::ABSOLUTE_URL), // TODO
+            'session_location_description' => $location ? $location->getDescription() : '',
         ];
 
         foreach ($users as $user) {
@@ -615,6 +621,7 @@ class SessionManager
             $locale = $user->getLocale();
             $session = $sessionUser->getSession();
             $course = $sessionUser->getSession()->getCourse();
+            $location = $session->getLocation();
             $placeholders = [
                 'course_name' => $course->getName(),
                 'course_code' => $course->getCode(),
@@ -626,6 +633,7 @@ class SessionManager
                 'first_name' => $user->getFirstName(),
                 'last_name' => $user->getLastName(),
                 'username' => $user->getUsername(),
+                'session_location_description' => $location ? $location->getDescription() : '',
             ];
 
             $subject = $this->templateManager->getTemplate('training_session_unregistred', $placeholders, $locale, 'title');

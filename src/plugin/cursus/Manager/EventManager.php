@@ -309,10 +309,10 @@ class EventManager
                 $content,
                 $title,
                 [$user],
-                $event->getCreator(),
+                /*$event->getCreator(),
                 [
                     ['name' => 'invitation.ics', 'url' => $icsPath, 'type' => 'text/calendar'],
-                ],
+                ],*/
             ]);
         }
     }
@@ -403,16 +403,20 @@ class EventManager
             $trainersList .= '</ul>';
         }
         $location = $event->getLocation();
+        $locationDescription = '';
         $locationName = '';
         $locationAddress = '';
 
         if ($location) {
+            $locationDescription = $location->getDescription();
             $locationName = $location->getName();
             $locationAddress = $location->getAddress();
             if ($location->getPhone()) {
                 $locationAddress .= '<br>'.$location->getPhone();
             }
         }
+
+        $room = $event->getRoom();
 
         return [
             // course info
@@ -434,6 +438,8 @@ class EventManager
             'event_location_name' => $locationName,
             'event_location_address' => $locationAddress,
             'event_trainers' => $trainersList,
+            'event_room_description' => $room ? $room->getDescription() : '',
+            'event_location_description' => $locationDescription
         ];
     }
 }
