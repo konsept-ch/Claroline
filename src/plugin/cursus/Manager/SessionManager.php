@@ -622,6 +622,7 @@ class SessionManager
             $session = $sessionUser->getSession();
             $course = $sessionUser->getSession()->getCourse();
             $location = $session->getLocation();
+
             $placeholders = [
                 'course_name' => $course->getName(),
                 'course_code' => $course->getCode(),

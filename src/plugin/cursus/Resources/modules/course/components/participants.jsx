@@ -175,12 +175,21 @@ const CourseParticipants = (props) =>
         />
       }
 
+      {hasPermission('register', props.activeSession) &&
+        <ContentCounter
+          icon="fa fa-ban label-danger"
+          label={trans('cancellations', {}, 'cursus')}
+          color="rgb(169, 68, 66)"
+          value={get(props.activeSession, 'participants.cancellations', 0)}
+        />
+      }
+
       <ContentCounter
         icon="fa fa-user-plus"
-        label={trans('available_seats', {}, 'cursus')}
+        label={trans('occupation', {}, 'cursus')}
         color={schemeCategory20c[13]}
         value={get(props.activeSession, 'restrictions.users') ?
-          (get(props.activeSession, 'restrictions.users') - get(props.activeSession, 'participants.learners', 0)) + ' / ' + get(props.activeSession, 'restrictions.users')
+          get(props.activeSession, 'participants.learners', 0) + ' / ' + get(props.activeSession, 'restrictions.users')
           : <span className="fa fa-fw fa-infinity" />
         }
       />
@@ -206,7 +215,7 @@ const CourseParticipants = (props) =>
               path: '/groups'
             }, {
               icon: 'fa fa-fw fa-hourglass-half',
-              title: trans('En attente'),
+              title: trans('Refus RH'),
               path: '/pending',
               displayed: hasPermission('register', props.activeSession)
             }, {
