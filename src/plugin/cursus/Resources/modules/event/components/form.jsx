@@ -108,7 +108,17 @@ const EventForm = (props) =>
                 displayed: (event) => !isEmpty(event.location),
                 options: {
                   picker: {
-                    filters: [{property: 'location', value: get(props.event, 'location.id'), locked: true}]
+                    filters: [
+                      {
+                        property: 'location',
+                        value: get(props.event, 'location.id'),
+                        locked: true
+                      }, {
+                        property: 'range',
+                        value: [props.event.start || '', props.event.end || ''],
+                        locked: true
+                      }
+                    ]
                   }
                 }
               }
