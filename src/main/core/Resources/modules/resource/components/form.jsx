@@ -73,10 +73,7 @@ const ResourceFormComponent = (props) =>
           {
             name: 'poster',
             label: trans('poster'),
-            type: 'image',
-            options: {
-              ratio: '3:1'
-            }
+            type: 'image'
           }, {
             name: 'thumbnail',
             label: trans('thumbnail'),
@@ -170,6 +167,19 @@ const ResourceFormComponent = (props) =>
                 }
               }
             ]
+          }
+        ]
+      }, {
+        icon: 'fa fa-fw fa-award',
+        title: trans('evaluation'),
+        fields: [
+          {
+            name: 'evaluation.estimatedDuration',
+            label: trans('estimated_duration'),
+            type: 'number',
+            options: {
+              unit: trans('minutes')
+            }
           }
         ]
       }, {

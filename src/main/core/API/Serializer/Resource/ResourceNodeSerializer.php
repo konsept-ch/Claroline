@@ -3,6 +3,7 @@
 namespace Claroline\CoreBundle\API\Serializer\Resource;
 
 use Claroline\AppBundle\API\Options;
+use Claroline\AppBundle\API\Serializer\SerializerInterface;
 use Claroline\AppBundle\API\Serializer\SerializerTrait;
 use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\AppBundle\Event\StrictDispatcher;
@@ -82,13 +83,17 @@ class ResourceNodeSerializer
             'name' => $resourceNode->getName(),
             'path' => $resourceNode->getAncestors(),
             'meta' => $this->serializeMeta($resourceNode, $options),
-            'permissions' => $this->rightsManager->getCurrentPermissionArray($resourceNode),
             'thumbnail' => $this->serializeThumbnail($resourceNode),
             'evaluation' => [
                 'evaluated' => $resourceNode->isEvaluated(),
                 'required' => $resourceNode->isRequired(),
+                'estimatedDuration' => $resourceNode->getEstimatedDuration(),
             ],
         ];
+
+        if (!in_array(SerializerInterface::SERIALIZE_TRANSFER, $options)) {
+            $serializedNode['permissions'] = $this->rightsManager->getCurrentPermissionArray($resourceNode);
+        }
 
         if ($resourceNode->getWorkspace()) {
             $serializedNode['workspace'] = [ // TODO : use workspace serializer with minimal option
@@ -317,6 +322,7 @@ class ResourceNodeSerializer
         if (isset($data['evaluation'])) {
             $this->sipe('evaluation.evaluated', 'setEvaluated', $data, $resourceNode);
             $this->sipe('evaluation.required', 'setRequired', $data, $resourceNode);
+            $this->sipe('evaluation.estimatedDuration', 'setEstimatedDuration', $data, $resourceNode);
         }
 
         if (!in_array(Options::NO_RIGHTS, $options) && isset($data['rights'])) {

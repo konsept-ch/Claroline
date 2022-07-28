@@ -60,13 +60,21 @@ const CourseForm = (props) =>
             options: {long: true},
             help: trans('plain_description_help')
           }, {
-            name: 'meta.duration',
+            name: 'meta.days',
             type: 'number',
-            label: trans('duration'),
-            required: true,
+            label: trans('session_days', {}, 'cursus'),
             options: {
               min: 0,
               unit: trans('days')
+            }
+          }, {
+            name: 'meta.hours',
+            type: 'number',
+            label: trans('session_hours', {}, 'cursus'),
+            options: {
+              min: 0,
+              max: 24,
+              unit: trans('hours')
             }
           }, {
             name: 'tags',
@@ -76,6 +84,10 @@ const CourseForm = (props) =>
             name: 'organizations',
             type: 'organizations',
             label: trans('organizations')
+          }, {
+            name: 'resource',
+            type: 'resource',
+            label: trans('resource')
           }
         ]
       }, {
@@ -127,7 +139,7 @@ const CourseForm = (props) =>
         ]
       }, {
         icon: 'fa fa-fw fa-user-plus',
-        title: trans('registration'),
+        title: trans('subscription'),
         fields: [
           {
             name: 'registration.selfRegistration',

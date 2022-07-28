@@ -106,6 +106,19 @@ class ResourcesSubscriber implements EventSubscriberInterface
             return;
         }
 
+        // we need to push the path resources last, because we need all resources to be created
+        // to link them to the new paths.
+        // this should not be done here and as is it doesn't work if we link paths to others paths.
+        usort($data['resources'], function (array $a, array $b) {
+            if ('innova_path' === $a['resourceNode']['meta']['type']) {
+                return 1;
+            } elseif ('innova_path' === $b['resourceNode']['meta']['type']) {
+                return -1;
+            }
+
+            return 0;
+        });
+
         $workspace = $event->getWorkspace();
 
         // manage workspace opening
@@ -128,6 +141,7 @@ class ResourcesSubscriber implements EventSubscriberInterface
             $resourceNode->setWorkspace($workspace);
             if (!empty($nodeData['parent']) && $event->getCreatedEntity($nodeData['parent']['id'])) {
                 $resourceNode->setParent($event->getCreatedEntity($nodeData['parent']['id']));
+                unset($nodeData['parent']);
             }
 
             $this->crud->create($resourceNode, $nodeData, [Crud::NO_PERMISSIONS, Crud::NO_VALIDATION, Options::NO_RIGHTS/*, Options::REFRESH_UUID*/]);
@@ -179,6 +193,9 @@ class ResourcesSubscriber implements EventSubscriberInterface
                     'workspace_opening_resource' => $resourceNode->getUuid(),
                 ]));
             }
+
+            // we need the resources to be persisted in DB to be exploitable in listeners (eg. path do a DB call to retrieve linked resources)
+            $this->om->forceFlush();
         }
 
         // rename root directory based on the new workspace name
@@ -186,9 +203,8 @@ class ResourcesSubscriber implements EventSubscriberInterface
         if ($root) {
             $root->setName($workspace->getName());
             $this->om->persist($root);
+            $this->om->flush();
         }
-
-        $this->om->flush();
     }
 
     private function recursiveExport(ResourceNode $resourceNode, FileBag $fileBag)

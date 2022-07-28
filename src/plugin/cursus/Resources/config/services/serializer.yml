@@ -15,6 +15,7 @@ services:
             - '@Claroline\CoreBundle\API\Serializer\User\UserSerializer'
             - '@Claroline\CoreBundle\API\Serializer\User\OrganizationSerializer'
             - '@Claroline\CoreBundle\API\Serializer\Workspace\WorkspaceSerializer'
+            - '@Claroline\CoreBundle\API\Serializer\Resource\ResourceNodeSerializer'
 
     Claroline\CursusBundle\Serializer\SessionSerializer:
         arguments:
@@ -61,6 +62,11 @@ services:
     Claroline\CursusBundle\Serializer\Registration\SessionGroupSerializer:
         arguments:
             - '@Claroline\CoreBundle\API\Serializer\User\GroupSerializer'
+            - '@Claroline\CursusBundle\Serializer\SessionSerializer'
+
+    Claroline\CursusBundle\Serializer\Registration\SessionCancellationSerializer:
+        arguments:
+            - '@Claroline\CoreBundle\API\Serializer\User\UserSerializer'
             - '@Claroline\CursusBundle\Serializer\SessionSerializer'
 
     Claroline\CursusBundle\Serializer\Registration\EventUserSerializer:
