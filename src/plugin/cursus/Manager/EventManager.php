@@ -309,10 +309,10 @@ class EventManager
                 $content,
                 $title,
                 [$user],
-                /*$event->getCreator(),
+                $event->getCreator(),
                 [
                     ['name' => 'invitation.ics', 'url' => $icsPath, 'type' => 'text/calendar'],
-                ],*/
+                ],
             ]);
         }
     }
