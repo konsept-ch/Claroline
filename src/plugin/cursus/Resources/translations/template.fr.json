@@ -41,10 +41,14 @@
     "training_quota_status_cancelled": "Annulation de votre inscription",
     "training_quota_subscription_created": "Nouvelle inscription",
     "training_quota_status_validated_desc": "Template utilisé lorsqu'une inscription à été validée.",
-    "training_quota_status_managed_desc": "Template utilisé lorsqu'une inscription à été validée avec quotas.",
-    "training_quota_status_refused_desc": "Template utilisé lorsqu'une inscription à été refusée.",
-    "training_quota_status_cancelled_desc": "Template utilisé lorsqu'une inscription à été annulée.",
-    "training_quota_subscription_created_desc": "Template utilisé lorsqu'une inscription à été créée.",
+    "training_quota_status_managed_desc": "Template utilié lorsqu'une inscription à été validée avec quotas.",
+    "training_quota_status_refused_desc": "Template utilié lorsqu'une inscription à été refusée.",
+    "training_quota_status_cancelled_desc": "Template utilié lorsqu'une inscription à été annulée.",
+    "training_quota_subscription_created_desc": "Template utilié lorsqu'une inscription à été créée.",
     "training_session_unregistred": "Désinscription de session",
-    "training_session_unregistred_desc": "Template utilisé lorsqu'il y a une désinscription à une session."
+    "training_session_unregistred_desc": "Template utilisé lorsqu'il y a une désinscription à une session.",
+
+    "session_location_description": "La description du lieu de la session",
+    "event_location_description": "La description du lieu de la séance",
+    "event_room_description": "La description de la salle de la séance"
 }
