@@ -69,6 +69,7 @@ plugin:
               - session_max_users
               - session_start
               - session_end
+              - session_location_description
 
         - name: training_session_invitation
           type: email
@@ -83,6 +84,7 @@ plugin:
               - session_start
               - session_end
               - session_trainers
+              - session_location_description
 
         - name: training_session_unregistred
           type: email
@@ -97,6 +99,7 @@ plugin:
               - first_name
               - last_name
               - username
+              - session_location_description
 
         - name: training_session_confirmation
           type: email
@@ -112,6 +115,7 @@ plugin:
               - session_end
               - session_trainers
               - registration_confirmation_url
+              - session_location_description
 
         - name: training_event
           type: pdf
@@ -132,6 +136,8 @@ plugin:
               - event_location_name
               - event_location_address
               - event_trainers
+              - event_room_description
+              - event_location_description
 
         - name: training_event_invitation
           type: email
@@ -152,6 +158,8 @@ plugin:
               - event_location_name
               - event_location_address
               - event_trainers
+              - event_room_description
+              - event_location_description
 
         - name: training_event_presences
           type: pdf
