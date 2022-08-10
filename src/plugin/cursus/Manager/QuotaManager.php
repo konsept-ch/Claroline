@@ -45,47 +45,25 @@ class QuotaManager
 
     public function sendValidatedStatusMail(SessionUser $sessionUser): void
     {
-        $manager = $this->tokenStorage->getToken()->getUser();
-
-        $user = $sessionUser->getUser();
-        $locale = $this->localeManager->getLocale($user);
-
-        $placeholders = [
-            'session_name' => $sessionUser->getSession()->getName(),
-            'user_first_name' => $user->getFirstName(),
-            'user_last_name' => $user->getLastName(),
-            'session_start' => $sessionUser->getSession()->getStartDate()->format('d/m/Y'),
-            'session_end' => $sessionUser->getSession()->getEndDate()->format('d/m/Y'),
-            'remark' => $sessionUser->getRemark(),
-        ];
-        $subject = $this->templateManager->getTemplate('training_quota_status_validated', $placeholders, $locale, 'title');
-        $body = $this->templateManager->getTemplate('training_quota_status_validated', $placeholders, $locale);
-
-        $this->mailManager->send($subject, $body, [$user], $manager, [], true);
+        $this->sendMail('training_quota_status_validated', $sessionUser);
     }
 
     public function sendManagedStatusMail(SessionUser $sessionUser): void
     {
-        $manager = $this->tokenStorage->getToken()->getUser();
-
-        $user = $sessionUser->getUser();
-        $locale = $this->localeManager->getLocale($user);
-
-        $placeholders = [
-            'session_name' => $sessionUser->getSession()->getName(),
-            'user_first_name' => $user->getFirstName(),
-            'user_last_name' => $user->getLastName(),
-            'session_start' => $sessionUser->getSession()->getStartDate()->format('d/m/Y'),
-            'session_end' => $sessionUser->getSession()->getEndDate()->format('d/m/Y'),
-            'remark' => $sessionUser->getRemark(),
-        ];
-        $subject = $this->templateManager->getTemplate('training_quota_status_managed', $placeholders, $locale, 'title');
-        $body = $this->templateManager->getTemplate('training_quota_status_managed', $placeholders, $locale);
-
-        $this->mailManager->send($subject, $body, [$user], $manager, [], true);
+        $this->sendMail('training_quota_status_managed', $sessionUser);
     }
 
     public function sendRefusedStatusMail(SessionUser $sessionUser): void
+    {
+        $this->sendMail('training_quota_status_refused', $sessionUser);
+    }
+
+    public function sendCancelledStatusMail(SessionUser $sessionUser): void
+    {
+        $this->sendMail('training_quota_status_cancelled', $sessionUser);
+    }
+
+    private function sendMail(string $template, SessionUser $sessionUser): void
     {
         $manager = $this->tokenStorage->getToken()->getUser();
 
@@ -102,27 +80,6 @@ class QuotaManager
         ];
         $subject = $this->templateManager->getTemplate('training_quota_status_refused', $placeholders, $locale, 'title');
         $body = $this->templateManager->getTemplate('training_quota_status_refused', $placeholders, $locale);
-
-        $this->mailManager->send($subject, $body, [$user], $manager, [], true);
-    }
-
-    public function sendCancelledStatusMail(SessionUser $sessionUser): void
-    {
-        $manager = $this->tokenStorage->getToken()->getUser();
-
-        $user = $sessionUser->getUser();
-        $locale = $this->localeManager->getLocale($user);
-
-        $placeholders = [
-            'session_name' => $sessionUser->getSession()->getName(),
-            'user_first_name' => $user->getFirstName(),
-            'user_last_name' => $user->getLastName(),
-            'session_start' => $sessionUser->getSession()->getStartDate()->format('d/m/Y'),
-            'session_end' => $sessionUser->getSession()->getEndDate()->format('d/m/Y'),
-            'remark' => $sessionUser->getRemark(),
-        ];
-        $subject = $this->templateManager->getTemplate('training_quota_status_cancelled', $placeholders, $locale, 'title');
-        $body = $this->templateManager->getTemplate('training_quota_status_cancelled', $placeholders, $locale);
 
         $this->mailManager->send($subject, $body, [$user], $manager, [], true);
     }
