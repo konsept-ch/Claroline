@@ -134,7 +134,7 @@ class SessionManager
             'session_max_users' => $session->getMaxUsers(),
             'session_start' => $session->getStartDate()->format('d/m/Y'),
             'session_end' => $session->getEndDate()->format('d/m/Y'),
-            'session_location_description' => $location ? $location->getDescription() : ''
+            'session_location_description' => $location ? $location->getDescription() : '',
         ];
 
         return $this->templateManager->getTemplate('training_session', $placeholders, $locale);

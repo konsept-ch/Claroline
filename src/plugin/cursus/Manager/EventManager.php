@@ -439,7 +439,7 @@ class EventManager
             'event_location_address' => $locationAddress,
             'event_trainers' => $trainersList,
             'event_room_description' => $room ? $room->getDescription() : '',
-            'event_location_description' => $locationDescription
+            'event_location_description' => $locationDescription,
         ];
     }
 }
