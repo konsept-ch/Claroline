@@ -12,22 +12,22 @@ import {PropTypes as T, implementPropTypes} from '#/main/app/prop-types'
 import {DataInput as DataInputTypes} from '#/main/app/data/types/prop-types'
 
 const QuotaInput = props => {
-  /*const [default, setDefault] = useState(props.value.default)
+  /*const [def, setDef] = useState(props.value.default)
   const [years, setYears] = useState(props.value.years)*/
   const [def, setDef] = useState({
     enabled: false,
     quota: 0
   })
   const [years, setYears] = useState({})
-  const [chooses, setChooses] = useState(Array.from({length:31}, (_, i) => 2020 + i).reduce((acc, year) => {
+  const [choices, setChoices] = useState(Array.from({length:31}, (_, i) => 2020 + i).reduce((acc, year) => {
     return {
       ...acc,
       [year]: !years[year]
     }
   }, {}))
-  const [choose, setChoose] = useState()
+  const [choice, setChoice] = useState()
 
-  useEffect(() => setChoose(Object.entries(chooses).find(entry => entry[1] && entry[0] != choose)[0]), [chooses])
+  useEffect(() => setChoice(Object.entries(choices).find(entry => entry[1] && entry[0] != choice)[0]), [choices])
 
   return (
     <Fragment>
@@ -55,8 +55,8 @@ const QuotaInput = props => {
               callback: () => {
                 const {[year]: _, ...restYears} = years
                 setYears(restYears)
-                setChooses({
-                  ...chooses,
+                setChoices({
+                  ...choices,
                   [year]: true
                 })
               }
@@ -82,8 +82,8 @@ const QuotaInput = props => {
         )}
       </ContentSections>
 
-      <FormControl componentClass="select" value={choose} onChange={e => setChoose(e.target.value)}>
-        {Object.entries(chooses).filter(c => c[1]).map(([year, _]) =>
+      <FormControl componentClass="select" value={choice} onChange={e => setChoice(e.target.value)}>
+        {Object.entries(choices).filter(c => c[1]).map(([year, _]) =>
           <option key={year} value={year}>{year}</option>
         )}
       </FormControl>
@@ -97,11 +97,11 @@ const QuotaInput = props => {
         callback={() => {
           setYears({
             ...years,
-            [choose]: def
+            [choice]: def
           })
-          setChooses({
-            ...chooses,
-            [choose]: false
+          setChoices({
+            ...choices,
+            [choice]: false
           })
         }}
       />

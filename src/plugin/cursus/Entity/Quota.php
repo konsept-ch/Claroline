@@ -36,18 +36,18 @@ class Quota
     private $organization;
 
     /**
-     * @ORM\Column(type="float")
+     * @ORM\Column(type="json")
      *
-     * @var float
+     * @var array
      */
-    private $threshold = 0.0;
+    private $default = [];
 
     /**
-     * @ORM\Column(name="use_quotas", type="boolean")
+     * @ORM\Column(type="json")
      *
-     * @var bool
+     * @var array
      */
-    private $useQuotas = false;
+    private $years = [];
 
     public function __construct()
     {
@@ -68,28 +68,28 @@ class Quota
     }
 
     /**
-     * @return float
+     * @return array
      */
-    public function getThreshold()
+    public function getDefault()
     {
-        return $this->threshold;
+        return $this->default;
     }
 
-    public function setThreshold(float $threshold)
+    public function setDefault(array $default)
     {
-        $this->threshold = $threshold;
+        $this->default = $default;
     }
 
     /**
-     * @return bool
+     * @return array
      */
-    public function useQuotas()
+    public function getYears()
     {
-        return $this->useQuotas;
+        return $this->years;
     }
 
-    public function setUseQuotas(float $useQuotas)
+    public function setYears(array $years)
     {
-        $this->useQuotas = $useQuotas;
+        $this->years = $years;
     }
 }

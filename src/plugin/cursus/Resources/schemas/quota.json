@@ -15,12 +15,12 @@
         }
       }
     },
-    "threshold": {
-      "type": "number",
-      "description": "The quota threshold"
+    "options": {
+      "type": "object",
+      "description": "The quota options (default & years)"
     }
   },
-  "required": ["organization", "threshold"],
+  "required": ["organization", "options"],
   "claroline": {
     "ids": ["id"]
   }
