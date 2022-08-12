@@ -78,7 +78,6 @@ class QuotaManager
             'session_end' => $sessionUser->getSession()->getEndDate()->format('d/m/Y'),
             'remark' => $sessionUser->getRemark(),
         ];
-        
         $subject = $this->templateManager->getTemplate($template, $placeholders, $locale, 'title');
         $body = $this->templateManager->getTemplate($template, $placeholders, $locale);
 
