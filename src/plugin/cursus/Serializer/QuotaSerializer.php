@@ -54,8 +54,10 @@ class QuotaSerializer
         $serialized = [
             'id' => $quota->getUuid(),
             'organization' => $this->organizationSerializer->serialize($quota->getOrganization(), [Options::SERIALIZE_MINIMAL]),
-            'threshold' => $quota->getThreshold(),
-            'useQuotas' => $quota->useQuotas(),
+            'options' => [
+                'default' => $quota->getDefault(),
+                'years' => $quota->getYears(),
+            ],
         ];
 
         return $serialized;
