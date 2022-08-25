@@ -17,10 +17,13 @@ class Version20220809081209 extends AbstractMigration
         $this->addSql('
             ALTER TABLE claro_cursusbundle_quota 
             ADD `default` LONGTEXT NOT NULL COMMENT "(DC2Type:json)", 
-            ADD years LONGTEXT NOT NULL COMMENT "(DC2Type:json)" DEFAULT "{}"
+            ADD years LONGTEXT NOT NULL COMMENT "(DC2Type:json)"
         ');
         $this->addSql('
             UPDATE claro_cursusbundle_quota AS a INNER JOIN claro_cursusbundle_quota AS b ON a.id = b.id SET a.default = CONCAT(\'{"quota":\', b.threshold, \',"enabled":\', b.use_quotas, \'}\')
+        ');
+        $this->addSql('
+            UPDATE claro_cursusbundle_quota AS a SET a.years = "{}"
         ');
         $this->addSql('
             ALTER TABLE claro_cursusbundle_quota 
