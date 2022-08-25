@@ -12,13 +12,8 @@ import {PropTypes as T, implementPropTypes} from '#/main/app/prop-types'
 import {DataInput as DataInputTypes} from '#/main/app/data/types/prop-types'
 
 const QuotaInput = props => {
-  /*const [def, setDef] = useState(props.value.default)
-  const [years, setYears] = useState(props.value.years)*/
-  const [def, setDef] = useState({
-    enabled: false,
-    quota: 0
-  })
-  const [years, setYears] = useState({})
+  const [def, setDef] = useState(props.value.default)
+  const [years, setYears] = useState(props.value.years)
   const [choices, setChoices] = useState(Array.from({length:31}, (_, i) => 2020 + i).reduce((acc, year) => {
     return {
       ...acc,
