@@ -23,6 +23,7 @@ const QuotaInput = props => {
   const [choice, setChoice] = useState()
 
   useEffect(() => setChoice(Object.entries(choices).find(entry => entry[1] && entry[0] != choice)[0]), [choices])
+  useEffect(() => props.onChange({ default: def, years }), [years, def])
 
   return (
     <Fragment>
@@ -41,7 +42,7 @@ const QuotaInput = props => {
         </ContentSection>
 
         {Object.entries(years).sort((a, b) => a[0] - b[0]).map(([year, {enabled, quota}]) =>
-          <ContentSection key={year} title={`${year}`} actions={[
+          <ContentSection key={year} title={year} actions={[
             {
               name: 'remove-year',
               type: CALLBACK_BUTTON,

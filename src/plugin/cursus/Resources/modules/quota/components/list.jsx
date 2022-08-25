@@ -1,6 +1,7 @@
 import React from 'react'
 import {PropTypes as T} from 'prop-types'
 
+import moment from 'moment'
 import {trans} from '#/main/app/intl/translation'
 import {LINK_BUTTON} from '#/main/app/buttons'
 import {ListData} from '#/main/app/content/list/containers/data'
@@ -33,7 +34,7 @@ const QuotaList = (props) =>
         primary: true,
         sortable: false
       }, {
-        name: 'threshold',
+        name: 'quota.quota',
         type: 'number',
         label: trans('threshold', {}, 'cursus'),
         displayed: true,

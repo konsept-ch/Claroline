@@ -92,4 +92,9 @@ class Quota
     {
         $this->years = $years;
     }
+
+    public function getQuotaByYear(string $year): object
+    {
+        return (object)($this->getYears()[$year] ?? $this->getDefault());
+    }
 }
