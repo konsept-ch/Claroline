@@ -141,10 +141,10 @@ class QuotaController extends AbstractCrudController
     }
 
     /**
-     * @Route("/{id}/statistics", name="apiv2_cursus_quota_statistics", methods={"GET"})
+     * @Route("/{id}/statistics/{year}", name="apiv2_cursus_quota_statistics", methods={"GET"})
      * @EXT\ParamConverter("quota", class="Claroline\CursusBundle\Entity\Quota", options={"mapping": {"id": "uuid"}})
      */
-    public function getStatisticsAction(Quota $quota): JsonResponse
+    public function getStatisticsAction(Quota $quota, string $year): JsonResponse
     {
         $this->checkPermission('VALIDATE_SUBSCRIPTIONS', $quota, [], true);
 
@@ -163,7 +163,7 @@ class QuotaController extends AbstractCrudController
                 return $accum + (SessionUser::STATUS_VALIDATED == $subscription->getStatus() ? 1 : 0);
             }, 0),
         ];
-        if ($quota->useQuotas()) {
+        if ($quota->getQuotaByYear($year)->enabled) {
             $statistics['managed'] = array_reduce($sessionUsers, function ($accum, $subscription) {
                 return $accum + (SessionUser::STATUS_MANAGED == $subscription->getStatus() ? 1 : 0);
             }, 0);
@@ -180,10 +180,10 @@ class QuotaController extends AbstractCrudController
     }
 
     /**
-     * @Route("/{id}/csv", name="apiv2_cursus_quota_export", methods={"GET"})
+     * @Route("/{id}/csv/{year}", name="apiv2_cursus_quota_export", methods={"GET"})
      * @EXT\ParamConverter("quota", class="Claroline\CursusBundle\Entity\Quota", options={"mapping": {"id": "uuid"}})
      */
-    public function exportAction(Quota $quota, Request $request): BinaryFileResponse
+    public function exportAction(Quota $quota, string $year, Request $request): BinaryFileResponse
     {
         $this->checkPermission('VALIDATE_SUBSCRIPTIONS', $quota, [], true);
 
@@ -198,7 +198,7 @@ class QuotaController extends AbstractCrudController
         $filters['organization'] = $quota->getOrganization();
         $filters['type'] = AbstractRegistration::LEARNER;
 
-        if (!$quota->useQuotas()) {
+        if (!$quota->getQuotaByYear($year)->enabled) {
             $filters['ignored_status'] = SessionUser::STATUS_MANAGED;
         }
 
@@ -239,10 +239,10 @@ class QuotaController extends AbstractCrudController
     }
 
     /**
-     * @Route("/{id}/subscriptions", name="apiv2_cursus_quota_list_subscriptions", methods={"GET"})
+     * @Route("/{id}/subscriptions/{year}", name="apiv2_cursus_quota_list_subscriptions", methods={"GET"})
      * @EXT\ParamConverter("quota", class="Claroline\CursusBundle\Entity\Quota", options={"mapping": {"id": "uuid"}})
      */
-    public function listSubscriptionsAction(Quota $quota, Request $request): JsonResponse
+    public function listSubscriptionsAction(Quota $quota, string $year, Request $request): JsonResponse
     {
         $this->checkPermission('VALIDATE_SUBSCRIPTIONS', $quota, [], true);
 
@@ -254,7 +254,7 @@ class QuotaController extends AbstractCrudController
             'type' => AbstractRegistration::LEARNER,
         ];
 
-        if (!$quota->useQuotas()) {
+        if (!$quota->getQuotaByYear($year)->enabled) {
             $query['hiddenFilters']['ignored_status'] = SessionUser::STATUS_MANAGED;
         }
 
@@ -289,11 +289,11 @@ class QuotaController extends AbstractCrudController
     }
 
     /**
-     * @Route("/{id}/subscriptions/{sid}", name="apiv2_cursus_subscription_status", methods={"PATCH"})
+     * @Route("/{id}/subscriptions/{sid}/{year}", name="apiv2_cursus_subscription_status", methods={"PATCH"})
      * @EXT\ParamConverter("quota", class="Claroline\CursusBundle\Entity\Quota", options={"mapping": {"id": "uuid"}})
      * @EXT\ParamConverter("sessionUser", class="Claroline\CursusBundle\Entity\Registration\SessionUser", options={"mapping": {"sid": "uuid"}})
      */
-    public function setSubscriptionStatusAction(Quota $quota, SessionUser $sessionUser, Request $request): JsonResponse
+    public function setSubscriptionStatusAction(Quota $quota, SessionUser $sessionUser, string $year, Request $request): JsonResponse
     {
         $this->checkPermission('VALIDATE_SUBSCRIPTIONS', $quota, [], true);
 
@@ -321,7 +321,7 @@ class QuotaController extends AbstractCrudController
                     $this->quotaManager->sendValidatedStatusMail($sessionUser);
                     break;
                 case SessionUser::STATUS_MANAGED:
-                    if (null == $quota || !$quota->useQuotas()) {
+                    if (null == $quota || !$quota->getQuotaByYear($year)->enabled) {
                         return new JsonResponse('The status don\'t can be changed to managed.', 500);
                     }
                     $this->sessionManager->addUsers($sessionUser->getSession(), [$sessionUser->getUser()]);

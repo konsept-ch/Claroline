@@ -50,9 +50,9 @@ const SubscriptionAll = (props) =>
         icon: 'fa fa-fw fa-pencil',
         label: trans('edit', {}, 'actions'),
         modal: [MODAL_SUBSCRIPTION_STATUS, {
-          canValidate: props.statistics.calculated + rows[0].session.quotas.days <= props.quota.threshold,
+          canValidate: props.statistics.calculated + rows[0].session.quotas.days <= props.quota.quota.quota,
           status: !props.isAdmin && rows[0].status != 0 ? [] : (
-            rows[0].session.quotas.used && props.quota.useQuotas ?
+            rows[0].session.quotas.used && props.quota.quota.enabled ?
               [0, 1, 2, 3] :
               rows[0].session.restrictions.dates[0] >= now() ?
                 [0, 1, 2] :

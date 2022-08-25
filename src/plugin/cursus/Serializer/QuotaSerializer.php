@@ -17,6 +17,7 @@ use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\API\Serializer\User\OrganizationSerializer;
 use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CursusBundle\Entity\Quota;
+use Claroline\CursusBundle\Entity\Registration\SessionUser;
 use Claroline\CursusBundle\Repository\QuotaRepository;
 
 class QuotaSerializer
@@ -51,13 +52,21 @@ class QuotaSerializer
 
     public function serialize(Quota $quota, array $options = []): array
     {
+        $repo = $this->om->getRepository(SessionUser::class);
+        $sessionUsers = $repo->findByOrganization($quota->getOrganization());
+
+        $default = $quota->getDefault();
+        $years = $quota->getYears();
+
         $serialized = [
             'id' => $quota->getUuid(),
             'organization' => $this->organizationSerializer->serialize($quota->getOrganization(), [Options::SERIALIZE_MINIMAL]),
             'options' => [
-                'default' => $quota->getDefault(),
-                'years' => $quota->getYears(),
+                'default' => $default,
+                'years' => $years,
             ],
+            'quota' => $quota->getQuotaByYear(date('Y')),
+            'managed' => array_reduce($sessionUsers, fn($accum, $subscription) => $accum + (SessionUser::STATUS_MANAGED == $subscription->getStatus() ? 1 : 0), 0),
         ];
 
         return $serialized;
@@ -66,8 +75,8 @@ class QuotaSerializer
     public function deserialize(array $data, Quota $quota): Quota
     {
         $this->sipe('id', 'setUuid', $data, $quota);
-        $this->sipe('threshold', 'setThreshold', $data, $quota);
-        $this->sipe('useQuotas', 'setUseQuotas', $data, $quota);
+        $this->sipe('options.default', 'setDefault', $data, $quota);
+        $this->sipe('options.years', 'setYears', $data, $quota);
 
         if (isset($data['organization'])) {
             $organization = $this->organizationRepo->findOneBy(['uuid' => $data['organization']['id']]);
