@@ -14,13 +14,13 @@ const SubscriptionMain = (props) =>
         path: '/',
         exact: true,
         render: () => (
-          <SubscriptionList path={`${props.path}/subscription`} />
+          <SubscriptionList path={`${props.path}/subscription`} year={props.year} setYear={props.setYear} />
         )
       }, {
         path: '/:id',
         onEnter: (params = {}) => props.open(params.id),
         render: () => (
-          <SubscriptionPage path={`${props.path}/subscription`} />
+          <SubscriptionPage path={`${props.path}/subscription`} year={props.year} setYear={props.setYear} />
         )
       }
     ]}
@@ -28,7 +28,9 @@ const SubscriptionMain = (props) =>
 
 SubscriptionMain.propTypes = {
   path: T.string.isRequired,
-  open: T.func.isRequired
+  open: T.func.isRequired,
+  year: T.number.isRequired,
+  setYear: T.func.isRequired
 }
 
 export {

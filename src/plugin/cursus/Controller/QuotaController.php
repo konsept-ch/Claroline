@@ -141,7 +141,7 @@ class QuotaController extends AbstractCrudController
     }
 
     /**
-     * @Route("/{id}/statistics/{year}", name="apiv2_cursus_quota_statistics", methods={"GET"})
+     * @Route("/{id}/{year}/statistics", name="apiv2_cursus_quota_statistics", methods={"GET"})
      * @EXT\ParamConverter("quota", class="Claroline\CursusBundle\Entity\Quota", options={"mapping": {"id": "uuid"}})
      */
     public function getStatisticsAction(Quota $quota, string $year): JsonResponse
@@ -180,7 +180,7 @@ class QuotaController extends AbstractCrudController
     }
 
     /**
-     * @Route("/{id}/csv/{year}", name="apiv2_cursus_quota_export", methods={"GET"})
+     * @Route("/{id}/{year}/csv", name="apiv2_cursus_quota_export", methods={"GET"})
      * @EXT\ParamConverter("quota", class="Claroline\CursusBundle\Entity\Quota", options={"mapping": {"id": "uuid"}})
      */
     public function exportAction(Quota $quota, string $year, Request $request): BinaryFileResponse
@@ -205,7 +205,7 @@ class QuotaController extends AbstractCrudController
         $locale = $this->localeManager->getLocale($this->tokenStorage->getToken()->getUser());
 
         $subscriptions = $this->finder->fetch(SessionUser::class, $filters);
-        $this->sortSubscriptions($subscriptions, -1);
+        $this->sortSubscriptions($subscriptions);
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -239,7 +239,7 @@ class QuotaController extends AbstractCrudController
     }
 
     /**
-     * @Route("/{id}/subscriptions/{year}", name="apiv2_cursus_quota_list_subscriptions", methods={"GET"})
+     * @Route("/{id}/{year}/subscriptions", name="apiv2_cursus_quota_list_subscriptions", methods={"GET"})
      * @EXT\ParamConverter("quota", class="Claroline\CursusBundle\Entity\Quota", options={"mapping": {"id": "uuid"}})
      */
     public function listSubscriptionsAction(Quota $quota, string $year, Request $request): JsonResponse
@@ -275,9 +275,7 @@ class QuotaController extends AbstractCrudController
             $data = $this->finder->fetch(SessionUser::class, $allFilters, $sortBy, $page, $limit);
         }
 
-        if (!empty($sortBy) && 'startDate' == $sortBy['property']) {
-            $this->sortSubscriptions($data, $sortBy['direction']);
-        }
+        $this->sortSubscriptions($data);
 
         $results = FinderProvider::formatPaginatedData($data, $count, $page, $limit, $filters, $sortBy);
 
@@ -362,11 +360,9 @@ class QuotaController extends AbstractCrudController
         ]);
     }
 
-    private function sortSubscriptions(array &$subscriptions, int $direction)
+    private function sortSubscriptions(array &$subscriptions)
     {
-        usort($subscriptions, function (SessionUser $a, SessionUser $b) use ($direction) {
-            return $direction * ($a->getSession()->getStartDate()->getTimestamp() - $b->getSession()->getStartDate()->getTimestamp());
-        });
+        //usort($subscriptions, fn(SessionUser $a, SessionUser $b) => $a->getSession()->getStartDate()->getTimestamp() - $b->getSession()->getStartDate()->getTimestamp());
     }
 
     private function getOrganizationIds(array $organizations, array &$output): void

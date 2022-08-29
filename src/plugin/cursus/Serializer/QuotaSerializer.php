@@ -66,7 +66,7 @@ class QuotaSerializer
                 'years' => $years,
             ],
             'quota' => $quota->getQuotaByYear(date('Y')),
-            'managed' => array_reduce($sessionUsers, fn($accum, $subscription) => $accum + (SessionUser::STATUS_MANAGED == $subscription->getStatus() ? 1 : 0), 0),
+            'pending' => array_reduce($sessionUsers, fn($accum, $subscription) => $accum + (SessionUser::STATUS_PENDING == $subscription->getStatus() ? 1 : 0), 0),
         ];
 
         return $serialized;

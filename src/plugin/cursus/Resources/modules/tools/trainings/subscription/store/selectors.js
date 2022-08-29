@@ -20,10 +20,16 @@ const filters = createSelector(
   }, {})
 )
 
+const year = createSelector(
+  store,
+  (state) => state.year
+)
+
 export const selectors = {
   STORE_NAME,
   LIST_NAME,
   STATISTICS_NAME,
   statistics,
-  filters
+  filters,
+  year
 }
