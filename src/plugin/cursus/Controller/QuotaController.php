@@ -124,8 +124,6 @@ class QuotaController extends AbstractCrudController
      */
     public function getOrganizationsAction(User $user, Request $request): JsonResponse
     {
-        $this->checkPermission('MANAGE_QUOTAS', null, [], true);
-
         $params = $request->query->all();
 
         if (!$this->authorization->isGranted('ROLE_ADMIN')) {
@@ -148,7 +146,7 @@ class QuotaController extends AbstractCrudController
      */
     public function getStatisticsAction(Quota $quota, string $year): JsonResponse
     {
-        $this->checkPermission('VALIDATE_SUBSCRIPTIONS', null, [], true);
+        $this->checkPermission('VALIDATE_SUBSCRIPTIONS', $quota, [], true);
 
         /** @var SessionUserRepository */
         $repo = $this->om->getRepository(SessionUser::class);
@@ -187,7 +185,7 @@ class QuotaController extends AbstractCrudController
      */
     public function exportAction(Quota $quota, string $year, Request $request): BinaryFileResponse
     {
-        $this->checkPermission('VALIDATE_SUBSCRIPTIONS', null, [], true);
+        $this->checkPermission('VALIDATE_SUBSCRIPTIONS', $quota, [], true);
 
         $STATUS_STRINGS = [
             $this->translator->trans('subscription_pending', [], 'cursus'),
@@ -246,7 +244,7 @@ class QuotaController extends AbstractCrudController
      */
     public function listSubscriptionsAction(Quota $quota, string $year, Request $request): JsonResponse
     {
-        $this->checkPermission('VALIDATE_SUBSCRIPTIONS', null, [], true);
+        $this->checkPermission('VALIDATE_SUBSCRIPTIONS', $quota, [], true);
 
         $organization = $quota->getOrganization();
 
@@ -295,7 +293,7 @@ class QuotaController extends AbstractCrudController
      */
     public function setSubscriptionStatusAction(Quota $quota, SessionUser $sessionUser, string $year, Request $request): JsonResponse
     {
-        $this->checkPermission('VALIDATE_SUBSCRIPTIONS', null, [], true);
+        $this->checkPermission('VALIDATE_SUBSCRIPTIONS', $quota, [], true);
 
         $remark = $request->query->get('remark', '');
 
@@ -335,7 +333,9 @@ class QuotaController extends AbstractCrudController
                     } else {
                         $this->quotaManager->sendRefusedStatusMail($sessionUser);
                     }
-                    //$this->sessionManager->removeUsers($sessionUser->getSession(), [$sessionUser]);
+                    $sessionUser->setValidated(false);
+                    $sessionUser->setConfirmed(false);
+                    $this->sessionManager->checkUsersRegistration($sessionUser->getSession(), [$sessionUser]);
                     break;
             }
 
