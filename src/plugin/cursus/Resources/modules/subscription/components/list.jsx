@@ -1,7 +1,6 @@
 import React from 'react'
 import {PropTypes as T} from 'prop-types'
 
-import moment from 'moment'
 import {trans} from '#/main/app/intl/translation'
 import {LINK_BUTTON} from '#/main/app/buttons'
 import {ListData} from '#/main/app/content/list/containers/data'
@@ -30,9 +29,9 @@ const SubscriptionList = (props) =>
         primary: true,
         sortable: false
       }, {
-        name: 'managed',
+        name: 'pending',
         type: 'number',
-        label: trans('managed', {}, 'cursus'),
+        label: trans('subscription_pending', {}, 'cursus'),
         displayed: true,
         filterable: false,
         sortable: false

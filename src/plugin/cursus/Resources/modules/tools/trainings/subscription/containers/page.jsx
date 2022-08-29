@@ -11,11 +11,12 @@ const SubscriptionPage = connect(
     quota: quotaSelectors.quota(state),
     statistics: selectors.statistics(state),
     filters: selectors.filters(state),
-    isAdmin: securitySelectors.isAdmin(state)
+    isAdmin: securitySelectors.isAdmin(state),
+    year: selectors.year(state)
   }),
   (dispatch) => ({
-    getStatistics(id) {
-      dispatch(actions.getStatistics(id))
+    getStatistics(id, year) {
+      dispatch(actions.getStatistics(id, year))
     },
     setSubscriptionStatus(quotaId, subscriptionId, status, remark) {
       dispatch(actions.setSubscriptionStatus(quotaId, subscriptionId, status, remark))

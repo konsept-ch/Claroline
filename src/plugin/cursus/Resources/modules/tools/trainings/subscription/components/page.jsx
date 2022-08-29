@@ -29,7 +29,7 @@ const SubscriptionPage = (props) => {
 
   useEffect(() => {
     if (!isEmpty(props.quota)) {
-      props.getStatistics(props.quota.id)
+      props.getStatistics(props.quota.id, props.year)
     }
   }, [props.quota])
 
@@ -54,7 +54,7 @@ const SubscriptionPage = (props) => {
           icon: 'fa fa-fw fa-download',
           label: trans('export_with_filter', {}, 'actions'),
           file: {
-            url: ['apiv2_cursus_quota_export', {id: props.quota.id, filters: props.filters}]
+            url: ['apiv2_cursus_quota_export', {id: props.quota.id, year: props.year, filters: props.filters}]
           },
           group: trans('transfer')
         },
@@ -64,7 +64,7 @@ const SubscriptionPage = (props) => {
           icon: 'fa fa-fw fa-download',
           label: trans('export_all', {}, 'actions'),
           file: {
-            url: ['apiv2_cursus_quota_export', {id: props.quota.id}]
+            url: ['apiv2_cursus_quota_export', {id: props.quota.id, year: props.year}]
           },
           group: trans('transfer')
         }
@@ -118,7 +118,7 @@ const SubscriptionPage = (props) => {
           <div className="col-md-12">
             <SubscriptionAll
               name={selectors.LIST_NAME}
-              url={['apiv2_cursus_quota_list_subscriptions', {id: props.quota.id}]}
+              url={['apiv2_cursus_quota_list_subscriptions', {id: props.quota.id, year: props.year}]}
               path={props.path}
               setSubscriptionStatus={props.setSubscriptionStatus}
               statistics={props.statistics}
@@ -149,7 +149,8 @@ SubscriptionPage.propTypes = {
   ).isRequired,
   getStatistics: T.func.isRequired,
   setSubscriptionStatus: T.func.isRequired,
-  isAdmin: T.bool.isRequired
+  isAdmin: T.bool.isRequired,
+  year: T.string.isRequired
 }
 
 export {
