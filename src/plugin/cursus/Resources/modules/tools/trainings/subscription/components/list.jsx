@@ -1,12 +1,11 @@
 import React from 'react'
-import {ControlLabel} from 'react-bootstrap'
 import {PropTypes as T} from 'prop-types'
 import {trans} from '#/main/app/intl/translation'
 import {LINK_BUTTON} from '#/main/app/buttons'
 import {ToolPage} from '#/main/core/tool/containers/page'
 import {SubscriptionList as SubscriptionDataList} from '#/plugin/cursus/subscription/components/list'
 import {selectors} from '#/plugin/cursus/tools/trainings/quota/store/selectors'
-import {Select} from '#/main/app/input/components/select'
+import {YearSelector} from '#/plugin/cursus/subscription/components/year-selector'
 
 const SubscriptionList = (props) =>
   <ToolPage
@@ -17,26 +16,11 @@ const SubscriptionList = (props) =>
     }]}
     subtitle={trans('subscriptions', {}, 'cursus')}
   >
-    <h4>
-      <strong>{trans('exercice', {}, 'cursus')} {props.year}</strong>
-    </h4>
-    <Select
-      id="year"
-      choices={Array.from({length:31}, (_, i) => 2020 + i).reduce((acc, year) => {
-        return {
-          ...acc,
-          [year]: year
-        }}, {})
-      } 
-      onChange={value => {
-        props.setYear(value)
-      }}
-      value={props.year}
-    />
-    <p>&nbsp;</p>
+    <YearSelector value={props.year} onChange={(value) => props.setYear(value)} />
     <SubscriptionDataList
       name={selectors.LIST_NAME}
       path={props.path}
+      url={['apiv2_cursus_quota_list_by_year', {year: props.year}]}
     />
   </ToolPage>
 

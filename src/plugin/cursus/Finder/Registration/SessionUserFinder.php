@@ -35,7 +35,7 @@ class SessionUserFinder extends AbstractFinder
 
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
-                case 'start_date':
+                case 'year':
                     $qb->andWhere("year(s.startDate) = :{$filterName}");
                     $qb->setParameter($filterName, $filterValue);
                     break;
