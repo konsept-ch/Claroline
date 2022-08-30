@@ -54,10 +54,6 @@ SubscriptionList.propTypes = {
   url: T.oneOfType([T.string, T.array])
 }
 
-SubscriptionList.defaultProps = {
-  url: ['apiv2_cursus_quota_list']
-}
-
 export {
   SubscriptionList
 }

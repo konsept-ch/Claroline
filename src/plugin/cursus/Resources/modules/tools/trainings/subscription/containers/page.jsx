@@ -11,8 +11,7 @@ const SubscriptionPage = connect(
     quota: quotaSelectors.quota(state),
     statistics: selectors.statistics(state),
     filters: selectors.filters(state),
-    isAdmin: securitySelectors.isAdmin(state),
-    year: selectors.year(state)
+    isAdmin: securitySelectors.isAdmin(state)
   }),
   (dispatch) => ({
     getStatistics(id, year) {
@@ -20,6 +19,9 @@ const SubscriptionPage = connect(
     },
     setSubscriptionStatus(quotaId, subscriptionId, status, remark) {
       dispatch(actions.setSubscriptionStatus(quotaId, subscriptionId, status, remark))
+    },
+    updateYear(id, year) {
+      dispatch(actions.updateYear(id, year))
     }
   })
 )(SubscriptionComponent)

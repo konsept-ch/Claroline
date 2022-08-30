@@ -9,6 +9,7 @@ import {ContentCounter} from '#/main/app/content/components/counter'
 import {ContentLoader} from '#/main/app/content/components/loader'
 import {PageFull} from '#/main/app/page/components/full'
 import {getToolBreadcrumb, showToolBreadcrumb} from '#/main/core/tool/utils'
+import {YearSelector} from '#/plugin/cursus/subscription/components/year-selector'
 
 import {SubscriptionAll} from '#/plugin/cursus/tools/trainings/subscription/components/all'
 import {
@@ -72,6 +73,11 @@ const SubscriptionPage = (props) => {
     >
       <Fragment>
         <div className="row">
+          <div className="col-md-12">
+            <YearSelector value={props.year} onChange={(value) => props.updateYear(props.quota.id, value)} />
+          </div>
+        </div>
+        <div className="row">
           <ContentCounter
             icon="fa fa-chalkboard-teacher"
             label={trans('subscription_total', {}, 'cursus')}
@@ -124,6 +130,7 @@ const SubscriptionPage = (props) => {
               statistics={props.statistics}
               quota={props.quota}
               isAdmin={props.isAdmin}
+              year={props.year}
             />
           </div>
         </div>
@@ -150,7 +157,8 @@ SubscriptionPage.propTypes = {
   getStatistics: T.func.isRequired,
   setSubscriptionStatus: T.func.isRequired,
   isAdmin: T.bool.isRequired,
-  year: T.string.isRequired
+  year: T.number.isRequired,
+  updateYear: T.func.isRequired
 }
 
 export {

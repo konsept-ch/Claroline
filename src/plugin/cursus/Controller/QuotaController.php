@@ -150,7 +150,7 @@ class QuotaController extends AbstractCrudController
 
         /** @var SessionUserRepository */
         $repo = $this->om->getRepository(SessionUser::class);
-        $sessionUsers = $repo->findByOrganization($quota->getOrganization());
+        $sessionUsers = $repo->findByOrganization($quota->getOrganization(), $year);
         $statistics = [
             'total' => count($sessionUsers),
             'pending' => array_reduce($sessionUsers, function ($accum, $subscription) {
@@ -197,6 +197,7 @@ class QuotaController extends AbstractCrudController
         $filters = $request->query->get('filters', []);
         $filters['organization'] = $quota->getOrganization();
         $filters['type'] = AbstractRegistration::LEARNER;
+        $filters['year'] = $year;
 
         if (!$quota->getQuotaByYear($year)->enabled) {
             $filters['ignored_status'] = SessionUser::STATUS_MANAGED;
@@ -239,6 +240,21 @@ class QuotaController extends AbstractCrudController
     }
 
     /**
+     * @Route("/{year}", name="apiv2_cursus_quota_list_by_year", methods={"GET"})
+     */
+    public function listByYearAction(string $year, Request $request)
+    {
+        $query = $request->query->all();
+
+        $options = ['year' => $year];
+        $query['hiddenFilters'] = $this->getDefaultHiddenFilters();
+
+        return new JsonResponse(
+            $this->crud->list(Quota::class, $query, $options)
+        );
+    }
+
+    /**
      * @Route("/{id}/{year}/subscriptions", name="apiv2_cursus_quota_list_subscriptions", methods={"GET"})
      * @EXT\ParamConverter("quota", class="Claroline\CursusBundle\Entity\Quota", options={"mapping": {"id": "uuid"}})
      */
@@ -252,6 +268,7 @@ class QuotaController extends AbstractCrudController
         $query['hiddenFilters'] = [
             'organization' => $organization,
             'type' => AbstractRegistration::LEARNER,
+            'year' => $year
         ];
 
         if (!$quota->getQuotaByYear($year)->enabled) {

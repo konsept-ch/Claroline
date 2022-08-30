@@ -53,10 +53,11 @@ class QuotaSerializer
     public function serialize(Quota $quota, array $options = []): array
     {
         $repo = $this->om->getRepository(SessionUser::class);
-        $sessionUsers = $repo->findByOrganization($quota->getOrganization());
 
         $default = $quota->getDefault();
         $years = $quota->getYears();
+
+        $year = $options['year'] ?? date('Y');
 
         $serialized = [
             'id' => $quota->getUuid(),
@@ -65,9 +66,13 @@ class QuotaSerializer
                 'default' => $default,
                 'years' => $years,
             ],
-            'quota' => $quota->getQuotaByYear(date('Y')),
-            'pending' => array_reduce($sessionUsers, fn($accum, $subscription) => $accum + (SessionUser::STATUS_PENDING == $subscription->getStatus() ? 1 : 0), 0),
+            'quota' => $quota->getQuotaByYear($year),
         ];
+        
+        if (isset($options['year'])) {
+            $sessionUsers = $repo->findByOrganization($quota->getOrganization(), $options['year']);
+            $serialized['pending'] = array_reduce($sessionUsers, fn($accum, $subscription) => $accum + (SessionUser::STATUS_PENDING == $subscription->getStatus() ? 1 : 0), 0);
+        }
 
         return $serialized;
     }

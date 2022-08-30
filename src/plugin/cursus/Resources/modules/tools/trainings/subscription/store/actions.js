@@ -11,6 +11,11 @@ actions.updateSubscriptionStatus = makeActionCreator(UPDATE_SUBSCRIPTION_STATUS,
 actions.setStatistics = makeActionCreator(SET_STATISTICS, 'statistics')
 actions.setYear = makeActionCreator(SET_YEAR, 'year')
 
+actions.updateYear = (id, year) => (dispatch) => {
+  dispatch(actions.setYear(year))
+  dispatch(actions.getStatistics(id, year))
+}
+
 actions.getStatistics = (id, year) => (dispatch) => {
   return dispatch({
     [API_REQUEST]: {
@@ -23,17 +28,17 @@ actions.getStatistics = (id, year) => (dispatch) => {
   })
 }
 
-actions.setSubscriptionStatus = (quotaId, subscriptionId, status, remark) => (dispatch) => {
+actions.setSubscriptionStatus = (year, quotaId, subscriptionId, status, remark) => (dispatch) => {
   return dispatch({
     [API_REQUEST]: {
-      url: url(['apiv2_cursus_subscription_status', {id:quotaId, sid:subscriptionId}], {status, remark}),
+      url: url(['apiv2_cursus_subscription_status', {year, id:quotaId, sid:subscriptionId}], {status, remark}),
       request: {
         method: 'PATCH'
       },
       silent: true,
       success: () => {
         dispatch(actions.updateSubscriptionStatus({id:subscriptionId, status, remark}))
-        dispatch(actions.getStatistics(quotaId))
+        dispatch(actions.getStatistics(quotaId, year))
       }
     }
   })
