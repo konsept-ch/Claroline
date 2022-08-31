@@ -101,7 +101,7 @@ const SubscriptionPage = (props) => {
               icon="fa fa-check-double"
               label={trans('subscription_managed', {}, 'cursus')}
               color="rgb(79, 115, 2)"
-              value={props.statistics.pending}
+              value={props.statistics.managed}
             />
           }
           {props.quota.useQuotas && props.statistics.calculated != undefined &&
