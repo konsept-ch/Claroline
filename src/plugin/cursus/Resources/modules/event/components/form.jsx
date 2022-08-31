@@ -31,13 +31,13 @@ const EventForm = (props) =>
             required: true
           }, {
             name: 'dates',
-            type: 'date-range',
+            type: 'date-event',
             label: trans('date'),
             required: true,
-            calculated: (event) => [event.start || moment().hours(8).minutes(30).seconds(0).utc().format(getApiFormat()), event.end || moment().hours(17).minutes(0).seconds(0).utc().format(getApiFormat())],
+            calculated: (event) => [event.start, event.end],
             onChange: (datesRange) => {
-              props.update('end', props.event.start == datesRange[0] ? datesRange[1] : moment(datesRange[0]).hours(17).minutes(0).seconds(0).utc().format(getApiFormat()))
               props.update('start', datesRange[0])
+              props.update('end', datesRange[1])
             },
             options: {
               time: true
