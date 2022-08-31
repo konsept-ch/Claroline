@@ -37,7 +37,6 @@ class SessionRepository extends EntityRepository
             'tutors' => $this->countTutors($session),
             'learners' => $this->countLearners($session),
             'pending' => $this->countPending($session),
-            'cancellations' => $this->countCancellation($session),
         ];
     }
 
@@ -83,15 +82,6 @@ class SessionRepository extends EntityRepository
                 'registrationType' => AbstractRegistration::LEARNER,
                 'session' => $session,
             ])
-            ->getSingleScalarResult();
-    }
-
-    public function countCancellation(Session $session)
-    {
-        return (int) $this->_em
-            ->createQuery('
-                SELECT COUNT(sc) FROM Claroline\CursusBundle\Entity\Registration\SessionCancellation AS sc
-            ')
             ->getSingleScalarResult();
     }
 
