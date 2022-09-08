@@ -240,7 +240,7 @@ class QuotaController extends AbstractCrudController
     }
 
     /**
-     * @Route("/{year}", name="apiv2_cursus_quota_list_by_year", methods={"GET"})
+     * @Route("/year/{year}", name="apiv2_cursus_quota_list_by_year", methods={"GET"})
      */
     public function listByYearAction(string $year, Request $request)
     {

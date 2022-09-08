@@ -1,6 +1,5 @@
 import React from 'react'
 import {PropTypes as T} from 'prop-types'
-import moment from 'moment'
 
 import classes from 'classnames'
 import {constants as constList} from '#/main/app/content/list/constants'
