@@ -22,6 +22,8 @@ use Claroline\CoreBundle\Library\Normalizer\DateRangeNormalizer;
 use Claroline\CoreBundle\Library\RoutingHelper;
 use Claroline\CoreBundle\Manager\LocaleManager;
 use Claroline\CoreBundle\Manager\MailManager;
+use Claroline\CoreBundle\Manager\LocaleManager;
+use Claroline\CoreBundle\Manager\MailManager;
 use Claroline\CoreBundle\Manager\RoleManager;
 use Claroline\CoreBundle\Manager\Template\TemplateManager;
 use Claroline\CoreBundle\Manager\Workspace\WorkspaceManager;
@@ -66,6 +68,10 @@ class SessionManager
     private $mailManager;
     /** @var LocaleManager */
     private $localeManager;
+    /** @var MailManager */
+    private $mailManager;
+    /** @var LocaleManager */
+    private $localeManager;
 
     private $sessionRepo;
     private $sessionUserRepo;
@@ -84,6 +90,8 @@ class SessionManager
         WorkspaceManager $workspaceManager,
         EventManager $sessionEventManager,
         MailManager $mailManager,
+        LocaleManager $localeManager,
+        MailManager $mailManager,
         LocaleManager $localeManager
     ) {
         $this->eventDispatcher = $eventDispatcher;
@@ -97,6 +105,8 @@ class SessionManager
         $this->templateManager = $templateManager;
         $this->workspaceManager = $workspaceManager;
         $this->sessionEventManager = $sessionEventManager;
+        $this->mailManager = $mailManager;
+        $this->localeManager = $localeManager;
         $this->mailManager = $mailManager;
         $this->localeManager = $localeManager;
 
@@ -181,6 +191,9 @@ class SessionManager
         /**
          * @var Course
          */
+        /**
+         * @var Course
+         */
         $course = $session->getCourse();
         $registrationDate = new \DateTime();
 
@@ -214,6 +227,19 @@ class SessionManager
                 $this->om->persist($sessionUser);
 
                 $this->eventDispatcher->dispatch(new LogSessionUserRegistrationEvent($sessionUser), 'log');
+
+                $managers = $user->getMainOrganization()->getAdministrators()->toArray();
+                $locale = $this->localeManager->getLocale($user);
+                $placeholders = [
+                    'session_name' => $sessionUser->getSession()->getName(),
+                    'user_first_name' => $user->getFirstName(),
+                    'user_last_name' => $user->getLastName(),
+                    'session_start' => $sessionUser->getSession()->getStartDate()->format('d/m/Y'),
+                    'session_end' => $sessionUser->getSession()->getEndDate()->format('d/m/Y'),
+                ];
+                $subject = $this->templateManager->getTemplate('training_quota_subscription_created', $placeholders, $locale, 'title');
+                $body = $this->templateManager->getTemplate('training_quota_subscription_created', $placeholders, $locale);
+                $this->mailManager->send($subject, $body, $managers, null, [], true);
 
                 $managers = $user->getMainOrganization()->getAdministrators()->toArray();
                 $locale = $this->localeManager->getLocale($user);
@@ -280,6 +306,8 @@ class SessionManager
         }
 
         $this->om->flush();
+
+        $this->sendSessionUnregistration($sessionUsers);
 
         $this->sendSessionUnregistration($sessionUsers);
     }

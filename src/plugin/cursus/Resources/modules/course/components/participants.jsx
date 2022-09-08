@@ -3,16 +3,19 @@ import {PropTypes as T} from 'prop-types'
 import get from 'lodash/get'
 import {schemeCategory20c} from 'd3-scale'
 
+import {constants as listConst} from '#/main/app/content/list/constants'
 import {trans} from '#/main/app/intl/translation'
 import {hasPermission} from '#/main/app/security'
 import {LinkButton} from '#/main/app/buttons/link'
 import {CALLBACK_BUTTON, MODAL_BUTTON} from '#/main/app/buttons'
 import {AlertBlock} from '#/main/app/alert/components/alert-block'
 import {Routes} from '#/main/app/router/components/routes'
+import {ListData} from '#/main/app/content/list/containers/data'
 import {Vertical} from '#/main/app/content/tabs/components/vertical'
 import {ContentCounter} from '#/main/app/content/components/counter'
 import {MODAL_USERS} from '#/main/core/modals/users'
 import {MODAL_GROUPS} from '#/main/core/modals/groups'
+import {UserCard} from '#/main/core/user/components/card'
 
 import {selectors} from '#/plugin/cursus/tools/trainings/catalog/store/selectors'
 import {Course as CourseTypes, Session as SessionTypes} from '#/plugin/cursus/prop-types'
@@ -172,6 +175,15 @@ const CourseParticipants = (props) =>
         />
       }
 
+      {hasPermission('register', props.activeSession) &&
+        <ContentCounter
+          icon="fa fa-ban label-danger"
+          label={trans('cancellations', {}, 'cursus')}
+          color="rgb(169, 68, 66)"
+          value={get(props.activeSession, 'participants.cancellations', 0)}
+        />
+      }
+
       <ContentCounter
         icon="fa fa-user-plus"
         label={trans('occupation', {}, 'cursus')}
@@ -205,6 +217,11 @@ const CourseParticipants = (props) =>
               icon: 'fa fa-fw fa-hourglass-half',
               title: trans('Refus RH'),
               path: '/pending',
+              displayed: hasPermission('register', props.activeSession)
+            }, {
+              icon: 'fa fa-fw fa-ban',
+              title: trans('cancellations', {}, 'cursus'),
+              path: '/cancellations',
               displayed: hasPermission('register', props.activeSession)
             }
           ]}
@@ -363,6 +380,48 @@ const CourseParticipants = (props) =>
                 )
 
                 return Pending
+              }
+            }, {
+              path: '/cancellations',
+              disabled: !hasPermission('register', props.activeSession),
+              render() {
+                const Cancellation = (
+                  <Fragment>
+                    <ListData
+                      name={selectors.STORE_NAME+'.sessionCancellation'}
+                      fetch={{
+                        url: ['apiv2_cursus_session_list_cancellations', {id: props.activeSession.id}],
+                        autoload: true
+                      }}
+                      delete={{
+                        url: '',
+                        displayed: () => false
+                      }}
+                      selectable={false}
+                      definition={[
+                        {
+                          name: 'user',
+                          type: 'user',
+                          label: trans('user'),
+                          displayed: true
+                        }, {
+                          name: 'date',
+                          type: 'date',
+                          label: trans('cancellation_date', {}, 'cursus'),
+                          options: {time: true},
+                          displayed: true,
+                          filterable: false
+                        }
+                      ]}
+                      card={(cardProps) => <UserCard {...cardProps} data={cardProps.data.user} />}
+                      display={{
+                        current: listConst.DISPLAY_TABLE
+                      }}
+                    />
+                  </Fragment>
+                )
+
+                return Cancellation
               }
             }
           ]}
