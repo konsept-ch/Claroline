@@ -22,8 +22,6 @@ use Claroline\CoreBundle\Library\Normalizer\DateRangeNormalizer;
 use Claroline\CoreBundle\Library\RoutingHelper;
 use Claroline\CoreBundle\Manager\LocaleManager;
 use Claroline\CoreBundle\Manager\MailManager;
-use Claroline\CoreBundle\Manager\LocaleManager;
-use Claroline\CoreBundle\Manager\MailManager;
 use Claroline\CoreBundle\Manager\RoleManager;
 use Claroline\CoreBundle\Manager\Template\TemplateManager;
 use Claroline\CoreBundle\Manager\Workspace\WorkspaceManager;
@@ -68,10 +66,6 @@ class SessionManager
     private $mailManager;
     /** @var LocaleManager */
     private $localeManager;
-    /** @var MailManager */
-    private $mailManager;
-    /** @var LocaleManager */
-    private $localeManager;
 
     private $sessionRepo;
     private $sessionUserRepo;
@@ -90,8 +84,6 @@ class SessionManager
         WorkspaceManager $workspaceManager,
         EventManager $sessionEventManager,
         MailManager $mailManager,
-        LocaleManager $localeManager,
-        MailManager $mailManager,
         LocaleManager $localeManager
     ) {
         $this->eventDispatcher = $eventDispatcher;
@@ -105,8 +97,6 @@ class SessionManager
         $this->templateManager = $templateManager;
         $this->workspaceManager = $workspaceManager;
         $this->sessionEventManager = $sessionEventManager;
-        $this->mailManager = $mailManager;
-        $this->localeManager = $localeManager;
         $this->mailManager = $mailManager;
         $this->localeManager = $localeManager;
 
