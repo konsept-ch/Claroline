@@ -20,15 +20,7 @@ class Version20220809081209 extends AbstractMigration
             ADD years LONGTEXT NOT NULL COMMENT "(DC2Type:json)"
         ');
         $this->addSql('
-            UPDATE claro_cursusbundle_quota AS a INNER JOIN claro_cursusbundle_quota AS b ON a.id = b.id SET a.default = CONCAT(\'{"quota":\', b.threshold, \',"enabled":\', b.use_quotas, \'}\')
-        ');
-        $this->addSql('
             UPDATE claro_cursusbundle_quota AS a SET a.years = "{}"
-        ');
-        $this->addSql('
-            ALTER TABLE claro_cursusbundle_quota 
-            DROP threshold, 
-            DROP use_quotas
         ');
     }
 
@@ -36,9 +28,7 @@ class Version20220809081209 extends AbstractMigration
     {
         $this->addSql('
             ALTER TABLE claro_cursusbundle_quota 
-            ADD threshold DOUBLE PRECISION NOT NULL, 
-            ADD use_quotas TINYINT(1) NOT NULL, 
-            DROP `default`, 
+            DROP `default`,
             DROP years
         ');
     }

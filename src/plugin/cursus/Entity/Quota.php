@@ -34,6 +34,20 @@ class Quota
      * @var Organization
      */
     private $organization;
+    
+    /**
+     * @ORM\Column(type="float")
+     *
+     * @var float
+     */
+    private $threshold = 0.0;
+
+    /**
+     * @ORM\Column(name="use_quotas", type="boolean")
+     *
+     * @var bool
+     */
+    private $useQuotas = false;
 
     /**
      * @ORM\Column(type="json")
@@ -65,6 +79,32 @@ class Quota
     public function setOrganization(Organization $organization)
     {
         $this->organization = $organization;
+    }
+
+    /**
+     * @return float
+     */
+    public function getThreshold()
+    {
+        return $this->threshold;
+    }
+
+    public function setThreshold(float $threshold)
+    {
+        $this->threshold = $threshold;
+    }
+
+    /**
+     * @return bool
+     */
+    public function useQuotas()
+    {
+        return $this->useQuotas;
+    }
+
+    public function setUseQuotas(bool $useQuotas)
+    {
+        $this->useQuotas = $useQuotas;
     }
 
     /**
