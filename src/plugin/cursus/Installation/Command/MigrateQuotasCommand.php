@@ -1,12 +1,14 @@
 <?php
 
-namespace Claroline\CursusBundle\Installation\Updater;
+namespace Claroline\CursusBundle\Installation\Command;
 
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CursusBundle\Entity\Quota;
-use Claroline\InstallationBundle\Updater\Updater;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
-class Updater130500 extends Updater
+class MigrateQuotasCommand extends Command
 {
     /** @var ObjectManager */
     private $om;
@@ -14,14 +16,17 @@ class Updater130500 extends Updater
     public function __construct(
         ObjectManager $om
     ) {
+        parent::__construct();
+
         $this->om = $om;
     }
 
-    public function preUpdate()
+    protected function configure()
     {
+        $this->setDescription('Installs the platform.');
     }
 
-    public function postUpdate()
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->om->startFlushSuite();
 
@@ -40,5 +45,7 @@ class Updater130500 extends Updater
         }
 
         $this->om->endFlushSuite();
+
+        return 0;
     }
 }

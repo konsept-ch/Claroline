@@ -62,7 +62,7 @@ class QuotaSerializer
             'organization' => $this->organizationSerializer->serialize($quota->getOrganization(), [Options::SERIALIZE_MINIMAL]),
             'options' => [
                 'default' => $default,
-                'years' => $years,
+                'years' => (object)$years,
             ],
             'quota' => $quota->getQuotaByYear($year),
         ];
