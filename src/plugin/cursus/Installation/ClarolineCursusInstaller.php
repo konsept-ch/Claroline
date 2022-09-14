@@ -5,6 +5,7 @@ namespace Claroline\CursusBundle\Installation;
 use Claroline\CursusBundle\Installation\Updater\Updater130001;
 use Claroline\CursusBundle\Installation\Updater\Updater130013;
 use Claroline\CursusBundle\Installation\Updater\Updater130100;
+use Claroline\CursusBundle\Installation\Updater\Updater130500;
 use Claroline\InstallationBundle\Additional\AdditionalInstaller;
 
 class ClarolineCursusInstaller extends AdditionalInstaller
@@ -15,32 +16,12 @@ class ClarolineCursusInstaller extends AdditionalInstaller
             '13.0.1' => Updater130001::class,
             '13.0.13' => Updater130013::class,
             '13.1.0' => Updater130100::class,
+            '13.5.0' => Updater130500::class,
         ];
     }
 
     public function hasFixtures(): bool
     {
         return true;
-    }
-
-    public function postInstall()
-    {
-        $this->om->startFlushSuite();
-
-        /**
-         * @var Quota[]
-         */
-        $quotas = $this->om->getRepository(Quota::class)->findAll();
-
-        foreach ($quotas as $quota)
-        {
-            $quota->setDefault([
-                'enabled' => $quota->useQuotas(),
-                'quota' => $quota->getThreshold()
-            ]);
-            $this->om->flush();
-        }
-
-        $this->om->endFlushSuite();
     }
 }
