@@ -1,12 +1,12 @@
 <?php
 
-namespace Claroline\CursusBundle\Installation\Updater;
+namespace Claroline\CursusBundle\Installation\Command;
 
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CursusBundle\Entity\Quota;
-use Claroline\InstallationBundle\Updater\Updater;
+use Symfony\Component\Console\Command\Command;
 
-class Updater130500 extends Updater
+class MigrateQuotasCommand extends Command
 {
     /** @var ObjectManager */
     private $om;

@@ -15,8 +15,3 @@ services:
         arguments:
             - '@Claroline\AppBundle\Persistence\ObjectManager'
         tags: [ 'claroline.platform.updater' ]
-
-    Claroline\CursusBundle\Installation\Updater\Updater130500:
-        arguments:
-            - '@Claroline\AppBundle\Persistence\ObjectManager'
-        tags: [ 'claroline.platform.updater' ]
