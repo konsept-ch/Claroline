@@ -5,6 +5,8 @@ namespace Claroline\CursusBundle\Installation\Command;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CursusBundle\Entity\Quota;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class MigrateQuotasCommand extends Command
 {
@@ -17,11 +19,12 @@ class MigrateQuotasCommand extends Command
         $this->om = $om;
     }
 
-    public function preUpdate()
+    protected function configure()
     {
+        $this->setDescription('Installs the platform.');
     }
 
-    public function postUpdate()
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->om->startFlushSuite();
 
@@ -40,5 +43,7 @@ class MigrateQuotasCommand extends Command
         }
 
         $this->om->endFlushSuite();
+
+        return 0;
     }
 }
