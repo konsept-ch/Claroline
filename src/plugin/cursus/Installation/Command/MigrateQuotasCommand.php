@@ -16,6 +16,8 @@ class MigrateQuotasCommand extends Command
     public function __construct(
         ObjectManager $om
     ) {
+        parent::__construct();
+
         $this->om = $om;
     }
 
