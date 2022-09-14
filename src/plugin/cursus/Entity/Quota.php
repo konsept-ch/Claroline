@@ -50,7 +50,7 @@ class Quota
     private $useQuotas = false;
 
     /**
-     * @ORM\Column(type="json")
+     * @ORM\Column(name="def", type="json")
      *
      * @var array
      */
