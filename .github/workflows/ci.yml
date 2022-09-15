@@ -1,25 +1,25 @@
-name: 'CI'
+name: "CI"
 
 on:
   pull_request:
 
 jobs:
   cs:
-    name: 'Coding Style'
+    name: "Coding Style"
     runs-on: ubuntu-latest
 
     steps:
-      - name: 'Checkout'
-        uses: 'actions/checkout@v2'
+      - name: "Checkout"
+        uses: "actions/checkout@v2"
         with:
           fetch-depth: 2
 
-      - name: 'Install PHP 7.4'
-        uses: 'shivammathur/setup-php@v2'
+      - name: "Install PHP 7.4"
+        uses: "shivammathur/setup-php@v2"
         with:
-          php-version: '7.4'
+          php-version: "7.4"
 
-      - name: 'List modified files'
+      - name: "List modified files"
         id: diff
         run: |
           git fetch origin
@@ -27,45 +27,45 @@ jobs:
           echo "::set-output name=diff_php::$(cat git_diff_files.txt | grep '.\+\.php' | sed ':a;N;$!ba;s/\n/ /g')"
           echo "::set-output name=diff_js::$(cat git_diff_files.txt | grep 'Resources/modules/.\+\.js' | sed ':a;N;$!ba;s/\n/ /g')"
 
-      - name: 'Install PHPMD'
+      - name: "Install PHPMD"
         if: ${{ env.DIFF != '' }}
         run: wget -c https://phpmd.org/static/latest/phpmd.phar -O phpmd;
         env:
           DIFF: ${{ steps.diff.outputs.diff_php}}
 
-      - name: 'Run PHPMD checks'
+      - name: "Run PHPMD checks"
         if: ${{ env.DIFF != '' }}
         run: php phpmd `echo "$DIFF" | tr ' ' ','` text phpmd.xml
         env:
           DIFF: ${{ steps.diff.outputs.diff_php }}
 
-      - name: 'Install PHPCSFixer'
+      - name: "Install PHPCSFixer"
         if: ${{ env.DIFF != '' }}
         run: wget https://cs.symfony.com/download/php-cs-fixer-v2.phar -O php-cs-fixer
         env:
           DIFF: ${{ steps.diff.outputs.diff_php }}
 
-      - name: 'Run PHPCSFixer checks'
+      - name: "Run PHPCSFixer checks"
         if: ${{ env.DIFF != '' }}
         run: php php-cs-fixer fix --dry-run --diff --config=.php_cs --path-mode=intersection `echo "$DIFF"`
         env:
           PHP_CS_FIXER_IGNORE_ENV: 1
           DIFF: ${{ steps.diff.outputs.diff_php }}
 
-      - name: 'Install ESLint'
+      - name: "Install ESLint"
         if: ${{ env.DIFF != '' }}
         run: npm install eslint eslint-plugin-react@7.21.5 --legacy-peer-deps
         env:
           DIFF: ${{ steps.diff.outputs.diff_js }}
 
-      - name: 'Run ESLint checks'
+      - name: "Run ESLint checks"
         if: ${{ env.DIFF != '' }}
         run: node_modules/.bin/eslint --ext js --ext jsx `echo "$DIFF"`
         env:
           DIFF: ${{ steps.diff.outputs.diff_js }}
 
   php-74:
-    name: 'PHPUnit (PHP 7.4)'
+    name: "PHPUnit (PHP 7.4)"
     needs: cs
     runs-on: ubuntu-latest
 
@@ -77,34 +77,34 @@ jobs:
           -e MYSQL_ALLOW_EMPTY_PASSWORD=yes
           -e MYSQL_DATABASE=claroline_test
         ports:
-          - '3306:3306'
+          - "3306:3306"
 
     steps:
-      - name: 'Checkout'
-        uses: 'actions/checkout@v2'
+      - name: "Checkout"
+        uses: "actions/checkout@v2"
         with:
           fetch-depth: 2
 
-      - name: 'Install PHP 7.4'
-        uses: 'shivammathur/setup-php@v2'
+      - name: "Install PHP 7.4"
+        uses: "shivammathur/setup-php@v2"
         with:
-          php-version: '7.4'
+          php-version: "7.4"
           extensions: pdo_mysql
 
-      - name: 'Cache composer dependencies'
+      - name: "Cache composer dependencies"
         uses: actions/cache@v1
         with:
-          path: '~/.composer/cache'
+          path: "~/.composer/cache"
           key: composer-${{ hashFiles('**/composer.json') }}
           restore-keys: composer-
 
-      - name: 'Set project parameters'
+      - name: "Set project parameters"
         run: php bin/configure --default
 
-      - name: 'Install PHP dependencies with Composer'
-        run: composer update --no-interaction --no-plugins --no-scripts
+      - name: "Install PHP dependencies with Composer"
+        run: composer update --no-interaction
 
-      - name: 'Cache node modules'
+      - name: "Cache node modules"
         uses: actions/cache@v2
         with:
           path: ~/.npm
@@ -112,25 +112,25 @@ jobs:
           restore-keys: |
             npm-
 
-      - name: 'Install JS dependencies with NPM'
+      - name: "Install JS dependencies with NPM"
         run: npm install --legacy-peer-deps
 
-      - name: 'Build JS files with Webpack'
+      - name: "Build JS files with Webpack"
         run: npm run webpack
 
-      - name: 'Setup Claroline platform'
+      - name: "Setup Claroline platform"
         run: php bin/console claroline:install --env=test -vvv
 
-      - name: 'Run PHPUnit Tests'
+      - name: "Run PHPUnit Tests"
         run: SYMFONY_DEPRECATIONS_HELPER=weak vendor/bin/simple-phpunit --dont-report-useless-tests
 
       # Created user is not used in the job. This is just a dumb way to test the user creation process.
       # We do it after tests because we don't want tests on user parts to be affected by this.
-      - name: 'Create a Claroline user'
+      - name: "Create a Claroline user"
         run: php bin/console claroline:user:create --env=test -vvv -a John Doe john.doe john.doe john.doe@test.com
 
   php-80:
-    name: 'PHPUnit (PHP 8.0)'
+    name: "PHPUnit (PHP 8.0)"
     needs: cs
     runs-on: ubuntu-latest
 
@@ -142,34 +142,34 @@ jobs:
           -e MYSQL_ALLOW_EMPTY_PASSWORD=yes
           -e MYSQL_DATABASE=claroline_test
         ports:
-          - '3306:3306'
+          - "3306:3306"
 
     steps:
-      - name: 'Checkout'
-        uses: 'actions/checkout@v2'
+      - name: "Checkout"
+        uses: "actions/checkout@v2"
         with:
           fetch-depth: 2
 
-      - name: 'Install PHP 8.0'
-        uses: 'shivammathur/setup-php@v2'
+      - name: "Install PHP 8.0"
+        uses: "shivammathur/setup-php@v2"
         with:
-          php-version: '8.0'
+          php-version: "8.0"
           extensions: pdo_mysql
 
-      - name: 'Cache composer dependencies'
+      - name: "Cache composer dependencies"
         uses: actions/cache@v1
         with:
-          path: '~/.composer/cache'
+          path: "~/.composer/cache"
           key: composer-${{ hashFiles('**/composer.json') }}
           restore-keys: composer-
 
-      - name: 'Set project parameters'
+      - name: "Set project parameters"
         run: php bin/configure --default
 
-      - name: 'Install PHP dependencies with Composer'
-        run: composer update --no-interaction --no-plugins --no-scripts
+      - name: "Install PHP dependencies with Composer"
+        run: composer update --no-interaction
 
-      - name: 'Cache node modules'
+      - name: "Cache node modules"
         uses: actions/cache@v2
         with:
           path: ~/.npm
@@ -177,19 +177,19 @@ jobs:
           restore-keys: |
             npm-
 
-      - name: 'Install JS dependencies with NPM'
+      - name: "Install JS dependencies with NPM"
         run: npm install --legacy-peer-deps
 
-      - name: 'Build JS files with Webpack'
+      - name: "Build JS files with Webpack"
         run: npm run webpack
 
-      - name: 'Setup Claroline platform'
+      - name: "Setup Claroline platform"
         run: php bin/console claroline:install --env=test -vvv
 
-      - name: 'Run PHPUnit Tests'
+      - name: "Run PHPUnit Tests"
         run: SYMFONY_DEPRECATIONS_HELPER=weak vendor/bin/simple-phpunit --dont-report-useless-tests
 
       # Created user is not used in the job. This is just a dumb way to test the user creation process.
       # We do it after tests because we don't want tests on user parts to be affected by this.
-      - name: 'Create a Claroline user'
+      - name: "Create a Claroline user"
         run: php bin/console claroline:user:create --env=test -vvv -a John Doe john.doe john.doe john.doe@test.com
