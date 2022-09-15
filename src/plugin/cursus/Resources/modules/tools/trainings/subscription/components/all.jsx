@@ -52,10 +52,7 @@ const SubscriptionAll = (props) =>
           authorization: props.statistics.calculated + rows[0].session.quotas.days <= props.quota.quota.quota,
           status: !props.isAdmin && rows[0].status != 0 ? [] : (
             rows[0].session.quotas.used && props.quota.quota.enabled ?
-              [0, 1, 2, 3] :
-              rows[0].session.restrictions.dates[0] >= now() ?
-                [0, 1, 2] :
-                [0, 1]
+              [0, 1, 2, 3] : [0, 1, 2]
           ).filter(status => status != rows[0].status),
           changeStatus: (status, remark) => props.setSubscriptionStatus(props.year, props.quota.id, rows[0].id, status, remark)
         }]
