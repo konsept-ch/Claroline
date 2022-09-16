@@ -17,19 +17,22 @@ use Doctrine\ORM\EntityRepository;
 
 class SessionUserRepository extends EntityRepository
 {
-    public function findByOrganization(Organization $organization)
+    public function findByOrganization(Organization $organization, string $year)
     {
         return $this->_em
             ->createQuery('
                 SELECT su FROM Claroline\CursusBundle\Entity\Registration\SessionUser AS su
+                INNER JOIN su.session s
                 INNER JOIN su.user u
                 LEFT JOIN u.userOrganizationReferences oref
                 WHERE oref.organization = :organization
                 AND su.type = :type
+                AND year(s.startDate) = :year
             ')
             ->setParameters([
                 'type' => AbstractRegistration::LEARNER,
                 'organization' => $organization,
+                'year' => $year,
             ])
             ->getResult();
     }

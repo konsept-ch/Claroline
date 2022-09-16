@@ -49,6 +49,20 @@ class Quota
      */
     private $useQuotas = false;
 
+    /**
+     * @ORM\Column(name="def", type="json")
+     *
+     * @var array
+     */
+    private $default = [];
+
+    /**
+     * @ORM\Column(type="json")
+     *
+     * @var array
+     */
+    private $years = [];
+
     public function __construct()
     {
         $this->refreshUuid();
@@ -88,8 +102,39 @@ class Quota
         return $this->useQuotas;
     }
 
-    public function setUseQuotas(float $useQuotas)
+    public function setUseQuotas(bool $useQuotas)
     {
         $this->useQuotas = $useQuotas;
+    }
+
+    /**
+     * @return array
+     */
+    public function getDefault()
+    {
+        return $this->default;
+    }
+
+    public function setDefault(array $default)
+    {
+        $this->default = $default;
+    }
+
+    /**
+     * @return array
+     */
+    public function getYears()
+    {
+        return $this->years;
+    }
+
+    public function setYears(array $years)
+    {
+        $this->years = $years;
+    }
+
+    public function getQuotaByYear(string $year): object
+    {
+        return (object) ($this->getYears()[$year] ?? $this->getDefault());
     }
 }
