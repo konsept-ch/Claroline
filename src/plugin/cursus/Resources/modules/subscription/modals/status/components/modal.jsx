@@ -9,7 +9,6 @@ import {Modal} from '#/main/app/overlays/modal/components/modal'
 import {constants} from '#/plugin/cursus/constants'
 
 const StatusModal = props => {
-
   const [ selectedStatus, setSelectedStatus ] = useState(-1)
   const remark = React.createRef()
 
@@ -39,7 +38,7 @@ const StatusModal = props => {
             <label>{trans('remark', {}, 'cursus')}</label>
             <textarea ref={remark} className="form-control"></textarea>
           </div>
-          {!props.canValidate && selectedStatus == 3 ? 
+          {!props.authorization && selectedStatus == 3 ? 
             <strong className="text-danger" style={{paddingLeft: '1rem'}}>{trans('quotas_insufficient', {}, 'cursus')}</strong> :
             <CallbackButton
               primary
@@ -59,7 +58,7 @@ const StatusModal = props => {
 }
 
 StatusModal.propTypes = {
-  canValidate: T.bool.isRequired,
+  authorization: T.bool.isRequired,
   status: T.arrayOf(T.number).isRequired,
   changeStatus: T.func.isRequired,
 
