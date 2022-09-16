@@ -34,20 +34,16 @@ const QuotaForm = (props) =>
             options: {
               url: 'apiv2_cursus_quota_organizations'
             }
-          }, {
-            name: 'useQuotas',
-            type: 'boolean',
-            label: trans('use_quotas', {}, 'cursus'),
-            required: false,
-            linked: [
-              {
-                name: 'threshold',
-                type: 'number',
-                label: trans('threshold', {}, 'cursus'),
-                required: true,
-                displayed: (quota) => quota.useQuotas
-              }
-            ]
+          }
+        ]
+      }, {
+        title: trans('quotas'),
+        fields: [
+          {
+            name: 'options',
+            type: 'quota',
+            label: trans('annual_exercices'),
+            required: false
           }
         ]
       }

@@ -1,4 +1,5 @@
 imports:
+    - { resource: services/command.yml }
     - { resource: services/configuration.yml }
     - { resource: services/finder.yml }
     - { resource: services/voter.yml }
