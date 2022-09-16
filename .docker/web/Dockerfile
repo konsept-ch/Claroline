@@ -33,8 +33,10 @@ RUN docker-php-ext-install -j$(nproc) xml mysqli curl zip mbstring gettext pdo_m
 RUN docker-php-ext-configure intl
 RUN docker-php-ext-install intl
 
-RUN curl -sS https://getcomposer.org/installer | php
-RUN mv composer.phar /usr/local/bin/composer
+# RUN curl -sS https://getcomposer.org/installer | php
+# RUN mv composer.phar /usr/local/bin/composer
+
+COPY --from=composer:2.3 /usr/bin/composer /usr/local/bin/composer
 
 RUN pecl install apcu-beta \
   && echo extension=apcu.so > /usr/local/etc/php/conf.d/apcu.ini
