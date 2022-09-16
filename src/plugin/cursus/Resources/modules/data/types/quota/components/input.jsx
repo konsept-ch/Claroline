@@ -49,7 +49,8 @@ const QuotaInput = props => {
               icon: 'fa fa-fw fa-trash',
               label: trans('remove_year'),
               callback: () => {
-                const {[year]: _, ...restYears} = years
+                // eslint-disable-next-line no-unused-vars
+                const {[year]: _year, ...restYears} = years
                 setYears(restYears)
                 setChoices({
                   ...choices,
@@ -79,7 +80,7 @@ const QuotaInput = props => {
       </ContentSections>
 
       <FormControl componentClass="select" value={choice} onChange={e => setChoice(e.target.value)}>
-        {Object.entries(choices).filter(c => c[1]).map(([year, _]) =>
+        {Object.entries(choices).filter(c => c[1]).map(([year]) =>
           <option key={year} value={year}>{year}</option>
         )}
       </FormControl>

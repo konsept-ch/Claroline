@@ -27,5 +27,5 @@ YearSelector.propTypes = {
 }
 
 export {
-	YearSelector
+  YearSelector
 }
