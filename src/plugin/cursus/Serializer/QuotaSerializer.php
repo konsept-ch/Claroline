@@ -62,14 +62,14 @@ class QuotaSerializer
             'organization' => $this->organizationSerializer->serialize($quota->getOrganization(), [Options::SERIALIZE_MINIMAL]),
             'options' => [
                 'default' => $default,
-                'years' => (object)$years,
+                'years' => (object) $years,
             ],
             'quota' => $quota->getQuotaByYear($year),
         ];
-        
+
         if (isset($options['year'])) {
             $sessionUsers = $this->om->getRepository(SessionUser::class)->findByOrganization($quota->getOrganization(), $options['year']);
-            $serialized['pending'] = array_reduce($sessionUsers, fn($accum, $subscription) => $accum + (SessionUser::STATUS_PENDING == $subscription->getStatus() ? 1 : 0), 0);
+            $serialized['pending'] = array_reduce($sessionUsers, fn ($accum, $subscription) => $accum + (SessionUser::STATUS_PENDING == $subscription->getStatus() ? 1 : 0), 0);
         }
 
         return $serialized;

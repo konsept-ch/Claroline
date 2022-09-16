@@ -35,11 +35,10 @@ class MigrateQuotasCommand extends Command
          */
         $quotas = $this->om->getRepository(Quota::class)->findAll();
 
-        foreach ($quotas as $quota)
-        {
+        foreach ($quotas as $quota) {
             $quota->setDefault([
                 'enabled' => $quota->useQuotas(),
-                'quota' => $quota->getThreshold()
+                'quota' => $quota->getThreshold(),
             ]);
             $this->om->flush();
         }

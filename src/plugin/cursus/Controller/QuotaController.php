@@ -268,7 +268,7 @@ class QuotaController extends AbstractCrudController
         $query['hiddenFilters'] = [
             'organization' => $organization,
             'type' => AbstractRegistration::LEARNER,
-            'year' => $year
+            'year' => $year,
         ];
 
         if (!$quota->getQuotaByYear($year)->enabled) {
