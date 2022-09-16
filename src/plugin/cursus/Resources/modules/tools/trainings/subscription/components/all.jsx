@@ -1,6 +1,5 @@
 import React from 'react'
 import {PropTypes as T} from 'prop-types'
-import moment from 'moment'
 
 import classes from 'classnames'
 import {constants as constList} from '#/main/app/content/list/constants'
@@ -50,15 +49,15 @@ const SubscriptionAll = (props) =>
         icon: 'fa fa-fw fa-pencil',
         label: trans('edit', {}, 'actions'),
         modal: [MODAL_SUBSCRIPTION_STATUS, {
-          canValidate: props.statistics.calculated + rows[0].session.quotas.days <= props.quota.threshold,
+          authorization: props.statistics.calculated + rows[0].session.quotas.days <= props.quota.quota.quota,
           status: !props.isAdmin && rows[0].status != 0 ? [] : (
-            rows[0].session.quotas.used && props.quota.useQuotas ?
+            rows[0].session.quotas.used && props.quota.quota.enabled ?
               [0, 1, 2, 3] :
               rows[0].session.restrictions.dates[0] >= now() ?
                 [0, 1, 2] :
                 [0, 1]
           ).filter(status => status != rows[0].status),
-          changeStatus: (status, remark) => props.setSubscriptionStatus(props.quota.id, rows[0].id, status, remark)
+          changeStatus: (status, remark) => props.setSubscriptionStatus(props.year, props.quota.id, rows[0].id, status, remark)
         }]
       }
     ]}
@@ -98,16 +97,11 @@ const SubscriptionAll = (props) =>
       }, {
         name: 'session.restrictions.dates[0]',
         alias: 'start_date',
-        type: 'choice',
+        type: 'date',
         label: trans('start_date'),
         displayed: true,
         sortable: false,
-        options: {
-          choices: new Array(Number(moment().utc().local().format('YYYY')) - 2019).fill(0).reduce((accum, none, delta) => {
-            accum[`${2021 + delta}`] = `${2021 + delta}`
-            return accum
-          }, {})
-        },
+        filterable: false,
         render: (row) => displayDate(row.session.restrictions.dates[0])
       }, {
         name: 'status',
@@ -147,7 +141,8 @@ SubscriptionAll.propTypes = {
   statistics: T.shape(
     StatisticsTypes.propTypes
   ).isRequired,
-  isAdmin: T.bool.isRequired
+  isAdmin: T.bool.isRequired,
+  year: T.number.isRequired
 }
 
 export {

@@ -14,11 +14,14 @@ const SubscriptionPage = connect(
     isAdmin: securitySelectors.isAdmin(state)
   }),
   (dispatch) => ({
-    getStatistics(id) {
-      dispatch(actions.getStatistics(id))
+    getStatistics(id, year) {
+      dispatch(actions.getStatistics(id, year))
     },
-    setSubscriptionStatus(quotaId, subscriptionId, status, remark) {
-      dispatch(actions.setSubscriptionStatus(quotaId, subscriptionId, status, remark))
+    setSubscriptionStatus(year, quotaId, subscriptionId, status, remark) {
+      dispatch(actions.setSubscriptionStatus(year, quotaId, subscriptionId, status, remark))
+    },
+    updateYear(id, year) {
+      dispatch(actions.updateYear(id, year))
     }
   })
 )(SubscriptionComponent)
