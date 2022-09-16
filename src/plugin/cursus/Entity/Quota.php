@@ -34,7 +34,7 @@ class Quota
      * @var Organization
      */
     private $organization;
-    
+
     /**
      * @ORM\Column(type="float")
      *
@@ -135,6 +135,6 @@ class Quota
 
     public function getQuotaByYear(string $year): object
     {
-        return (object)($this->getYears()[$year] ?? $this->getDefault());
+        return (object) ($this->getYears()[$year] ?? $this->getDefault());
     }
 }
