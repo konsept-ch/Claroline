@@ -6,13 +6,14 @@ import {schemeCategory20c} from 'd3-scale'
 import {trans} from '#/main/app/intl/translation'
 import {hasPermission} from '#/main/app/security'
 import {LinkButton} from '#/main/app/buttons/link'
-import {CALLBACK_BUTTON, MODAL_BUTTON} from '#/main/app/buttons'
+import {LINK_BUTTON, CALLBACK_BUTTON, MODAL_BUTTON} from '#/main/app/buttons'
 import {AlertBlock} from '#/main/app/alert/components/alert-block'
 import {Routes} from '#/main/app/router/components/routes'
 import {Vertical} from '#/main/app/content/tabs/components/vertical'
 import {ContentCounter} from '#/main/app/content/components/counter'
 import {MODAL_USERS} from '#/main/core/modals/users'
 import {MODAL_GROUPS} from '#/main/core/modals/groups'
+import {route} from '#/main/core/user/routing'
 
 import {selectors} from '#/plugin/cursus/tools/trainings/catalog/store/selectors'
 import {Course as CourseTypes, Session as SessionTypes} from '#/plugin/cursus/prop-types'
@@ -29,6 +30,10 @@ const CourseUsers = (props) =>
     name={props.name}
     url={['apiv2_cursus_session_list_users', {type: props.type, id: props.activeSession.id}]}
     unregisterUrl={['apiv2_cursus_session_remove_users', {type: props.type, id: props.activeSession.id}]}
+    primaryAction={(row) => ({
+      type: LINK_BUTTON,
+      target: route(row.user)
+    })}
     actions={(rows) => [
       {
         name: 'invite',

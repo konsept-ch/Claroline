@@ -44,6 +44,7 @@ const SessionUsers = (props) =>
           filterable: true
         }
       ]}
+      primaryAction={props.primaryAction}
       actions={props.actions}
       card={(cardProps) => <UserCard {...cardProps} data={cardProps.data.user} />}
       display={{
@@ -67,6 +68,7 @@ SessionUsers.propTypes = {
   name: T.string.isRequired,
   url: T.oneOfType([T.string, T.array]).isRequired,
   unregisterUrl: T.oneOfType([T.string, T.array]).isRequired,
+  primaryAction: T.func,
   actions: T.func,
   add: T.shape({
     // action types
