@@ -1,9 +1,12 @@
+import moment from 'moment'
+
 import {combineReducers, makeReducer} from '#/main/app/store/reducer'
 import {makeListReducer} from '#/main/app/content/list/store'
 
 import {constants} from '#/plugin/cursus/constants'
 import {selectors} from '#/plugin/cursus/tools/trainings/subscription/store/selectors'
 import {SET_STATISTICS} from '#/plugin/cursus/tools/trainings/subscription/store/actions'
+import {SET_YEAR} from './actions'
 
 export const reducer = combineReducers({
   subscriptions: makeListReducer(selectors.LIST_NAME, {
@@ -12,11 +15,7 @@ export const reducer = combineReducers({
         property: 'status',
         value: constants.SUBSCRIPTION_STATUS_PENDING
       }
-    ],
-    sortBy: {
-      property: 'startDate',
-      direction: 1
-    }
+    ]
   }, {
     invalidated: makeReducer(false, {
       [SET_STATISTICS]: () => true
@@ -31,5 +30,8 @@ export const reducer = combineReducers({
     calculated: 0
   }, {
     [SET_STATISTICS]: (state, action) => action.statistics
+  }),
+  year: makeReducer(moment().year(), {
+    [SET_YEAR]: (state, action) => action.year
   })
 })
