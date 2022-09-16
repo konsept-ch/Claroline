@@ -4,7 +4,7 @@ import {PropTypes as T} from 'prop-types'
 import classes from 'classnames'
 import {constants as constList} from '#/main/app/content/list/constants'
 import {constants} from '#/plugin/cursus/constants'
-import {displayDate, now} from '#/main/app/intl/date'
+import {displayDate} from '#/main/app/intl/date'
 import {trans} from '#/main/app/intl/translation'
 import {MODAL_SUBSCRIPTION_STATUS} from '#/plugin/cursus/subscription/modals/status'
 import {MODAL_BUTTON, CALLBACK_BUTTON} from '#/main/app/buttons'
@@ -52,10 +52,7 @@ const SubscriptionAll = (props) =>
           authorization: props.statistics.calculated + rows[0].session.quotas.days <= props.quota.quota.quota,
           status: !props.isAdmin && rows[0].status != 0 ? [] : (
             rows[0].session.quotas.used && props.quota.quota.enabled ?
-              [0, 1, 2, 3] :
-              rows[0].session.restrictions.dates[0] >= now() ?
-                [0, 1, 2] :
-                [0, 1]
+              [0, 1, 2, 3] : [0, 1, 2]
           ).filter(status => status != rows[0].status),
           changeStatus: (status, remark) => props.setSubscriptionStatus(props.year, props.quota.id, rows[0].id, status, remark)
         }]
