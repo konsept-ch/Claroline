@@ -29,7 +29,14 @@ const SubscriptionList = (props) =>
         primary: true,
         sortable: false
       }, {
-        name: 'threshold',
+        name: 'pending',
+        type: 'number',
+        label: trans('subscription_pending', {}, 'cursus'),
+        displayed: true,
+        filterable: false,
+        sortable: false
+      }, {
+        name: 'quota.quota',
         type: 'number',
         label: trans('threshold', {}, 'cursus'),
         displayed: true,
@@ -45,10 +52,6 @@ SubscriptionList.propTypes = {
   path: T.string.isRequired,
   name: T.string.isRequired,
   url: T.oneOfType([T.string, T.array])
-}
-
-SubscriptionList.defaultProps = {
-  url: ['apiv2_cursus_quota_list']
 }
 
 export {
