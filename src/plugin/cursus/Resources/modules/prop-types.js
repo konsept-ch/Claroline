@@ -168,11 +168,22 @@ const Quota = {
   propTypes: {
     id: T.string,
     organization: T.shape(OrganizationTypes.propTypes),
-    threshold: T.number,
-    useQuotas: T.bool
+    options: T.shape({
+      default: T.shape({
+        enabled: T.bool,
+        quota: T.number
+      }),
+      years: T.object
+    })
   },
   defaultProps: {
-    threshold: 0.0
+    options: {
+      default: {
+        enabled: false,
+        quota: 0
+      },
+      years: {}
+    }
   }
 }
 
