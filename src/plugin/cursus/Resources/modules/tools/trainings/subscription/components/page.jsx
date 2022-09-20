@@ -102,7 +102,7 @@ const SubscriptionPage = (props) => {
             color="rgb(237, 158, 47)"
             value={props.statistics.validated}
           />
-          {props.quota.useQuotas && props.statistics.calculated != undefined &&
+          {props.quota.quota.enabled && props.statistics.calculated != undefined &&
             <ContentCounter
               icon="fa fa-check-double"
               label={trans('subscription_managed', {}, 'cursus')}
@@ -110,12 +110,12 @@ const SubscriptionPage = (props) => {
               value={props.statistics.managed}
             />
           }
-          {props.quota.useQuotas && props.statistics.calculated != undefined &&
+          {props.quota.quota.enabled && props.statistics.calculated != undefined &&
             <ContentCounter
               icon="fa fa-chart-pie"
               label={trans('subscription_quota', {}, 'cursus')}
               color="rgb(51, 122, 183)"
-              value={`${props.statistics.calculated.toFixed(2)} / ${get(props.quota, 'threshold')}`}
+              value={`${props.statistics.calculated.toFixed(2)} / ${get(props.quota.quota, 'quota')}`}
             />
           }
         </div>
