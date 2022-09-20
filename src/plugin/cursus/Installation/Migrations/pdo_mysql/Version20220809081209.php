@@ -16,7 +16,7 @@ class Version20220809081209 extends AbstractMigration
     {
         $this->addSql('
             ALTER TABLE claro_cursusbundle_quota 
-            ADD `default` LONGTEXT NOT NULL COMMENT "(DC2Type:json)", 
+            ADD def LONGTEXT NOT NULL COMMENT "(DC2Type:json)", 
             ADD years LONGTEXT NOT NULL COMMENT "(DC2Type:json)"
         ');
         $this->addSql('
@@ -28,7 +28,7 @@ class Version20220809081209 extends AbstractMigration
     {
         $this->addSql('
             ALTER TABLE claro_cursusbundle_quota 
-            DROP `default`,
+            DROP def,
             DROP years
         ');
     }
