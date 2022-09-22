@@ -10,6 +10,7 @@ import {ContentLoader} from '#/main/app/content/components/loader'
 import {PageFull} from '#/main/app/page/components/full'
 import {getToolBreadcrumb, showToolBreadcrumb} from '#/main/core/tool/utils'
 import {YearSelector} from '#/plugin/cursus/subscription/components/year-selector'
+import {getQuotaByYear} from '#/plugin/cursus/utils'
 
 import {SubscriptionAll} from '#/plugin/cursus/tools/trainings/subscription/components/all'
 import {
@@ -102,7 +103,7 @@ const SubscriptionPage = (props) => {
             color="rgb(237, 158, 47)"
             value={props.statistics.validated}
           />
-          {props.quota.quota.enabled && props.statistics.calculated != undefined &&
+          {getQuotaByYear(props).enabled && props.statistics.calculated != undefined &&
             <ContentCounter
               icon="fa fa-check-double"
               label={trans('subscription_managed', {}, 'cursus')}
@@ -110,12 +111,12 @@ const SubscriptionPage = (props) => {
               value={props.statistics.managed}
             />
           }
-          {props.quota.quota.enabled && props.statistics.calculated != undefined &&
+          {getQuotaByYear(props).enabled && props.statistics.calculated != undefined &&
             <ContentCounter
               icon="fa fa-chart-pie"
               label={trans('subscription_quota', {}, 'cursus')}
               color="rgb(51, 122, 183)"
-              value={`${props.statistics.calculated.toFixed(2)} / ${get(props.quota.quota, 'quota')}`}
+              value={`${props.statistics.calculated.toFixed(2)} / ${get(getQuotaByYear(props), 'quota')}`}
             />
           }
         </div>
