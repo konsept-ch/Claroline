@@ -45,9 +45,14 @@ function isFull(session) {
   return false
 }
 
+function getQuotaByYear({quota, year}) {
+  return quota.options.years[year] ? quota.options.years[year] : quota.options.default
+}
+
 export {
   getInfo,
   isFull,
   isFullyRegistered,
-  isRegistered
+  isRegistered,
+  getQuotaByYear
 }
