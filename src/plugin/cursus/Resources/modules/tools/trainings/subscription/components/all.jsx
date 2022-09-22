@@ -9,6 +9,7 @@ import {trans} from '#/main/app/intl/translation'
 import {MODAL_SUBSCRIPTION_STATUS} from '#/plugin/cursus/subscription/modals/status'
 import {MODAL_BUTTON, CALLBACK_BUTTON} from '#/main/app/buttons'
 import {MODAL_SUBSCRIPTION_ABOUT} from '#/plugin/cursus/subscription/modals/about'
+import {getQuotaByYear} from '#/plugin/cursus/utils'
 import {ListData} from '#/main/app/content/list/containers/data'
 import {
   Quota as QuotaTypes,
@@ -16,6 +17,7 @@ import {
 } from '#/plugin/cursus/prop-types'
 
 import {SubscriptionCard} from '#/plugin/cursus/subscription/components/card'
+import { quotaByYear } from '../../../../utils'
 
 const SubscriptionAll = (props) =>
   <ListData
@@ -49,9 +51,9 @@ const SubscriptionAll = (props) =>
         icon: 'fa fa-fw fa-pencil',
         label: trans('edit', {}, 'actions'),
         modal: [MODAL_SUBSCRIPTION_STATUS, {
-          authorization: props.statistics.calculated + rows[0].session.quotas.days <= props.quota.quota.quota,
+          authorization: props.statistics.calculated + rows[0].session.quotas.days <= getQuotaByYear(props).quota,
           status: !props.isAdmin && rows[0].status != 0 ? [] : (
-            rows[0].session.quotas.used && props.quota.quota.enabled ?
+            rows[0].session.quotas.used && getQuotaByYear(props).enabled ?
               [0, 1, 2, 3] : [0, 1, 2]
           ).filter(status => status != rows[0].status),
           changeStatus: (status, remark) => props.setSubscriptionStatus(props.year, props.quota.id, rows[0].id, status, remark)

@@ -63,8 +63,7 @@ class QuotaSerializer
             'options' => [
                 'default' => $default,
                 'years' => (object) $years,
-            ],
-            'quota' => $quota->getQuotaByYear($year),
+            ]
         ];
 
         if (isset($options['year'])) {
