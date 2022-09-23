@@ -50,7 +50,7 @@ class CourseVoter extends AbstractVoter
             case self::EDIT: // admin of organization | EDIT right on tool
             case self::PATCH:
             case self::DELETE:
-                if ($this->isGranted('EDIT', $trainingsTool) || $this->isOrganizationManager($token, $object)) {
+                if ($this->isGranted('EDIT', $trainingsTool)) {
                     return VoterInterface::ACCESS_GRANTED;
                 }
 
@@ -65,7 +65,7 @@ class CourseVoter extends AbstractVoter
                 return VoterInterface::ACCESS_DENIED;
 
             case self::REGISTER:
-                if ($this->isGranted('REGISTER', $trainingsTool) || $this->isOrganizationManager($token, $object)) {
+                if ($this->isGranted('REGISTER', $trainingsTool)) {
                     return VoterInterface::ACCESS_GRANTED;
                 }
 
