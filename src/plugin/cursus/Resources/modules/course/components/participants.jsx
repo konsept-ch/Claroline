@@ -8,6 +8,8 @@ import {hasPermission} from '#/main/app/security'
 import {LinkButton} from '#/main/app/buttons/link'
 import {LINK_BUTTON, CALLBACK_BUTTON, MODAL_BUTTON} from '#/main/app/buttons'
 import {AlertBlock} from '#/main/app/alert/components/alert-block'
+import {constants as listConst} from '#/main/app/content/list/constants'
+import {ListData} from '#/main/app/content/list/containers/data'
 import {Routes} from '#/main/app/router/components/routes'
 import {Vertical} from '#/main/app/content/tabs/components/vertical'
 import {ContentCounter} from '#/main/app/content/components/counter'
@@ -211,6 +213,11 @@ const CourseParticipants = (props) =>
               title: trans('Refus RH'),
               path: '/pending',
               displayed: hasPermission('register', props.activeSession)
+            }, {
+              icon: 'fa fa-fw fa-ban',
+              title: trans('cancellations', {}, 'cursus'),
+              path: '/cancellations',
+              displayed: hasPermission('register', props.activeSession)
             }
           ]}
         />
@@ -368,6 +375,48 @@ const CourseParticipants = (props) =>
                 )
 
                 return Pending
+              }
+            }, {
+              path: '/cancellations',
+              disabled: !hasPermission('register', props.activeSession),
+              render() {
+                const Cancellation = (
+                  <Fragment>
+                    <ListData
+                      name={selectors.STORE_NAME+'.sessionCancellation'}
+                      fetch={{
+                        url: ['apiv2_cursus_session_list_cancellations', {id: props.activeSession.id}],
+                        autoload: true
+                      }}
+                      delete={{
+                        url: '',
+                        displayed: () => false
+                      }}
+                      selectable={false}
+                      definition={[
+                        {
+                          name: 'user',
+                          type: 'user',
+                          label: trans('user'),
+                          displayed: true
+                        }, {
+                          name: 'date',
+                          type: 'date',
+                          label: trans('cancellation_date', {}, 'cursus'),
+                          options: {time: true},
+                          displayed: true,
+                          filterable: false
+                        }
+                      ]}
+                      card={(cardProps) => <UserCard {...cardProps} data={cardProps.data.user} />}
+                      display={{
+                        current: listConst.DISPLAY_TABLE
+                      }}
+                    />
+                  </Fragment>
+                )
+
+                return Cancellation
               }
             }
           ]}
