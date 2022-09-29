@@ -566,6 +566,25 @@ class SessionController extends AbstractCrudController
         return new JsonResponse();
     }
 
+    /**
+     * @Route("/{id}/cancellations", name="apiv2_cursus_session_list_cancellations", methods={"GET"})
+     * @EXT\ParamConverter("session", class="Claroline\CursusBundle\Entity\Session", options={"mapping": {"id": "uuid"}})
+     */
+    public function listCancellationAction(Session $session, Request $request): JsonResponse
+    {
+        $this->checkPermission('REGISTER', $session, [], true);
+
+        $params = $request->query->all();
+        if (!isset($params['hiddenFilters'])) {
+            $params['hiddenFilters'] = [];
+        }
+        $params['hiddenFilters']['session'] = $session->getUuid();
+
+        return new JsonResponse(
+            $this->finder->search(SessionCancellation::class, $params)
+        );
+    }
+
     private function checkToolAccess(string $rights = 'OPEN'): bool
     {
         $trainingsTool = $this->toolManager->getOrderedTool('trainings', Tool::DESKTOP);
