@@ -16,6 +16,7 @@ import {ContentCounter} from '#/main/app/content/components/counter'
 import {MODAL_USERS} from '#/main/core/modals/users'
 import {MODAL_GROUPS} from '#/main/core/modals/groups'
 import {route} from '#/main/core/user/routing'
+import {UserCard} from '#/main/core/user/components/card'
 
 import {selectors} from '#/plugin/cursus/tools/trainings/catalog/store/selectors'
 import {Course as CourseTypes, Session as SessionTypes} from '#/plugin/cursus/prop-types'
