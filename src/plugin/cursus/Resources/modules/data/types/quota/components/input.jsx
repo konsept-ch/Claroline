@@ -12,36 +12,39 @@ import {PropTypes as T, implementPropTypes} from '#/main/app/prop-types'
 import {DataInput as DataInputTypes} from '#/main/app/data/types/prop-types'
 
 const QuotaInput = props => {
-  const [def, setDef] = useState(props.value.default)
-  const [years, setYears] = useState(props.value.years)
   const [choices, setChoices] = useState(Array.from({length:31}, (_, i) => 2020 + i).reduce((acc, year) => {
     return {
       ...acc,
-      [year]: !years[year]
+      [year]: !props.value.years[year]
     }
   }, {}))
   const [choice, setChoice] = useState()
 
   useEffect(() => setChoice(Object.entries(choices).find(entry => entry[1] && entry[0] != choice)[0]), [choices])
-  useEffect(() => props.onChange({ default: def, years }), [years, def])
 
   return (
     <Fragment>
       <ContentSections>
         <ContentSection title={trans('default')}>
           <ControlLabel>{trans('enabled')}</ControlLabel>
-          <Checkbox name="quota_default_enabled" checked={def.enabled} onChange={e => setDef({
-            enabled: e.target.checked,
-            quota: def.quota
+          <Checkbox name="quota_default_enabled" checked={props.value.default.enabled} onChange={e => props.onChange({
+            default: {
+              enabled: e.target.checked,
+              quota: props.value.default.quota
+            },
+            years: props.value.years
           })} />
           <ControlLabel>{trans('quota', {}, 'cursus')}</ControlLabel>
-          <FormControl name="quota_default_quota" type="number" value={def.quota} onChange={e => setDef({
-            enabled: def.enabled,
-            quota: e.target.value
+          <FormControl name="quota_default_quota" type="number" value={props.value.default.quota} onChange={e => props.onChange({
+            default: {
+              enabled: props.value.default.enabled,
+              quota: e.target.value
+            },
+            years: props.value.years
           })} />
         </ContentSection>
 
-        {Object.entries(years).sort((a, b) => a[0] - b[0]).map(([year, {enabled, quota}]) =>
+        {Object.entries(props.value.years).sort((a, b) => a[0] - b[0]).map(([year, {enabled, quota}]) =>
           <ContentSection key={year} title={year} actions={[
             {
               name: 'remove-year',
@@ -51,7 +54,10 @@ const QuotaInput = props => {
               callback: () => {
                 // eslint-disable-next-line no-unused-vars
                 const {[year]: _year, ...restYears} = years
-                setYears(restYears)
+                props.onChange({
+                  default: props.value.default,
+                  years: restYears
+                })
                 setChoices({
                   ...choices,
                   [year]: true
@@ -60,19 +66,25 @@ const QuotaInput = props => {
             }
           ]}>
             <ControlLabel>{trans('enabled')}</ControlLabel>
-            <Checkbox name={`quota_${year}_enabled`} checked={enabled} onChange={e => setYears({
-              ...years,
-              [year]: {
-                enabled: e.target.checked,
-                quota
+            <Checkbox name={`quota_${year}_enabled`} checked={enabled} onChange={e => props.onChange({
+              default: props.value.default,
+              years: {
+                ...props.value.years,
+                [year]: {
+                  enabled: e.target.checked,
+                  quota
+                }
               }
             })} />
             <ControlLabel>{trans('quota', {}, 'cursus')}</ControlLabel>
-            <FormControl name={`quota_${year}_quota`} type="number" value={quota} onChange={e => setYears({
-              ...years,
-              [year]: {
-                enabled,
-                quota: e.target.value
+            <FormControl name={`quota_${year}_quota`} type="number" value={quota} onChange={e => props.onChange({
+              default: props.value.default,
+              years: {
+                ...props.value.years,
+                [year]: {
+                  enabled,
+                  quota: e.target.value
+                }
               }
             })} />
           </ContentSection>
@@ -92,9 +104,12 @@ const QuotaInput = props => {
         label={trans('add_year', {}, 'cursus')}
         size={props.size}
         callback={() => {
-          setYears({
-            ...years,
-            [choice]: def
+          props.onChange({
+            default: props.value.default,
+            years: {
+              ...props.value.years,
+              [choice]: props.value.default
+            }
           })
           setChoices({
             ...choices,

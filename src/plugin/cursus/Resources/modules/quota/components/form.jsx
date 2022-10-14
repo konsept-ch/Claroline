@@ -7,8 +7,10 @@ import {FormData} from '#/main/app/content/form/containers/data'
 
 import {Quota as QuotaTypes} from '#/plugin/cursus/prop-types'
 
-const QuotaForm = (props) =>
-  <FormData
+const QuotaForm = (props) => {
+  console.log('FORM', props.quota)
+
+  return <FormData
     name={props.name}
     meta={false}
     buttons={true}
@@ -43,12 +45,16 @@ const QuotaForm = (props) =>
             name: 'options',
             type: 'quota',
             label: trans('annual_exercices'),
-            required: false
+            required: false,
+            onChange: (options) => {
+              props.update(props.name, 'options', options)
+            }
           }
         ]
       }
     ]}
   />
+}
 
 QuotaForm.propTypes = {
   path: T.string.isRequired,
