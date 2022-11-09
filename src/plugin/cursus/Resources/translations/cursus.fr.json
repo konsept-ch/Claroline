@@ -143,5 +143,7 @@
     "subscription_managed_help": "Le statut sera validé et pris en compte dans le quota.",
     "quotas_insufficient": "Quotas insuffisant !",
     "cancellations": "Annulations",
-    "cancellation_date": "Date d'annulation"
+    "cancellation_date": "Date d'annulation",
+    "annual_exercices": "Exercices annuels",
+    "add_year": "Ajouter exercice"
 }
