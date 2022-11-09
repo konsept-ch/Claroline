@@ -554,7 +554,9 @@ class SessionManager
      */
     public function sendSessionInvitation(Session $session, array $users, bool $confirm = true, string $type = AbstractRegistration::LEARNER)
     {
-        if ($type === AbstractRegistration::TUTOR) return;
+        if (AbstractRegistration::TUTOR === $type) {
+            return;
+        }
 
         $templateName = 'training_session_invitation';
         if ($confirm && $session->getUserValidation()) {

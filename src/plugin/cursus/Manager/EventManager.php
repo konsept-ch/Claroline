@@ -289,7 +289,9 @@ class EventManager
      */
     public function sendSessionEventInvitation(Event $event, array $users, string $type = AbstractRegistration::LEARNER)
     {
-        if ($type === AbstractRegistration::TUTOR) return;
+        if (AbstractRegistration::TUTOR === $type) {
+            return;
+        }
 
         $basicPlaceholders = $this->getTemplatePlaceholders($event);
 
