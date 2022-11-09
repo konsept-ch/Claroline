@@ -45,7 +45,7 @@ QuotaCreation.propTypes = {
   currentContext: T.shape({
     type: T.oneOf(['desktop']),
     data: T.object
-  }).isRequired
+  })
 }
 
 export {

@@ -53,7 +53,7 @@ const QuotaInput = props => {
               label: trans('remove_year'),
               callback: () => {
                 // eslint-disable-next-line no-unused-vars
-                const {[year]: _year, ...restYears} = years
+                const {[year]: _, ...restYears} = props.value.years
                 props.onChange({
                   default: props.value.default,
                   years: restYears
