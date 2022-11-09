@@ -10,9 +10,6 @@ const QuotaMain = withReducer(selectors.STORE_NAME, reducer)(
       path: toolSelectors.path(state)
     }),
     (dispatch) => ({
-      open(id) {
-        dispatch(actions.open(id))
-      },
       openForm(id, defaultProps) {
         dispatch(actions.openForm(id, defaultProps))
       }

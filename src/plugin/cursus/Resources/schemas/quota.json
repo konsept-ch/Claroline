@@ -17,16 +17,7 @@
     },
     "options": {
       "type": "object",
-      "properties": {
-        "default": {
-          "type": "object",
-          "description": "The default quota"
-        },
-        "years": {
-          "type": "object",
-          "description": "The years quota"
-        }
-      }
+      "description": "The quota options"
     }
   },
   "required": ["organization", "options"],

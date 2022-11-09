@@ -43,7 +43,10 @@ const QuotaForm = (props) =>
             name: 'options',
             type: 'quota',
             label: trans('annual_exercices'),
-            required: false
+            required: false,
+            onChange: (options) => {
+              props.update(props.name, 'options', options)
+            }
           }
         ]
       }
