@@ -224,9 +224,12 @@ class SessionManager
                     'session_start' => $sessionUser->getSession()->getStartDate()->format('d/m/Y'),
                     'session_end' => $sessionUser->getSession()->getEndDate()->format('d/m/Y'),
                 ];
-                $subject = $this->templateManager->getTemplate('training_quota_subscription_created', $placeholders, $locale, 'title');
-                $body = $this->templateManager->getTemplate('training_quota_subscription_created', $placeholders, $locale);
-                $this->mailManager->send($subject, $body, $managers, null, [], true);
+
+                if (AbstractRegistration::LEARNER === $type) {
+                    $subject = $this->templateManager->getTemplate('training_quota_subscription_created', $placeholders, $locale, 'title');
+                    $body = $this->templateManager->getTemplate('training_quota_subscription_created', $placeholders, $locale);
+                    $this->mailManager->send($subject, $body, $managers, null, [], true);
+                }
 
                 $results[] = $sessionUser;
             }
@@ -239,7 +242,7 @@ class SessionManager
         if ($session->getRegistrationMail()) {
             $this->sendSessionInvitation($session, array_map(function (SessionUser $sessionUser) {
                 return $sessionUser->getUser();
-            }, $results), AbstractRegistration::LEARNER === $type);
+            }, $results), AbstractRegistration::LEARNER === $type, $type);
         }
 
         // registers users to linked trainings
@@ -549,8 +552,12 @@ class SessionManager
     /**
      * Sends invitation to session to given users.
      */
-    public function sendSessionInvitation(Session $session, array $users, bool $confirm = true)
+    public function sendSessionInvitation(Session $session, array $users, bool $confirm = true, string $type = AbstractRegistration::LEARNER)
     {
+        if (AbstractRegistration::TUTOR === $type) {
+            return;
+        }
+
         $templateName = 'training_session_invitation';
         if ($confirm && $session->getUserValidation()) {
             $templateName = 'training_session_confirmation';

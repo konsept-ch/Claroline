@@ -141,7 +141,7 @@ class EventManager
         if ($event->getRegistrationMail()) {
             $this->sendSessionEventInvitation($event, array_map(function (EventUser $eventUser) {
                 return $eventUser->getUser();
-            }, $results));
+            }, $results), $type);
         }
 
         $this->om->endFlushSuite();
@@ -287,8 +287,12 @@ class EventManager
     /**
      * Sends invitation to session event to given users.
      */
-    public function sendSessionEventInvitation(Event $event, array $users)
+    public function sendSessionEventInvitation(Event $event, array $users, string $type = AbstractRegistration::LEARNER)
     {
+        if (AbstractRegistration::TUTOR === $type) {
+            return;
+        }
+
         $basicPlaceholders = $this->getTemplatePlaceholders($event);
 
         // create ics file to attach to the message
