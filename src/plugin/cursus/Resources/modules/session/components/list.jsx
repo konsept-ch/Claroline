@@ -101,10 +101,10 @@ const SessionList = (props) =>
       }, {
         name: 'availableSeats',
         type: 'string',
-        label: trans('available_seats', {}, 'cursus'),
+        label: trans('occupation', {}, 'cursus'),
         calculated: (row) => {
           if (get(row, 'restrictions.users')) {
-            return (get(row, 'restrictions.users') - get(row, 'participants.learners', 0)) + ' / ' + get(row, 'restrictions.users')
+            return get(row, 'participants.learners', 0) + ' / ' + get(row, 'restrictions.users')
           }
 
           return trans('not_limited', {}, 'cursus')
