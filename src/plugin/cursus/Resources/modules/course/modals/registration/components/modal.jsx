@@ -80,9 +80,9 @@ const RegistrationModal = props => {
                   }, {
                     name: 'available',
                     type: 'string',
-                    label: trans('available_seats', {}, 'cursus'),
+                    label: trans('occupation', {}, 'cursus'),
                     displayed: (session) => !!get(session, 'restrictions.users'),
-                    calculated: (session) => (get(session, 'restrictions.users') - get(session, 'participants.learners')) + ' / ' + get(session, 'restrictions.users')
+                    calculated: (session) => get(session, 'participants.learners') + ' / ' + get(session, 'restrictions.users')
                   }
                 ]
               }

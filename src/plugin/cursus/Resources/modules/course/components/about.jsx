@@ -149,7 +149,7 @@ const CourseAbout = (props) => {
             </li>
 
             <li className="list-group-item">
-              {trans('available_seats', {}, 'cursus')}
+              {trans('occupation', {}, 'cursus')}
 
               {!getInfo(props.course, props.activeSession, 'restrictions.users') &&
                 <span className="value">{trans('not_limited', {}, 'cursus')}</span>
@@ -163,7 +163,7 @@ const CourseAbout = (props) => {
 
               {getInfo(props.course, props.activeSession, 'restrictions.users') && props.activeSession &&
                 <span className="value">
-                  {(get(props.activeSession, 'restrictions.users') - get(props.activeSession, 'participants.learners')) + ' / ' + get(props.activeSession, 'restrictions.users')}
+                  {get(props.activeSession, 'participants.learners') + ' / ' + get(props.activeSession, 'restrictions.users')}
                 </span>
               }
             </li>

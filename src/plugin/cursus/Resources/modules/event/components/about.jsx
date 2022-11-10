@@ -71,7 +71,7 @@ const EventAbout = (props) =>
           </li>
 
           <li className="list-group-item">
-            {trans('available_seats', {}, 'cursus')}
+            {trans('occupation', {}, 'cursus')}
 
             {!get(props.event, 'restrictions.users') &&
               <span className="value">{trans('not_limited', {}, 'cursus')}</span>
@@ -79,7 +79,7 @@ const EventAbout = (props) =>
 
             {get(props.event, 'restrictions.users') &&
               <span className="value">
-                {(get(props.event, 'restrictions.users') - get(props.event, 'participants.learners')) + ' / ' + get(props.event, 'restrictions.users')}
+                {get(props.event, 'participants.learners') + ' / ' + get(props.event, 'restrictions.users')}
               </span>
             }
           </li>
