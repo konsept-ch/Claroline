@@ -35,26 +35,30 @@ const SUBSCRIPTION_STATUS_PENDING = 0
 const SUBSCRIPTION_STATUS_REFUSED = 1
 const SUBSCRIPTION_STATUS_VALIDATED = 2
 const SUBSCRIPTION_STATUS_MANAGED = 3
+const SUBSCRIPTION_STATUS_CANCELLED = 4
 
 const SUBSCRIPTION_STRINGS = {
   [SUBSCRIPTION_STATUS_PENDING]: 'subscription_pending',
   [SUBSCRIPTION_STATUS_REFUSED]: 'subscription_refused',
   [SUBSCRIPTION_STATUS_VALIDATED]: 'subscription_validated',
-  [SUBSCRIPTION_STATUS_MANAGED]: 'subscription_managed'
+  [SUBSCRIPTION_STATUS_MANAGED]: 'subscription_managed',
+  [SUBSCRIPTION_STATUS_CANCELLED]: 'subscription_cancelled'
 }
 
 const SUBSCRIPTION_STATUSES = {
   [SUBSCRIPTION_STATUS_PENDING]: trans('subscription_pending', {}, 'cursus'),
   [SUBSCRIPTION_STATUS_REFUSED]: trans('subscription_refused', {}, 'cursus'),
   [SUBSCRIPTION_STATUS_VALIDATED]: trans('subscription_validated', {}, 'cursus'),
-  [SUBSCRIPTION_STATUS_MANAGED]: trans('subscription_managed', {}, 'cursus')
+  [SUBSCRIPTION_STATUS_MANAGED]: trans('subscription_managed', {}, 'cursus'),
+  [SUBSCRIPTION_STATUS_CANCELLED]: trans('subscription_cancelled', {}, 'cursus')
 }
 
 const SUBSCRIPTION_STATUS_COLORS = {
   [SUBSCRIPTION_STATUS_PENDING]: 'default',
   [SUBSCRIPTION_STATUS_REFUSED]: 'danger',
   [SUBSCRIPTION_STATUS_VALIDATED]: 'warning',
-  [SUBSCRIPTION_STATUS_MANAGED]: 'success'
+  [SUBSCRIPTION_STATUS_MANAGED]: 'success',
+  [SUBSCRIPTION_STATUS_CANCELLED]: 'info'
 }
 
 const LEARNER_TYPE = 'learner'

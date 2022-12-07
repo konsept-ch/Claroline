@@ -187,7 +187,9 @@ class SessionManager
         $this->om->startFlushSuite();
 
         foreach ($users as $user) {
+            /** @var SessionUser */
             $sessionUser = $this->sessionUserRepo->findOneBy(['session' => $session, 'user' => $user, 'type' => $type]);
+            $shouldRegister = false;
 
             if (empty($sessionUser)) {
                 $sessionUser = new SessionUser();
@@ -195,7 +197,14 @@ class SessionManager
                 $sessionUser->setUser($user);
                 $sessionUser->setType($type);
                 $sessionUser->setDate($registrationDate);
+                $shouldRegister = true;
+            }
+            else if ($sessionUser->isStatusUnregistred()) {
+                $sessionUser->setStatus(SessionUser::STATUS_PENDING);
+                $shouldRegister = true;
+            }
 
+            if ($shouldRegister) {
                 if (AbstractRegistration::TUTOR === $type) {
                     // no validation on tutors
                     $sessionUser->setValidated(true);
@@ -206,11 +215,6 @@ class SessionManager
                     $sessionUser->setConfirmed(!$session->getUserValidation());
                 }
 
-                // grant workspace role if registration is fully validated
-                $role = AbstractRegistration::TUTOR === $type ? $session->getTutorRole() : $session->getLearnerRole();
-                if ($role && $sessionUser->isValidated() && $sessionUser->isConfirmed() && !$user->hasRole($role->getName())) {
-                    $this->crud->patch($user, 'role', Crud::COLLECTION_ADD, [$role], [Crud::NO_PERMISSIONS]);
-                }
                 $this->om->persist($sessionUser);
 
                 $this->eventDispatcher->dispatch(new LogSessionUserRegistrationEvent($sessionUser), 'log');
@@ -266,8 +270,6 @@ class SessionManager
     public function removeUsers(Session $session, array $sessionUsers)
     {
         foreach ($sessionUsers as $sessionUser) {
-            $this->om->remove($sessionUser);
-
             // unregister user from the linked workspace
             if ($session->getWorkspace()) {
                 $this->workspaceManager->unregister($sessionUser->getUser(), $session->getWorkspace(), [Crud::NO_PERMISSIONS]);
@@ -662,7 +664,7 @@ class SessionManager
         ];
 
         foreach ($sessionUsers as $sessionUser) {
-            if ($sessionUser->isValidated() && $sessionUser->isConfirmed()) {
+            if ($sessionUser->isFullyRegistred() && $sessionUser->isStatusValidated()) {
                 // registration is fully validated
                 $fullyRegistered[$sessionUser->getType()][] = $sessionUser->getUser();
 

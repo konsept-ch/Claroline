@@ -50,6 +50,8 @@ services:
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\CursusBundle\Manager\QuotaManager'
             - '@Claroline\CursusBundle\Manager\SessionManager'
+            - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceManager'
+            - '@Claroline\CursusBundle\Manager\EventManager'
 
     Claroline\CursusBundle\Controller\EventPresenceController:
         arguments:

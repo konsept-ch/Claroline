@@ -11,6 +11,7 @@
 
 namespace Claroline\CursusBundle\Controller;
 
+use Claroline\AppBundle\API\Crud;
 use Claroline\AppBundle\API\FinderProvider;
 use Claroline\AppBundle\Controller\AbstractCrudController;
 use Claroline\AppBundle\Persistence\ObjectManager;
@@ -18,11 +19,13 @@ use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler;
 use Claroline\CoreBundle\Manager\LocaleManager;
+use Claroline\CoreBundle\Manager\Workspace\WorkspaceManager;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
 use Claroline\CursusBundle\Entity\Quota;
 use Claroline\CursusBundle\Entity\Registration\AbstractRegistration;
 use Claroline\CursusBundle\Entity\Registration\SessionUser;
 use Claroline\CursusBundle\Event\Log\LogSubscriptionSetStatusEvent;
+use Claroline\CursusBundle\Manager\EventManager;
 use Claroline\CursusBundle\Manager\QuotaManager;
 use Claroline\CursusBundle\Manager\SessionManager;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -58,6 +61,10 @@ class QuotaController extends AbstractCrudController
     private $quotaManager;
     /** @var SessionManager */
     private $sessionManager;
+    /** @var WorkspaceManager */
+    private $workspaceManager;
+    /** @var EventManager */
+    private $sessionEventManager;
 
     public function __construct(
         EventDispatcherInterface $eventDispatcher,
@@ -68,7 +75,9 @@ class QuotaController extends AbstractCrudController
         PlatformConfigurationHandler $config,
         ObjectManager $om,
         QuotaManager $quotaManager,
-        SessionManager $sessionManager
+        SessionManager $sessionManager,
+        WorkspaceManager $workspaceManager,
+        EventManager $sessionEventManager
     ) {
         $this->eventDispatcher = $eventDispatcher;
         $this->authorization = $authorization;
@@ -79,6 +88,8 @@ class QuotaController extends AbstractCrudController
         $this->om = $om;
         $this->quotaManager = $quotaManager;
         $this->sessionManager = $sessionManager;
+        $this->workspaceManager = $workspaceManager;
+        $this->sessionEventManager = $sessionEventManager;
     }
 
     public function getName()
@@ -156,6 +167,9 @@ class QuotaController extends AbstractCrudController
             'pending' => array_reduce($sessionUsers, function ($accum, $subscription) {
                 return $accum + (SessionUser::STATUS_PENDING == $subscription->getStatus() ? 1 : 0);
             }, 0),
+            'cancelled' => array_reduce($sessionUsers, function ($accum, $subscription) {
+                return $accum + (SessionUser::STATUS_CANCELLED == $subscription->getStatus() ? 1 : 0);
+            }, 0),
             'refused' => array_reduce($sessionUsers, function ($accum, $subscription) {
                 return $accum + (SessionUser::STATUS_REFUSED == $subscription->getStatus() ? 1 : 0);
             }, 0),
@@ -192,6 +206,7 @@ class QuotaController extends AbstractCrudController
             $this->translator->trans('subscription_refused', [], 'cursus'),
             $this->translator->trans('subscription_validated', [], 'cursus'),
             $this->translator->trans('subscription_managed', [], 'cursus'),
+            $this->translator->trans('subscription_cancelled', [], 'cursus'),
         ];
 
         $filters = $request->query->get('filters', []);
@@ -326,39 +341,56 @@ class QuotaController extends AbstractCrudController
         $sessionUser->setRemark($remark);
 
         $oldStatus = $sessionUser->getStatus();
+
         if ($oldStatus != $status) {
+            $sessionUser->setStatus(SessionUser::STATUS_REFUSED == $status ? (SessionUser::STATUS_VALIDATED == $oldStatus || SessionUser::STATUS_MANAGED == $oldStatus ? SessionUser::STATUS_CANCELLED : SessionUser::STATUS_REFUSED) : $status);
+            $this->om->persist($sessionUser);
+            $this->om->flush();
+
             $this->eventDispatcher->dispatch(new LogSubscriptionSetStatusEvent($sessionUser), 'log');
 
             // Execute action, dispatch event, send mail, etc
             switch ($status) {
                 case SessionUser::STATUS_VALIDATED:
-                    $this->sessionManager->addUsers($sessionUser->getSession(), [$sessionUser->getUser()]);
+                    $this->sessionManager->checkUsersRegistration($sessionUser->getSession(), [$sessionUser]);
                     $this->quotaManager->sendValidatedStatusMail($sessionUser);
                     break;
                 case SessionUser::STATUS_MANAGED:
                     if (null == $quota || !$quota->getQuotaByYear($year)->enabled) {
                         return new JsonResponse('The status don\'t can be changed to managed.', 500);
                     }
-                    $this->sessionManager->addUsers($sessionUser->getSession(), [$sessionUser->getUser()]);
+                    $this->sessionManager->checkUsersRegistration($sessionUser->getSession(), [$sessionUser]);
                     $this->quotaManager->sendManagedStatusMail($sessionUser);
                     break;
                 case SessionUser::STATUS_PENDING:
+                    $session = $sessionUser->getSession();
+
+                    if ($session->getWorkspace()) {
+                        $this->workspaceManager->unregister($sessionUser->getUser(), $session->getWorkspace(), [Crud::NO_PERMISSIONS]);
+                    }
+
+                    foreach ($this->sessionEventManager->getBySessionAndUser($session, $sessionUser->getUser()) as $eventRegistration) {
+                        $this->sessionEventManager->removeUsers($eventRegistration->getEvent(), [$eventRegistration]);
+                    }
                     break;
                 case SessionUser::STATUS_REFUSED:
+                    $session = $sessionUser->getSession();
+
+                    if ($session->getWorkspace()) {
+                        $this->workspaceManager->unregister($sessionUser->getUser(), $session->getWorkspace(), [Crud::NO_PERMISSIONS]);
+                    }
+
+                    foreach ($this->sessionEventManager->getBySessionAndUser($session, $sessionUser->getUser()) as $eventRegistration) {
+                        $this->sessionEventManager->removeUsers($eventRegistration->getEvent(), [$eventRegistration]);
+                    }
+
                     if (SessionUser::STATUS_VALIDATED == $oldStatus || SessionUser::STATUS_MANAGED == $oldStatus) {
                         $this->quotaManager->sendCancelledStatusMail($sessionUser);
                     } else {
                         $this->quotaManager->sendRefusedStatusMail($sessionUser);
                     }
-                    $sessionUser->setValidated(false);
-                    $sessionUser->setConfirmed(false);
-                    $this->sessionManager->checkUsersRegistration($sessionUser->getSession(), [$sessionUser]);
                     break;
             }
-
-            $sessionUser->setStatus($status);
-            $this->om->persist($sessionUser);
-            $this->om->flush();
         }
 
         return new JsonResponse([

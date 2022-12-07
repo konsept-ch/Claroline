@@ -41,12 +41,14 @@ class SessionUserFinder extends AbstractFinder
                     break;
 
                 case 'status':
-                    $qb->andWhere("(obj.status = :{$filterName})");
+                    if (is_array($filterValue)) $qb->andWhere("(obj.status IN (:{$filterName}))");
+                    else $qb->andWhere("(obj.status = :{$filterName})");
                     $qb->setParameter($filterName, $filterValue);
                     break;
 
                 case 'ignored_status':
-                    $qb->andWhere("obj.status != :{$filterName}");
+                    if (is_array($filterValue)) $qb->andWhere("(obj.status NOT IN (:{$filterName}))");
+                    else $qb->andWhere("obj.status != :{$filterName}");
                     $qb->setParameter($filterName, $filterValue);
                     break;
 

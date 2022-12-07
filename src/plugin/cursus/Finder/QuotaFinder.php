@@ -26,6 +26,12 @@ class QuotaFinder extends AbstractFinder
     {
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
+                case 'organization':
+                    $qb->join('obj.organization', 'o');
+                    $qb->andWhere("o.name LIKE :{$filterName}");
+                    $qb->setParameter($filterName, '%'.$filterValue.'%');
+                    break;
+
                 case 'organizations':
                     $qb->join('obj.organization', 'o');
                     $qb->andWhere("o.uuid IN (:{$filterName})");

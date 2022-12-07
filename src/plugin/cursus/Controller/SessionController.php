@@ -24,7 +24,6 @@ use Claroline\CoreBundle\Security\PermissionCheckerTrait;
 use Claroline\CoreBundle\Validator\Exception\InvalidDataException;
 use Claroline\CursusBundle\Entity\Event;
 use Claroline\CursusBundle\Entity\Registration\AbstractRegistration;
-use Claroline\CursusBundle\Entity\Registration\SessionCancellation;
 use Claroline\CursusBundle\Entity\Registration\SessionGroup;
 use Claroline\CursusBundle\Entity\Registration\SessionUser;
 use Claroline\CursusBundle\Entity\Session;
@@ -191,7 +190,8 @@ class SessionController extends AbstractCrudController
         }
         $params['hiddenFilters']['session'] = $session->getUuid();
         $params['hiddenFilters']['type'] = $type;
-        $params['hiddenFilters']['pending'] = false;
+        //$params['hiddenFilters']['pending'] = false;
+        $params['hiddenFilters']['status'] = [SessionUser::STATUS_VALIDATED, SessionUser::STATUS_MANAGED];
 
         return new JsonResponse(
             $this->finder->search(SessionUser::class, $params)
@@ -232,12 +232,9 @@ class SessionController extends AbstractCrudController
 
         $sessionUsers = $this->decodeIdsString($request, SessionUser::class);
 
+        /** @var SessionUser */
         foreach ($sessionUsers as $sessionUser) {
-            $cancellation = new SessionCancellation();
-            $cancellation->setUser($sessionUser->getUser());
-            $cancellation->setSession($sessionUser->getSession());
-            $cancellation->setInscriptionUuid($sessionUser->getUuid());
-            $this->om->persist($cancellation);
+            $sessionUser->setStatus(SessionUser::STATUS_CANCELLED);
         }
 
         $this->manager->removeUsers($session, $sessionUsers);
@@ -320,7 +317,8 @@ class SessionController extends AbstractCrudController
             $params['hiddenFilters'] = [];
         }
         $params['hiddenFilters']['session'] = $session->getUuid();
-        $params['hiddenFilters']['pending'] = true;
+        //$params['hiddenFilters']['pending'] = true;
+        $params['hiddenFilters']['status'] = SessionUser::STATUS_PENDING;
 
         // only list participants of the same organization
         if (!$this->authorization->isGranted('ROLE_ADMIN')) {
@@ -562,9 +560,10 @@ class SessionController extends AbstractCrudController
             $params['hiddenFilters'] = [];
         }
         $params['hiddenFilters']['session'] = $session->getUuid();
+        $params['hiddenFilters']['status'] = SessionUser::STATUS_CANCELLED;
 
         return new JsonResponse(
-            $this->finder->search(SessionCancellation::class, $params)
+            $this->finder->search(SessionUser::class, $params)
         );
     }
 

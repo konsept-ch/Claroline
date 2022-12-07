@@ -29,6 +29,7 @@ class SessionUser extends AbstractUserRegistration
     const STATUS_REFUSED = 1;
     const STATUS_VALIDATED = 2;
     const STATUS_MANAGED = 3;
+    const STATUS_CANCELLED = 4;
 
     /**
      * @ORM\ManyToOne(targetEntity="Claroline\CursusBundle\Entity\Session")
@@ -85,5 +86,20 @@ class SessionUser extends AbstractUserRegistration
     public function setRemark(string $remark)
     {
         $this->remark = $remark;
+    }
+
+    public function isFullyRegistred(): bool
+    {
+        return $this->confirmed && $this->validated;
+    }
+
+    public function isStatusValidated(): bool
+    {
+        return $this->status == self::STATUS_VALIDATED || $this->status == self::STATUS_MANAGED;
+    }
+
+    public function isStatusUnregistred(): bool
+    {
+        return $this->status == self::STATUS_REFUSED || $this->status == self::STATUS_CANCELLED;
     }
 }

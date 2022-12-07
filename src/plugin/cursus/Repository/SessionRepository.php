@@ -13,6 +13,7 @@ namespace Claroline\CursusBundle\Repository;
 
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\CursusBundle\Entity\Registration\AbstractRegistration;
+use Claroline\CursusBundle\Entity\Registration\SessionUser;
 use Claroline\CursusBundle\Entity\Session;
 use Doctrine\ORM\EntityRepository;
 
@@ -77,10 +78,12 @@ class SessionRepository extends EntityRepository
                 WHERE su.type = :registrationType
                   AND su.session = :session
                   AND (su.confirmed = 0 OR su.validated = 0)
+                  AND su.status = :status
             ')
             ->setParameters([
                 'registrationType' => AbstractRegistration::LEARNER,
                 'session' => $session,
+                'status' => SessionUser::STATUS_PENDING
             ])
             ->getSingleScalarResult();
     }
@@ -93,10 +96,12 @@ class SessionRepository extends EntityRepository
                 WHERE su.type = :registrationType
                   AND su.session = :session
                   AND (su.confirmed = 1 AND su.validated = 1)
+                  AND su.status IN (:status)
             ')
             ->setParameters([
                 'registrationType' => $type,
                 'session' => $session,
+                'status' => [SessionUser::STATUS_VALIDATED, SessionUser::STATUS_MANAGED]
             ])
             ->getSingleScalarResult();
     }
