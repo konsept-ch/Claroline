@@ -36,6 +36,7 @@
     "resource_showIcon_help": "For evaluative resources, icon is replaced by a progression gauge.",
     "resource_views": "{0} This resource has never been viewed. | {1} This resource has been viewed once. | ]1,Inf[ This resource has been viewed %count% times.",
     "resource_not_published": "This resource is not published.",
+    "resource_published": "This resource is published.",
     "restricted_access_message": "You can not access this resource because all access conditions are not met.",
     "text": "Text",
     "text_desc": "Allow to edit a rich text (link, image, video) directly on the platform.",
@@ -44,6 +45,7 @@
     "resources_delete_message": "{1} Are you sure you want to delete this resource? | [2,Inf[ Are you sure you want to delete these %count% resources?",
     "all_resources": "All resources",
     "all_resources_help": "You will find below all the resources of the workspace in which you have participated.",
+    "evaluated_resource": "Evaluated resource",
     "required_resource": "Required resource",
     "required_resources": "Required resources",
     "required_resources_help": "You will find below all the resources to do to progress in the workspace.",
@@ -53,16 +55,6 @@
     "rights_loading": "We are loading the resource rights...",
     "no_started_resource": "You have not started any resources.",
     "no_started_resource_help": "Browse your resources to see your progress in each of them here.",
-
-    "evaluation_not_attempted_status": "You have not started the resource.",
-    "evaluation_todo_status": "You have to do the resource.",
-    "evaluation_unknown_status": "We don't know your progression in this resource.",
-    "evaluation_opened_status": "You have opened the resource.",
-    "evaluation_incomplete_status": "You have started the resource.",
-    "evaluation_participated_status": "You have participated to the resource.",
-    "evaluation_failed_status": "You did not pass the resource.",
-    "evaluation_completed_status": "You have finished the resource.",
-    "evaluation_passed_status": "You have passed the resource.",
     "show_resource_header" : "Show resource header",
     "resourceOpen": "The resource resourceName has been opened by user userName",
     "resourceEvaluation": "resourceName - statusName : userName is currently in step userProgression for a duration of durationTime sec",
@@ -96,5 +88,10 @@
         "location_unauthorized_help": "Please use one of the authorized workstations to access the resource."
     },
     "forbidden": "Access to the resource not possible",
-    "forbidden_desc": "You do not have access to this resource. Please contact an administrator to give you the necessary rights."
+    "forbidden_desc": "You do not have access to this resource. Please contact an administrator to give you the necessary rights.",
+    "require_resource": "The resource is used in the progression of the workspace",
+    "require_resource_help": "Users will need to complete this resource to progress through the workspace.",
+    "evaluate_resource": "The resource is used in the score of the workspace",
+    "evaluate_resource_help": "The score obtained by users at this resource is used to calculate the score of the workspace.",
+    "count_resources": "Number of resources"
 }

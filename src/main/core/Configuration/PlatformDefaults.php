@@ -12,6 +12,7 @@
 namespace Claroline\CoreBundle\Configuration;
 
 use Claroline\CoreBundle\Library\Configuration\ParameterProviderInterface;
+use Claroline\CoreBundle\Security\PlatformRoles;
 
 class PlatformDefaults implements ParameterProviderInterface
 {
@@ -33,7 +34,7 @@ class PlatformDefaults implements ParameterProviderInterface
                 'roles_confidential' => [],
                 'roles_locked' => [],
                 'roles_edition' => [],
-                'show_email' => ['ROLE_USER'],
+                'show_email' => [PlatformRoles::USER],
             ],
             'country' => '-',
             'text' => [
@@ -68,7 +69,7 @@ class PlatformDefaults implements ParameterProviderInterface
             ],
             'registration' => [
                 'self' => false,
-                'default_role' => 'ROLE_USER',
+                'default_role' => PlatformRoles::USER,
                 'validation' => self::REGISTRATION_MAIL_VALIDATION_PARTIAL,
                 'auto_logging' => false,
                 'allow_workspace' => false,
@@ -115,9 +116,6 @@ class PlatformDefaults implements ParameterProviderInterface
                 'enabled' => false,
                 'version' => 3,
             ],
-            'server' => [
-                'tmp_dir' => sys_get_temp_dir(),
-            ],
             'auto_enable_notifications' => [
                 'resource-create' => ['visible'],
                 'resource-publish' => ['visible'],
@@ -129,7 +127,6 @@ class PlatformDefaults implements ParameterProviderInterface
                 'portfolio' => ['visible'],
                 'icap_blog' => ['visible'],
                 'icap_dropzone' => ['visible'],
-                'icap_socialmedia' => ['visible'],
                 'icap_wiki' => ['visible'],
                 'innova_path' => ['visible'],
                 'icap_lesson' => ['visible'],

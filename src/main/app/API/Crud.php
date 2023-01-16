@@ -378,7 +378,6 @@ class Crud
      *
      * @todo only flush once (do not flush for each collection element)
      * @todo only dispatch lifecycle events once with the full collection in param
-     * @todo remove post_collection event
      */
     public function patch($object, string $property, string $action, array $elements, array $options = [])
     {
@@ -391,8 +390,6 @@ class Crud
         if (!in_array(static::NO_PERMISSIONS, $options)) {
             $this->checkPermission('PATCH', $object, ['collection' => new ObjectCollection($elements, ['action' => $action])], true);
         }
-
-        $updated = [];
         foreach ($elements as $element) {
             // check if the element is in the collection if the object implement a has*() method
             $checkerName = 'has'.ucfirst(strtolower($property));
@@ -414,12 +411,8 @@ class Crud
                 }
 
                 $this->dispatch('patch', 'post', [$object, $options, $property, $element, $action]);
-
-                $updated[] = $element;
             }
         }
-
-        $this->dispatch('patch', 'post_collection', [$object, $options, $property, $updated, $action]);
 
         return $object;
     }

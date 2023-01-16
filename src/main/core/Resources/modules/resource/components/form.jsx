@@ -21,7 +21,7 @@ const ResourceFormComponent = (props) =>
     name={props.name}
     dataPart={props.dataPart}
     meta={props.meta}
-    sections={[
+    definition={[
       {
         title: trans('general'),
         primary: true,
@@ -31,11 +31,11 @@ const ResourceFormComponent = (props) =>
             label: trans('type'),
             type: 'type',
             hideLabel: true,
-            calculated: (resourceNode) => ({
+            calculated: (resourceNode) => !isEmpty(resourceNode) ? ({
               icon: <ResourceIcon mimeType={resourceNode.meta.mimeType} />,
               name: trans(resourceNode.meta.type, {}, 'resource'),
               description: trans(`${resourceNode.meta.type}_desc`, {}, 'resource')
-            })
+            }) : null
           }, {
             name: 'name',
             label: trans('name'),
@@ -180,6 +180,25 @@ const ResourceFormComponent = (props) =>
             options: {
               unit: trans('minutes')
             }
+          }, {
+            name: 'evaluation.required',
+            label: trans('require_resource', {}, 'resource'),
+            type: 'boolean',
+            help: trans('require_resource_help', {}, 'resource'),
+            onChange: (required) => {
+              if (!required) {
+                props.updateProp('evaluation.evaluated', false)
+              }
+            },
+            linked: [
+              {
+                name: 'evaluation.evaluated',
+                label: trans('evaluate_resource', {}, 'resource'),
+                type: 'boolean',
+                help: trans('evaluate_resource_help', {}, 'resource'),
+                displayed: (resource) => get(resource, 'evaluation.required', false)
+              }
+            ]
           }
         ]
       }, {

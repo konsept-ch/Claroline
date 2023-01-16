@@ -2,10 +2,10 @@
 
 namespace Claroline\EvaluationBundle\Messenger\Message;
 
-use Claroline\AppBundle\Messenger\Message\AsyncMessageInterface;
+use Claroline\AppBundle\Messenger\Message\AsyncHighMessageInterface;
 use Claroline\EvaluationBundle\Entity\AbstractEvaluation;
 
-class InitializeResourceEvaluations implements AsyncMessageInterface
+class InitializeResourceEvaluations implements AsyncHighMessageInterface
 {
     /** @var int */
     private $resourceNodeId;
@@ -14,8 +14,11 @@ class InitializeResourceEvaluations implements AsyncMessageInterface
     /** @var string */
     private $status;
 
-    public function __construct(int $resourceNodeId, array $userIds, string $status = AbstractEvaluation::STATUS_NOT_ATTEMPTED)
-    {
+    public function __construct(
+        int $resourceNodeId,
+        array $userIds,
+        ?string $status = AbstractEvaluation::STATUS_NOT_ATTEMPTED
+    ) {
         $this->resourceNodeId = $resourceNodeId;
         $this->userIds = $userIds;
         $this->status = $status;

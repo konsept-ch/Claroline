@@ -15,7 +15,7 @@ import {ContentHtml} from '#/main/app/content/components/html'
 import {Checkbox} from '#/main/app/input/components/checkbox'
 import {route as toolRoute} from '#/main/core/tool/routing'
 
-import {User as UserTypes} from '#/main/core/user/prop-types'
+import {User as UserTypes} from '#/main/community/prop-types'
 import {getActions} from '#/main/core/desktop'
 import {constants} from '#/main/core/data/types/connection-message/constants'
 import {ConnectionMessage as ConnectionMessageTypes} from '#/main/core/data/types/connection-message/prop-types'
@@ -82,7 +82,7 @@ class ConnectionModal extends Component {
         bsSize="lg"
       >
         {!isEmpty(slide.poster) &&
-          <img className="img-responsive" src={slide.poster.absolute ? slide.poster.url : asset(slide.poster.url)} />
+          <img className="img-responsive" src={slide.poster.absolute ? slide.poster : asset(slide.poster)} />
         }
 
         {slide.title &&

@@ -18,7 +18,7 @@ const WorkspaceCard = props =>
       'data-card-muted': get(props.data, 'restrictions.hidden', false)
     })}
     id={props.data.id}
-    poster={props.data.thumbnail ? asset(props.data.thumbnail.url) : null}
+    poster={props.data.thumbnail ? asset(props.data.thumbnail) : null}
     icon="fa fa-book"
     title={props.data.name}
     subtitle={props.data.code}
@@ -30,7 +30,7 @@ const WorkspaceCard = props =>
       get(props.data, 'registration.waitingForRegistration') && ['fa fa-hourglass', trans('pending')]
     ].filter(flag => !!flag)}
     contentText={get(props.data, 'meta.description')}
-    footer={
+    footer={get(props.data, 'meta.creator') || get(props.data, 'meta.created') ?
       <span
         style={{
           display: 'flex',
@@ -44,6 +44,8 @@ const WorkspaceCard = props =>
           trans('created_at', {date: displayDate(props.data.meta.created, false, true)})
         }
       </span>
+      :
+      null
     }
   />
 

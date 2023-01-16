@@ -18,7 +18,7 @@ use Claroline\AppBundle\Controller\RequestDecoderTrait;
 use Claroline\AppBundle\Manager\TermsOfServiceManager;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\AuthenticationBundle\Security\Authentication\Authenticator;
-use Claroline\CoreBundle\API\Serializer\User\ProfileSerializer;
+use Claroline\CommunityBundle\Serializer\ProfileSerializer;
 use Claroline\CoreBundle\Configuration\PlatformDefaults;
 use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CoreBundle\Entity\User;
@@ -107,12 +107,7 @@ class RegistrationController
             }
 
             if (!$organization && isset($data['mainOrganization'])) {
-                $organization = $this->crud->create(Organization::class, $data['mainOrganization']);
-            }
-
-            // error handling
-            if (is_array($organization)) {
-                return new JsonResponse($organization, 422);
+                $organization = $this->crud->create(Organization::class, $data['mainOrganization'], [Crud::THROW_EXCEPTION]);
             }
         }
 
@@ -123,12 +118,8 @@ class RegistrationController
             Options::ADD_NOTIFICATIONS,
             Options::WORKSPACE_VALIDATE_ROLES,
             Options::VALIDATE_FACET,
+            Crud::THROW_EXCEPTION,
         ]);
-
-        // error handling
-        if (is_array($user)) {
-            return new JsonResponse($user, 422);
-        }
 
         if ($organization) {
             $this->crud->replace($user, 'mainOrganization', $organization);

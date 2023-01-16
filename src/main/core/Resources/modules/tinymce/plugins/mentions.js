@@ -6,7 +6,7 @@ import {url} from '#/main/app/api'
 import {trans} from '#/main/app/intl/translation'
 import {asset} from '#/main/app/config/asset'
 
-import {route} from '#/main/core/user/routing'
+import {route} from '#/main/community/routing'
 
 const AutoComplete = function (editor) {
   this.editor = editor
@@ -171,7 +171,7 @@ AutoComplete.prototype = {
           // creates log error
           invariant(false, error.message)
           // displays generic error in ui
-          this.editor.notificationManager.open({type: 'error', text: trans('error_occured')})
+          this.editor.notificationManager.open({type: 'error', text: trans('error_occurred')})
         })
     }
   },
@@ -231,8 +231,8 @@ AutoComplete.prototype = {
 
   render: function (item, query) {
     let avatar = '<span class="user-avatar fa fa-user-circle-o"></span>'
-    if (item.picture && item.picture.url) {
-      avatar = `<img class="user-avatar" src="${asset(item.picture.url)}" alt="${item.name}" />`
+    if (item.picture) {
+      avatar = `<img class="user-avatar" src="${asset(item.picture)}" alt="${item.name}" />`
     }
 
     return (`

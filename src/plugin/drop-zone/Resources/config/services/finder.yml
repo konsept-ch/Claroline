@@ -1,0 +1,8 @@
+services:
+    Claroline\DropZoneBundle\Finder\DropFinder:
+        parent: Claroline\AppBundle\API\Finder\AbstractFinder
+        tags: [ claroline.finder ]
+
+    Claroline\DropZoneBundle\Finder\RevisionFinder:
+        parent: Claroline\AppBundle\API\Finder\AbstractFinder
+        tags: [ claroline.finder ]

@@ -17,8 +17,8 @@ use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\AppBundle\Controller\RequestDecoderTrait;
 use Claroline\AppBundle\Manager\File\TempFileManager;
 use Claroline\AppBundle\Persistence\ObjectManager;
+use Claroline\CommunityBundle\Serializer\ProfileSerializer;
 use Claroline\CoreBundle\API\Serializer\ParametersSerializer;
-use Claroline\CoreBundle\API\Serializer\User\ProfileSerializer;
 use Claroline\CoreBundle\Entity\Facet\Facet;
 use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CoreBundle\Entity\User;
@@ -196,6 +196,8 @@ class ProfileController
     public function updateAction(User $user, Request $request): JsonResponse
     {
         $userData = $this->decodeRequest($request);
+        // removes main organization from the serialized structure because it will cause access issues.
+        unset($userData['mainOrganization']);
         // removes roles from the serialized structure because it will cause access issues.
         // those roles should not be here anyway.
         unset($userData['roles']);

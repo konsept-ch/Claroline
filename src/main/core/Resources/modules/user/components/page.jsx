@@ -5,7 +5,7 @@ import get from 'lodash/get'
 import {trans} from '#/main/app/intl/translation'
 import {PageFull} from '#/main/app/page/components/full'
 
-import {User as UserTypes} from '#/main/core/user/prop-types'
+import {User as UserTypes} from '#/main/community/prop-types'
 import {UserAvatar} from '#/main/core/user/components/avatar'
 
 const UserPage = props =>
@@ -18,7 +18,7 @@ const UserPage = props =>
     }])}
     title={props.user.name}
     subtitle={props.title || props.user.username}
-    poster={props.user.poster ? props.user.poster.url : undefined}
+    poster={props.user.poster}
     icon={
       <UserAvatar className="user-avatar-lg img-thumbnail" picture={props.user.picture} />
     }

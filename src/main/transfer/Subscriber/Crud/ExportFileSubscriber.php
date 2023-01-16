@@ -5,6 +5,7 @@ namespace Claroline\TransferBundle\Subscriber\Crud;
 use Claroline\AppBundle\API\Crud;
 use Claroline\AppBundle\Event\Crud\CreateEvent;
 use Claroline\AppBundle\Event\Crud\DeleteEvent;
+use Claroline\AppBundle\Event\Crud\UpdateEvent;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\SchedulerBundle\Entity\ScheduledTask;
@@ -45,6 +46,7 @@ class ExportFileSubscriber implements EventSubscriberInterface
         return [
             Crud::getEventName('create', 'pre', ExportFile::class) => 'preCreate',
             Crud::getEventName('create', 'post', ExportFile::class) => 'postCreate',
+            Crud::getEventName('update', 'post', ExportFile::class) => 'postUpdate',
             Crud::getEventName('delete', 'post', ExportFile::class) => 'postDelete',
         ];
     }
@@ -79,6 +81,35 @@ class ExportFileSubscriber implements EventSubscriberInterface
         ]), [Crud::THROW_EXCEPTION]);
     }
 
+    public function postUpdate(UpdateEvent $event)
+    {
+        /** @var ExportFile $object */
+        $object = $event->getObject();
+        $data = $event->getData();
+
+        $scheduler = $this->om->getRepository(ScheduledTask::class)->findOneBy(['parentId' => $object->getUuid()]);
+        if (empty($data['scheduler']) && empty($scheduler)) {
+            // no scheduled task
+            return;
+        }
+
+        if (empty($data['scheduler'])) {
+            if (!empty($scheduler)) {
+                $this->crud->delete($scheduler);
+            }
+        } else {
+            if (!empty($scheduler)) {
+                $this->crud->update($scheduler, $data['scheduler'], [Crud::NO_PERMISSIONS, Crud::THROW_EXCEPTION]);
+            } else {
+                $this->crud->create(ScheduledTask::class, array_merge($data['scheduler'], [
+                    'name' => $object->getAction(),
+                    'action' => 'export',
+                    'parentId' => $object->getUuid(),
+                ]), [Crud::NO_PERMISSIONS, Crud::THROW_EXCEPTION]);
+            }
+        }
+    }
+
     public function postDelete(DeleteEvent $event)
     {
         /** @var ExportFile $object */
@@ -87,11 +118,13 @@ class ExportFileSubscriber implements EventSubscriberInterface
         $fs = new FileSystem();
 
         // delete log file
-        $fs->remove($this->logDir.DIRECTORY_SEPARATOR.$object->getUuid());
+        if (file_exists($this->logDir.DIRECTORY_SEPARATOR.$object->getUuid())) {
+            $fs->remove($this->logDir.DIRECTORY_SEPARATOR.$object->getUuid());
+        }
 
         // delete exported file
-        if (file_exists($this->filesDir.DIRECTORY_SEPARATOR.'transfer'.DIRECTORY_SEPARATOR.$object->getUuid())) {
-            $fs->remove($this->filesDir.DIRECTORY_SEPARATOR.'transfer'.DIRECTORY_SEPARATOR.$object->getUuid());
+        if (file_exists($this->filesDir.DIRECTORY_SEPARATOR.$object->getUuid())) {
+            $fs->remove($this->filesDir.DIRECTORY_SEPARATOR.$object->getUuid());
         }
 
         // delete scheduled tasks if any

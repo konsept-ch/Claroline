@@ -1,0 +1,53 @@
+services:
+    _defaults:
+        tags: [claroline.serializer]
+
+    Claroline\DropZoneBundle\Serializer\RevisionSerializer:
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\AppBundle\API\SerializerProvider'
+
+    Claroline\DropZoneBundle\Serializer\RevisionCommentSerializer:
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\CommunityBundle\Serializer\UserSerializer'
+
+    Claroline\DropZoneBundle\Serializer\GradeSerializer:
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+
+    Claroline\DropZoneBundle\Serializer\DropzoneSerializer:
+        arguments:
+            - '@Claroline\DropZoneBundle\Serializer\CriterionSerializer'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+
+    Claroline\DropZoneBundle\Serializer\DropSerializer:
+        arguments:
+            - '@Claroline\DropZoneBundle\Serializer\CorrectionSerializer'
+            - '@Claroline\DropZoneBundle\Serializer\DocumentSerializer'
+            - '@Claroline\DropZoneBundle\Serializer\DropCommentSerializer'
+            - '@Claroline\CommunityBundle\Serializer\UserSerializer'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+
+    Claroline\DropZoneBundle\Serializer\DropCommentSerializer:
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\CommunityBundle\Serializer\UserSerializer'
+
+    Claroline\DropZoneBundle\Serializer\DocumentSerializer:
+        arguments:
+            - '@Claroline\DropZoneBundle\Serializer\RevisionSerializer'
+            - '@Claroline\CoreBundle\API\Serializer\Resource\ResourceNodeSerializer'
+            - '@Claroline\CommunityBundle\Serializer\UserSerializer'
+            - '@security.token_storage'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+
+    Claroline\DropZoneBundle\Serializer\CriterionSerializer:
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+
+    Claroline\DropZoneBundle\Serializer\CorrectionSerializer:
+        arguments:
+            - '@Claroline\DropZoneBundle\Serializer\GradeSerializer'
+            - '@Claroline\CommunityBundle\Serializer\UserSerializer'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'

@@ -12,12 +12,11 @@
 namespace Claroline\CoreBundle\API\Serializer\Location;
 
 use Claroline\AppBundle\API\Options;
+use Claroline\AppBundle\API\Serializer\SerializerInterface;
 use Claroline\AppBundle\API\Serializer\SerializerTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
-use Claroline\CoreBundle\Entity\Location\Material;
-use Claroline\CoreBundle\API\Serializer\File\PublicFileSerializer;
-use Claroline\CoreBundle\Entity\File\PublicFile;
 use Claroline\CoreBundle\Entity\Location\Location;
+use Claroline\CoreBundle\Entity\Location\Material;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 class MaterialSerializer
@@ -28,20 +27,16 @@ class MaterialSerializer
     private $authorization;
     /** @var ObjectManager */
     private $om;
-    /** @var PublicFileSerializer */
-    private $fileSerializer;
     /** @var LocationSerializer */
     private $locationSerializer;
 
     public function __construct(
         AuthorizationCheckerInterface $authorization,
         ObjectManager $om,
-        PublicFileSerializer $fileSerializer,
         LocationSerializer $locationSerializer
     ) {
         $this->authorization = $authorization;
         $this->om = $om;
-        $this->fileSerializer = $fileSerializer;
         $this->locationSerializer = $locationSerializer;
     }
 
@@ -52,14 +47,24 @@ class MaterialSerializer
 
     public function serialize(Material $material, array $options = []): array
     {
+        if (in_array(SerializerInterface::SERIALIZE_MINIMAL, $options)) {
+            return [
+                'id' => $material->getUuid(),
+                'code' => $material->getCode(),
+                'name' => $material->getName(),
+                'thumbnail' => $material->getThumbnail(),
+            ];
+        }
+
         return [
+            'autoId' => $material->getId(),
             'id' => $material->getUuid(),
             'code' => $material->getCode(),
             'name' => $material->getName(),
+            'thumbnail' => $material->getThumbnail(),
+            'poster' => $material->getPoster(),
             'description' => $material->getDescription(),
             'quantity' => $material->getQuantity(),
-            'poster' => $this->serializePoster($material),
-            'thumbnail' => $this->serializeThumbnail($material),
             'location' => $material->getLocation() ? $this->locationSerializer->serialize($material->getLocation(), [Options::SERIALIZE_MINIMAL]) : null,
             'permissions' => [
                 'open' => $this->authorization->isGranted('OPEN', $material),
@@ -74,6 +79,8 @@ class MaterialSerializer
         $this->sipe('id', 'setUuid', $data, $material);
         $this->sipe('code', 'setCode', $data, $material);
         $this->sipe('name', 'setName', $data, $material);
+        $this->sipe('poster', 'setPoster', $data, $material);
+        $this->sipe('thumbnail', 'setThumbnail', $data, $material);
         $this->sipe('description', 'setDescription', $data, $material);
         $this->sipe('quantity', 'setQuantity', $data, $material);
 
@@ -86,46 +93,6 @@ class MaterialSerializer
             $material->setLocation($location);
         }
 
-        if (isset($data['poster'])) {
-            $material->setPoster($data['poster']['url'] ?? null);
-        }
-
-        if (isset($data['thumbnail'])) {
-            $material->setThumbnail($data['thumbnail']['url'] ?? null);
-        }
-
         return $material;
-    }
-
-    private function serializePoster(Material $material)
-    {
-        if (!empty($material->getPoster())) {
-            /** @var PublicFile $file */
-            $file = $this->om
-                ->getRepository(PublicFile::class)
-                ->findOneBy(['url' => $material->getPoster()]);
-
-            if ($file) {
-                return $this->fileSerializer->serialize($file);
-            }
-        }
-
-        return null;
-    }
-
-    private function serializeThumbnail(Material $material)
-    {
-        if (!empty($material->getThumbnail())) {
-            /** @var PublicFile $file */
-            $file = $this->om
-                ->getRepository(PublicFile::class)
-                ->findOneBy(['url' => $material->getThumbnail()]);
-
-            if ($file) {
-                return $this->fileSerializer->serialize($file);
-            }
-        }
-
-        return null;
     }
 }

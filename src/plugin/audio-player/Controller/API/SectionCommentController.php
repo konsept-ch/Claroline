@@ -20,7 +20,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * @Route("/audioresourcesectioncomment")
@@ -39,17 +39,17 @@ class SectionCommentController extends AbstractCrudController
         $this->translator = $translator;
     }
 
-    public function getName()
+    public function getName(): string
     {
         return 'audioresourcesectioncomment';
     }
 
-    public function getClass()
+    public function getClass(): string
     {
         return SectionComment::class;
     }
 
-    public function getIgnore()
+    public function getIgnore(): array
     {
         return ['exist', 'copyBulk', 'schema', 'find', 'list'];
     }

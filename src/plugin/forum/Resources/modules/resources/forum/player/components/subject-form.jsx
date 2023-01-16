@@ -14,7 +14,7 @@ import {FormData} from '#/main/app/content/form/containers/data'
 import {actions as formActions, selectors as formSelect} from '#/main/app/content/form/store'
 import {selectors as securitySelectors} from '#/main/app/security/store'
 
-import {User as UserTypes} from '#/main/core/user/prop-types'
+import {User as UserTypes} from '#/main/community/prop-types'
 import {selectors as resourceSelectors} from '#/main/core/resource/store'
 import {UserAvatar} from '#/main/core/user/components/avatar'
 
@@ -197,12 +197,12 @@ const SubjectForm = withRouter(withModal(connect(
       })
     },
     createModeratedSubject(forumId) {
-      dispatch(formActions.saveForm(`${selectors.STORE_NAME}.subjects.form`, ['claroline_forum_api_forum_createsubject', {id: forumId}])).then(() => {
+      dispatch(formActions.saveForm(`${selectors.STORE_NAME}.subjects.form`, ['claroline_forum_forum_createsubject', {id: forumId}])).then(() => {
         ownProps.history.push(`${ownProps.path}/subjects`)
       })
     },
     createSubject(forumId, subjectId, path) {
-      dispatch(formActions.saveForm(`${selectors.STORE_NAME}.subjects.form`, ['claroline_forum_api_forum_createsubject', {id: forumId}])).then(() => {
+      dispatch(formActions.saveForm(`${selectors.STORE_NAME}.subjects.form`, ['claroline_forum_forum_createsubject', {id: forumId}])).then(() => {
         ownProps.history.push(`${path}/subjects/show/${subjectId}`)
       })
     }

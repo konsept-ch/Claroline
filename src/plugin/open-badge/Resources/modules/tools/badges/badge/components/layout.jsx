@@ -16,8 +16,8 @@ import {ContentLoader} from '#/main/app/content/components/loader'
 import {selectors as securitySelectors} from '#/main/app/security/store'
 import {selectors as toolSelectors} from '#/main/core/tool/store'
 import {UserAvatar} from '#/main/core/user/components/avatar'
-import {displayUsername} from '#/main/core/user/utils'
-import {route as userRoute} from '#/main/core/user/routing'
+import {displayUsername} from '#/main/community/utils'
+import {route as userRoute} from '#/main/community/routing'
 
 import {Badge as BadgeTypes, Assertion as AssertionTypes} from '#/plugin/open-badge/prop-types'
 
@@ -79,7 +79,7 @@ class BadgeLayoutComponent extends Component {
                 backgroundColor: this.props.badge.color
               } : undefined}
             >
-              <img src={get(this.props.badge, 'image.url') ? asset(get(this.props.badge, 'image.url')) : null} />
+              <img src={get(this.props.badge, 'image') ? asset(get(this.props.badge, 'image')) : null} />
             </div>
           </div>
 

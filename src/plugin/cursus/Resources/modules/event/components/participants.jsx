@@ -11,8 +11,8 @@ import {AlertBlock} from '#/main/app/alert/components/alert-block'
 import {Routes} from '#/main/app/router/components/routes'
 import {ListData} from '#/main/app/content/list/containers/data'
 import {Vertical} from '#/main/app/content/tabs/components/vertical'
-import {MODAL_USERS} from '#/main/core/modals/users'
-import {MODAL_GROUPS} from '#/main/core/modals/groups'
+import {MODAL_USERS} from '#/main/community/modals/users'
+import {MODAL_GROUPS} from '#/main/community/modals/groups'
 
 import {Event as EventTypes} from '#/plugin/cursus/prop-types'
 import {constants} from '#/plugin/cursus/constants'
@@ -41,7 +41,7 @@ const EventUsers = (props) =>
       }, {
         name: 'download-presence',
         type: DOWNLOAD_BUTTON,
-        icon: 'fa fa-fw fa-file-pdf-o',
+        icon: 'fa fa-fw fa-file-pdf',
         label: trans('download_presence', {}, 'cursus'),
         file: {
           url: ['apiv2_cursus_user_presence_download', {id: props.event.id, userId: rows[0].user.id}]
@@ -162,7 +162,7 @@ const EventPresences = (props) =>
       }, {
         name: 'download-presence',
         type: DOWNLOAD_BUTTON,
-        icon: 'fa fa-fw fa-file-pdf-o',
+        icon: 'fa fa-fw fa-file-pdf',
         label: trans('download_presence', {}, 'cursus'),
         file: {
           url: ['apiv2_cursus_user_presence_download', {id: props.event.id, userId: rows[0].user.id}]

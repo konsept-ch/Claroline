@@ -5,7 +5,6 @@ namespace Claroline\ForumBundle\Serializer;
 use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\Serializer\SerializerTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
-use Claroline\CoreBundle\API\Serializer\File\PublicFileSerializer;
 use Claroline\CoreBundle\API\Serializer\MessageSerializer as AbstractMessageSerializer;
 use Claroline\CoreBundle\API\Serializer\Resource\ResourceNodeSerializer;
 use Claroline\ForumBundle\Entity\Message;
@@ -17,68 +16,45 @@ class MessageSerializer
 
     /** @var AbstractMessageSerializer */
     private $messageSerializer;
-
-    /** @var AbstractMessageSerializer */
-    private $subjectSerializer;
-
     /** @var ObjectManager */
     private $om;
-
-    /** @var PublicFileSerializer */
-    private $fileSerializer;
-
     /** @var ResourceNodeSerializer */
     private $nodeSerializer;
 
-    /**
-     * MessageSerializer constructor.
-     */
     public function __construct(
         AbstractMessageSerializer $messageSerializer,
         ObjectManager $om,
-        SubjectSerializer $subjectSerializer,
-        PublicFileSerializer $fileSerializer,
         ResourceNodeSerializer $nodeSerializer
     ) {
         $this->messageSerializer = $messageSerializer;
         $this->om = $om;
-        $this->subjectSerializer = $subjectSerializer;
-        $this->fileSerializer = $fileSerializer;
         $this->nodeSerializer = $nodeSerializer;
     }
 
-    public function getClass()
+    public function getClass(): string
     {
         return Message::class;
     }
 
-    public function getName()
+    public function getName(): string
     {
         return 'forum_message';
     }
 
-    /**
-     * @return string
-     */
-    public function getSchema()
+    public function getSchema(): string
     {
         return '#/plugin/forum/message.json';
     }
 
-    /**
-     * @return string
-     */
-    public function getSamples()
+    public function getSamples(): string
     {
         return '#/plugin/forum/message';
     }
 
     /**
      * Serializes a Message entity.
-     *
-     * @return array
      */
-    public function serialize(Message $message, array $options = [])
+    public function serialize(Message $message, ?array $options = []): array
     {
         $data = $this->messageSerializer->serialize($message, $options);
         $subject = $message->getSubject();
@@ -87,7 +63,7 @@ class MessageSerializer
             $data['subject'] = [
                 'id' => $subject->getUuid(),
                 'title' => $subject->getTitle(),
-                'poster' => $subject->getPoster() ? $this->fileSerializer->serialize($subject->getPoster()) : null,
+                'poster' => $subject->getPoster() ? $subject->getPoster()->getUrl() : null,
             ];
 
             if ($subject->getForum() && $subject->getForum()->getResourceNode()) {
@@ -104,16 +80,13 @@ class MessageSerializer
 
     /**
      * Deserializes data into a Message entity.
-     *
-     * @param array $data
-     *
-     * @return Message
      */
-    public function deserialize($data, Message $message, array $options = [])
+    public function deserialize(array $data, Message $message, ?array $options = []): Message
     {
-        $message = $this->messageSerializer->deserialize($data, $message, $options);
+        $this->messageSerializer->deserialize($data, $message, $options);
 
         if (isset($data['subject'])) {
+            /** @var Subject $subject */
             $subject = $this->om->getObject($data['subject'], Subject::class);
 
             if (!empty($subject)) {

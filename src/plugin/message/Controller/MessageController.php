@@ -14,6 +14,7 @@ namespace Claroline\MessageBundle\Controller;
 use Claroline\AppBundle\Annotations\ApiDoc;
 use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\Controller\AbstractCrudController;
+use Claroline\CoreBundle\Entity\User;
 use Claroline\MessageBundle\Entity\Message;
 use Claroline\MessageBundle\Entity\UserMessage;
 use Claroline\MessageBundle\Manager\MessageManager;
@@ -22,26 +23,32 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
  * @Route("/message")
  */
 class MessageController extends AbstractCrudController
 {
+    /** @var AuthorizationCheckerInterface */
+    private $authorization;
+    /** @var TokenStorageInterface */
     private $tokenStorage;
     /** @var MessageManager */
     private $messageManager;
 
     public function __construct(
+        AuthorizationCheckerInterface $authorization,
         TokenStorageInterface $tokenStorage,
         MessageManager $messageManager
     ) {
+        $this->authorization = $authorization;
         $this->tokenStorage = $tokenStorage;
         $this->messageManager = $messageManager;
     }
 
-    /** @return string */
-    public function getName()
+    public function getName(): string
     {
         return 'message';
     }
@@ -270,7 +277,7 @@ class MessageController extends AbstractCrudController
         return new JsonResponse($this->serializer->serialize($root, [Options::IS_RECURSIVE]));
     }
 
-    public function getAction(Request $request, $id, $class)
+    public function getAction(Request $request, $id, $class): JsonResponse
     {
         $currentUser = $this->tokenStorage->getToken()->getUser();
 
@@ -284,22 +291,38 @@ class MessageController extends AbstractCrudController
             $options = $query['options'];
         }
 
-        return $object ?
-            new JsonResponse(
+        if ($object) {
+            return new JsonResponse(
                 $this->serializer->serialize($object, $options)
-            ) :
-            new JsonResponse("No object found for id {$id} of class {$class}", 404);
+            );
+        }
+
+        return new JsonResponse("No object found for id {$id} of class {$class}", 404);
     }
 
-    public function getOptions()
+    public function getOptions(): array
     {
         return array_merge(parent::getOptions(), [
             'get' => [Options::IS_RECURSIVE],
         ]);
     }
 
-    public function getClass()
+    public function getClass(): string
     {
         return Message::class;
+    }
+
+    protected function getDefaultHiddenFilters(): array
+    {
+        if (!$this->authorization->isGranted('IS_AUTHENTICATED_FULLY')) {
+            throw new AccessDeniedException();
+        }
+
+        /** @var User $user */
+        $user = $this->tokenStorage->getToken()->getUser();
+
+        return [
+            'user' => $user->getUuid(),
+        ];
     }
 }

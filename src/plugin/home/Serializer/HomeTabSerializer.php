@@ -6,11 +6,9 @@ use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\Serializer\SerializerTrait;
 use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\AppBundle\Persistence\ObjectManager;
-use Claroline\CoreBundle\API\Serializer\File\PublicFileSerializer;
-use Claroline\CoreBundle\API\Serializer\User\RoleSerializer;
-use Claroline\CoreBundle\API\Serializer\User\UserSerializer;
+use Claroline\CommunityBundle\Serializer\RoleSerializer;
+use Claroline\CommunityBundle\Serializer\UserSerializer;
 use Claroline\CoreBundle\API\Serializer\Workspace\WorkspaceSerializer;
-use Claroline\CoreBundle\Entity\File\PublicFile;
 use Claroline\CoreBundle\Entity\Role;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
@@ -19,9 +17,6 @@ use Claroline\HomeBundle\Entity\HomeTab;
 use Claroline\HomeBundle\Entity\Type\AbstractTab;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
-/**
- * @todo simplify serialized structure
- */
 class HomeTabSerializer
 {
     use SerializerTrait;
@@ -38,8 +33,6 @@ class HomeTabSerializer
     private $userSerializer;
     /** @var RoleSerializer */
     private $roleSerializer;
-    /** @var PublicFileSerializer */
-    private $publicFileSerializer;
 
     public function __construct(
         AuthorizationCheckerInterface $authorization,
@@ -47,8 +40,7 @@ class HomeTabSerializer
         SerializerProvider $serializer,
         WorkspaceSerializer $workspaceSerializer,
         UserSerializer $userSerializer,
-        RoleSerializer $roleSerializer,
-        PublicFileSerializer $publicFileSerializer
+        RoleSerializer $roleSerializer
     ) {
         $this->authorization = $authorization;
         $this->om = $om;
@@ -56,7 +48,6 @@ class HomeTabSerializer
         $this->workspaceSerializer = $workspaceSerializer;
         $this->userSerializer = $userSerializer;
         $this->roleSerializer = $roleSerializer;
-        $this->publicFileSerializer = $publicFileSerializer;
     }
 
     public function getName()
@@ -71,24 +62,12 @@ class HomeTabSerializer
 
     public function serialize(HomeTab $homeTab, array $options = []): array
     {
-        $poster = null;
-        if ($homeTab->getPoster()) {
-            /** @var PublicFile $file */
-            $file = $this->om
-                ->getRepository(PublicFile::class)
-                ->findOneBy(['url' => $homeTab->getPoster()]);
-
-            if ($file) {
-                $poster = $this->publicFileSerializer->serialize($file);
-            }
-        }
-
         $data = [
             'id' => $homeTab->getUuid(),
             'title' => $homeTab->getName(),
             'slug' => $homeTab->getLongTitle() ? substr(strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $homeTab->getLongTitle()))), 0, 128) : 'new',
             'longTitle' => $homeTab->getLongTitle(),
-            'poster' => $poster,
+            'poster' => $homeTab->getPoster(),
             'icon' => $homeTab->getIcon(),
             'context' => $homeTab->getContext(),
             'type' => $homeTab->getType(),
@@ -156,7 +135,7 @@ class HomeTabSerializer
         $this->sipe('title', 'setName', $data, $homeTab);
         $this->sipe('position', 'setOrder', $data, $homeTab);
         $this->sipe('longTitle', 'setLongTitle', $data, $homeTab);
-        $this->sipe('poster.url', 'setPoster', $data, $homeTab);
+        $this->sipe('poster', 'setPoster', $data, $homeTab);
         $this->sipe('icon', 'setIcon', $data, $homeTab);
         $this->sipe('context', 'setContext', $data, $homeTab);
         $this->sipe('type', 'setType', $data, $homeTab);

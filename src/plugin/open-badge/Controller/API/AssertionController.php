@@ -13,6 +13,7 @@ namespace Claroline\OpenBadgeBundle\Controller\API;
 
 use Claroline\AppBundle\Controller\AbstractCrudController;
 use Claroline\AppBundle\Manager\PdfManager;
+use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
 use Claroline\OpenBadgeBundle\Entity\Assertion;
@@ -55,29 +56,37 @@ class AssertionController extends AbstractCrudController
         $this->pdfManager = $pdfManager;
     }
 
-    public function getClass()
+    public function getClass(): string
     {
         return Assertion::class;
     }
 
-    public function getName()
+    public function getName(): string
     {
         return 'badge-assertion';
     }
 
     /**
-     * @Route("/current-user", name="apiv2_assertion_current_user_list", methods={"GET"})
+     * @Route("/current-user/{workspace}", name="apiv2_assertion_current_user_list", methods={"GET"})
      */
-    public function listMyAssertionsAction(Request $request): JsonResponse
+    public function listMyAssertionsAction(Request $request, ?string $workspace = null): JsonResponse
     {
         if (!$this->authorization->isGranted('IS_AUTHENTICATED_FULLY')) {
             throw new AccessDeniedException();
         }
 
         $user = $this->tokenStorage->getToken()->getUser();
+
+        $filters = [
+            'recipient' => $user->getUuid(),
+        ];
+        if ($workspace) {
+            $filters['workspace'] = $workspace;
+        }
+
         $assertions = $this->finder->search(Assertion::class, array_merge(
             $request->query->all(),
-            ['hiddenFilters' => ['recipient' => $user->getUuid()]]
+            ['hiddenFilters' => $filters]
         ));
 
         return new JsonResponse($assertions);
@@ -124,7 +133,7 @@ class AssertionController extends AbstractCrudController
         ]);
     }
 
-    protected function getDefaultHiddenFilters()
+    protected function getDefaultHiddenFilters(): array
     {
         if (!$this->authorization->isGranted('IS_AUTHENTICATED_FULLY')) {
             throw new AccessDeniedException();
