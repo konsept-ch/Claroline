@@ -1,5 +1,3 @@
-/* global require, window */
-
 import {
   applyMiddleware,
   compose,
