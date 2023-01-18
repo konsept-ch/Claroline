@@ -83,17 +83,6 @@ const UserMenu = props =>
         {props.unavailable &&
           <ContentHelp help={trans('only_admin_login_help', {}, 'administration')} />
         }
-
-        {!props.unavailable && props.registration &&
-          <Button
-            type={LINK_BUTTON}
-            className="btn btn-block"
-            label={trans('create-account', {}, 'actions')}
-            target="/registration"
-            onClick={props.closeMenu}
-            active={false}
-          />
-        }
       </div>
     }
 
@@ -115,6 +104,15 @@ const UserMenu = props =>
           icon="fa fa-fw fa-user"
           label={trans('my_account')}
           target="/account"
+          onClick={props.closeMenu}
+        />
+
+        <Button
+          type={LINK_BUTTON}
+          className="list-group-item"
+          icon="fa fa-fw fa-graduation-cap"
+          label={trans('my_courses', {}, 'cursus')}
+          target="/home/mes-formations"
           onClick={props.closeMenu}
         />
 

@@ -96,7 +96,7 @@ const CourseList = (props) =>
     ]}
     card={CourseCard}
     display={{
-      current: listConst.DISPLAY_LIST
+      current: listConst.DISPLAY_TABLE
     }}
   />
 

@@ -55,8 +55,7 @@ class BlogSerializer
     }
 
     /**
-     * @param array       $data
-     * @param Blog | null $blog
+     * @param array $data
      *
      * @return Blog - The deserialized blog entity
      */

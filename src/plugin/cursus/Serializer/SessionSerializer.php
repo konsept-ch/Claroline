@@ -100,6 +100,14 @@ class SessionSerializer
                 'restrictions' => [
                     'dates' => DateRangeNormalizer::normalize($session->getStartDate(), $session->getEndDate()),
                 ],
+                'quotas' => [
+                    'used' => $session->usedByQuotas(),
+                    'days' => $session->getQuotaDays(),
+                ],
+                'pricing' => [
+                    'price' => $session->getPrice(),
+                    'description' => $session->getPriceDescription(),
+                ],
             ];
         }
 
@@ -165,10 +173,6 @@ class SessionSerializer
                 'pendingRegistrations' => $session->getPendingRegistrations(),
                 'eventRegistrationType' => $session->getEventRegistrationType(),
             ],
-            'pricing' => [
-                'price' => $session->getPrice(),
-                'description' => $session->getPriceDescription(),
-            ],
             'participants' => $this->sessionRepo->countParticipants($session),
             'tutors' => array_map(function (SessionUser $sessionUser) {
                 return $this->userSerializer->serialize($sessionUser->getUser(), [SerializerInterface::SERIALIZE_MINIMAL]);
@@ -202,6 +206,9 @@ class SessionSerializer
 
         $this->sipe('pricing.price', 'setPrice', $data, $session);
         $this->sipe('pricing.description', 'setPriceDescription', $data, $session);
+
+        $this->sipe('quotas.used', 'setUsedByQuotas', $data, $session);
+        $this->sipe('quotas.days', 'setQuotaDays', $data, $session);
 
         if (isset($data['meta'])) {
             $this->sipe('meta.default', 'setDefaultSession', $data, $session);

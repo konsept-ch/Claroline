@@ -18,15 +18,6 @@ const AuthenticationMenu = (props) => {
         label={trans('login', {}, 'actions')}
         target="/login"
       />
-
-      {props.registration &&
-        <Button
-          type={LINK_BUTTON}
-          className="app-header-item app-header-btn"
-          label={trans('create-account', {}, 'actions')}
-          target="/registration"
-        />
-      }
     </Fragment>
   )
 }

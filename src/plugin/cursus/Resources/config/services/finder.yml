@@ -16,6 +16,11 @@ services:
         parent: Claroline\AppBundle\API\Finder\AbstractFinder
         tags: [ claroline.finder ]
 
+    Claroline\CursusBundle\Finder\QuotaFinder:
+        arguments:
+          - '@security.authorization_checker'
+          - '@security.token_storage'
+
     # Registrations
     Claroline\CursusBundle\Finder\Registration\CourseUserFinder:
         parent: Claroline\AppBundle\API\Finder\AbstractFinder
@@ -26,6 +31,10 @@ services:
         tags: [ claroline.finder ]
 
     Claroline\CursusBundle\Finder\Registration\SessionUserFinder:
+        parent: Claroline\AppBundle\API\Finder\AbstractFinder
+        tags: [ claroline.finder ]
+
+    Claroline\CursusBundle\Finder\Registration\SessionCancellationFinder:
         parent: Claroline\AppBundle\API\Finder\AbstractFinder
         tags: [ claroline.finder ]
 

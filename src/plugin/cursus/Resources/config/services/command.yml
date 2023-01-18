@@ -1,0 +1,10 @@
+services:
+    _defaults:
+        autowire: false
+        autoconfigure: false
+
+    Claroline\CursusBundle\Installation\Command\MigrateQuotasCommand:
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+        tags:
+            - { name: 'console.command', command: 'claroline:quotas:migrate' }

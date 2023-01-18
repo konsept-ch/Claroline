@@ -126,7 +126,7 @@ class OrganizationController extends AbstractCrudController
             if ($user instanceof User) {
                 // show user organizations
                 return [
-                    'user' => $user->getUuid(),
+                    'public' => true,
                 ];
             }
 

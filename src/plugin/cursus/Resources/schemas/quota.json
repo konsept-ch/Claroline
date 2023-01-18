@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "The quota uuid"
+    },
+    "organization": {
+      "type": "object",
+      "properties": {
+        "uuid": {
+          "type": "string",
+          "description": "The quota organization"
+        }
+      }
+    },
+    "options": {
+      "type": "object",
+      "description": "The quota options"
+    }
+  },
+  "required": ["organization", "options"],
+  "claroline": {
+    "ids": ["id"]
+  }
+}

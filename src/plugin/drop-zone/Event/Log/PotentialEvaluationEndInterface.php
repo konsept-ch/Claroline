@@ -1,6 +1,6 @@
 <?php
 
-namespace  Claroline\DropZoneBundle\Event\Log;
+namespace Claroline\DropZoneBundle\Event\Log;
 
 use Claroline\DropZoneBundle\Entity\Correction;
 

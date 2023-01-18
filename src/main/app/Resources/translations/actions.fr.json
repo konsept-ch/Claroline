@@ -91,5 +91,7 @@
   "view-as": "Voir en tant que",
   "show-terms-of-service": "Voir les conditions d'utilisation",
   "accept-terms-of-service": "Accepter les conditions d'utilisation",
+  "manage_quotas": "Gérer les quotas",
+  "validate_subscriptions": "Valider les inscriptions",
   "replace_image": "Remplacer l'image"
 }

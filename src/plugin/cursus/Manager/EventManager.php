@@ -141,7 +141,7 @@ class EventManager
         if ($event->getRegistrationMail()) {
             $this->sendSessionEventInvitation($event, array_map(function (EventUser $eventUser) {
                 return $eventUser->getUser();
-            }, $results));
+            }, $results), $type);
         }
 
         $this->om->endFlushSuite();
@@ -289,8 +289,12 @@ class EventManager
     /**
      * Sends invitation to session event to given users.
      */
-    public function sendSessionEventInvitation(Event $event, array $users)
+    public function sendSessionEventInvitation(Event $event, array $users, string $type = AbstractRegistration::LEARNER)
     {
+        if (AbstractRegistration::TUTOR === $type) {
+            return;
+        }
+
         $basicPlaceholders = $this->getTemplatePlaceholders($event);
 
         // create ics file to attach to the message
@@ -335,8 +339,8 @@ class EventManager
             'summary' => $event->getName(),
             'description' => $event->getDescription(),
             'location' => $locationAddress,
-            'dtstart' => DateNormalizer::normalize($event->getStartDate()),
-            'dtend' => DateNormalizer::normalize($event->getEndDate()),
+            'dtstart' => DateNormalizer::normalize($event->getStartDate()->setTimezone(new \DateTimeZone('UTC'))),
+            'dtend' => DateNormalizer::normalize($event->getEndDate()->setTimezone(new \DateTimeZone('UTC'))),
             'url' => null,
         ];
 
@@ -405,16 +409,20 @@ class EventManager
             $trainersList .= '</ul>';
         }
         $location = $event->getLocation();
+        $locationDescription = '';
         $locationName = '';
         $locationAddress = '';
 
         if ($location) {
+            $locationDescription = $location->getDescription();
             $locationName = $location->getName();
             $locationAddress = $location->getAddress();
             if ($location->getPhone()) {
                 $locationAddress .= '<br>'.$location->getPhone();
             }
         }
+
+        $room = $event->getRoom();
 
         return [
             // course info
@@ -431,11 +439,13 @@ class EventManager
             'event_name' => $event->getName(),
             'event_description' => $event->getDescription(),
             'event_code' => $event->getCode(),
-            'event_start' => $event->getStartDate()->format('d/m/Y H:i'),
-            'event_end' => $event->getEndDate()->format('d/m/Y H:i'),
+            'event_start' => $event->getStartDate()->setTimezone(new \DateTimeZone('Europe/Zurich'))->format('d/m/Y H:i'),
+            'event_end' => $event->getEndDate()->setTimezone(new \DateTimeZone('Europe/Zurich'))->format('d/m/Y H:i'),
             'event_location_name' => $locationName,
             'event_location_address' => $locationAddress,
             'event_trainers' => $trainersList,
+            'event_room_description' => $room ? $room->getDescription() : '',
+            'event_location_description' => $locationDescription,
         ];
     }
 }

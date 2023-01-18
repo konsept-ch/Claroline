@@ -32,6 +32,20 @@ class RoomFinder extends AbstractFinder
                     $qb->setParameter($filterName, $filterValue);
                     break;
 
+                case 'range':
+                    if (!empty($filterValue[0]) && !empty($filterValue[1])) {
+                        $qb->andWhere('obj.id NOT IN (
+	                        SELECT r.id FROM Claroline\CoreBundle\Entity\Location\Room r
+	                        INNER JOIN Claroline\CoreBundle\Entity\Planning\PlannedObject o
+	                        INNER JOIN o.room rr
+	                        WHERE rr.id = r.id
+                            AND :end > o.startDate AND :start < o.endDate
+                        )');
+                        $qb->setParameter('start', $filterValue[0]);
+                        $qb->setParameter('end', $filterValue[1]);
+                    }
+                    break;
+
                 default:
                     $this->setDefaults($qb, $filterName, $filterValue);
                     break;

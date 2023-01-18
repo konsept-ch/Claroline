@@ -2,8 +2,8 @@
 
 namespace Claroline\TransferBundle\Tests\Transfer;
 
-use Claroline\TransferBundle\Transfer\ImportProvider;
 use Claroline\CoreBundle\Library\Testing\TransactionalTestCase;
+use Claroline\TransferBundle\Transfer\ImportProvider;
 
 class ImportProviderTest extends TransactionalTestCase
 {

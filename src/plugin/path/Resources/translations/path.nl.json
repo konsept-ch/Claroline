@@ -9,6 +9,7 @@
     "path_name": "Naam",
     "completed": "voltooid",
     "delete_step": "De stap verwijderen",
+    "copy": "kopie",
     "description_help": "Geef een korte beschrijving van het leerpad",
     "done": "Voltooid",
     "editor": "Leerpad editor",

@@ -11,9 +11,6 @@
 
 namespace Claroline\CoreBundle\Event\Tool;
 
-use Claroline\AppBundle\Event\DataConveyorEventInterface;
-use Claroline\CoreBundle\Entity\Workspace\Workspace;
-
 /**
  * Event fired when a tool is closed.
  */

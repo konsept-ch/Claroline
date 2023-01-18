@@ -2,19 +2,19 @@
  * Created by panos on 10/16/15.
  */
 (function () {
-  'use strict';
+  'use strict'
 
   window.DomUtils = {
     hasClass: function (el, className) {
       if (el.classList)
-        return el.classList.contains(className);
+        return el.classList.contains(className)
       else
-        return !!el.className.match(new RegExp('(\\s|^)' + className + '(\\s|$)'));
+        return !!el.className.match(new RegExp('(\\s|^)' + className + '(\\s|$)'))
     },
     addClass: function (el, className) {
       if (el.classList)
-        el.classList.add(className);
-      else if (!this.hasClass(el, className)) el.className += " " + className;
+        el.classList.add(className)
+      else if (!this.hasClass(el, className)) el.className += ' ' + className
     },
     removeClass: function (el, className) {
       if (el.classList)
@@ -25,113 +25,113 @@
       }
     },
     loadJsFile: function (filename, onLoadCallback, defaultFilename) {
-      var fileref = document.createElement('script');
+      var fileref = document.createElement('script')
       if (defaultFilename) {
         fileref.onerror = function () {
-          DomUtils.loadJsFile(defaultFilename, onLoadCallback);
-        };
+          DomUtils.loadJsFile(defaultFilename, onLoadCallback)
+        }
       }
-      fileref.onload = onLoadCallback;
-      fileref.type = "text/javascript";
-      fileref.src = filename;
-      document.getElementsByTagName("head")[0].appendChild(fileref);
+      fileref.onload = onLoadCallback
+      fileref.type = 'text/javascript'
+      fileref.src = filename
+      document.getElementsByTagName('head')[0].appendChild(fileref)
     },
     replaceSVGUseWithGraphElements: function (svg) {
-      var useElements = svg.getElementsByTagName("use");
-      var originalElements = [];
-      var newUseElements = [];
+      var useElements = svg.getElementsByTagName('use')
+      var originalElements = []
+      var newUseElements = []
       // Get all use elements
       for (var i = 0; i < useElements.length; i++) {
-        var useElement = useElements[i];
-        var originalElementId = useElement.getAttribute("href").replace("#", "");
-        var originalElement = document.getElementById(originalElementId).cloneNode(true);
-        originalElement.id += "-c-" + (new Date()).getTime();
-        var position = {};
+        var useElement = useElements[i]
+        var originalElementId = useElement.getAttribute('href').replace('#', '')
+        var originalElement = document.getElementById(originalElementId).cloneNode(true)
+        originalElement.id += '-c-' + (new Date()).getTime()
+        var position = {}
         //For every element get all attributes and copy them to graph element
         for (var j = 0; j < useElement.attributes.length; j++) {
-          var attribute = useElement.attributes[j];
-          if (attribute.nodeName !== "href" && attribute.nodeName !== "x" && attribute.nodeName !== "y") {
-            originalElement.setAttribute(attribute.nodeName, attribute.nodeValue);
-          } else if (attribute.nodeName == "x" || attribute.nodeName == "y") {
+          var attribute = useElement.attributes[j]
+          if (attribute.nodeName !== 'href' && attribute.nodeName !== 'x' && attribute.nodeName !== 'y') {
+            originalElement.setAttribute(attribute.nodeName, attribute.nodeValue)
+          } else if (attribute.nodeName == 'x' || attribute.nodeName == 'y') {
             //If position attributes (x or y) are set, create a position element
-            position[attribute.nodeName] = attribute.nodeValue;
+            position[attribute.nodeName] = attribute.nodeValue
           }
         }
         //If position element is set then add or change tranform attribute
         if (position.x) {
-          var positionStr = (position.x || 0) + ", " + (position.y || 0);
-          var transform = originalElement.getAttribute("transform") || "";
-          if (transform !== "") transform += " ";
-          transform += "translate(" + positionStr + ")";
-          originalElement.setAttribute("transform", transform);
+          var positionStr = (position.x || 0) + ', ' + (position.y || 0)
+          var transform = originalElement.getAttribute('transform') || ''
+          if (transform !== '') transform += ' '
+          transform += 'translate(' + positionStr + ')'
+          originalElement.setAttribute('transform', transform)
         }
-        originalElements.push(originalElement);
-        newUseElements.push(useElement);
+        originalElements.push(originalElement)
+        newUseElements.push(useElement)
       }
       for (var i = 0; i < originalElements.length; i++) {
-        var tmp = newUseElements[i];
-        newUseElements[i] = i;
-        tmp.parentNode.replaceChild(originalElements[i], tmp);
+        var tmp = newUseElements[i]
+        newUseElements[i] = i
+        tmp.parentNode.replaceChild(originalElements[i], tmp)
       }
     }
-  };
+  }
 
   HTMLTextAreaElement.prototype.insertAtCaret = function (text) {
-    text = text || '';
+    text = text || ''
     if (document.selection) {
       // IE
-      this.focus();
-      var sel = document.selection.createRange();
-      sel.text = text;
+      this.focus()
+      var sel = document.selection.createRange()
+      sel.text = text
     } else if (this.selectionStart || this.selectionStart === 0) {
       // Others
-      var startPos = this.selectionStart;
-      var endPos = this.selectionEnd;
+      var startPos = this.selectionStart
+      var endPos = this.selectionEnd
       this.value = this.value.substring(0, startPos) +
         text +
-        this.value.substring(endPos, this.value.length);
-      this.selectionStart = startPos + text.length;
-      this.selectionEnd = startPos + text.length;
+        this.value.substring(endPos, this.value.length)
+      this.selectionStart = startPos + text.length
+      this.selectionEnd = startPos + text.length
     } else {
-      this.value += text;
+      this.value += text
     }
-  };
+  }
 
   HTMLTextAreaElement.prototype.getCaret = function () {
     if (this.selectionStart) {
-      return this.selectionStart;
+      return this.selectionStart
     } else if (document.selection) {
-      this.focus();
+      this.focus()
 
-      var r = document.selection.createRange();
+      var r = document.selection.createRange()
       if (r == null) {
-        return 0;
+        return 0
       }
 
       var re = this.createTextRange(),
-        rc = re.duplicate();
-      re.moveToBookmark(r.getBookmark());
-      rc.setEndPoint('EndToStart', re);
+        rc = re.duplicate()
+      re.moveToBookmark(r.getBookmark())
+      rc.setEndPoint('EndToStart', re)
 
-      return rc.text.length;
+      return rc.text.length
     }
-    return 0;
+    return 0
   }
 
   window.Url = {
     get get() {
-      var vars = {};
+      var vars = {}
       if (window.location.search.length !== 0)
         window.location.search.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
-          key = decodeURIComponent(key);
-          if (typeof vars[key] === "undefined") {
-            vars[key] = decodeURIComponent(value);
+          key = decodeURIComponent(key)
+          if (typeof vars[key] === 'undefined') {
+            vars[key] = decodeURIComponent(value)
           }
           else {
-            vars[key] = [].concat(vars[key], decodeURIComponent(value));
+            vars[key] = [].concat(vars[key], decodeURIComponent(value))
           }
-        });
-      return vars;
+        })
+      return vars
     }
   }
-}());
+}())

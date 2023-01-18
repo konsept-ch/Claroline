@@ -147,7 +147,7 @@ class FinderProvider
         ];
     }
 
-    private static function formatPaginatedData($data, $total, $page, $limit, $filters, $sortBy): array
+    public static function formatPaginatedData($data, $total, $page, $limit, $filters, $sortBy): array
     {
         return [
             'data' => $data,

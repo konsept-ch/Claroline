@@ -6,13 +6,17 @@ import {schemeCategory20c} from 'd3-scale'
 import {trans} from '#/main/app/intl/translation'
 import {hasPermission} from '#/main/app/security'
 import {LinkButton} from '#/main/app/buttons/link'
-import {CALLBACK_BUTTON, MODAL_BUTTON} from '#/main/app/buttons'
+import {LINK_BUTTON, CALLBACK_BUTTON, MODAL_BUTTON} from '#/main/app/buttons'
 import {AlertBlock} from '#/main/app/alert/components/alert-block'
+import {constants as listConst} from '#/main/app/content/list/constants'
+import {ListData} from '#/main/app/content/list/containers/data'
 import {Routes} from '#/main/app/router/components/routes'
 import {Vertical} from '#/main/app/content/tabs/components/vertical'
 import {ContentCounter} from '#/main/app/content/components/counter'
 import {MODAL_USERS} from '#/main/community/modals/users'
 import {MODAL_GROUPS} from '#/main/community/modals/groups'
+import {route} from '#/main/community/routing'
+import {UserCard} from '#/main/core/user/components/card'
 
 import {selectors} from '#/plugin/cursus/tools/trainings/catalog/store/selectors'
 import {Course as CourseTypes, Session as SessionTypes} from '#/plugin/cursus/prop-types'
@@ -29,6 +33,10 @@ const CourseUsers = (props) =>
     name={props.name}
     url={['apiv2_cursus_session_list_users', {type: props.type, id: props.activeSession.id}]}
     unregisterUrl={['apiv2_cursus_session_remove_users', {type: props.type, id: props.activeSession.id}]}
+    primaryAction={(row) => ({
+      type: LINK_BUTTON,
+      target: route(row.user)
+    })}
     actions={(rows) => [
       {
         name: 'invite',
@@ -174,10 +182,10 @@ const CourseParticipants = (props) =>
 
       <ContentCounter
         icon="fa fa-user-plus"
-        label={trans('available_seats', {}, 'cursus')}
+        label={trans('occupation', {}, 'cursus')}
         color={schemeCategory20c[13]}
         value={get(props.activeSession, 'restrictions.users') ?
-          (get(props.activeSession, 'restrictions.users') - get(props.activeSession, 'participants.learners', 0)) + ' / ' + get(props.activeSession, 'restrictions.users')
+          get(props.activeSession, 'participants.learners', 0) + ' / ' + get(props.activeSession, 'restrictions.users')
           : <span className="fa fa-fw fa-infinity" />
         }
       />
@@ -191,20 +199,25 @@ const CourseParticipants = (props) =>
             {
               icon: 'fa fa-fw fa-chalkboard-teacher',
               title: trans('tutors', {}, 'cursus'),
-              path: '/',
-              exact: true
+              path: '/tutors'
             }, {
               icon: 'fa fa-fw fa-user',
               title: trans('users'),
-              path: '/users'
+              path: '/',
+              exact: true
             }, {
               icon: 'fa fa-fw fa-users',
               title: trans('groups'),
               path: '/groups'
             }, {
               icon: 'fa fa-fw fa-hourglass-half',
-              title: trans('En attente'),
+              title: trans('Refus RH'),
               path: '/pending',
+              displayed: hasPermission('register', props.activeSession)
+            }, {
+              icon: 'fa fa-fw fa-ban',
+              title: trans('cancellations', {}, 'cursus'),
+              path: '/cancellations',
               displayed: hasPermission('register', props.activeSession)
             }
           ]}
@@ -216,8 +229,7 @@ const CourseParticipants = (props) =>
           path={props.path+'/'+props.course.slug+(props.activeSession ? '/'+props.activeSession.id : '')+'/participants'}
           routes={[
             {
-              path: '/',
-              exact: true,
+              path: '/tutors',
               render() {
                 const Tutors = (
                   <CourseUsers
@@ -235,7 +247,8 @@ const CourseParticipants = (props) =>
                 return Tutors
               }
             }, {
-              path: '/users',
+              path: '/',
+              exact: true,
               render() {
                 const Users = (
                   <Fragment>
@@ -363,6 +376,48 @@ const CourseParticipants = (props) =>
                 )
 
                 return Pending
+              }
+            }, {
+              path: '/cancellations',
+              disabled: !hasPermission('register', props.activeSession),
+              render() {
+                const Cancellation = (
+                  <Fragment>
+                    <ListData
+                      name={selectors.STORE_NAME+'.sessionCancellation'}
+                      fetch={{
+                        url: ['apiv2_cursus_session_list_cancellations', {id: props.activeSession.id}],
+                        autoload: true
+                      }}
+                      delete={{
+                        url: '',
+                        displayed: () => false
+                      }}
+                      selectable={false}
+                      definition={[
+                        {
+                          name: 'user',
+                          type: 'user',
+                          label: trans('user'),
+                          displayed: true
+                        }, {
+                          name: 'date',
+                          type: 'date',
+                          label: trans('cancellation_date', {}, 'cursus'),
+                          options: {time: true},
+                          displayed: true,
+                          filterable: false
+                        }
+                      ]}
+                      card={(cardProps) => <UserCard {...cardProps} data={cardProps.data.user} />}
+                      display={{
+                        current: listConst.DISPLAY_TABLE
+                      }}
+                    />
+                  </Fragment>
+                )
+
+                return Cancellation
               }
             }
           ]}

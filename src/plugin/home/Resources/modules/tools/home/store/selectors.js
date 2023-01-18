@@ -1,4 +1,5 @@
 import {createSelector} from 'reselect'
+import isEmpty from 'lodash/isEmpty'
 
 import {trans} from '#/main/app/intl/translation'
 
@@ -14,6 +15,7 @@ const defaultTab = createSelector(
   [context],
   (context) => ({
     context: 'administration' === context.type ? 'admin' : context.type,
+    workspace: !isEmpty(context.data) ? context.data : null,
     type: 'widgets',
     class: 'Claroline\\HomeBundle\\Entity\\Type\\WidgetsTab',
     title: trans('home'),
@@ -24,7 +26,6 @@ const defaultTab = createSelector(
     restrictions: {
       hidden: false
     },
-    workspace: context.data,
     parameters: {
       widgets: []
     }

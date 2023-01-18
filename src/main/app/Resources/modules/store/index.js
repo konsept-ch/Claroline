@@ -1,5 +1,3 @@
-/* global require, window */
-
 import {
   applyMiddleware,
   compose,
@@ -22,7 +20,7 @@ const middleware = [apiMiddleware, thunk]
 if ('production' !== env()) {
   // Register redux freeze (it will throw errors if the state is mistakenly mutated)
   middleware.push(
-    require('redux-freeze')
+    // require('redux-freeze')
   )
 }
 

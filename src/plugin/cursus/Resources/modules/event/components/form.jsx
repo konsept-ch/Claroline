@@ -28,10 +28,10 @@ const EventForm = (props) =>
             required: true
           }, {
             name: 'dates',
-            type: 'date-range',
+            type: 'date-event',
             label: trans('date'),
             required: true,
-            calculated: (event) => [event.start || null, event.end || null],
+            calculated: (event) => [event.start, event.end],
             onChange: (datesRange) => {
               props.update('start', datesRange[0])
               props.update('end', datesRange[1])
@@ -105,7 +105,17 @@ const EventForm = (props) =>
                 displayed: (event) => !isEmpty(event.location),
                 options: {
                   picker: {
-                    filters: [{property: 'location', value: get(props.event, 'location.id'), locked: true}]
+                    filters: [
+                      {
+                        property: 'location',
+                        value: get(props.event, 'location.id'),
+                        locked: true
+                      }, {
+                        property: 'range',
+                        value: [props.event.start || '', props.event.end || ''],
+                        locked: true
+                      }
+                    ]
                   }
                 }
               }
@@ -141,7 +151,7 @@ const EventForm = (props) =>
         ]
       }, {
         icon: 'fa fa-fw fa-sign-in',
-        title: trans('registration'),
+        title: trans('subscription'),
         fields: [
           {
             name: 'registration.registrationType',

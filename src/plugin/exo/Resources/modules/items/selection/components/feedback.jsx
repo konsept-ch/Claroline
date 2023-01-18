@@ -8,11 +8,11 @@ export const SelectionFeedback = (props) => {
   const elements = props.item.mode === 'find' ? props.item.solutions: props.item.selections
 
   return (<SelectionText
-     anchorPrefix="selection-element-feedback"
-     className="selection-feedback"
-     text={props.item.text}
-     elements={elements}
-     selections={getReactAnswerSelections(props.item, props.answer, false)}
+    anchorPrefix="selection-element-feedback"
+    className="selection-feedback"
+    text={props.item.text}
+    elements={elements}
+    selections={getReactAnswerSelections(props.item, props.answer, false)}
   />)
 }
 

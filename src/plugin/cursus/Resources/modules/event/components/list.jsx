@@ -187,7 +187,7 @@ const EventList = (props) =>
     ].concat(props.definition)}
     card={EventCard}
     display={{
-      current: listConst.DISPLAY_LIST
+      current: listConst.DISPLAY_TABLE
     }}
   />
 

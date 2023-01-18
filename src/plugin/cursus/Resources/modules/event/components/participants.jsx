@@ -198,10 +198,10 @@ const EventParticipants = (props) =>
 
       <ContentCounter
         icon="fa fa-user-plus"
-        label={trans('available_seats', {}, 'cursus')}
+        label={trans('occupation', {}, 'cursus')}
         color={schemeCategory20c[9]}
         value={get(props.event, 'restrictions.users') ?
-          (get(props.event, 'restrictions.users') - get(props.event, 'participants.learners', 0)) + ' / ' + get(props.event, 'restrictions.users')
+          get(props.event, 'participants.learners', 0) + ' / ' + get(props.event, 'restrictions.users')
           : <span className="fa fa-fw fa-infinity" />
         }
       />

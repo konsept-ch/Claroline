@@ -18,3 +18,5 @@ services:
     Claroline\CursusBundle\Security\Voter\SessionVoter: ~
 
     Claroline\CursusBundle\Security\Voter\EventVoter: ~
+
+    Claroline\CursusBundle\Security\Voter\QuotaVoter: ~

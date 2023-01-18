@@ -140,7 +140,7 @@ class WorkspaceSerializer
             ],
         ];
 
-        if (!in_array(SerializerInterface::SERIALIZE_TRANSFER, $options)) {
+        if (!in_array(SerializerInterface::SERIALIZE_TRANSFER, $options) && !in_array(SerializerInterface::SERIALIZE_MINIMAL, $options)) {
             $editPerm = $this->authorization->isGranted('EDIT', $workspace);
 
             $serialized['permissions'] = [

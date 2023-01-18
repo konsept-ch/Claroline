@@ -78,12 +78,6 @@ const HomeActions = (props) =>
         label: trans('login', {}, 'actions'),
         target: '/login',
         displayed: !props.authenticated
-      }, {
-        name: 'create-account',
-        type: LINK_BUTTON,
-        label: trans('create-account', {}, 'actions'),
-        target: '/registration',
-        displayed: props.selfRegistration && !props.authenticated && !props.unavailable
       }
     ]}
     onClick={props.autoClose}
