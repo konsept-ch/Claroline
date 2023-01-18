@@ -100,6 +100,14 @@ class SessionSerializer
                 'restrictions' => [
                     'dates' => DateRangeNormalizer::normalize($session->getStartDate(), $session->getEndDate()),
                 ],
+                'quotas' => [
+                    'used' => $session->usedByQuotas(),
+                    'days' => $session->getQuotaDays(),
+                ],
+                'pricing' => [
+                    'price' => $session->getPrice(),
+                    'description' => $session->getPriceDescription(),
+                ],
             ];
         }
 
@@ -134,10 +142,6 @@ class SessionSerializer
             'workspace' => $session->getWorkspace() ?
                 $this->workspaceSerializer->serialize($session->getWorkspace(), [SerializerInterface::SERIALIZE_MINIMAL]) :
                 null,
-            'quotas' => [
-                'used' => $session->usedByQuotas(),
-                'days' => $session->getQuotaDays(),
-            ],
             'location' => $session->getLocation() ?
                 $this->locationSerializer->serialize($session->getLocation(), [SerializerInterface::SERIALIZE_MINIMAL]) :
                 null,
@@ -168,10 +172,6 @@ class SessionSerializer
                 'mail' => $session->getRegistrationMail(),
                 'pendingRegistrations' => $session->getPendingRegistrations(),
                 'eventRegistrationType' => $session->getEventRegistrationType(),
-            ],
-            'pricing' => [
-                'price' => $session->getPrice(),
-                'description' => $session->getPriceDescription(),
             ],
             'participants' => $this->sessionRepo->countParticipants($session),
             'tutors' => array_map(function (SessionUser $sessionUser) {
