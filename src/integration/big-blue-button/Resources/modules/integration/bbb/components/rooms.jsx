@@ -45,31 +45,31 @@ const BBBRooms = (props) =>
         </thead>
 
         <tbody>
-        {props.meetings.map(meeting =>
-          <TableRow key={meeting.meetingID}>
-            <TableCell align="left">
-              <UrlButton className="list-primary-action" target={meeting.url}>
-                {meeting.meetingName}
-              </UrlButton>
-            </TableCell>
-            <TableCell align="right">
-              {meeting.participantCount}
-            </TableCell>
-            <TableCell className="boolean-cell">
-              <span
-                aria-hidden={true}
-                className={classes('fa fa-fw', {
-                  'fa-check true': meeting.running,
-                  'fa-times false': !meeting.running
-                })}
-              />
-              <span className="sr-only">{meeting.running}</span>
-            </TableCell>
-            <TableCell>
-              {meeting.server}
-            </TableCell>
-          </TableRow>
-        )}
+          {props.meetings.map(meeting =>
+            <TableRow key={meeting.meetingID}>
+              <TableCell align="left">
+                <UrlButton className="list-primary-action" target={meeting.url}>
+                  {meeting.meetingName}
+                </UrlButton>
+              </TableCell>
+              <TableCell align="right">
+                {meeting.participantCount}
+              </TableCell>
+              <TableCell className="boolean-cell">
+                <span
+                  aria-hidden={true}
+                  className={classes('fa fa-fw', {
+                    'fa-check true': meeting.running,
+                    'fa-times false': !meeting.running
+                  })}
+                />
+                <span className="sr-only">{meeting.running}</span>
+              </TableCell>
+              <TableCell>
+                {meeting.server}
+              </TableCell>
+            </TableRow>
+          )}
         </tbody>
       </Table>
     }

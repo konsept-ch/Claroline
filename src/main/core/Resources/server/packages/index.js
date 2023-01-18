@@ -39,7 +39,7 @@ function getDefinitions(rootDir) {
   let packages = JSON.parse(data)
 
   if (typeof packages['packages'] !== 'undefined') {
-    packages = packages['packages'];
+    packages = packages['packages']
   }
 
   if (!(packages instanceof Array) || packages.length < 1) {
@@ -79,7 +79,7 @@ function extractPackageInfo(rootDir) {
   }
 }
 
-function getMetaEntries (targetDir) {
+function getMetaEntries(targetDir) {
   var data
   var assets = {}
 
