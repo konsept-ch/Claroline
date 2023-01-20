@@ -74,9 +74,11 @@ class SessionRepository extends EntityRepository
         return (int) $this->_em
             ->createQuery('
                 SELECT COUNT(su) FROM Claroline\CursusBundle\Entity\Registration\SessionUser AS su
+                INNER JOIN su.user u
                 WHERE su.type = :registrationType
                   AND su.session = :session
                   AND (su.confirmed = 0 OR su.validated = 0)
+                  AND u.isRemoved = 0
             ')
             ->setParameters([
                 'registrationType' => AbstractRegistration::LEARNER,
@@ -90,9 +92,11 @@ class SessionRepository extends EntityRepository
         return (int) $this->_em
             ->createQuery('
                 SELECT COUNT(su) FROM Claroline\CursusBundle\Entity\Registration\SessionUser AS su
+                INNER JOIN su.user u
                 WHERE su.type = :registrationType
                   AND su.session = :session
                   AND (su.confirmed = 1 AND su.validated = 1)
+                  AND u.isRemoved = 0
             ')
             ->setParameters([
                 'registrationType' => $type,
