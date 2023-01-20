@@ -210,12 +210,8 @@ class SessionController extends AbstractCrudController
                 $params['hiddenFilters']['organizations'] = array_map(function (Organization $organization) {
                     return $organization->getUuid();
                 }, $organizations);
-                //$params['hiddenFilters']['organizations'] = $organizations;
             }
         }
-
-        //dd($params);
-
 
         return new JsonResponse(
             $this->finder->search(SessionUser::class, $params)
