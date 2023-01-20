@@ -26,7 +26,6 @@ class SessionUserFinder extends AbstractFinder
     {
         $qb->join('obj.user', 'u');
         $qb->join('obj.session', 's');
-        $qb->join('s.course', 'c');
 
         if (!array_key_exists('userDisabled', $searches) && !array_key_exists('user', $searches)) {
             $qb->andWhere('u.isEnabled = TRUE');
@@ -62,6 +61,7 @@ class SessionUserFinder extends AbstractFinder
                     break;
 
                 case 'course':
+                    $qb->join('s.course', 'c');
                     $qb->andWhere("c.uuid = :{$filterName}");
                     $qb->setParameter($filterName, $filterValue);
                     break;
@@ -84,7 +84,8 @@ class SessionUserFinder extends AbstractFinder
 
                 case 'organizations':
                     $qb->leftJoin('u.userOrganizationReferences', 'oref');
-                    $qb->andWhere("oref.organization IN (:{$filterName})");
+                    $qb->leftJoin('oref.organization', 'o');
+                    $qb->andWhere("o.uuid IN (:{$filterName})");
                     $qb->setParameter($filterName, $filterValue);
                     break;
 

@@ -12,7 +12,9 @@
 namespace Claroline\CursusBundle\Repository;
 
 use Claroline\CoreBundle\Entity\Organization\Organization;
+use Claroline\CoreBundle\Entity\User;
 use Claroline\CursusBundle\Entity\Registration\AbstractRegistration;
+use Claroline\CursusBundle\Entity\Session;
 use Doctrine\ORM\EntityRepository;
 
 class SessionUserRepository extends EntityRepository
@@ -35,5 +37,22 @@ class SessionUserRepository extends EntityRepository
                 'year' => $year,
             ])
             ->getResult();
+    }
+
+    public function hasRegistration(Session $session, string $type, User $user)
+    {
+        return null != $this->_em
+            ->createQuery('
+                SELECT su FROM Claroline\CursusBundle\Entity\Registration\SessionUser AS su
+                WHERE su.user = :user
+                AND su.session = :session
+                AND su.type = :type
+            ')
+            ->setParameters([
+                'user' => $user,
+                'session' => $session,
+                'type' => $type,
+            ])
+            ->getOneOrNullResult();
     }
 }

@@ -193,6 +193,28 @@ class SessionController extends AbstractCrudController
         $params['hiddenFilters']['type'] = $type;
         $params['hiddenFilters']['pending'] = false;
 
+        // only list participants of the same organization
+        if (SessionUser::LEARNER === $type && !$this->authorization->isGranted('ROLE_ADMIN')) {
+            /** @var User $user */
+            $user = $this->tokenStorage->getToken()->getUser();
+            $organizations = null;
+
+            // filter by organizations
+            if ($user instanceof User) {
+                if (!$this->om->getRepository(SessionUser::class)->hasRegistration($session, SessionUser::TUTOR, $user)) {
+                    $organizations = $user->getOrganizations();
+                }
+            } else {
+                $organizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
+            }
+
+            if (null != $organizations) {
+                $params['hiddenFilters']['organizations'] = array_map(function (Organization $organization) {
+                    return $organization->getUuid();
+                }, $organizations);
+            }
+        }
+
         return new JsonResponse(
             $this->finder->search(SessionUser::class, $params)
         );
