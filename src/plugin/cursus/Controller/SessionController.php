@@ -201,7 +201,9 @@ class SessionController extends AbstractCrudController
 
             // filter by organizations
             if ($user instanceof User) {
-                if (!$this->om->getRepository(SessionUser::class)->hasRegistration($session, SessionUser::TUTOR, $user)) $organizations = $user->getOrganizations();
+                if (!$this->om->getRepository(SessionUser::class)->hasRegistration($session, SessionUser::TUTOR, $user)) {
+                    $organizations = $user->getOrganizations();
+                }
             } else {
                 $organizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
             }
