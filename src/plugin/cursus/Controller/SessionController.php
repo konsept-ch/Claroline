@@ -201,11 +201,16 @@ class SessionController extends AbstractCrudController
 
             // filter by organizations
             if ($user instanceof User) {
-                if (!$this->om->getRepository(SessionUser::class)->hasRegistration($session, SessionUser::TUTOR, $user)) {
+                $registrations = $this->om->getRepository(SessionUser::class)->findByUser($session, $user);
+                if (0 == count($registrations)) {
+                    return new JsonResponse($this->finder->formatPaginatedData([], 0, 0, -1, [], []));
+                }
+
+                if (!$this->isTutor($registrations)) {
                     $organizations = $user->getOrganizations();
                 }
             } else {
-                $organizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
+                return new JsonResponse($this->finder->formatPaginatedData([], 0, 0, -1, [], []));
             }
 
             if (null != $organizations) {
@@ -599,5 +604,16 @@ class SessionController extends AbstractCrudController
         }
 
         return true;
+    }
+
+    private function isTutor(array $registrations)
+    {
+        foreach ($registrations as $registration) {
+            if ('tutor' == $registration->getType()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
