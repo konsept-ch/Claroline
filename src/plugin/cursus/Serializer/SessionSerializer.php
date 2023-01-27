@@ -134,6 +134,7 @@ class SessionSerializer
                 'delete' => $this->authorization->isGranted('DELETE', $session),
                 'register' => $this->authorization->isGranted('REGISTER', $session),
             ],
+            'course' => $this->courseSerializer->serialize($session->getCourse(), [SerializerInterface::SERIALIZE_MINIMAL]),
             'restrictions' => [
                 'hidden' => $session->isHidden(),
                 'users' => $session->getMaxUsers(),
