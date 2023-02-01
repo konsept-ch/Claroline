@@ -10,7 +10,7 @@ import {ContentPlaceholder} from '#/main/app/content/components/placeholder'
 import {OrganizationCard} from '#/main/core/user/data/components/organization-card'
 import {Organization as OrganizationTypes} from '#/main/community/prop-types'
 import {MODAL_ORGANIZATIONS} from '#/main/community/modals/organizations'
-import {OrganizationChoice} from '#/main/community/data/types/organization/components/choice'
+import {OrganizationChoice} from '#/main/community/data/types/organization/containers/choice'
 
 const OrganizationButton = props =>
   <Button

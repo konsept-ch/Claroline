@@ -108,6 +108,7 @@ class SessionSerializer
                     'price' => $session->getPrice(),
                     'description' => $session->getPriceDescription(),
                 ],
+                'course' => $this->courseSerializer->serialize($session->getCourse(), [SerializerInterface::SERIALIZE_MINIMAL]),
             ];
         }
 

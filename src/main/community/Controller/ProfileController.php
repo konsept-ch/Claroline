@@ -116,7 +116,7 @@ class ProfileController
             return new JsonResponse(2);
         }
 
-        $serializedUser = $this->serializer->serialize($user, [Options::SERIALIZE_MINIMAL, Options::SERIALIZE_FACET]);
+        $serializedUser = $this->serializer->serialize($user, [Options::SERIALIZE_FACET]);
         if (!isset($serializedUser['profile'])) {
             return new JsonResponse(2);
         }
@@ -196,8 +196,6 @@ class ProfileController
     public function updateAction(User $user, Request $request): JsonResponse
     {
         $userData = $this->decodeRequest($request);
-        // removes main organization from the serialized structure because it will cause access issues.
-        unset($userData['mainOrganization']);
         // removes roles from the serialized structure because it will cause access issues.
         // those roles should not be here anyway.
         unset($userData['roles']);
