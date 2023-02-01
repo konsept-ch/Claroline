@@ -116,7 +116,7 @@ class ProfileController
             return new JsonResponse(2);
         }
 
-        $serializedUser = $this->serializer->serialize($user, [Options::SERIALIZE_MINIMAL, Options::SERIALIZE_FACET]);
+        $serializedUser = $this->serializer->serialize($user, [Options::SERIALIZE_FACET]);
         if (!isset($serializedUser['profile'])) {
             return new JsonResponse(2);
         }
