@@ -103,7 +103,7 @@ const UserMenu = props =>
           className="list-group-item"
           icon="fa fa-fw fa-user"
           label={trans('my_account')}
-          target="/account"
+          target="/account/profile"
           onClick={props.closeMenu}
         />
 
