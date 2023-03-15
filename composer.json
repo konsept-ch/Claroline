@@ -162,6 +162,11 @@
             "Claroline\\TransferBundle\\": "src/main/transfer"
         }
     },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    },
     "scripts": {
         "enable-maintenance": [
             "Claroline\\CoreBundle\\Library\\Maintenance\\MaintenanceHandler::enableMaintenance"
