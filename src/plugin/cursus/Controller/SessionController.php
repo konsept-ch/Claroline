@@ -193,6 +193,33 @@ class SessionController extends AbstractCrudController
         $params['hiddenFilters']['type'] = $type;
         $params['hiddenFilters']['pending'] = false;
 
+        // only list participants of the same organization
+        if (SessionUser::LEARNER === $type && !$this->authorization->isGranted('ROLE_ADMIN')) {
+            /** @var User $user */
+            $user = $this->tokenStorage->getToken()->getUser();
+            $organizations = null;
+
+            // filter by organizations
+            if ($user instanceof User) {
+                $registrations = $this->om->getRepository(SessionUser::class)->findByUser($session, $user);
+                if (0 == count($registrations)) {
+                    return new JsonResponse($this->finder->formatPaginatedData([], 0, 0, -1, [], []));
+                }
+
+                if (!$this->isTutor($registrations)) {
+                    $organizations = $user->getOrganizations();
+                }
+            } else {
+                return new JsonResponse($this->finder->formatPaginatedData([], 0, 0, -1, [], []));
+            }
+
+            if (null != $organizations) {
+                $params['hiddenFilters']['organizations'] = array_map(function (Organization $organization) {
+                    return $organization->getUuid();
+                }, $organizations);
+            }
+        }
+
         return new JsonResponse(
             $this->finder->search(SessionUser::class, $params)
         );
@@ -577,5 +604,16 @@ class SessionController extends AbstractCrudController
         }
 
         return true;
+    }
+    
+    private function isTutor(array $registrations)
+    {
+        foreach ($registrations as $registration) {
+            if ('tutor' == $registration->getType()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
