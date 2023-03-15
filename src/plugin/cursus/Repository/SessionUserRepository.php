@@ -39,20 +39,18 @@ class SessionUserRepository extends EntityRepository
             ->getResult();
     }
 
-    public function hasRegistration(Session $session, string $type, User $user)
+    public function findByUser(Session $session, User $user)
     {
-        return null != $this->_em
+        return $this->_em
             ->createQuery('
                 SELECT su FROM Claroline\CursusBundle\Entity\Registration\SessionUser AS su
                 WHERE su.user = :user
                 AND su.session = :session
-                AND su.type = :type
             ')
             ->setParameters([
                 'user' => $user,
                 'session' => $session,
-                'type' => $type,
             ])
-            ->getOneOrNullResult();
+            ->getResult();
     }
 }
