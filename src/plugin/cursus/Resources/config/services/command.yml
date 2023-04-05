@@ -8,3 +8,10 @@ services:
             - '@Claroline\AppBundle\Persistence\ObjectManager'
         tags:
             - { name: 'console.command', command: 'claroline:quotas:migrate' }
+
+    Claroline\CursusBundle\Installation\Command\CleanWorkspaceCommand:
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceManager'
+        tags:
+            - { name: 'console.command', command: 'claroline:clean:workspace' }
