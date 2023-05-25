@@ -71,13 +71,9 @@
     "show_pending_list": "Voir la liste d'attente",
     "not_limited": "Non limité",
     "session_full": "La session est complète.",
-<<<<<<< HEAD
     "session_full_help": "Nous vous prions de bien vouloir sélectionner une autre session.",
-=======
-    "session_full_help": "Toutes les nouvelles inscriptions seront automatiquement ajoutées en liste d'attente.",
     "session_full_group_help": "Il n'est plus possible d'inscrire de nouveaux groupes.",
     "session_full_pending_help": "Il n'est plus possible de valider les inscriptions en attente.",
->>>>>>> original/13.8
     "session_registration_tutor": "Vous êtes formateur pour cette session.",
     "session_registration": "Vous êtes inscrit à cette session.",
     "session_registration_pending": "Votre inscription a été refusée.",
