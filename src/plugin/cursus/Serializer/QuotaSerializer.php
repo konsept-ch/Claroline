@@ -14,6 +14,7 @@ namespace Claroline\CursusBundle\Serializer;
 use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\Serializer\SerializerTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
+use Claroline\CommunityBundle\Repository\OrganizationRepository;
 use Claroline\CommunityBundle\Serializer\OrganizationSerializer;
 use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CursusBundle\Entity\Quota;
@@ -24,17 +25,10 @@ class QuotaSerializer
 {
     use SerializerTrait;
 
-    /** @var ObjectManager */
-    private $om;
-
-    /** @var OrganizationSerializer */
-    private $organizationSerializer;
-
-    /** @var OrganizationRepository */
-    private $organizationRepo;
-
-    /** @var QuotaRepository */
-    private $quotaRepo;
+    private ObjectManager $om;
+    private OrganizationSerializer $organizationSerializer;
+    private OrganizationRepository $organizationRepo;
+    private QuotaRepository $quotaRepo;
 
     public function __construct(ObjectManager $om, OrganizationSerializer $organizationSerializer)
     {

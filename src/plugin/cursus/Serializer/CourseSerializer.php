@@ -15,6 +15,7 @@ use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\Serializer\SerializerInterface;
 use Claroline\AppBundle\API\Serializer\SerializerTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
+use Claroline\CommunityBundle\Repository\OrganizationRepository;
 use Claroline\CommunityBundle\Serializer\OrganizationSerializer;
 use Claroline\CommunityBundle\Serializer\RoleSerializer;
 use Claroline\CommunityBundle\Serializer\UserSerializer;
