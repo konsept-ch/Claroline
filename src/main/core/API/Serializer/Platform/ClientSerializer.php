@@ -5,7 +5,6 @@ namespace Claroline\CoreBundle\API\Serializer\Platform;
 use Claroline\AppBundle\Manager\PlatformManager;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\API\Serializer\Resource\ResourceTypeSerializer;
-use Claroline\CoreBundle\Entity\File\PublicFile;
 use Claroline\CoreBundle\Entity\Resource\ResourceType;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Event\GenericDataEvent;
@@ -91,15 +90,8 @@ class ClientSerializer
      */
     public function serialize()
     {
-        $logo = null;
-        if ($this->config->getParameter('logo')) {
-            $logo = $this->om->getRepository(PublicFile::class)->findOneBy([
-                'url' => $this->config->getParameter('logo'),
-            ]);
-        }
-
         $data = [
-            'logo' => $logo ? $logo->getUrl() : null,
+            'logo' => $this->config->getParameter('logo'),
             'name' => $this->config->getParameter('name'),
             'secondaryName' => $this->config->getParameter('secondary_name'),
             'description' => null, // the one for the current locale
@@ -117,6 +109,7 @@ class ClientSerializer
             'openGraph' => [
                 'enabled' => $this->config->getParameter('enable_opengraph'),
             ],
+            'richTextScript' => $this->config->getParameter('rich_text_script'),
             'home' => $this->config->getParameter('home'),
             'resources' => [
                 'types' => array_map(function (ResourceType $resourceType) {
@@ -146,7 +139,7 @@ class ClientSerializer
         return array_merge_recursive($data, $event->getResponse() ?? []);
     }
 
-    private function serializeLocale()
+    private function serializeLocale(): array
     {
         // TODO : there is a method in LocaleManager to do that. Reuse it
         $request = $this->requestStack->getCurrentRequest();

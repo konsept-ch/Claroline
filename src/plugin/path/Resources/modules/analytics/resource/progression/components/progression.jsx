@@ -10,7 +10,7 @@ import {ListData} from '#/main/app/content/list/containers/data'
 import {selectors} from '#/plugin/path/resources/path/store'
 import {Path as PathType} from '#/plugin/path/resources/path/prop-types'
 import {MODAL_USER_PROGRESSION} from '#/plugin/path/resources/path/modals/user-progression'
-import {constants} from '#/main/core/resource/constants'
+import {constants} from '#/main/evaluation/resource/constants'
 
 const Progression = (props) =>
   <Fragment>
@@ -58,7 +58,6 @@ const Progression = (props) =>
           type: 'progression',
           displayed: true,
           filterable: false,
-          calculated: (rowData) => rowData.progression && rowData.progressionMax ? Math.round((rowData.progression / rowData.progressionMax) * 100) : 0,
           options: {
             type: 'user'
           }

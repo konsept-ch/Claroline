@@ -60,7 +60,7 @@ class Log
     protected $shortDateLog;
 
     /**
-     * @ORM\Column(type="json_array", nullable=true)
+     * @ORM\Column(type="json", nullable=true)
      */
     protected $details;
 
@@ -109,7 +109,7 @@ class Log
     protected $toolName;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Claroline\CoreBundle\Entity\Resource\ResourceNode", inversedBy="logs")
+     * @ORM\ManyToOne(targetEntity="Claroline\CoreBundle\Entity\Resource\ResourceNode")
      * @ORM\JoinColumn(onDelete="SET NULL")
      */
     protected $resourceNode;

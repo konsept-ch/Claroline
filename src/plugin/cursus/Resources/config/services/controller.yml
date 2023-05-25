@@ -9,9 +9,8 @@ services:
         arguments:
             - '@security.authorization_checker'
             - '@security.token_storage'
-            - '@twig'
             - '@Claroline\CoreBundle\Library\RoutingHelper'
-            - '@claroline.manager.tool_manager'
+            - '@Claroline\CoreBundle\Manager\Tool\ToolManager'
             - '@Claroline\CursusBundle\Manager\CourseManager'
             - '@Claroline\AppBundle\Manager\PdfManager'
 
@@ -60,6 +59,30 @@ services:
             - '@Claroline\CursusBundle\Manager\EventPresenceManager'
             - '@Claroline\CursusBundle\Manager\EventManager'
             - '@Claroline\AppBundle\Manager\PdfManager'
+
+    # Registrations
+    Claroline\CursusBundle\Controller\Registration\CourseUserController:
+        parent: Claroline\AppBundle\Controller\AbstractCrudController
+        public: true
+        arguments:
+            - '@security.authorization_checker'
+            - '@security.token_storage'
+
+    Claroline\CursusBundle\Controller\Registration\SessionUserController:
+        parent: Claroline\AppBundle\Controller\AbstractCrudController
+        public: true
+        arguments:
+            - '@security.authorization_checker'
+            - '@security.token_storage'
+            - '@Claroline\CursusBundle\Manager\SessionManager'
+
+    Claroline\CursusBundle\Controller\Registration\SessionGroupController:
+        parent: Claroline\AppBundle\Controller\AbstractCrudController
+        public: true
+        arguments:
+            - '@security.authorization_checker'
+            - '@security.token_storage'
+            - '@Claroline\CursusBundle\Manager\SessionManager'
 
     # User trainings
     Claroline\CursusBundle\Controller\User\SessionController:

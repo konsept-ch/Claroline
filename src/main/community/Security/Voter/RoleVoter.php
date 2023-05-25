@@ -12,16 +12,25 @@
 namespace Claroline\CommunityBundle\Security\Voter;
 
 use Claroline\AppBundle\Security\ObjectCollection;
+use Claroline\AppBundle\Security\Voter\AbstractVoter;
 use Claroline\CoreBundle\Entity\Group;
 use Claroline\CoreBundle\Entity\Role;
 use Claroline\CoreBundle\Entity\User;
-use Claroline\CoreBundle\Security\Voter\AbstractVoter;
+use Claroline\CoreBundle\Manager\Workspace\WorkspaceManager;
+use Claroline\CoreBundle\Security\PlatformRoles;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
 class RoleVoter extends AbstractVoter
 {
-    public function getClass()
+    private $workspaceManager;
+
+    public function __construct(WorkspaceManager $workspaceManager)
+    {
+        $this->workspaceManager = $workspaceManager;
+    }
+
+    public function getClass(): string
     {
         return Role::class;
     }
@@ -29,18 +38,27 @@ class RoleVoter extends AbstractVoter
     /**
      * @param Role $object
      */
-    public function checkPermission(TokenInterface $token, $object, array $attributes, array $options)
+    public function checkPermission(TokenInterface $token, $object, array $attributes, array $options): int
     {
         $collection = isset($options['collection']) ? $options['collection'] : null;
 
         switch ($attributes[0]) {
             case self::OPEN:
-                if (in_array($object->getName(), $token->getRoleNames())) {
+                if (PlatformRoles::ANONYMOUS === $object->getName() || in_array($object->getName(), $token->getRoleNames())) {
                     return VoterInterface::ACCESS_GRANTED;
+                }
+
+                if (!empty($object->getWorkspace())) {
+                    if ($this->isToolGranted('EDIT', 'community', $object->getWorkspace())
+                        || $this->workspaceManager->isManager($object->getWorkspace(), $token)) {
+                        // If user is workspace manager then grant access
+                        return VoterInterface::ACCESS_GRANTED;
+                    }
                 }
 
                 return VoterInterface::ACCESS_DENIED;
             case self::EDIT:
+            case self::ADMINISTRATE:
                 return $this->check($token, $object);
             case self::PATCH:
                 return $this->checkPatch($token, $object, $collection);
@@ -77,17 +95,16 @@ class RoleVoter extends AbstractVoter
     {
         // probably do the check from the UserVoter or a security issue will arise
         if (!$object->getWorkspace()) {
-            return $this->hasAdminToolAccess($token, 'community') ?
-              VoterInterface::ACCESS_GRANTED : VoterInterface::ACCESS_DENIED;
+            return $this->isToolGranted('EDIT', 'community') ?
+                VoterInterface::ACCESS_GRANTED : VoterInterface::ACCESS_DENIED;
         }
 
         // if it's a workspace role, we must be granted the edit perm on the workspace users tool
         // and our right level to be less than the role we're trying to remove that way, a user cannot remove admins
         $workspace = $object->getWorkspace();
-        if ($this->isGranted(['community', 'edit'], $workspace)) {
-            $workspaceManager = $this->getContainer()->get('claroline.manager.workspace_manager');
+        if ($this->isToolGranted('EDIT', 'community', $workspace)) {
             // If user is workspace manager then grant access
-            if ($workspaceManager->isManager($object->getWorkspace(), $token)) {
+            if ($this->workspaceManager->isManager($object->getWorkspace(), $token)) {
                 return VoterInterface::ACCESS_GRANTED;
             }
 
@@ -118,6 +135,6 @@ class RoleVoter extends AbstractVoter
 
     public function getSupportedActions()
     {
-        return [self::CREATE, self::OPEN, self::EDIT, self::DELETE, self::PATCH];
+        return [self::CREATE, self::OPEN, self::EDIT, self::ADMINISTRATE, self::DELETE, self::PATCH];
     }
 }

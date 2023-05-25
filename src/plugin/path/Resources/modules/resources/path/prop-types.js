@@ -19,10 +19,7 @@ const Step = {
     showResourceHeader: T.bool,
     secondaryResources: T.arrayOf(T.shape({
       // minimal resource
-    })),
-    userProgression: T.shape({
-      status: T.string
-    })
+    }))
   },
   defaultProps: {
     description: null,
@@ -36,13 +33,8 @@ const Step = {
 const Path = {
   propTypes: {
     id: T.string.isRequired,
-    meta: T.shape({
-      description: T.string,
-      endMessage: T.string
-    }),
     display: T.shape({
       showOverview: T.bool,
-      showEndPage: T.bool,
       numbering: T.oneOf(['none', 'numeric', 'literal', 'custom']),
       manualProgressionAllowed: T.bool,
       showScore: T.bool
@@ -56,10 +48,24 @@ const Path = {
     }),
     steps: T.arrayOf(T.shape(
       Step.propTypes
-    ))
+    )),
+    overview: T.shape({
+      display: T.bool,
+      message: T.string,
+      resource: T.shape({
+        id: T.string.isRequired,
+        meta: T.shape({
+          type: T.string.isRequired
+        })
+      })
+    }),
+    end: T.shape({
+      display: T.bool,
+      message: T.string,
+      navigation: T.bool
+    })
   },
   defaultProps: {
-    meta: {},
     display: {
       showOverview: false,
       showEndPage: false,

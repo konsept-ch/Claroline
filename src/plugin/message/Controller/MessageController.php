@@ -277,30 +277,26 @@ class MessageController extends AbstractCrudController
         return new JsonResponse($this->serializer->serialize($root, [Options::IS_RECURSIVE]));
     }
 
-    public function getAction(Request $request, $id, $class): JsonResponse
+    public function getAction(string $field, $id, $class): JsonResponse
     {
         $currentUser = $this->tokenStorage->getToken()->getUser();
 
-        $query = $request->query->all();
         $object = $this->crud->get($class, $id);
         $um = $this->om->getRepository(UserMessage::class)->findOneBy(['message' => $object, 'user' => $currentUser]);
         $this->crud->replace($um, 'isRead', true);
-        $options = $this->options['get'];
 
-        if (isset($query['options'])) {
-            $options = $query['options'];
-        }
+        $options = static::getOptions();
 
         if ($object) {
             return new JsonResponse(
-                $this->serializer->serialize($object, $options)
+                $this->serializer->serialize($object, $options['get'] ?? [])
             );
         }
 
         return new JsonResponse("No object found for id {$id} of class {$class}", 404);
     }
 
-    public function getOptions(): array
+    public static function getOptions(): array
     {
         return array_merge(parent::getOptions(), [
             'get' => [Options::IS_RECURSIVE],

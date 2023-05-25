@@ -3,18 +3,26 @@
 namespace Innova\PathBundle\Entity\Path;
 
 use Claroline\CoreBundle\Entity\Resource\AbstractResource;
+use Claroline\CoreBundle\Entity\Resource\HasEndPage;
+use Claroline\CoreBundle\Entity\Resource\HasHomePage;
+use Claroline\CoreBundle\Entity\Resource\ResourceNode;
+use Claroline\EvaluationBundle\Entity\EvaluationFeedbacks;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Innova\PathBundle\Entity\Step;
 
 /**
- * Path.
+ * Path resource.
  *
+ * @ORM\Entity(repositoryClass="Innova\PathBundle\Repository\PathRepository")
  * @ORM\Table(name="innova_path")
- * @ORM\Entity()
  */
 class Path extends AbstractResource
 {
+    use HasHomePage;
+    use HasEndPage;
+    use EvaluationFeedbacks;
+
     /**
      * Steps linked to the path.
      *
@@ -25,14 +33,7 @@ class Path extends AbstractResource
      *     "order" = "ASC"
      * })
      */
-    protected $steps;
-
-    /**
-     * @var bool
-     *
-     * @ORM\Column(name="modified", type="boolean")
-     */
-    protected $modified = false;
+    private $steps;
 
     /**
      * Numbering of the steps.
@@ -41,16 +42,7 @@ class Path extends AbstractResource
      *
      * @ORM\Column
      */
-    protected $numbering = 'none';
-
-    /**
-     * Description of the path.
-     *
-     * @var string
-     *
-     * @ORM\Column(name="description", type="text", nullable=true)
-     */
-    protected $description;
+    private $numbering = 'none';
 
     /**
      * Is it possible for the user to manually set the progression.
@@ -59,34 +51,15 @@ class Path extends AbstractResource
      *
      * @ORM\Column(name="manual_progression_allowed", type="boolean")
      */
-    protected $manualProgressionAllowed = true;
+    private $manualProgressionAllowed = true;
 
     /**
-     * Show overview to users or directly start the path.
+     * @ORM\ManyToOne(targetEntity="Claroline\CoreBundle\Entity\Resource\ResourceNode")
+     * @ORM\JoinColumn(name="resource_id", nullable=true, onDelete="SET NULL")
      *
-     * @ORM\Column(name="show_overview", type="boolean", options={"default" = 1})
-     *
-     * @var bool
+     * @var ResourceNode
      */
-    private $showOverview = true;
-
-    /**
-     * Show an end page when the user has finished the path.
-     *
-     * @ORM\Column(name="show_end_page", type="boolean")
-     *
-     * @var bool
-     */
-    private $showEndPage = false;
-
-    /**
-     * A message to display at the end of the path.
-     *
-     * @ORM\Column(name="end_message", type="text", nullable=true)
-     *
-     * @var string
-     */
-    private $endMessage = '';
+    private $overviewResource;
 
     /**
      * Force the opening of secondary resources.
@@ -129,35 +102,21 @@ class Path extends AbstractResource
         $this->steps = new ArrayCollection();
     }
 
-    /**
-     * Add step.
-     *
-     * @return Path
-     */
-    public function addStep(Step $step)
+    public function addStep(Step $step): void
     {
         if (!$this->steps->contains($step)) {
             $this->steps->add($step);
         }
-
-        return $this;
     }
 
-    /**
-     * Remove step.
-     *
-     * @return Path
-     */
-    public function removeStep(Step $step)
+    public function removeStep(Step $step): void
     {
         if ($this->steps->contains($step)) {
             $this->steps->removeElement($step);
         }
-
-        return $this;
     }
 
-    public function getStep($stepId)
+    public function getStep(string $stepId): ?Step
     {
         $found = null;
 
@@ -174,15 +133,11 @@ class Path extends AbstractResource
     /**
      * Remove all steps.
      *
-     * @return Path
-     *
      * @deprecated
      */
-    public function emptySteps()
+    public function emptySteps(): void
     {
         $this->steps->clear();
-
-        return $this;
     }
 
     /**
@@ -195,111 +150,30 @@ class Path extends AbstractResource
         return $this->steps;
     }
 
-    /**
-     * Get numbering.
-     *
-     * @return string
-     */
-    public function getNumbering()
+    public function getNumbering(): string
     {
         return $this->numbering;
     }
 
-    /**
-     * Set numbering.
-     *
-     * @param string $numbering
-     *
-     * @return Path
-     */
-    public function setNumbering($numbering)
+    public function setNumbering(string $numbering): void
     {
         $this->numbering = $numbering;
-
-        return $this;
     }
 
-    /**
-     * Get description.
-     *
-     * @return string
-     */
-    public function getDescription()
-    {
-        return $this->description;
-    }
-
-    /**
-     * Set description.
-     *
-     * @param string $description
-     *
-     * @return Path
-     */
-    public function setDescription($description)
-    {
-        $this->description = $description;
-
-        return $this;
-    }
-
-    /**
-     * Get manualProgressionAllowed.
-     *
-     * @return bool
-     */
-    public function isManualProgressionAllowed()
+    public function isManualProgressionAllowed(): bool
     {
         return $this->manualProgressionAllowed;
     }
 
-    /**
-     * Set manualProgressionAllowed.
-     *
-     * @param bool $manualProgressionAllowed
-     *
-     * @return Path
-     */
-    public function setManualProgressionAllowed($manualProgressionAllowed)
+    public function setManualProgressionAllowed(bool $manualProgressionAllowed): void
     {
         $this->manualProgressionAllowed = $manualProgressionAllowed;
-
-        return $this;
-    }
-
-    /**
-     * Gets all the path step in a flat array in correct order.
-     *
-     * @return Step[]
-     */
-    public function getOrderedSteps()
-    {
-        $flatten = [];
-
-        $roots = $this->getRootSteps();
-        foreach ($roots as $root) {
-            $flatten = array_merge($flatten, $this->getFlatSteps($root));
-        }
-
-        return $flatten;
-    }
-
-    private function getFlatSteps(Step $step)
-    {
-        $steps = [$step];
-        foreach ($step->getChildren() as $child) {
-            $steps = array_merge($steps, $this->getFlatSteps($child));
-        }
-
-        return $steps;
     }
 
     /**
      * Get root step of the path.
-     *
-     * @return Step[]
      */
-    public function getRootSteps()
+    public function getRootSteps(): array
     {
         $roots = [];
 
@@ -315,48 +189,38 @@ class Path extends AbstractResource
         return $roots;
     }
 
-    /**
-     * Set show overview.
-     *
-     * @param bool $showOverview
-     */
-    public function setShowOverview($showOverview)
+    public function getOverviewResource(): ?ResourceNode
     {
-        $this->showOverview = $showOverview;
+        return $this->overviewResource;
     }
 
-    /**
-     * Is overview shown ?
-     *
-     * @return bool
-     */
-    public function getShowOverview()
+    public function setOverviewResource(?ResourceNode $overviewResource = null): void
     {
-        return $this->showOverview;
+        $this->overviewResource = $overviewResource;
     }
 
     /**
      * Get the opening target for secondary resources.
-     *
-     * @return string
      */
-    public function getSecondaryResourcesTarget()
+    public function getSecondaryResourcesTarget(): string
     {
         return $this->secondaryResourcesTarget;
     }
 
     /**
      * Set the opening target for secondary resources.
-     *
-     * @param $secondaryResourcesTarget
      */
-    public function setSecondaryResourcesTarget($secondaryResourcesTarget)
+    public function setSecondaryResourcesTarget(string $secondaryResourcesTarget): void
     {
         $this->secondaryResourcesTarget = $secondaryResourcesTarget;
     }
 
-    public function hasResources()
+    public function hasResources(): bool
     {
+        if (!empty($this->overviewResource)) {
+            return true;
+        }
+
         foreach ($this->steps as $step) {
             if ($step->hasResources()) {
                 return true;
@@ -366,81 +230,33 @@ class Path extends AbstractResource
         return false;
     }
 
-    /**
-     * @return float
-     */
-    public function getScoreTotal()
+    public function getScoreTotal(): ?float
     {
         return $this->scoreTotal;
     }
 
-    /**
-     * @param float $scoreTotal
-     */
-    public function setScoreTotal($scoreTotal)
+    public function setScoreTotal(?float $scoreTotal = null): void
     {
         $this->scoreTotal = $scoreTotal;
     }
 
-    /**
-     * @return float
-     */
-    public function getSuccessScore()
+    public function getSuccessScore(): ?float
     {
         return $this->successScore;
     }
 
-    /**
-     * @param float $successScore
-     */
-    public function setSuccessScore($successScore)
+    public function setSuccessScore(?float $successScore = null): void
     {
         $this->successScore = $successScore;
     }
 
-    /**
-     * @return bool
-     */
-    public function getShowScore()
+    public function getShowScore(): bool
     {
         return $this->showScore;
     }
 
-    /**
-     * @param bool $showScore
-     */
-    public function setShowScore($showScore)
+    public function setShowScore($showScore): void
     {
         $this->showScore = $showScore;
-    }
-
-    /**
-     * Set show end page.
-     *
-     * @param bool $showEndPage
-     */
-    public function setShowEndPage($showEndPage)
-    {
-        $this->showEndPage = $showEndPage;
-    }
-
-    /**
-     * Is end page shown ?
-     *
-     * @return bool
-     */
-    public function getShowEndPage()
-    {
-        return $this->showEndPage;
-    }
-
-    public function getEndMessage()
-    {
-        return $this->endMessage;
-    }
-
-    public function setEndMessage($endMessage)
-    {
-        $this->endMessage = $endMessage;
     }
 }

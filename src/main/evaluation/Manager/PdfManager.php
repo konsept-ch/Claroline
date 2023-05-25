@@ -32,7 +32,7 @@ class PdfManager
         $this->templateManager = $templateManager;
     }
 
-    public function getWorkspaceParticipationCertificate(Evaluation $evaluation, string $locale): ?string
+    public function getWorkspaceParticipationCertificate(Evaluation $evaluation): ?string
     {
         // only generate certificate if the evaluation is finished
         if (!$evaluation->isTerminated()) {
@@ -42,24 +42,28 @@ class PdfManager
         $placeholders = $this->getCommonPlaceholders($evaluation);
 
         return $this->pdfManager->fromHtml(
-            $this->templateManager->getTemplate('workspace_participation_certificate', $placeholders, $locale)
+            $this->templateManager->getTemplate('workspace_participation_certificate', $placeholders, $evaluation->getUser()->getLocale())
         );
     }
 
-    public function getWorkspaceSuccessCertificate(Evaluation $evaluation, string $locale): ?string
+    public function getWorkspaceSuccessCertificate(Evaluation $evaluation): ?string
     {
         // only generate certificate if the evaluation is finished and has success/failure status
         if (!$evaluation->isTerminated() || !in_array($evaluation->getStatus(), [AbstractEvaluation::STATUS_PASSED, AbstractEvaluation::STATUS_FAILED])) {
             return null;
         }
 
+        $score = $evaluation->getScore() ?: 0;
+        $scoreMax = $evaluation->getScoreMax() ?: 1;
+        $finalScore = round(($score / $scoreMax) * 100, 2);
+
         $placeholders = array_merge($this->getCommonPlaceholders($evaluation), [
-            'evaluation_score' => $evaluation->getScore() ? $evaluation->getScore() : '0',
-            'evaluation_score_max' => $evaluation->getScoreMax(),
+            'evaluation_score' => $finalScore ?: '0',
+            'evaluation_score_max' => 100,
         ]);
 
         return $this->pdfManager->fromHtml(
-            $this->templateManager->getTemplate('workspace_success_certificate', $placeholders, $locale)
+            $this->templateManager->getTemplate('workspace_success_certificate', $placeholders, $evaluation->getUser()->getLocale())
         );
     }
 
@@ -68,7 +72,7 @@ class PdfManager
         $workspace = $evaluation->getWorkspace();
         $user = $evaluation->getUser();
 
-        return [
+        return array_merge([
             'workspace_name' => $workspace->getName(),
             'workspace_code' => $workspace->getCode(),
             'workspace_description' => $workspace->getDescription(),
@@ -80,7 +84,6 @@ class PdfManager
 
             'evaluation_duration' => round($evaluation->getDuration() / 60, 2), // in minutes
             'evaluation_status' => $this->translator->trans('evaluation_'.$evaluation->getStatus().'_status', [], 'workspace'),
-            'evaluation_date' => $evaluation->getDate()->format('d/m/Y H:i'),
-        ];
+        ], $this->templateManager->formatDatePlaceholder('evaluation', $evaluation->getDate()));
     }
 }

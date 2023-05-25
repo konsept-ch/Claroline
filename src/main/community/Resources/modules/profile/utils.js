@@ -1,10 +1,10 @@
-import get from 'lodash/get'
 import isEmpty from 'lodash/isEmpty'
-import cloneDeep from 'lodash/cloneDeep'
 
 import {trans} from '#/main/app/intl/translation'
-import {hasPermission} from '#/main/app/security/permissions'
 import {param} from '#/main/app/config'
+import {hasPermission} from '#/main/app/security'
+
+import {formatSections} from '#/main/app/content/form/parameters/utils'
 
 function getMainFacet(facets) {
   return facets.find(facet => facet.meta.main)
@@ -14,7 +14,9 @@ function getDefaultFacet() {
   return {
     id: 'main',
     title: trans('general'),
-    position: 0,
+    display: {
+      order: 0
+    },
     meta: {
       main: true
     },
@@ -45,12 +47,17 @@ function getDetailsDefaultSection(parameters, user) {
         options: {
           minRows: 5
         }
+      }, {
+        name: 'mainOrganization',
+        type: 'organization',
+        displayed: hasPermission('administrate', user),
+        label: trans('main_organization')
       }
     ]
   }
 }
 
-function getFormDefaultSections(user, isNew = false) {
+function getFormDefaultSections(user, update, isNew = false) {
   return [
     {
       id: 'default-props',
@@ -73,16 +80,11 @@ function getFormDefaultSections(user, isNew = false) {
           label: trans('email'),
           required: true
         }, {
-          name: 'phone',
-          type: 'string',
-          label: trans('phone')
-        }, {
           name: 'username',
           type: 'username',
           label: trans('username'),
           required: true,
-          displayed: param('community.username'),
-          disabled: !isNew && !hasPermission('administrate', user)
+          displayed: param('community.username')
         }, {
           name: 'plainPassword',
           type: 'password',
@@ -90,25 +92,30 @@ function getFormDefaultSections(user, isNew = false) {
           displayed: isNew,
           required: true
         }, {
+          name: 'mainOrganization',
+          type: 'organization',
+          required: true,
+          displayed: hasPermission('administrate', user),
+          label: trans('main_organization')
+        }
+      ]
+    }, {
+      icon: 'fa fa-fw fa-circle-info',
+      title: trans('information'),
+      fields: [
+        {
+          name: 'administrativeCode',
+          type: 'string',
+          displayed: hasPermission('administrate', user),
+          label: trans('administrativeCode')
+        }, {
           name: 'meta.description',
           type: 'html',
-          label: trans('description'),
-          options: {
-            minRows: 5
-          }
+          label: trans('description')
         }, {
-          name: 'meta.locale',
-          type: 'locale',
-          label: trans('language'),
-          required: true,
-          displayed: isNew,
-          options: {
-            onlyEnabled: true
-          }
-        }, {
-          name: 'picture',
-          type: 'image',
-          label: trans('picture')
+          name: 'phone',
+          type: 'string',
+          label: trans('phone')
         }
       ]
     }, {
@@ -116,6 +123,10 @@ function getFormDefaultSections(user, isNew = false) {
       title: trans('display_parameters'),
       fields: [
         {
+          name: 'picture',
+          type: 'image',
+          label: trans('picture')
+        }, {
           name: 'poster',
           label: trans('poster'),
           type: 'image'
@@ -123,6 +134,46 @@ function getFormDefaultSections(user, isNew = false) {
           name: 'thumbnail',
           label: trans('thumbnail'),
           type: 'image'
+        }, {
+          name: 'meta.locale',
+          type: 'locale',
+          label: trans('language'),
+          required: true,
+          displayed: isNew || hasPermission('administrate', user),
+          options: {
+            onlyEnabled: true
+          }
+        }
+      ]
+    }, {
+      icon: 'fa fa-fw fa-key',
+      title: trans('access_restrictions'),
+      displayed: hasPermission('administrate', user),
+      fields: [
+        {
+          name: 'restrictions.enableDates',
+          type: 'boolean',
+          label: trans('restrict_by_dates'),
+          calculated: (user) => user.restrictions && 0 !== user.restrictions.dates.length,
+          onChange: (activated) => {
+            if (!activated) {
+              update('restrictions.dates', [])
+            } else {
+              update('restrictions.dates', [null, null])
+            }
+          },
+          linked: [
+            {
+              name: 'restrictions.dates',
+              type: 'date-range',
+              label: trans('access_dates'),
+              displayed: (user) => user.restrictions && 0!== user.restrictions.dates.length,
+              required: true,
+              options: {
+                time: true
+              }
+            }
+          ]
         }
       ]
     }
@@ -130,87 +181,16 @@ function getFormDefaultSections(user, isNew = false) {
 }
 
 function formatFormSections(sections, allFields, userData, params = {}, currentUser = null) {
-  const hasConfidentialRights = currentUser ? hasRoles(currentUser.roles, ['ROLE_ADMIN'].concat(params.roles_confidential)): false
-  const hasLockedRights = currentUser ? hasRoles(currentUser.roles, ['ROLE_ADMIN'].concat(params.roles_locked)): false
+  const hasConfidentialRights = currentUser ? currentUser.id === userData.id || hasRoles(currentUser.roles, ['ROLE_ADMIN'].concat(params.roles_confidential)) : false
+  const hasLockedRights = currentUser ? hasRoles(currentUser.roles, ['ROLE_ADMIN'].concat(params.roles_locked)) : false
 
-  return sections.map(section => {
-    section.fields = section.fields
-      .filter(f => !get(f, 'restrictions.hidden') && (hasConfidentialRights || !get(f, 'restrictions.metadata') || (currentUser && currentUser.id === userData.id)))
-      .map(f => {
-        if (!hasLockedRights && (
-          (f.restrictions.locked && !f.restrictions.lockedEditionOnly) ||
-          (f.restrictions.locked && f.restrictions.lockedEditionOnly && null !== get(userData, `profile.${f.id}`, null))
-        )) {
-          f.disabled = true
-        }
-
-        return formatField(f, allFields, 'profile')
-      })
-
-    return section
-  })
+  return formatSections(sections, allFields, 'profile', hasConfidentialRights, hasLockedRights)
 }
 
-function formatDetailsSections(sections, allFields, user, params, currentUser) {
-  const hasConfidentialRights = currentUser ? hasRoles(currentUser.roles, ['ROLE_ADMIN'].concat(params['roles_confidential'])) : false
+function formatDetailsSections(sections, allFields, userData, params, currentUser) {
+  const hasConfidentialRights = currentUser ? currentUser.id === userData.id || hasRoles(currentUser.roles, ['ROLE_ADMIN'].concat(params.roles_confidential)) : false
 
-  return sections.map(section => {
-    section.fields = section.fields
-      .filter(f => !f.restrictions.hidden && (hasConfidentialRights || !f.restrictions.metadata || (currentUser && currentUser.id === user.id)))
-      .map(f => formatField(f, allFields, 'profile'))
-
-    return section
-  })
-}
-
-function formatField(fieldDef, allFields, dataProp) {
-  const field = {
-    name: `${dataProp}.${fieldDef.id}`,
-    type: fieldDef.type,
-    label: fieldDef.label,
-    required: fieldDef.required,
-    help: fieldDef.help,
-    options: fieldDef.options ? cloneDeep(fieldDef.options) : {},
-    displayed: (data) => isFieldDisplayed(fieldDef, allFields, data[dataProp])
-  }
-
-  if (fieldDef.type === 'choice') {
-    field.options.choices = fieldDef.options.choices ?
-      fieldDef.options.choices.reduce((acc, choice) => Object.assign(acc, {
-        [choice.value]: choice.value
-      }), {}) : {}
-  }
-
-  return field
-}
-
-function isFieldDisplayed(fieldDef, allFields, data) {
-  if (!isEmpty(fieldDef.display.condition)) {
-    const parentField = allFields.find(f => f.id === fieldDef.display.condition.field)
-    if (parentField) {
-      const parentValue = get(data, parentField.id)
-
-      let displayed = false
-      switch (fieldDef.display.condition.comparator) {
-        case 'equal':
-          displayed = parentValue === fieldDef.display.condition.value
-          break
-        case 'different':
-          displayed = parentValue !== fieldDef.display.condition.value
-          break
-        case 'empty':
-          displayed = isEmpty(parentValue)
-          break
-        case 'not_empty':
-          displayed = !isEmpty(parentValue)
-          break
-      }
-
-      return displayed
-    }
-  }
-
-  return true
+  return formatSections(sections, allFields, 'profile', hasConfidentialRights, true)
 }
 
 // should be declared elsewhere
@@ -226,7 +206,5 @@ export {
   getMainFacet,
   getDefaultFacet,
   formatFormSections,
-  formatDetailsSections,
-  formatField,
-  isFieldDisplayed
+  formatDetailsSections
 }

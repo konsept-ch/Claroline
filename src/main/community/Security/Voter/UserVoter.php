@@ -17,7 +17,6 @@ use Claroline\CoreBundle\Entity\Tool\OrderedTool;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler;
 use Claroline\CoreBundle\Repository\Tool\OrderedToolRepository;
-use Claroline\CoreBundle\Security\Voter\AbstractRoleSubjectVoter;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
@@ -33,10 +32,8 @@ class UserVoter extends AbstractRoleSubjectVoter
 
     /**
      * @param User $object
-     *
-     * @return int
      */
-    public function checkPermission(TokenInterface $token, $object, array $attributes, array $options)
+    public function checkPermission(TokenInterface $token, $object, array $attributes, array $options): int
     {
         $collection = isset($options['collection']) ? $options['collection'] : null;
 
@@ -71,7 +68,7 @@ class UserVoter extends AbstractRoleSubjectVoter
             return VoterInterface::ACCESS_GRANTED;
         }
 
-        if ($this->hasAdminToolAccess($token, 'community')) {
+        if ($this->isToolGranted('EDIT', 'community')) {
             return VoterInterface::ACCESS_GRANTED;
         }
 
@@ -154,7 +151,7 @@ class UserVoter extends AbstractRoleSubjectVoter
     private function checkCreate(TokenInterface $token, User $user)
     {
         // allow creation to administrators
-        if ($this->hasAdminToolAccess($token, 'community')) {
+        if ($this->isToolGranted('CREATE_USER', 'community')) {
             return VoterInterface::ACCESS_GRANTED;
         }
 

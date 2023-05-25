@@ -6,7 +6,7 @@ import {url} from '#/main/app/api'
 import {trans} from '#/main/app/intl/translation'
 import {asset} from '#/main/app/config/asset'
 
-import {route} from '#/main/community/routing'
+import {route} from '#/main/community/user/routing'
 
 const AutoComplete = function (editor) {
   this.editor = editor
@@ -230,7 +230,7 @@ AutoComplete.prototype = {
   },
 
   render: function (item, query) {
-    let avatar = '<span class="user-avatar fa fa-user-circle-o"></span>'
+    let avatar = '<span class="user-avatar fa fa-user-circle"></span>'
     if (item.picture) {
       avatar = `<img class="user-avatar" src="${asset(item.picture)}" alt="${item.name}" />`
     }

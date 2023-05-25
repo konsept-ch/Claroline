@@ -30,30 +30,15 @@ class ThemeRepository extends ServiceEntityRepository
         if ($onlyEnabled) {
             $dql .= '
                 WHERE (CONCAT(p.vendorName, p.bundleName) IN (:bundles) OR theme.plugin is NULL)
-                AND theme.enabled = 1
             ';
         }
 
-        $query = $this->_em->createQuery($dql);
+        $query = $this->getEntityManager()->createQuery($dql);
 
         if ($onlyEnabled) {
             $query->setParameter('bundles', $this->bundles);
         }
 
         return $query->getResult();
-    }
-
-    /**
-     * Returns the themes corresponding to an array of UUIDs.
-     *
-     * @return Theme[]
-     */
-    public function findByUuids(array $uuids)
-    {
-        return $this->createQueryBuilder('t')
-            ->where('t.uuid IN (:uuids)')
-            ->setParameter('uuids', $uuids)
-            ->getQuery()
-            ->getResult();
     }
 }

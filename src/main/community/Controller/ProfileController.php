@@ -175,17 +175,13 @@ class ProfileController
     }
 
     /**
-     * @Route("/{username}", name="apiv2_profile_open", methods={"GET"})
-     * @EXT\ParamConverter("user", options={"mapping": {"username": "username"}})
+     * @Route("", name="apiv2_profile_open", methods={"GET"})
      */
-    public function openAction(User $user)
+    public function openAction(): JsonResponse
     {
-        $this->checkPermission('OPEN', $user, [], true);
-
         return new JsonResponse([
             'facets' => $this->profileSerializer->serialize(),
             'parameters' => $this->parametersSerializer->serialize()['profile'],
-            'user' => $this->serializer->serialize($user, [Options::SERIALIZE_FACET]),
         ]);
     }
 
@@ -225,7 +221,7 @@ class ProfileController
         // updates facets data
         $updatedFacets = [];
         foreach ($formData as $facetData) {
-            $updated = $this->crud->update(Facet::class, $facetData, [Options::DEEP_DESERIALIZE]);
+            $updated = $this->crud->update(Facet::class, $facetData);
             $updatedFacets[$updated->getId()] = $updated;
         }
 

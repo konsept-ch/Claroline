@@ -9,7 +9,7 @@ import {EventCard} from '#/plugin/cursus/event/components/card'
 
 export default {
   name: 'session-events',
-  icon: 'fa fa-fw fa-clock-o',
+  icon: 'fa fa-fw fa-clock',
   parameters: {
     primaryAction: (event) => ({
       type: URL_BUTTON,
@@ -67,6 +67,14 @@ export default {
         label: trans('workspace'),
         displayable: false,
         sortable: false
+      }, {
+        name: 'organizations',
+        type: 'organizations',
+        label: trans('organizations'),
+        displayable: false,
+        displayed: false,
+        sortable: false,
+        filterable: true
       }
     ],
     card: EventCard

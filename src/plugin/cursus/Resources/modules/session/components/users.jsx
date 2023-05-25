@@ -1,78 +1,126 @@
-import React, {Fragment} from 'react'
+import React from 'react'
 import {PropTypes as T} from 'prop-types'
+import get from 'lodash/get'
+import isEmpty from 'lodash/isEmpty'
 
-import {trans} from '#/main/app/intl/translation'
-import {hasPermission} from '#/main/app/security'
-import {Button} from '#/main/app/action/components/button'
-import {ListData} from '#/main/app/content/list/containers/data'
-import {constants as listConst} from '#/main/app/content/list/constants'
-import {UserCard} from '#/main/core/user/components/card'
+import {trans} from '#/main/app/intl'
+import {CALLBACK_BUTTON, MODAL_BUTTON} from '#/main/app/buttons'
+import {formatListField} from '#/main/app/content/form/parameters/utils'
 
-import {Session as SessionTypes} from '#/plugin/cursus/prop-types'
+import {constants} from '#/plugin/cursus/constants'
+import {isFull} from '#/plugin/cursus/utils'
+import {Course as CourseTypes, Session as SessionTypes} from '#/plugin/cursus/prop-types'
 
-const SessionUsers = (props) =>
-  <Fragment>
-    <ListData
-      name={props.name}
-      fetch={{
-        url: props.url,
-        autoload: true
-      }}
-      delete={{
-        url: props.unregisterUrl,
-        label: trans('cancel', {}, 'actions'),
-        displayed: () => hasPermission('register', props.session)
-      }}
-      definition={[
+import {RegistrationUsers} from '#/plugin/cursus/registration/components/users'
+import {MODAL_REGISTRATION_PARAMETERS} from '#/plugin/cursus/registration/modals/parameters'
+import {MODAL_SESSIONS} from '#/plugin/cursus/modals/sessions'
+
+
+const SessionUsers = (props) => {
+  let customDefinition = [].concat(props.customDefinition || [])
+  if (constants.LEARNER_TYPE === props.type && get(props.course, 'registration.form')) {
+    get(props.course, 'registration.form').map(formSection => {
+      customDefinition = customDefinition.concat(formSection.fields.map(field => formatListField(field, customDefinition, 'data')))
+    })
+  }
+
+  return (
+    <RegistrationUsers
+      {...props}
+      url={props.session ?
+        ['apiv2_training_session_user_list', {id: props.course.id, sessionId: props.session.id}] :
+        ['apiv2_training_session_user_list', {id: props.course.id}]
+      }
+      unregisterUrl={['apiv2_training_session_user_delete_bulk']}
+      session={props.session || props.course}
+      customDefinition={customDefinition}
+      actions={(rows) => [
         {
-          name: 'user',
-          type: 'user',
-          label: trans('user'),
-          displayed: true
+          name: 'edit',
+          type: MODAL_BUTTON,
+          icon: 'fa fa-fw fa-pencil',
+          label: trans('edit', {}, 'actions'),
+          displayed: constants.LEARNER_TYPE === props.type && !isEmpty(get(props.course, 'registration.form')),
+          modal: [MODAL_REGISTRATION_PARAMETERS, {
+            course: props.course,
+            session: rows[0].session,
+            registration: rows[0],
+            onSave: (registrationData) => props.updateUser(registrationData)
+          }],
+          group: trans('management'),
+          scope: ['object'],
+          primary: true
         }, {
-          name: 'date',
-          type: 'date',
-          label: trans('registration_date', {}, 'cursus'),
-          options: {time: true},
-          displayed: true
+          name: 'invite',
+          type: CALLBACK_BUTTON,
+          icon: 'fa fa-fw fa-envelope',
+          label: trans('send_invitation', {}, 'actions'),
+          callback: () => props.inviteUsers(rows)
         }, {
-          name: 'userDisabled',
-          label: trans('user_disabled'),
-          type: 'boolean',
-          displayable: false,
-          sortable: false,
-          filterable: true
+          name: 'confirm',
+          type: CALLBACK_BUTTON,
+          icon: 'fa fa-fw fa-user-check',
+          label: trans('confirm_registration', {}, 'actions'),
+          callback: () => props.confirmPending(rows.filter(row => !row.confirmed)),
+          disabled: props.session ? isFull(props.session) : false,
+          displayed: -1 !== rows.findIndex(row => !row.confirmed),
+          group: trans('management')
+        }, {
+          name: 'validate',
+          type: CALLBACK_BUTTON,
+          icon: 'fa fa-fw fa-check',
+          label: trans('validate_registration', {}, 'actions'),
+          callback: () => props.validatePending(rows.filter(row => !row.validated)),
+          disabled: props.session ? isFull(props.session) : false,
+          displayed: -1 !== rows.findIndex(row => !row.validated),
+          group: trans('management')
+        }, {
+          name: 'move',
+          type: MODAL_BUTTON,
+          icon: 'fa fa-fw fa-arrows',
+          label: trans('move', {}, 'actions'),
+          group: trans('management'),
+          modal: [MODAL_SESSIONS, {
+            url: ['apiv2_cursus_course_list_sessions', {id: get(props.course, 'id')}],
+            filters: [{property: 'status', value: 'not_ended'}],
+            selectAction: (selected) => ({
+              type: CALLBACK_BUTTON,
+              callback: () => props.moveUsers(selected[0].id, rows, props.type)
+            })
+          }]
+        }, {
+          name: 'move-pending',
+          type: CALLBACK_BUTTON,
+          icon: 'fa fa-fw fa-hourglass-half',
+          label: trans('move-pending', {}, 'actions'),
+          displayed: constants.LEARNER_TYPE === props.type && get(props.course, 'registration.pendingRegistrations', false),
+          group: trans('management'),
+          callback: () => props.movePending(props.course.id, rows)
         }
       ]}
-      primaryAction={props.primaryAction}
-      actions={props.actions}
-      card={(cardProps) => <UserCard {...cardProps} data={cardProps.data.user} />}
-      display={{
-        current: listConst.DISPLAY_TILES_SM
-      }}
     />
-
-    {props.add && hasPermission('register', props.session) &&
-      <Button
-        className="btn btn-block btn-emphasis component-container"
-        primary={true}
-        {...props.add}
-      />
-    }
-  </Fragment>
+  )
+}
 
 SessionUsers.propTypes = {
+  course: T.shape(
+    CourseTypes.propTypes
+  ).isRequired,
   session: T.shape(
     SessionTypes.propTypes
-  ).isRequired,
+  ),
   name: T.string.isRequired,
-  url: T.oneOfType([T.string, T.array]).isRequired,
-  unregisterUrl: T.oneOfType([T.string, T.array]).isRequired,
-  primaryAction: T.func,
-  actions: T.func,
-  add: T.shape({
-    // action types
-  })
+  type: T.string.isRequired,
+  customDefinition: T.arrayOf(T.shape({
+    // data list prop types
+  })),
+
+  updateUser: T.func.isRequired,
+  inviteUsers: T.func.isRequired,
+  confirmPending: T.func.isRequired,
+  validatePending: T.func.isRequired,
+  moveUsers: T.func.isRequired,
+  movePending: T.func.isRequired
 }
 
 export {

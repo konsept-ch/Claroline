@@ -6,8 +6,10 @@ import {trans} from '#/main/app/intl/translation'
 import {LINK_BUTTON} from '#/main/app/buttons'
 import {ContentTitle} from '#/main/app/content/components/title'
 import {FormData} from '#/main/app/content/form/containers/data'
+import {ResourceNode as ResourceNodeTypes} from '#/main/core/resource/prop-types'
 
 import {constants} from '#/plugin/path/resources/path/constants'
+import {Path as PathTypes} from '#/plugin/path/resources/path/prop-types'
 import {selectors} from '#/plugin/path/resources/path/editor/store'
 
 const EditorParameters = props =>
@@ -36,17 +38,26 @@ const EditorParameters = props =>
           title: trans('overview'),
           fields: [
             {
-              name: 'display.showOverview',
+              name: 'overview.display',
               type: 'boolean',
               label: trans('enable_overview'),
               linked: [
                 {
-                  name: 'meta.description',
+                  name: 'overview.message',
                   type: 'html',
                   label: trans('overview_message'),
-                  displayed: props.path.display.showOverview,
+                  displayed: get(props.path, 'overview.display'),
                   options: {
                     workspace: props.workspace
+                  }
+                }, {
+                  name: 'overview.resource',
+                  type: 'resource',
+                  label: trans('resource'),
+                  options: {
+                    picker: {
+                      current : props.resourceParent
+                    }
                   }
                 }
               ]
@@ -95,18 +106,75 @@ const EditorParameters = props =>
           title: trans('end_page'),
           fields: [
             {
-              name: 'display.showEndPage',
+              name: 'end.display',
               type: 'boolean',
               label: trans('show_end_page'),
               linked: [
                 {
-                  name: 'meta.endMessage',
+                  name: 'end.message',
                   type: 'html',
                   label: trans('end_message'),
-                  displayed: (path) => get(path, 'display.showEndPage'),
+                  displayed: (path) => get(path, 'end.display'),
                   options: {
                     workspace: props.workspace
                   }
+                }, {
+                  name: 'end.navigation',
+                  type: 'boolean',
+                  label: trans('resource_end_navigation', {}, 'resource'),
+                  displayed: (path) => get(path, 'end.display'),
+                  linked: [
+                    {
+                      name: 'end.back._enabled',
+                      type: 'boolean',
+                      label: trans('resource_end_back', {}, 'resource'),
+                      displayed: (path) => get(path, 'end.display') && get(path, 'end.navigation'),
+                      calculated: (path) => !!get(path, 'end.back.type') || get(path, 'end.back._enabled'),
+                      onChange: (enabled) => {
+                        if (!enabled) {
+                          props.update('end.back.type', null)
+                          props.update('end.back.label', null)
+                          props.update('end.back.target', null)
+                        }
+                      },
+                      linked: [
+                        {
+                          name: 'end.back.label',
+                          type: 'string',
+                          label: trans('resource_end_back_label', {}, 'resource'),
+                          placeholder: trans('return-home', {}, 'actions'),
+                          displayed: (path) => get(path, 'end.display') && get(path, 'end.navigation') && (!!get(path, 'end.back.type') || get(path, 'end.back._enabled'))
+                        }, {
+                          name: 'end.back.type',
+                          displayed: (path) => get(path, 'end.display') && get(path, 'end.navigation') && (!!get(path, 'end.back.type') || get(path, 'end.back._enabled')),
+                          label: trans('resource_end_back_type', {}, 'resource'),
+                          type: 'choice',
+                          required: true,
+                          options: {
+                            choices: {
+                              workspace: trans('resource_end_back_workspace', {}, 'resource'),
+                              desktop: trans('resource_end_back_desktop', {}, 'resource'),
+                              resource: trans('resource_end_back_resource', {}, 'resource')
+                            }
+                          },
+                          linked: [
+                            {
+                              name: 'end.back.target',
+                              type: 'resource',
+                              required: true,
+                              label: trans('resource'),
+                              displayed: (path) => get(path, 'end.display') && get(path, 'end.navigation') && 'resource' === get(path, 'end.back.type')
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }, {
+                  name: 'end.workspaceCertificates',
+                  type: 'boolean',
+                  label: trans('resource_end_certificates', {}, 'resource'),
+                  displayed: (path) => get(path, 'end.display')
                 }
               ]
             }
@@ -120,20 +188,44 @@ const EditorParameters = props =>
               type: 'boolean',
               label: trans('show_score', {}, 'path')
             }, {
-              name: 'score.success',
-              label: trans('score_to_pass'),
-              type: 'number',
-              required: true,
-              options: {
-                min: 0,
-                max: 100,
-                unit: '%'
-              }
-            }, {
               name: 'score.total',
               label: trans('score_total'),
               type: 'number',
               required: true
+            }
+          ]
+        }, {
+          icon: 'fa fa-fw fa-award',
+          title: trans('evaluation'),
+          fields: [
+            {
+              name: 'score.success',
+              label: trans('score_to_pass'),
+              type: 'number',
+              options: {
+                min: 0,
+                max: 100,
+                unit: '%'
+              },
+              linked: [
+                {
+                  name: 'evaluation.successMessage',
+                  label: trans('success_message'),
+                  type: 'html',
+                  displayed: (path) => !!get(path, 'score.success'),
+                  options: {
+                    workspace: props.workspace
+                  }
+                }, {
+                  name: 'evaluation.failureMessage',
+                  label: trans('failure_message'),
+                  type: 'html',
+                  displayed: (path) => !!get(path, 'score.success'),
+                  options: {
+                    workspace: props.workspace
+                  }
+                }
+              ]
             }
           ]
         }
@@ -144,12 +236,13 @@ const EditorParameters = props =>
 EditorParameters.propTypes = {
   basePath: T.string,
   workspace: T.object,
-  path: T.shape({
-    id: T.string,
-    display: T.shape({
-      showOverview: T.bool
-    })
-  }).isRequired
+  resourceParent: T.shape(
+    ResourceNodeTypes.propTypes
+  ),
+  path: T.shape(
+    PathTypes.propTypes
+  ).isRequired,
+  update: T.func.isRequired
 }
 
 export {

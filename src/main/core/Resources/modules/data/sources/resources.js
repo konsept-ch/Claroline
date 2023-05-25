@@ -1,10 +1,9 @@
-import {ResourceCard} from '#/main/core/resource/components/card'
-
 import {trans} from '#/main/app/intl/translation'
 import {URL_BUTTON} from '#/main/app/buttons'
 
 import {route} from '#/main/core/resource/routing'
 import {getTypes} from '#/main/core/resource/utils'
+import {ResourceCard} from '#/main/core/resource/components/card'
 
 export default {
   name: 'resources',
@@ -18,8 +17,13 @@ export default {
       {
         name: 'name',
         label: trans('name'),
+        type: 'string',
         displayed: true,
         primary: true
+      }, {
+        name: 'code',
+        label: trans('code'),
+        type: 'string'
       }, {
         name: 'meta.type',
         alias: 'resourceType',

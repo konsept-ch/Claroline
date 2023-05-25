@@ -135,6 +135,7 @@ abstract class RepositoryTestCase extends TransactionalTestCase
         }
         $node = new ResourceNode();
         $node->setName($name);
+        $node->setCode($name);
         $node->setCreator($this->defaults['user']);
         $node->setResourceType($this->defaults['activity_type']);
         $node->setWorkspace($this->defaults['workspace']);
@@ -154,7 +155,6 @@ abstract class RepositoryTestCase extends TransactionalTestCase
         $eval = $previous ? $previous->getResourceUserEvaluation() : new ResourceUserEvaluation();
         $eval->setResourceNode($resource);
         $eval->setUser($user);
-        $eval->setUserName($user->getUsername());
         $eval->setStatus($status);
         $eval->setDate(new \DateTime());
         $this->om->persist($eval);

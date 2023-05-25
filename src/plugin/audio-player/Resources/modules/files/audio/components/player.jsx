@@ -10,7 +10,7 @@ import {asset} from '#/main/app/config/asset'
 import {trans} from '#/main/app/intl/translation'
 import {actions as modalActions} from '#/main/app/overlays/modal/store'
 import {MODAL_CONFIRM} from '#/main/app/modals/confirm'
-import {CALLBACK_BUTTON, CallbackButton, DownloadButton} from '#/main/app/buttons'
+import {CALLBACK_BUTTON, CallbackButton} from '#/main/app/buttons'
 import {selectors as securitySelectors} from '#/main/app/security/store'
 import {makeId} from '#/main/core/scaffolding/id'
 import {selectors as fileSelect} from '#/main/core/resources/file/store'
@@ -74,7 +74,7 @@ const Section = props =>
           callback={() => props.deleteSection()}
           dangerous={true}
         >
-          <span className="fa fa-trash-o"/>
+          <span className="fa fa-trash"/>
         </CallbackButton>
       }
     </div>
@@ -126,7 +126,7 @@ const Section = props =>
               displayed: true,
               callback: () => props.updateOption(props.section.id, 'showCommentForm', true)
             }, {
-              icon: 'fa fa-fw fa-trash-o',
+              icon: 'fa fa-fw fa-trash',
               type: CALLBACK_BUTTON,
               label: trans('delete'),
               displayed: true,
@@ -249,14 +249,6 @@ class Audio extends Component {
                 {trans(this.state.displayAllComments ? 'display_my_comments' : 'display_all_comments', {}, 'audio')}
               </CallbackButton>
             }
-            <DownloadButton
-              className="btn"
-              file={{
-                url: ['apiv2_audioresourcesectioncomment_list_comments_csv', {resourceNode: this.props.resourceNodeId}]
-              }}
-            >
-              {trans('export_comments_to_csv', {}, 'audio')}
-            </DownloadButton>
           </div>
         }
 
@@ -420,7 +412,7 @@ const AudioPlayer = connect(
     },
     deleteSection(sections, sectionId) {
       dispatch(modalActions.showModal(MODAL_CONFIRM, {
-        icon: 'fa fa-fw fa-trash-o',
+        icon: 'fa fa-fw fa-trash',
         title: trans('section_deletion', {}, 'audio'),
         question: trans('section_deletion_confirm_message', {}, 'audio'),
         dangerous: true,
@@ -432,7 +424,7 @@ const AudioPlayer = connect(
     },
     deleteComment(sections, sectionId, commentId) {
       dispatch(modalActions.showModal(MODAL_CONFIRM, {
-        icon: 'fa fa-fw fa-trash-o',
+        icon: 'fa fa-fw fa-trash',
         title: trans('comment_deletion'),
         question: trans('comment_deletion_confirm_message'),
         dangerous: true,

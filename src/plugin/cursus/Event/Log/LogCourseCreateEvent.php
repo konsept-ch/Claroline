@@ -27,27 +27,21 @@ class LogCourseCreateEvent extends LogGenericEvent
         $details['publicRegistration'] = $course->getPublicRegistration();
         $details['publicUnregistration'] = $course->getPublicUnregistration();
         $details['registrationValidation'] = $course->getRegistrationValidation();
-        $details['tutorRoleName'] = $course->getTutorRoleName();
-        $details['learnerRoleName'] = $course->getLearnerRoleName();
         $details['userValidation'] = $course->getUserValidation();
         $details['maxUsers'] = $course->getMaxUsers();
         $details['defaultSessionDays'] = $course->getDefaultSessionDays();
         $details['defaultSessionHours'] = $course->getDefaultSessionHours();
         $details['organizations'] = [];
-        $workspace = $course->getWorkspace();
-        $workspaceModel = $course->getWorkspaceModel();
-        $organizations = $course->getOrganizations()->toArray();
 
+        $workspace = $course->getWorkspace();
         if (!is_null($workspace)) {
             $details['workspaceId'] = $workspace->getId();
             $details['workspaceName'] = $workspace->getName();
             $details['workspaceCode'] = $workspace->getCode();
             $details['workspaceGuid'] = $workspace->getUuid();
         }
-        if (!is_null($workspaceModel)) {
-            $details['workspaceModelId'] = $workspaceModel->getId();
-            $details['workspaceModelName'] = $workspaceModel->getName();
-        }
+
+        $organizations = $course->getOrganizations()->toArray();
         foreach ($organizations as $organization) {
             $details['organizations'][] = [
                 'id' => $organization->getId(),

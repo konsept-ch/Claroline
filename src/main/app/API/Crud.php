@@ -2,7 +2,6 @@
 
 namespace Claroline\AppBundle\API;
 
-use Claroline\AppBundle\API\Utils\ArrayUtils;
 use Claroline\AppBundle\Event\Crud\CrudEvent;
 use Claroline\AppBundle\Event\StrictDispatcher;
 use Claroline\AppBundle\Persistence\ObjectManager;
@@ -72,13 +71,31 @@ class Crud
      *
      * @return object|null
      */
-    public function get(string $class, $id)
+    public function get(string $class, $id, string $idProp = 'id', ?array $options = [])
     {
-        if (!is_numeric($id) && property_exists($class, 'uuid')) {
-            return $this->om->getRepository($class)->findOneBy(['uuid' => $id]);
+        $object = null;
+
+        if ('id' === $idProp) {
+            if (!is_numeric($id) && property_exists($class, 'uuid')) {
+                $object = $this->om->getRepository($class)->findOneBy(['uuid' => $id]);
+            } else {
+                $object = $this->om->getRepository($class)->findOneBy(['id' => $id]);
+            }
+        } else {
+            $identifiers = $this->schema->getIdentifiers($class);
+            if (!in_array($idProp, $identifiers)) {
+                throw new \LogicException(sprintf('You can only get entities with an identifier property (identifiers: %s).', implode(', ', $identifiers)));
+            }
+
+            $object = $this->om->getRepository($class)->findOneBy([$idProp => $id]);
         }
 
-        return $this->om->getRepository($class)->findOneBy(['id' => $id]);
+        if ($object && !in_array(static::NO_PERMISSIONS, $options)) {
+            // creates the entity if allowed
+            $this->checkPermission('OPEN', $object, [], true);
+        }
+
+        return $object;
     }
 
     public function find(string $class, $data)
@@ -95,45 +112,6 @@ class Crud
                 return $this->serializer->serialize($result, $options);
             }, $results['data']),
         ]);
-    }
-
-    /**
-     * @deprecated
-     */
-    public function csv(string $class, array $query = [], array $options = [])
-    {
-        $data = $this->list($class, $query, $options)['data'];
-
-        $titles = [];
-        $formatted = [];
-        if (!empty($data[0])) {
-            $firstRow = $data[0];
-            //get the title list
-            $titles = !empty($query['columns']) ? $query['columns'] : ArrayUtils::getPropertiesName($firstRow);
-
-            foreach ($data as $el) {
-                $formattedData = [];
-                foreach ($titles as $title) {
-                    $formattedData[$title] = ArrayUtils::has($el, $title) ?
-                        ArrayUtils::get($el, $title) : null;
-                    $formattedData[$title] = !is_array($formattedData[$title]) ? $formattedData[$title] : json_encode($formattedData[$title]);
-                }
-                $formatted[] = $formattedData;
-            }
-        }
-
-        $tmpFile = tempnam(sys_get_temp_dir(), 'CSVCLARO').'.csv';
-        $fp = fopen($tmpFile, 'w');
-
-        fputcsv($fp, $titles, ';');
-
-        foreach ($formatted as $item) {
-            fputcsv($fp, $item, ';');
-        }
-
-        fclose($fp);
-
-        return $tmpFile;
     }
 
     /**

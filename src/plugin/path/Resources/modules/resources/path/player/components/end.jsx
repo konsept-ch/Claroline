@@ -2,17 +2,18 @@ import React, {Component, Fragment} from 'react'
 import {PropTypes as T} from 'prop-types'
 import classes from 'classnames'
 import get from 'lodash/get'
-import isEmpty from 'lodash/isEmpty'
 
-import {trans, number} from '#/main/app/intl'
-import {ContentSummary} from '#/main/app/content/components/summary'
+import {trans} from '#/main/app/intl'
 import {scrollTo} from '#/main/app/dom/scroll'
-import {Toolbar} from '#/main/app/action/components/toolbar'
 import {LINK_BUTTON, URL_BUTTON} from '#/main/app/buttons'
-import {ContentHtml} from '#/main/app/content/components/html'
-import {ScoreGauge} from '#/main/core/layout/gauge/components/score'
-import {ScoreBox} from '#/main/core/layout/evaluation/components/score-box'
-import {route} from '#/main/core/workspace/routing'
+import {route as desktopRoute} from '#/main/core/tool/routing'
+import {route as workspaceRoute} from '#/main/core/workspace/routing'
+import {route as resourceRoute} from '#/main/core/resource/routing'
+import {ResourceAttempt as ResourceAttemptTypes, ResourceEvaluation as ResourceEvaluationTypes} from '#/main/evaluation/resource/prop-types'
+
+import {ResourceEnd} from '#/main/core/resource/components/end'
+import {Path as PathTypes} from '#/plugin/path/resources/path/prop-types'
+import {PathSummary} from '#/plugin/path/resources/path/components/summary'
 
 class PlayerEnd extends Component {
   constructor(props) {
@@ -21,114 +22,93 @@ class PlayerEnd extends Component {
     this.state = {
       loaded: !this.props.currentUser
     }
-
-    this.getStepSummary = this.getStepSummary.bind(this)
   }
 
   componentDidMount() {
     if (!this.state.loaded) {
-      this.props.getAttempt(this.props.pathId).then(() => this.setState({loaded: true}))
-    }
-  }
-
-  getStepSummary(step) {
-    return {
-      id: step.id,
-      type: LINK_BUTTON,
-      icon: classes('step-progression fa fa-fw fa-circle', get(step, 'userProgression.status')),
-      label: (
-        <Fragment>
-          {step.title}
-          {!isEmpty(step.primaryResource) && this.props.showScore && get(this.props.attempt, `data.resources[${step.id}].max`, null) &&
-            <ScoreBox
-              score={get(this.props.attempt, `data.resources[${step.id}].score`, null)}
-              scoreMax={get(this.props.attempt, `data.resources[${step.id}].max`)}
-              size="sm"
-              style={{marginLeft: 'auto'}}
-            />
-          }
-        </Fragment>
-      ),
-      target: `${this.props.path}/play/${step.slug}`,
-      children: step.children ? step.children.map(this.getStepSummary) : [],
-      onClick: () => {
-        scrollTo(`#resource-${this.props.resourceId} > .page-content`)
-      }
+      this.props.getAttempt(this.props.path.id).then(() => this.setState({loaded: true}))
     }
   }
 
   render() {
     return (
-      <div className="row">
-        {this.props.showScore && this.props.attempt &&
-          <div className="col-md-3 text-center" style={{marginTop: 20}}>
-            <ScoreGauge
-              type="user"
-              value={get(this.props.attempt, 'score') ? number(get(this.props.attempt, 'score')) : null}
-              total={get(this.props.attempt, 'scoreMax')}
-              width={140}
-              height={140}
-              displayValue={value => undefined === value || null === value ? '?' : value+''}
-            />
-          </div>
+      <ResourceEnd
+        contentText={get(this.props.path, 'end.message') ||
+          <Fragment>
+            <h2 className="h3">{trans('attempt_end_title', {}, 'path')}</h2>
+            <p>{trans('attempt_end_info', {}, 'path')}</p>
+          </Fragment>
         }
-
-        <div className={this.props.showScore && this.props.attempt ? 'col-md-9':'col-md-12'}>
-          {this.props.endMessage ?
-            <ContentHtml className="component-container" style={{marginTop: 20}}>{this.props.endMessage}</ContentHtml> :
-            <Fragment>
-              <h2 className="h3">{trans('attempt_end_title', {}, 'path')}</h2>
-              <p>{trans('attempt_end_info', {}, 'path')}</p>
-            </Fragment>
+        attempt={this.props.attempt}
+        workspace={this.props.workspace}
+        display={{
+          score: get(this.props.path, 'display.showScore'),
+          scoreMax: get(this.props.path, 'score.total'),
+          successScore: get(this.props.path, 'score.success'),
+          feedback: !!get(this.props.path, 'evaluation.successMessage') || !!get(this.props.path, 'evaluation.failureMessage'),
+          toolbar: get(this.props.path, 'end.navigation'),
+          certificates: get(this.props.path, 'end.workspaceCertificates')
+        }}
+        feedbacks={{
+          success: get(this.props.path, 'evaluation.successMessage'),
+          failure: get(this.props.path, 'evaluation.failureMessage')
+        }}
+        actions={[
+          {
+            name: 'restart',
+            type: LINK_BUTTON,
+            label: trans('restart_path', {}, 'path'),
+            target: `${this.props.basePath}/play`,
+            exact: true,
+            primary: true,
+            className: 'btn-emphasis'
           }
-
-          <Toolbar
+        ].concat(get(this.props.path, 'end.back.type') ? [
+          {
+            name: 'home',
+            type: URL_BUTTON, // we require an URL_BUTTON here to escape the embedded resource router
+            label: get(this.props.path, 'end.back.label') || trans('return-home', {}, 'actions'),
+            target: '#'+classes({
+              [desktopRoute()]: 'desktop' === get(this.props.path, 'end.back.type'),
+              [this.props.workspace ? workspaceRoute(this.props.workspace) : undefined]: 'workspace' === get(this.props.path, 'end.back.type'),
+              [get(this.props.path, 'end.back.target') ? resourceRoute(get(this.props.path, 'end.back.target')) : undefined]: 'resource' === get(this.props.path, 'end.back.type')
+            })
+          }
+        ] : [])}
+      >
+        <section className="resource-parameters">
+          <h3 className="h2">{trans('summary')}</h3>
+          <PathSummary
             className="component-container"
-            buttonName="btn btn-block btn-emphasis"
-            toolbar="restart home"
-            actions={[
-              {
-                name: 'restart',
-                type: LINK_BUTTON,
-                icon: 'fa fa-fw fa-redo',
-                label: trans('restart_path', {}, 'path'),
-                target: `${this.props.path}/play`,
-                exact: true,
-                primary: true
-              }, {
-                name: 'home',
-                type: URL_BUTTON, // we require an URL_BUTTON here to escape the embedded resource router
-                icon: 'fa fa-fw fa-home',
-                label: trans('return-home', {}, 'actions'),
-                target: '#'+route(this.props.workspace),
-                displayed: !!this.props.workspace,
-                exact: true
-              }
-            ]}
+            basePath={this.props.basePath}
+            path={this.props.path}
+            stepsProgression={this.props.stepsProgression}
+            resourceEvaluations={this.props.resourceEvaluations}
+            onNavigate={() => {
+              scrollTo(`#resource-${this.props.resourceId} > .page-content`)
+            }}
           />
-
-          <ContentSummary
-            className="component-container"
-            links={this.props.steps.map(this.getStepSummary)}
-            noCollapse={true}
-          />
-        </div>
-      </div>
+        </section>
+      </ResourceEnd>
     )
   }
 }
 
 PlayerEnd.propTypes = {
-  path: T.string.isRequired,
+  basePath: T.string.isRequired,
   resourceId: T.string.isRequired,
-  pathId: T.string.isRequired,
-  endMessage: T.string,
-  showScore: T.bool,
-  scoreTotal: T.number,
+  path: T.shape(
+    PathTypes.propTypes
+  ).isRequired,
   workspace: T.object,
-  steps: T.array,
   currentUser: T.object,
-  attempt: T.object,
+  attempt: T.shape(
+    ResourceAttemptTypes.propTypes
+  ),
+  resourceEvaluations: T.arrayOf(T.shape(
+    ResourceEvaluationTypes.propTypes
+  )),
+  stepsProgression: T.object,
   getAttempt: T.func.isRequired
 }
 

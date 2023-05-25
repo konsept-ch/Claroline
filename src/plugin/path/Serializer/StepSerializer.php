@@ -2,17 +2,13 @@
 
 namespace Innova\PathBundle\Serializer;
 
-use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\Serializer\SerializerInterface;
 use Claroline\AppBundle\API\Serializer\SerializerTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\API\Serializer\Resource\ResourceNodeSerializer;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
-use Claroline\CoreBundle\Entity\User;
 use Innova\PathBundle\Entity\SecondaryResource;
 use Innova\PathBundle\Entity\Step;
-use Innova\PathBundle\Entity\UserProgression;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class StepSerializer
 {
@@ -22,27 +18,21 @@ class StepSerializer
     private $om;
     /** @var ResourceNodeSerializer */
     private $resourceNodeSerializer;
-    /** @var TokenStorageInterface */
-    private $tokenStorage;
 
     private $resourceNodeRepo;
     private $stepRepo;
     private $secondaryResourceRepo;
-    private $userProgressionRepo;
 
     public function __construct(
         ObjectManager $om,
-        ResourceNodeSerializer $resourceSerializer,
-        TokenStorageInterface $tokenStorage
+        ResourceNodeSerializer $resourceSerializer
     ) {
         $this->om = $om;
         $this->resourceNodeSerializer = $resourceSerializer;
-        $this->tokenStorage = $tokenStorage;
 
         $this->resourceNodeRepo = $om->getRepository(ResourceNode::class);
         $this->stepRepo = $om->getRepository(Step::class);
         $this->secondaryResourceRepo = $om->getRepository(SecondaryResource::class);
-        $this->userProgressionRepo = $om->getRepository(UserProgression::class);
     }
 
     public function getSchema(): string
@@ -83,13 +73,12 @@ class StepSerializer
             'children' => array_values(array_map(function (Step $child) use ($options) {
                 return $this->serialize($child, $options);
             }, $step->getChildren()->toArray())),
-            'userProgression' => $this->serializeUserProgression($step), // todo : user related data should not be here
         ];
     }
 
     public function deserialize(Step $step, array $data, array $options = []): Step
     {
-        if (!in_array(Options::REFRESH_UUID, $options)) {
+        if (!in_array(SerializerInterface::REFRESH_UUID, $options)) {
             $this->sipe('id', 'setUuid', $data, $step);
         } else {
             $step->refreshUuid();
@@ -162,18 +151,5 @@ class StepSerializer
         }
 
         return $step;
-    }
-
-    private function serializeUserProgression(Step $step): array
-    {
-        $user = $this->tokenStorage->getToken()->getUser();
-        /** @var UserProgression $userProgression */
-        $userProgression = $user instanceof User ?
-            $this->userProgressionRepo->findOneBy(['step' => $step, 'user' => $user]) :
-            null;
-
-        return [
-            'status' => empty($userProgression) ? 'unseen' : $userProgression->getStatus(),
-        ];
     }
 }

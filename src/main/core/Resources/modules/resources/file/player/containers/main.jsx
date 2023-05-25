@@ -19,6 +19,7 @@ const PlayerMain = connect(
     mimeType: selectors.mimeType(state),
     file: selectors.file(state),
     resourceNode: resourceSelectors.resourceNode(state),
+    embedded: resourceSelectors.embedded(state),
     workspace: resourceSelectors.workspace(state),
     canEdit: hasPermission('edit', resourceSelectors.resourceNode(state))
   }),
@@ -44,7 +45,7 @@ const PlayerMain = connect(
     },
     deleteComment(commentId) {
       dispatch(modalActions.showModal(MODAL_CONFIRM, {
-        icon: 'fa fa-fw fa-trash-o',
+        icon: 'fa fa-fw fa-trash',
         title: trans('comment_deletion'),
         question: trans('comment_deletion_confirm_message'),
         dangerous: true,

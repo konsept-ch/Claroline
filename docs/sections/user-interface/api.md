@@ -5,39 +5,75 @@ title: API
 
 # API
 
-The API module is responsible of the UI calls to the underlying data api.
+The API module is in charge of the UI calls to the underlying data api.
 
-> To learn more about creating an API for your user interface, please check [API documentation](/sections/api/index).
+> To learn more about creating an API for your user interface, please check [API documentation](Claroline/sections/api/index).
+
+In order to call our API we will need two things : 
+- Have access to the API routes 
+- Be able to trigger AJAX requests
 
 ## Router
 
-## Middleware
+We use [FOSJsRouting](https://github.com/FriendsOfSymfony/FOSJsRoutingBundle) to expose API routes to the UI.
 
-The api middleware is highly inspired by:
-[Redux real world example](https://github.com/reactjs/redux/blob/master/examples/real-world/src/middleware/api.js).
-
-It permits to declare new actions that will be caught and transformed in API request.
-
-### Requirements
-
-- Requires to be registered in the app store.
-- Requires `redux-thunk` to dispatch the correct sets of actions on AJAX events.
-- As it needs `redux-thunk`, the api middleware must to be registered **before** it.
+> ATTENTION : Only routes marked with the `expose: true` flag in the symfony routing configuration
+> are made available to the UI.
 
 ### Usage
+
+```js
+
+import {url} from '#/main/app/api'
+
+// route without params
+const userListUrl = url(['apiv2_user_list'])
+console.log(userListUrl) // print : /apiv2/user
+
+// route with params
+const userGetUrl = url(['apiv2_user_get', {id: '123'}])
+console.log(userGetUrl) // print : /apiv2/user/123
+```
+
+> Lots of components which need API URLs (like DataForm or DataList) will accept the route definition `['apiv2_user_list']` or the final URL string.
+
+## Redux
+
+AJAX calls are performed through our Redux integration.
+You can declare new actions that will be caught and transformed in API request.
+
+> Under the hood, we use a custom [middleware](https://redux.js.org/understanding/history-and-design/middleware)
+> based on the `redux-thunk` middleware which will eventually call the standard [fetch](https://developer.mozilla.org/fr/docs/Web/API/Fetch_API/Using_Fetch) function.
+
+### Usage
+
 Managed action example:
 
-```
-import {API_REQUEST} from '#/main/core/api/actions'
+```js
+import {API_REQUEST} from '#/main/app/api'
 
 // ...
 
-actions.fetchAttempt = quizId => ({
+// Simple API request
+actions.fetchAttempt = (quizId) => ({
   [API_REQUEST]: {
     url: ['exercise_attempt_start', {exerciseId: quizId}],
     request: {method: 'POST'},
-    success: (data, dispatch) => {
+    success: (data) => doSometing(),
+    error: () => doSometingOnError()
+  }
+})
+
+// An API request which need to re-dispatch a redux action on completion
+// (for example, for storing the result of the request in the redux store)
+actions.fetchAttempt = (quizId) => (dispatch) => dispatch({
+  [API_REQUEST]: {
+    url: ['exercise_attempt_start', {exerciseId: quizId}],
+    request: {method: 'POST'},
+    success: (data) => {
       const normalized = normalize(data)
+      
+      // dispatch a new redux action
       return dispatch(actions.initPlayer(normalized.paper, normalized.answers))
     },
     error: () => doSometing()
@@ -51,14 +87,8 @@ Action parameters:
 - `url (string)`: the url to call. If provided, it's used in priority, if not, the middleware will fallback to the `route` param.
 - `request (object|Request)`: a custom request to send. See [Fetch](https://developer.mozilla.org/en-US/docs/Web/API/GlobalFetch/fetch) for more detail.
 - `before (func)`:  a callback to execute before sending the request
-                    (called with dispatch function)
-- `success (func)`: a callback to execute AJAX request is processed without errors
-                    (called with response data and dispatch function)
-- `error (func)`: a callback to execute if something goes wrong
-                    (called with error object and dispatch function)
+- `success (func)`: a callback to execute AJAX request is processed without errors (called with response data)
+- `error (func)`: a callback to execute if something goes wrong (called with error object)
+
 Action only requires a `route` or `url` parameter. All other ones are optional.
 If not set in the `request`, the middleware will make `GET` requests by default.
-
-## Enhancements
-- The error handler should give access to the detail of the error.
-- The middleware should handle offline mode.

@@ -13,7 +13,9 @@
 
 namespace Claroline\ThemeBundle\Entity\Icon;
 
+use Claroline\AppBundle\Entity\Identifier\Id;
 use Claroline\AppBundle\Entity\Identifier\Uuid;
+use Claroline\AppBundle\Entity\Meta\Name;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
@@ -21,73 +23,47 @@ use Gedmo\Mapping\Annotation as Gedmo;
 /**
  * @ORM\Entity()
  * @ORM\Table(name="claro_icon_set")
- * Class IconSet
  */
 class IconSet
 {
+    use Id;
     use Uuid;
+    use Name;
 
-    const RESOURCE_ICON_SET = 'resource_icon_set';
-    const UTILITIES_ICON_SET = 'utilities_icon_set';
-    const THEME_ICON_SET = 'theme_icon_set';
-
-    /**
-     * @var int
-     *
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
-    protected $id;
+    const RESOURCE_ICON_SET = 'resources';
+    const WIDGET_ICON_SET = 'widgets';
+    const DATA_ICON_SET = 'data';
 
     /**
-     * @var string
-     *
-     * @ORM\Column()
-     */
-    private $name;
-
-    /**
-     * @var string
      * @Gedmo\Slug(fields={"name"}, unique=true, updatable=false, separator="_")
      * @ORM\Column(unique=true)
+     *
+     * @var string
+     *
+     * @deprecated
      */
     private $cname;
 
     /**
-     * @var bool
+     * @ORM\Column(name="is_default", type="boolean", options={"default"= 0})
      *
-     * @ORM\Column(name="is_default", type="boolean")
+     * @var bool
      */
     private $default = false;
 
     /**
-     * @var bool
-     *
-     * @ORM\Column(name="is_active", type="boolean")
-     */
-    private $active = false;
-
-    /**
-     * @var string
-     *
      * @ORM\Column(nullable=true)
+     *
+     * @var string
      */
     private $type;
 
     /**
-     * @var ArrayCollection
-     *
      * @ORM\OneToMany(targetEntity="IconItem", mappedBy="iconSet")
+     *
+     * @var ArrayCollection|IconItem[]
      */
     private $icons;
-
-    /**
-     * @var bool
-     *
-     * @ORM\Column(type="boolean", options={"default" = 0})
-     */
-    private $editable = false;
 
     public function __construct()
     {
@@ -97,135 +73,52 @@ class IconSet
     }
 
     /**
-     * @return int
+     * @deprecated
      */
-    public function getId()
+    public function getCname(): ?string
     {
-        return $this->id;
+        return $this->cname;
     }
 
-    /**
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * @param string $name
-     *
-     * @return $this
-     */
-    public function setName($name)
-    {
-        $this->name = $name;
-
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isDefault()
+    public function isDefault(): bool
     {
         return $this->default;
     }
 
-    /**
-     * @param bool $default
-     *
-     * @return $this
-     */
-    public function setDefault($default)
+    public function setDefault(bool $default): void
     {
         $this->default = $default;
-
-        return $this;
     }
 
-    /**
-     * @return bool
-     */
-    public function isActive()
-    {
-        return $this->active;
-    }
-
-    /**
-     * @param bool $active
-     *
-     * @return $this
-     */
-    public function setActive($active)
-    {
-        $this->active = $active;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getType()
+    public function getType(): ?string
     {
         return $this->type;
     }
 
-    /**
-     * @param string $type
-     */
-    public function setType($type)
+    public function setType(string $type): void
     {
         $this->type = $type;
     }
 
     /**
-     * @return ArrayCollection
+     * @return IconItem[]
      */
     public function getIcons()
     {
         return $this->icons;
     }
 
-    /**
-     * @param array $icons
-     *
-     * @return $this
-     */
-    public function setIcons($icons)
+    public function addIcon(IconItem $icon): void
     {
-        $this->icons = $icons;
-
-        return $this;
+        if (!$this->icons->contains($icon)) {
+            $this->icons->add($icon);
+        }
     }
 
-    public function addIcon(IconItem $icon)
+    public function removeIcon(IconItem $icon): void
     {
-        $this->icons->add($icon);
-    }
-
-    /**
-     * @return string
-     */
-    public function getCname()
-    {
-        return $this->cname;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isEditable()
-    {
-        return $this->editable;
-    }
-
-    /**
-     * @param bool $editable
-     */
-    public function setEditable($editable)
-    {
-        $this->editable = $editable;
+        if ($this->icons->contains($icon)) {
+            $this->icons->removeElement($icon);
+        }
     }
 }

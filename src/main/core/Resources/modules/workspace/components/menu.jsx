@@ -19,8 +19,11 @@ import {constants as baseConstants} from '#/main/evaluation/constants'
 
 import {route as workspaceRoute} from '#/main/core/workspace/routing'
 import {getActions} from '#/main/core/workspace/utils'
-import {Workspace as WorkspaceTypes, UserEvaluation as UserEvaluationTypes} from '#/main/core/workspace/prop-types'
+import {Workspace as WorkspaceTypes} from '#/main/core/workspace/prop-types'
+
 import {constants} from '#/main/core/workspace/constants'
+import {WorkspaceEvaluation as WorkspaceEvaluationTypes} from '#/main/evaluation/workspace/prop-types'
+import {constants as evalConstants} from '#/main/evaluation/workspace/constants'
 
 const WorkspaceImpersonation = (props) =>
   <section className="app-menu-status app-menu-impersonation">
@@ -62,50 +65,39 @@ WorkspaceImpersonation.propTypes = {
   workspace: T.object.isRequired
 }
 
-const WorkspaceProgression = props => {
-  let progression = 0
-  if (get(props.userEvaluation, 'progression')) {
-    progression = props.userEvaluation.progression
-    if (props.userEvaluation.progressionMax) {
-      progression = (progression / props.userEvaluation.progressionMax) * 100
-    }
-  }
+const WorkspaceProgression = (props) =>
+  <section className="app-menu-status">
+    <h2 className="sr-only">
+      {trans('my_progression')}
+    </h2>
 
-  return (
-    <section className="app-menu-status">
-      <h2 className="sr-only">
-        {trans('my_progression')}
-      </h2>
+    <LiquidGauge
+      id="workspace-progression"
+      type="user"
+      value={get(props.userEvaluation, 'progression') || 0}
+      displayValue={(value) => number(value) + '%'}
+      width={70}
+      height={70}
+    />
 
-      <LiquidGauge
-        id="workspace-progression"
-        type="user"
-        value={progression}
-        displayValue={(value) => number(value) + '%'}
-        width={70}
-        height={70}
-      />
+    <div className="app-menu-status-info">
+      <h3 className="h4">
+        {!isEmpty(props.roles) ?
+          props.roles.map(role => trans(role.translationKey)).join(', ') :
+          trans('guest')
+        }
+      </h3>
 
-      <div className="app-menu-status-info">
-        <h3 className="h4">
-          {!isEmpty(props.roles) ?
-            props.roles.map(role => trans(role.translationKey)).join(', ') :
-            trans('guest')
-          }
-        </h3>
-
-        {constants.EVALUATION_STATUSES[get(props.userEvaluation, 'status', baseConstants.EVALUATION_STATUS_UNKNOWN)]}
-      </div>
-    </section>
-  )
-}
+      {evalConstants.EVALUATION_STATUSES[get(props.userEvaluation, 'status', baseConstants.EVALUATION_STATUS_UNKNOWN)]}
+    </div>
+  </section>
 
 WorkspaceProgression.propTypes = {
   roles: T.arrayOf(T.shape({
     translationKey: T.string.isRequired
   })),
   userEvaluation: T.shape(
-    UserEvaluationTypes.propTypes
+    WorkspaceEvaluationTypes.propTypes
   )
 }
 
@@ -218,9 +210,9 @@ WorkspaceMenu.propTypes = {
   currentUser: T.shape(
     UserTypes.propTypes
   ),
-  userEvaluation: T.shape({
-
-  }),
+  userEvaluation: T.shape(
+    WorkspaceEvaluationTypes.propTypes
+  ),
   roles: T.arrayOf(T.shape({
     translationKey: T.string.isRequired
   })),

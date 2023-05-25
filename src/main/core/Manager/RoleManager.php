@@ -12,12 +12,11 @@
 namespace Claroline\CoreBundle\Manager;
 
 use Claroline\AppBundle\Persistence\ObjectManager;
+use Claroline\CommunityBundle\Repository\RoleRepository;
 use Claroline\CoreBundle\Entity\Group;
 use Claroline\CoreBundle\Entity\Role;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
-use Claroline\CoreBundle\Repository\User\RoleRepository;
-use Claroline\CoreBundle\Repository\User\UserRepository;
 
 class RoleManager
 {
@@ -26,8 +25,6 @@ class RoleManager
 
     /** @var RoleRepository */
     private $roleRepo;
-    /** @var UserRepository */
-    private $userRepo;
 
     public function __construct(
         ObjectManager $om
@@ -35,7 +32,6 @@ class RoleManager
         $this->om = $om;
 
         $this->roleRepo = $om->getRepository(Role::class);
-        $this->userRepo = $om->getRepository(User::class);
     }
 
     /**
@@ -175,17 +171,9 @@ class RoleManager
         return $this->roleRepo->findWorkspaceRolesForUser($user, $workspace);
     }
 
-    /**
-     * @param string $name
-     *
-     * @return Role
-     */
-    public function getRoleByName($name)
+    public function getRoleByName(string $name): ?Role
     {
-        /** @var Role $role */
-        $role = $this->roleRepo->findOneBy(['name' => $name]);
-
-        return $role;
+        return $this->roleRepo->findOneBy(['name' => $name]);
     }
 
     /**
@@ -196,33 +184,12 @@ class RoleManager
         return $this->roleRepo->findAllPlatformRoles();
     }
 
-    /**
-     * @param string $key - The translation key
-     *
-     * @return Role
-     */
-    public function getRoleByTranslationKeyAndWorkspace($key, Workspace $workspace)
+    public function getRoleByTranslationKeyAndWorkspace(string $key, Workspace $workspace): ?Role
     {
-        /** @var Role $role */
-        $role = $this->roleRepo->findOneBy(['translationKey' => $key, 'workspace' => $workspace]);
-
-        return $role;
-    }
-
-    /**
-     * @return bool
-     */
-    public function countUsersByRoleIncludingGroup(Role $role)
-    {
-        return $this->userRepo->countUsersByRoleIncludingGroup($role);
-    }
-
-    /**
-     * @return Role[]
-     */
-    public function getRolesByWorkspaceCodeAndTranslationKey(string $workspaceCode, string $translationKey)
-    {
-        return $this->roleRepo->findRolesByWorkspaceCodeAndTranslationKey($workspaceCode, $translationKey);
+        return $this->roleRepo->findOneBy([
+            'translationKey' => $key,
+            'workspace' => $workspace,
+        ]);
     }
 
     public function getUserRole($username): ?Role

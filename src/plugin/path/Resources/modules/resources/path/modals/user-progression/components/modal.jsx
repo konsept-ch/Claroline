@@ -10,13 +10,17 @@ import {LINK_BUTTON} from '#/main/app/buttons'
 import {Modal} from '#/main/app/overlays/modal/components/modal'
 import {ContentSummary} from '#/main/app/content/components/summary'
 import {ScoreBox} from '#/main/core/layout/evaluation/components/score-box'
-import {UserEvaluation as UserEvaluationTypes} from '#/main/core/resource/prop-types'
+import {ResourceEvaluation as ResourceEvaluationTypes} from '#/main/evaluation/resource/prop-types'
 
 import {Path as PathTypes} from '#/plugin/path/resources/path/prop-types'
 
-
 const UserProgressionModal = props => {
   function getStepSummary(step) {
+    let resourceEvaluation
+    if (!isEmpty(step.primaryResource)) {
+      resourceEvaluation = props.resourceEvaluations.find(evaluation => get(evaluation, 'resourceNode.id') === get(step, 'primaryResource.id'))
+    }
+
     return {
       id: step.id,
       type: LINK_BUTTON,
@@ -24,10 +28,11 @@ const UserProgressionModal = props => {
       label: (
         <Fragment>
           {step.title}
-          {!isEmpty(step.primaryResource) && get(props.path, 'display.showScore') && get(props.lastAttempt, `data.resources[${step.id}].max`, null) &&
+
+          {get(props.path, 'display.showScore') && resourceEvaluation && resourceEvaluation.scoreMax &&
             <ScoreBox
-              score={get(props.lastAttempt, `data.resources[${step.id}].score`, null)}
-              scoreMax={get(props.lastAttempt, `data.resources[${step.id}].max`)}
+              score={get(props.path, 'score.total') ? (resourceEvaluation.score / resourceEvaluation.scoreMax) * get(props.path, 'score.total') : resourceEvaluation.score}
+              scoreMax={get(props.path, 'score.total') ? get(props.path, 'score.total') : resourceEvaluation.scoreMax}
               size="sm"
               style={{marginLeft: 'auto'}}
             />
@@ -46,12 +51,8 @@ const UserProgressionModal = props => {
       icon="fa fa-fw fa-tasks"
       title={trans('progression')}
       subtitle={props.evaluation.user.name}
-      onEntering={() => {
-        props.fetchUserStepsProgression(props.path.id, props.evaluation.user.id)
-      }}
-      onExiting={() => {
-        props.resetUserStepsProgression()
-      }}
+      onEntering={() => props.fetchUserStepsProgression(props.path.id, props.evaluation.user.id)}
+      onExiting={() => props.resetUserStepsProgression()}
     >
       <div className="modal-body">
         <ContentSummary links={props.path.steps.map(getStepSummary)} />
@@ -63,9 +64,11 @@ const UserProgressionModal = props => {
 UserProgressionModal.propTypes = {
   basePath: T.string.isRequired,
   evaluation: T.shape(
-    UserEvaluationTypes.propTypes
+    ResourceEvaluationTypes.propTypes
   ).isRequired,
-  lastAttempt: T.object,
+  resourceEvaluations: T.arrayOf(T.shape(
+    ResourceEvaluationTypes.propTypes
+  )),
   path: T.shape(
     PathTypes.propTypes
   ).isRequired,
@@ -73,6 +76,10 @@ UserProgressionModal.propTypes = {
   fetchUserStepsProgression: T.func.isRequired,
   resetUserStepsProgression: T.func.isRequired,
   fadeModal: T.func.isRequired
+}
+
+UserProgressionModal.defaultProps = {
+  resourceEvaluations: []
 }
 
 export {

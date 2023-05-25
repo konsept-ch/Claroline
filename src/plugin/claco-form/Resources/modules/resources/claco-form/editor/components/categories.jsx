@@ -68,7 +68,7 @@ const EditorCategories = props =>
           name: 'details.notify_edition',
           type: 'boolean',
           alias: 'notify_edition',
-          label: trans('edition', {}, 'clacoform'),
+          label: trans('edition'),
           displayed: true,
           sortable: false
         }, {
@@ -100,7 +100,7 @@ const EditorCategories = props =>
           scope: ['object']
         }, {
           type: CALLBACK_BUTTON,
-          icon: 'fa fa-fw fa-trash-o',
+          icon: 'fa fa-fw fa-trash',
           label: trans('delete', {}, 'actions'),
           dangerous: true,
           confirm: {

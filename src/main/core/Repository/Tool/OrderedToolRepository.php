@@ -22,9 +22,6 @@ class OrderedToolRepository extends ServiceEntityRepository
     /** @var array */
     private $bundles;
 
-    /**
-     * OrderedToolRepository constructor.
-     */
     public function __construct(ManagerRegistry $registry, PluginManager $pluginManager)
     {
         $this->bundles = $pluginManager->getEnabled();
@@ -34,7 +31,7 @@ class OrderedToolRepository extends ServiceEntityRepository
 
     public function findByName($name)
     {
-        return $this->_em
+        return $this->getEntityManager()
             ->createQuery('
                 SELECT ot
                 FROM Claroline\CoreBundle\Entity\Tool\OrderedTool ot
@@ -46,9 +43,9 @@ class OrderedToolRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    public function findOneByNameAndWorkspace(string $name, Workspace $workspace = null): ?OrderedTool
+    public function findOneByNameAndWorkspace(string $name, ?Workspace $workspace = null): ?OrderedTool
     {
-        return $this->_em
+        return $this->getEntityManager()
             ->createQuery('
                 SELECT ot
                 FROM Claroline\CoreBundle\Entity\Tool\OrderedTool ot
@@ -69,7 +66,7 @@ class OrderedToolRepository extends ServiceEntityRepository
      */
     public function findByWorkspace(Workspace $workspace)
     {
-        return $this->_em
+        return $this->getEntityManager()
             ->createQuery('
                 SELECT ot
                 FROM Claroline\CoreBundle\Entity\Tool\OrderedTool AS ot
@@ -98,7 +95,7 @@ class OrderedToolRepository extends ServiceEntityRepository
             return [];
         }
 
-        return $this->_em
+        return $this->getEntityManager()
             ->createQuery('
                 SELECT ot
                 FROM Claroline\CoreBundle\Entity\Tool\OrderedTool AS ot
@@ -121,14 +118,9 @@ class OrderedToolRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /**
-     * @param string $name
-     *
-     * @return OrderedTool
-     */
-    public function findOneByNameAndDesktop($name)
+    public function findOneByNameAndDesktop(string $name): ?OrderedTool
     {
-        return $this->_em
+        return $this->getEntityManager()
             ->createQuery('
                 SELECT ot
                 FROM Claroline\CoreBundle\Entity\Tool\OrderedTool ot
@@ -144,7 +136,7 @@ class OrderedToolRepository extends ServiceEntityRepository
 
     public function findByDesktop()
     {
-        return $this->_em
+        return $this->getEntityManager()
             ->createQuery('
                 SELECT ot
                 FROM Claroline\CoreBundle\Entity\Tool\OrderedTool AS ot
@@ -168,7 +160,7 @@ class OrderedToolRepository extends ServiceEntityRepository
             return [];
         }
 
-        return $this->_em
+        return $this->getEntityManager()
             ->createQuery('
                 SELECT ot
                 FROM Claroline\CoreBundle\Entity\Tool\OrderedTool AS ot

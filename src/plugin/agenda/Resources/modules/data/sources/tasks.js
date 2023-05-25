@@ -29,11 +29,12 @@ export default {
         name: 'start',
         type: 'date',
         label: trans('start_date'),
-        displayed: true
+        displayed: true,
+        options: {time: true}
       }, {
         name: 'afterToday',
         type: 'boolean',
-        label: trans('after_today', {}, 'agenda'),
+        label: trans('after_today'),
         displayed: false,
         displayable: false,
         filterable: true,

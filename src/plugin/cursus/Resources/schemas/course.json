@@ -6,6 +6,10 @@
       "type": "string",
       "description": "The course uuid"
     },
+    "slug": {
+      "type": "string",
+      "description": "The course slug"
+    },
     "name": {
       "type": "string",
       "description": "The course name",
@@ -20,35 +24,18 @@
       "type": ["string", "null"],
       "description": "The course description"
     },
+    "workspace": {
+      "type": ["object", "null"],
+      "properties": {
+        "uuid": {
+          "type": "string",
+          "description": "The course workspace"
+        }
+      }
+    },
     "meta": {
       "type": "object",
       "properties": {
-        "workspaceModel": {
-          "type": ["object", "null"],
-          "properties": {
-            "uuid": {
-              "type": "string",
-              "description": "The course workspace model"
-            }
-          }
-        },
-        "workspace": {
-          "type": ["object", "null"],
-          "properties": {
-            "uuid": {
-              "type": "string",
-              "description": "The course workspace"
-            }
-          }
-        },
-        "tutorRoleName": {
-          "type": ["string", "null"],
-          "description": "The course role for tutor"
-        },
-        "learnerRoleName": {
-          "type": ["string", "null"],
-          "description": "The course role for learner"
-        },
         "duration": {
           "type": "number",
           "description": "The default duration in days of session"
@@ -100,6 +87,6 @@
   },
   "required": ["code", "name"],
   "claroline": {
-    "ids": ["id", "code"]
+    "ids": ["id", "code", "slug"]
   }
 }

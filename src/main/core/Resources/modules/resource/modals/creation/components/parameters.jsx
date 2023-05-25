@@ -1,7 +1,7 @@
 import React, {createElement, Component, Fragment} from 'react'
 import {PropTypes as T} from 'prop-types'
 
-import {theme} from '#/main/app/config'
+import {theme} from '#/main/theme/config'
 
 import {getResource} from '#/main/core/resources'
 import {ResourceNode as ResourceNodeTypes} from '#/main/core/resource/prop-types'
@@ -49,7 +49,7 @@ class ResourceParameters extends Component {
     return (
       <ResourceForm
         level={5}
-        meta={true}
+        meta={false}
         name={selectors.STORE_NAME}
         dataPart={selectors.FORM_NODE_PART}
       >

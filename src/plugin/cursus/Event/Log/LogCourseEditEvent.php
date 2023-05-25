@@ -27,15 +27,12 @@ class LogCourseEditEvent extends LogGenericEvent
         $details['publicRegistration'] = $course->getPublicRegistration();
         $details['publicUnregistration'] = $course->getPublicUnregistration();
         $details['registrationValidation'] = $course->getRegistrationValidation();
-        $details['tutorRoleName'] = $course->getTutorRoleName();
-        $details['learnerRoleName'] = $course->getLearnerRoleName();
         $details['userValidation'] = $course->getUserValidation();
         $details['maxUsers'] = $course->getMaxUsers();
         $details['defaultSessionDays'] = $course->getDefaultSessionDays();
         $details['defaultSessionHours'] = $course->getDefaultSessionHours();
         $details['organizations'] = [];
         $workspace = $course->getWorkspace();
-        $workspaceModel = $course->getWorkspaceModel();
         $organizations = $course->getOrganizations()->toArray();
 
         if (!is_null($workspace)) {
@@ -44,10 +41,7 @@ class LogCourseEditEvent extends LogGenericEvent
             $details['workspaceCode'] = $workspace->getCode();
             $details['workspaceGuid'] = $workspace->getUuid();
         }
-        if (!is_null($workspaceModel)) {
-            $details['workspaceModelId'] = $workspaceModel->getId();
-            $details['workspaceModelName'] = $workspaceModel->getName();
-        }
+
         foreach ($organizations as $organization) {
             $details['organizations'][] = [
                 'id' => $organization->getId(),

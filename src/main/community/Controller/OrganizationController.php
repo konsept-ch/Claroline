@@ -63,16 +63,16 @@ class OrganizationController extends AbstractCrudController
     /**
      * @Route("/list/recursive", name="apiv2_organization_list_recursive")
      */
-    public function recursiveListAction(): JsonResponse
+    public function recursiveListAction(Request $request): JsonResponse
     {
-        $hiddenFilters = $this->getDefaultHiddenFilters();
+        $query = $request->query->all();
+
+        $query['hiddenFilters'] = $this->getDefaultHiddenFilters();
         // only get the root organization to build the tree
-        $hiddenFilters['parent'] = null;
+        $query['hiddenFilters']['parent'] = null;
 
         return new JsonResponse(
-            $this->finder->search(Organization::class, [
-                'hiddenFilters' => $hiddenFilters,
-            ], [Options::IS_RECURSIVE])
+            $this->finder->search(Organization::class, $query, [Options::IS_RECURSIVE])
         );
     }
 
@@ -100,7 +100,7 @@ class OrganizationController extends AbstractCrudController
     public function addManagersAction(Organization $organization, Request $request): JsonResponse
     {
         $users = $this->decodeIdsString($request, User::class);
-        $this->crud->patch($organization, 'administrator', Crud::COLLECTION_ADD, $users);
+        $this->crud->patch($organization, 'manager', Crud::COLLECTION_ADD, $users);
 
         return new JsonResponse($this->serializer->serialize($organization));
     }
@@ -114,7 +114,7 @@ class OrganizationController extends AbstractCrudController
     public function removeManagersAction(Organization $organization, Request $request): JsonResponse
     {
         $users = $this->decodeIdsString($request, User::class);
-        $this->crud->patch($organization, 'administrator', Crud::COLLECTION_REMOVE, $users);
+        $this->crud->patch($organization, 'manager', Crud::COLLECTION_REMOVE, $users);
 
         return new JsonResponse($this->serializer->serialize($organization));
     }

@@ -15,13 +15,11 @@ use Claroline\AppBundle\API\FinderProvider;
 use Claroline\CoreBundle\Entity\Resource\ResourceEvaluation;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
 use Claroline\CoreBundle\Entity\Resource\ResourceUserEvaluation;
-use Claroline\CoreBundle\Library\Normalizer\DateNormalizer;
-use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
+use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -63,8 +61,10 @@ class ResourceUserEvaluationController
 
         $filters = ['resourceNode' => $resourceNode->getUuid()];
         if (!$this->checkPermission('ADMINISTRATE', $resourceNode)) {
-            // only display
-            $filters['user'] = $this->tokenStorage->getToken()->getUser()->getUuid();
+            // only display evaluation of the current user
+            /** @var User $user */
+            $user = $this->tokenStorage->getToken()->getUser();
+            $filters['user'] = $user->getUuid();
         }
 
         return new JsonResponse(
@@ -73,62 +73,7 @@ class ResourceUserEvaluationController
     }
 
     /**
-     * @Route("/{nodeId}/csv", name="apiv2_resource_evaluation_csv", methods={"GET"})
-     * @EXT\ParamConverter("resourceNode", class="Claroline\CoreBundle\Entity\Resource\ResourceNode", options={"mapping": {"nodeId": "uuid"}})
-     */
-    public function exportCsvAction(ResourceNode $resourceNode): StreamedResponse
-    {
-        if (!$this->authorization->isGranted('IS_AUTHENTICATED_FULLY')) {
-            throw new AccessDeniedException();
-        }
-
-        $filters = ['resourceNode' => $resourceNode->getUuid()];
-        if (!$this->checkPermission('ADMINISTRATE', $resourceNode)) {
-            // only display
-            $filters['user'] = $this->tokenStorage->getToken()->getUser()->getUuid();
-        }
-
-        $evaluations = $this->finder->searchEntities(ResourceUserEvaluation::class, $filters);
-
-        return new StreamedResponse(function () use ($evaluations) {
-            // Prepare CSV file
-            $handle = fopen('php://output', 'w+');
-
-            // Create header
-            fputcsv($handle, [
-                'first_name',
-                'last_name',
-                'status',
-                'date',
-                'progression',
-                'progression_max',
-            ], ';', '"');
-
-            foreach ($evaluations['data'] as $evaluation) {
-                fputcsv($handle, [
-                    $evaluation->getUser()->getFirstName(),
-                    $evaluation->getUser()->getLastName(),
-                    DateNormalizer::normalize($evaluation->getDate()),
-                    $evaluation->getStatus(),
-                    $evaluation->getProgression(),
-                    $evaluation->getProgressionMax(),
-                    $evaluation->getScore(),
-                    $evaluation->getScoreMax(),
-                    $evaluation->getDuration(),
-                ], ';', '"');
-            }
-
-            fclose($handle);
-
-            return $handle;
-        }, 200, [
-            'Content-Type' => 'application/force-download',
-            'Content-Disposition' => 'attachment; filename="'.TextNormalizer::toKey("evaluations-{$resourceNode->getSlug()}").'.csv"',
-        ]);
-    }
-
-    /**
-     * @Route("/evaluations/{userEvaluationId}", name="apiv2_resource_evaluation_list_attempts", methods={"GET"})
+     * @Route("/attempts/{userEvaluationId}", name="apiv2_resource_evaluation_list_attempts", methods={"GET"})
      * @EXT\ParamConverter("userEvaluation", class="Claroline\CoreBundle\Entity\Resource\ResourceUserEvaluation", options={"mapping": {"userEvaluationId": "id"}})
      */
     public function listAttemptsAction(ResourceUserEvaluation $userEvaluation, Request $request): JsonResponse

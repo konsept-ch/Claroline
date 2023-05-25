@@ -11,7 +11,7 @@
 
 namespace Claroline\CoreBundle\Controller;
 
-use Claroline\AppBundle\API\Options;
+use Claroline\AppBundle\API\Serializer\SerializerInterface;
 use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\AppBundle\Event\StrictDispatcher;
 use Claroline\AppBundle\Persistence\ObjectManager;
@@ -123,7 +123,7 @@ class WorkspaceController
             if ($user) {
                 $userEvaluation = $this->serializer->serialize(
                     $this->evaluationManager->getUserEvaluation($workspace, $user),
-                    [Options::SERIALIZE_MINIMAL]
+                    [SerializerInterface::SERIALIZE_MINIMAL]
                 );
             }
 
@@ -133,7 +133,7 @@ class WorkspaceController
                 'impersonated' => $this->manager->isImpersonated($this->tokenStorage->getToken()),
                 // the list of current workspace roles the user owns
                 'roles' => array_map(function (Role $role) {
-                    return $this->serializer->serialize($role, [Options::SERIALIZE_MINIMAL]);
+                    return $this->serializer->serialize($role, [SerializerInterface::SERIALIZE_MINIMAL]);
                 }, $this->manager->getTokenRoles($this->tokenStorage->getToken(), $workspace)),
                 // append access restrictions to the loaded data if any
                 // to let the manager knows that other users can not enter the workspace
@@ -141,9 +141,9 @@ class WorkspaceController
                 'userEvaluation' => $userEvaluation,
                 // get the list of enabled workspace tool
                 'tools' => array_values(array_map(function (OrderedTool $orderedTool) {
-                    return $this->serializer->serialize($orderedTool, [Options::SERIALIZE_MINIMAL]);
+                    return $this->serializer->serialize($orderedTool, [SerializerInterface::SERIALIZE_MINIMAL]);
                 }, $this->toolManager->getOrderedToolsByWorkspace($workspace))),
-                'root' => $this->serializer->serialize($this->om->getRepository(ResourceNode::class)->findOneBy(['workspace' => $workspace, 'parent' => null]), [Options::SERIALIZE_MINIMAL]),
+                'root' => $this->serializer->serialize($this->om->getRepository(ResourceNode::class)->findOneBy(['workspace' => $workspace, 'parent' => null]), [SerializerInterface::SERIALIZE_MINIMAL]),
                 // TODO : only export current user shortcuts (we get all roles for the configuration in community/editor)
                 //'shortcuts' => $this->manager->getShortcuts($workspace, $this->tokenStorage->getToken()->getRoleNames()),
                 'shortcuts' => array_values(array_map(function (Shortcuts $shortcuts) {
@@ -162,7 +162,7 @@ class WorkspaceController
         return new JsonResponse([
             'impersonated' => $this->manager->isImpersonated($this->tokenStorage->getToken()),
             'roles' => array_map(function (Role $role) {
-                return $this->serializer->serialize($role, [Options::SERIALIZE_MINIMAL]);
+                return $this->serializer->serialize($role, [SerializerInterface::SERIALIZE_MINIMAL]);
             }, $this->manager->getTokenRoles($this->tokenStorage->getToken(), $workspace)),
             'workspace' => $this->serializer->serialize($workspace),
             'accessErrors' => $accessErrors,
@@ -173,11 +173,7 @@ class WorkspaceController
      * Opens a tool.
      *
      * @Route("/{id}/tool/{toolName}", name="claro_workspace_open_tool")
-     * @EXT\ParamConverter(
-     *      "workspace",
-     *      class="Claroline\CoreBundle\Entity\Workspace\Workspace",
-     *      options={"mapping": {"id": "uuid"}}
-     * )
+     * @EXT\ParamConverter("workspace", class="Claroline\CoreBundle\Entity\Workspace\Workspace", options={"mapping": {"id": "uuid"}})
      */
     public function openToolAction(Workspace $workspace, string $toolName): JsonResponse
     {
@@ -220,11 +216,7 @@ class WorkspaceController
      * Submit access code.
      *
      * @Route("/unlock/{id}", name="claro_workspace_unlock", methods={"POST"})
-     * @EXT\ParamConverter(
-     *     "workspace",
-     *     class="Claroline\CoreBundle\Entity\Workspace\Workspace",
-     *     options={"mapping": {"id": "uuid"}}
-     * )
+     * @EXT\ParamConverter("workspace", class="Claroline\CoreBundle\Entity\Workspace\Workspace", options={"mapping": {"id": "uuid"}})
      */
     public function unlockAction(Workspace $workspace, Request $request): JsonResponse
     {

@@ -21,7 +21,7 @@ use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
 use Claroline\CoreBundle\Library\RoutingHelper;
 use Claroline\CoreBundle\Manager\Tool\ToolManager;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
-use Claroline\CoreBundle\Validator\Exception\InvalidDataException;
+use Claroline\CursusBundle\Entity\Course;
 use Claroline\CursusBundle\Entity\Event;
 use Claroline\CursusBundle\Entity\Registration\AbstractRegistration;
 use Claroline\CursusBundle\Entity\Registration\SessionCancellation;
@@ -47,18 +47,12 @@ class SessionController extends AbstractCrudController
 {
     use PermissionCheckerTrait;
 
-    /** @var TokenStorageInterface */
-    private $tokenStorage;
-    /** @var TranslatorInterface */
-    private $translator;
-    /** @var RoutingHelper */
-    private $routingHelper;
-    /** @var ToolManager */
-    private $toolManager;
-    /** @var SessionManager */
-    private $manager;
-    /** @var PdfManager */
-    private $pdfManager;
+    private TokenStorageInterface $tokenStorage;
+    private TranslatorInterface $translator;
+    private RoutingHelper $routingHelper;
+    private ToolManager $toolManager;
+    private SessionManager $manager;
+    private PdfManager $pdfManager;
 
     public function __construct(
         AuthorizationCheckerInterface $authorization,
@@ -88,11 +82,6 @@ class SessionController extends AbstractCrudController
         return Session::class;
     }
 
-    public function getIgnore(): array
-    {
-        return ['schema'];
-    }
-
     protected function getDefaultHiddenFilters(): array
     {
         $filters = [];
@@ -101,10 +90,9 @@ class SessionController extends AbstractCrudController
             $user = $this->tokenStorage->getToken()->getUser();
 
             // filter by organization
+            $organizations = [];
             if ($user instanceof User) {
                 $organizations = $user->getOrganizations();
-            } else {
-                $organizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
             }
 
             $filters['organizations'] = array_map(function (Organization $organization) {
@@ -125,7 +113,7 @@ class SessionController extends AbstractCrudController
      */
     public function listPublicAction(Request $request): JsonResponse
     {
-        $options = $this->options['list'];
+        $options = static::getOptions();
         $params = $request->query->all();
 
         $params['hiddenFilters'] = $this->getDefaultHiddenFilters();
@@ -138,7 +126,7 @@ class SessionController extends AbstractCrudController
         }
 
         return new JsonResponse(
-            $this->finder->search(Session::class, $params, $options ?? [])
+            $this->finder->search(Session::class, $params, $options['list'] ?? [])
         );
     }
 
@@ -321,57 +309,6 @@ class SessionController extends AbstractCrudController
     }
 
     /**
-     * @Route("/{id}/groups/{type}", name="apiv2_cursus_session_remove_groups", methods={"DELETE"})
-     * @EXT\ParamConverter("session", class="Claroline\CursusBundle\Entity\Session", options={"mapping": {"id": "uuid"}})
-     */
-    public function removeGroupsAction(Session $session, Request $request): JsonResponse
-    {
-        $this->checkPermission('REGISTER', $session, [], true);
-
-        $sessionGroups = $this->decodeIdsString($request, SessionGroup::class);
-        $this->manager->removeGroups($session, $sessionGroups);
-
-        return new JsonResponse(null, 204);
-    }
-
-    /**
-     * @Route("/{id}/pending", name="apiv2_cursus_session_list_pending", methods={"GET"})
-     * @EXT\ParamConverter("session", class="Claroline\CursusBundle\Entity\Session", options={"mapping": {"id": "uuid"}})
-     */
-    public function listPendingAction(Session $session, Request $request): JsonResponse
-    {
-        $this->checkPermission('REGISTER', $session, [], true);
-
-        $params = $request->query->all();
-        if (!isset($params['hiddenFilters'])) {
-            $params['hiddenFilters'] = [];
-        }
-        $params['hiddenFilters']['session'] = $session->getUuid();
-        $params['hiddenFilters']['pending'] = true;
-
-        // only list participants of the same organization
-        if (!$this->authorization->isGranted('ROLE_ADMIN')) {
-            /** @var User $user */
-            $user = $this->tokenStorage->getToken()->getUser();
-
-            // filter by organizations
-            if ($user instanceof User) {
-                $organizations = $user->getOrganizations();
-            } else {
-                $organizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
-            }
-
-            $params['hiddenFilters']['organizations'] = array_map(function (Organization $organization) {
-                return $organization->getUuid();
-            }, $organizations);
-        }
-
-        return new JsonResponse(
-            $this->finder->search(SessionUser::class, $params)
-        );
-    }
-
-    /**
      * @Route("/{id}/pending", name="apiv2_cursus_session_add_pending", methods={"PATCH"})
      * @EXT\ParamConverter("session", class="Claroline\CursusBundle\Entity\Session", options={"mapping": {"id": "uuid"}})
      */
@@ -388,43 +325,11 @@ class SessionController extends AbstractCrudController
     }
 
     /**
-     * @Route("/{id}/pending/confirm", name="apiv2_cursus_session_confirm_pending", methods={"PUT"})
-     * @EXT\ParamConverter("session", class="Claroline\CursusBundle\Entity\Session", options={"mapping": {"id": "uuid"}})
-     */
-    public function confirmPendingAction(Session $session, Request $request): JsonResponse
-    {
-        $this->checkPermission('REGISTER', $session, [], true);
-
-        $users = $this->decodeIdsString($request, SessionUser::class);
-        $sessionUsers = $this->manager->confirmUsers($session, $users);
-
-        return new JsonResponse(array_map(function (SessionUser $sessionUser) {
-            return $this->serializer->serialize($sessionUser);
-        }, $sessionUsers));
-    }
-
-    /**
-     * @Route("/{id}/pending/validate", name="apiv2_cursus_session_validate_pending", methods={"PUT"})
-     * @EXT\ParamConverter("session", class="Claroline\CursusBundle\Entity\Session", options={"mapping": {"id": "uuid"}})
-     */
-    public function validatePendingAction(Session $session, Request $request): JsonResponse
-    {
-        $this->checkPermission('REGISTER', $session, [], true);
-
-        $users = $this->decodeIdsString($request, SessionUser::class);
-        $sessionUsers = $this->manager->validateUsers($session, $users);
-
-        return new JsonResponse(array_map(function (SessionUser $sessionUser) {
-            return $this->serializer->serialize($sessionUser);
-        }, $sessionUsers));
-    }
-
-    /**
      * @Route("/{id}/self/register", name="apiv2_cursus_session_self_register", methods={"PUT"})
      * @EXT\ParamConverter("session", class="Claroline\CursusBundle\Entity\Session", options={"mapping": {"id": "uuid"}})
      * @EXT\ParamConverter("user", converter="current_user", options={"allowAnonymous"=false})
      */
-    public function selfRegisterAction(Session $session, User $user): JsonResponse
+    public function selfRegisterAction(Session $session, User $user, Request $request): JsonResponse
     {
         $this->checkPermission('OPEN', $session, [], true);
 
@@ -432,7 +337,11 @@ class SessionController extends AbstractCrudController
             throw new AccessDeniedException();
         }
 
-        $sessionUsers = $this->manager->addUsers($session, [$user], AbstractRegistration::LEARNER);
+        $registrationData = $this->decodeRequest($request);
+
+        $sessionUsers = $this->manager->addUsers($session, [$user], AbstractRegistration::LEARNER, false, [
+            $user->getUuid() => $registrationData,
+        ]);
 
         return new JsonResponse($this->serializer->serialize($sessionUsers[0]));
     }
@@ -450,7 +359,7 @@ class SessionController extends AbstractCrudController
 
         $sessionUser = $this->om->getRepository(SessionUser::class)->findOneBy(['session' => $session, 'user' => $user]);
         if ($sessionUser && !$sessionUser->isConfirmed()) {
-            $this->manager->confirmUsers($session, [$sessionUser]);
+            $this->manager->confirmUsers([$sessionUser]);
         }
 
         return new RedirectResponse(
@@ -472,108 +381,24 @@ class SessionController extends AbstractCrudController
     }
 
     /**
-     * @Route("/{id}/invite/users", name="apiv2_cursus_session_invite_users", methods={"PUT"})
+     * @Route("/{id}/stats", name="apiv2_cursus_session_stats", methods={"GET"})
      * @EXT\ParamConverter("session", class="Claroline\CursusBundle\Entity\Session", options={"mapping": {"id": "uuid"}})
      */
-    public function inviteUsersAction(Session $session, Request $request): JsonResponse
+    public function getStatsAction(Session $session): JsonResponse
     {
         $this->checkPermission('REGISTER', $session, [], true);
 
-        $sessionUsers = $this->decodeIdsString($request, SessionUser::class);
-        $this->manager->sendSessionInvitation($session, array_map(function (SessionUser $sessionUser) {
-            return $sessionUser->getUser();
-        }, $sessionUsers));
+        $stats = $this->om->getRepository(Course::class)->getRegistrationStats($session->getCourse(), $session);
 
-        return new JsonResponse(null, 204);
-    }
-
-    /**
-     * @Route("/{id}/invite/groups", name="apiv2_cursus_session_invite_groups", methods={"PUT"})
-     * @EXT\ParamConverter("session", class="Claroline\CursusBundle\Entity\Session", options={"mapping": {"id": "uuid"}})
-     */
-    public function inviteGroupsAction(Session $session, Request $request): JsonResponse
-    {
-        $this->checkPermission('REGISTER', $session, [], true);
-
-        $sessionGroups = $this->decodeIdsString($request, SessionGroup::class);
-        $users = [];
-        foreach ($sessionGroups as $sessionGroup) {
-            $groupUsers = $sessionGroup->getGroup()->getUsers();
-
-            foreach ($groupUsers as $user) {
-                $users[$user->getUuid()] = $user;
-            }
-        }
-
-        $this->manager->sendSessionInvitation($session, $users, false);
-
-        return new JsonResponse(null, 204);
-    }
-
-    /**
-     * @Route("/{id}/move/users/{type}", name="apiv2_cursus_session_move_users", methods={"PUT"})
-     * @EXT\ParamConverter("session", class="Claroline\CursusBundle\Entity\Session", options={"mapping": {"id": "uuid"}})
-     */
-    public function moveUsersAction(Session $session, string $type, Request $request): JsonResponse
-    {
-        $this->checkPermission('REGISTER', $session, [], true);
-
-        $data = $this->decodeRequest($request);
-        if (empty($data['target']) || empty($data['sessionUsers'])) {
-            throw new InvalidDataException('Missing either target session or registrations to move.');
-        }
-
-        $targetSession = $this->om->getRepository(Session::class)->findOneBy([
-            'uuid' => $data['target'],
+        return new JsonResponse([
+            'total' => $stats['total'],
+            'fields' => array_map(function (array $fieldStats) {
+                return [
+                    'field' => $this->serializer->serialize($fieldStats['field']),
+                    'values' => $fieldStats['values'],
+                ];
+            }, $stats['fields']),
         ]);
-
-        $sessionUsers = [];
-        foreach ($data['sessionUsers'] as $sessionUserId) {
-            $sessionUser = $this->om->getRepository(SessionUser::class)->findOneBy([
-                'uuid' => $sessionUserId,
-            ]);
-
-            if (!empty($sessionUser)) {
-                $sessionUsers[] = $sessionUser;
-            }
-        }
-
-        $this->manager->moveUsers($session, $targetSession, $sessionUsers, $type);
-
-        return new JsonResponse();
-    }
-
-    /**
-     * @Route("/{id}/move/groups/{type}", name="apiv2_cursus_session_move_groups", methods={"PUT"})
-     * @EXT\ParamConverter("session", class="Claroline\CursusBundle\Entity\Session", options={"mapping": {"id": "uuid"}})
-     */
-    public function moveGroupsAction(Session $session, string $type, Request $request): JsonResponse
-    {
-        $this->checkPermission('REGISTER', $session, [], true);
-
-        $data = $this->decodeRequest($request);
-        if (empty($data['target']) || empty($data['sessionGroups'])) {
-            throw new InvalidDataException('Missing either target session or registrations to move.');
-        }
-
-        $targetSession = $this->om->getRepository(Session::class)->findOneBy([
-            'uuid' => $data['target'],
-        ]);
-
-        $sessionGroups = [];
-        foreach ($data['sessionGroups'] as $sessionGroupId) {
-            $sessionGroup = $this->om->getRepository(SessionGroup::class)->findOneBy([
-                'uuid' => $sessionGroupId,
-            ]);
-
-            if (!empty($sessionGroup)) {
-                $sessionGroups[] = $sessionGroup;
-            }
-        }
-
-        $this->manager->moveGroups($session, $targetSession, $sessionGroups, $type);
-
-        return new JsonResponse();
     }
 
     /**
@@ -595,7 +420,7 @@ class SessionController extends AbstractCrudController
         );
     }
 
-    private function checkToolAccess(string $rights = 'OPEN'): bool
+    private function checkToolAccess(?string $rights = 'OPEN'): bool
     {
         $trainingsTool = $this->toolManager->getOrderedTool('trainings', Tool::DESKTOP);
 

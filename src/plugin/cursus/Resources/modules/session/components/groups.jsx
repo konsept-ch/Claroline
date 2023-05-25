@@ -1,77 +1,59 @@
-import React, {Fragment} from 'react'
+import React from 'react'
 import {PropTypes as T} from 'prop-types'
+import get from 'lodash/get'
 
-import {trans} from '#/main/app/intl/translation'
-import {hasPermission} from '#/main/app/security'
-import {AlertBlock} from '#/main/app/alert/components/alert-block'
-import {Button} from '#/main/app/action/components/button'
-import {ListData} from '#/main/app/content/list/containers/data'
-import {constants as listConst} from '#/main/app/content/list/constants'
-import {GroupCard} from '#/main/core/user/data/components/group-card'
+import {trans} from '#/main/app/intl'
+import {CALLBACK_BUTTON, MODAL_BUTTON} from '#/main/app/buttons'
 
-import {isFull} from '#/plugin/cursus/utils'
-import {Session as SessionTypes} from '#/plugin/cursus/prop-types'
+import {RegistrationGroups} from '#/plugin/cursus/registration/components/groups'
+import {Course as CourseTypes, Session as SessionTypes} from '#/plugin/cursus/prop-types'
+import {MODAL_SESSIONS} from '#/plugin/cursus/modals/sessions'
 
 const SessionGroups = (props) =>
-  <Fragment>
-    {isFull(props.session) && hasPermission('register', props.session) &&
-      <AlertBlock type="warning" title={trans('La session est complète.', {}, 'cursus')}>
-        {trans('Il n\'est plus possible d\'inscrire de nouveaux groupes.', {}, 'cursus')}
-      </AlertBlock>
+  <RegistrationGroups
+    {...props}
+    session={props.session || props.course}
+    url={props.session ?
+      ['apiv2_training_session_group_list', {id: props.course.id, sessionId: props.session.id}] :
+      ['apiv2_training_session_group_list', {id: props.course.id}]
     }
-
-    <ListData
-      name={props.name}
-      fetch={{
-        url: props.url,
-        autoload: true
-      }}
-      delete={{
-        url: props.unregisterUrl,
-        label: trans('unregister', {}, 'actions'),
-        displayed: () => hasPermission('register', props.session)
-      }}
-      definition={[
-        {
-          name: 'group',
-          type: 'group',
-          label: trans('group'),
-          displayed: true
-        }, {
-          name: 'date',
-          type: 'date',
-          label: trans('registration_date', {}, 'cursus'),
-          options: {time: true},
-          displayed: true
-        }
-      ]}
-      actions={props.actions}
-      card={(cardProps) => <GroupCard {...cardProps} data={cardProps.data.group} />}
-      display={{
-        current: listConst.DISPLAY_TILES_SM
-      }}
-    />
-
-    {props.add && hasPermission('register', props.session) &&
-      <Button
-        className="btn btn-block btn-emphasis component-container"
-        primary={true}
-        {...props.add}
-      />
-    }
-  </Fragment>
+    unregisterUrl={['apiv2_training_session_group_delete_bulk']}
+    actions={(rows) => [
+      {
+        name: 'invite',
+        type: CALLBACK_BUTTON,
+        icon: 'fa fa-fw fa-envelope',
+        label: trans('send_invitation', {}, 'actions'),
+        callback: () => props.inviteGroups(rows)
+      }, {
+        name: 'move',
+        type: MODAL_BUTTON,
+        icon: 'fa fa-fw fa-arrows',
+        label: trans('move', {}, 'actions'),
+        group: trans('management'),
+        modal: [MODAL_SESSIONS, {
+          url: ['apiv2_cursus_course_list_sessions', {id: get(props.course, 'id')}],
+          filters: [{property: 'status', value: 'not_ended'}],
+          selectAction: (selected) => ({
+            type: CALLBACK_BUTTON,
+            callback: () => props.moveGroups(selected[0].id, rows, props.type)
+          })
+        }]
+      }
+    ]}
+  />
 
 SessionGroups.propTypes = {
+  course: T.shape(
+    CourseTypes.propTypes
+  ).isRequired,
   session: T.shape(
     SessionTypes.propTypes
-  ).isRequired,
+  ),
+  type: T.string,
   name: T.string.isRequired,
-  url: T.oneOfType([T.string, T.array]).isRequired,
-  unregisterUrl: T.oneOfType([T.string, T.array]).isRequired,
-  actions: T.func,
-  add: T.shape({
-    // action types
-  })
+  inviteGroups: T.func.isRequired,
+  moveGroups: T.func.isRequired
 }
 
 export {

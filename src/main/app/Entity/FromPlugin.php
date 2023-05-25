@@ -12,17 +12,15 @@ trait FromPlugin
      *
      * @ORM\ManyToOne(targetEntity="Claroline\CoreBundle\Entity\Plugin")
      * @ORM\JoinColumn(onDelete="CASCADE")
-     *
-     * @var Plugin
      */
-    protected $plugin;
+    protected ?Plugin $plugin = null;
 
     public function getPlugin(): ?Plugin
     {
         return $this->plugin;
     }
 
-    public function setPlugin(Plugin $plugin)
+    public function setPlugin(Plugin $plugin): void
     {
         $this->plugin = $plugin;
     }

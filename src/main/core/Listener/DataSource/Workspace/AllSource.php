@@ -37,9 +37,10 @@ class AllSource
     public function getData(GetDataEvent $event)
     {
         $options = $event->getOptions();
-        $options['hiddenFilters']['hidden'] = false;
 
-        if (!$this->authorization->isGranted('ROLE_ADMIN')) {
+        // filter by current user organizations for non admin
+        // and if the data source is not already filtered by organization
+        if (!$this->authorization->isGranted('ROLE_ADMIN') && (empty($options['filters']) || empty($options['filters']['organizations']))) {
             $options['hiddenFilters']['organizations'] = $this->getOrganizations();
         }
 

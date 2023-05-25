@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {Fragment} from 'react'
 import {PropTypes as T} from 'prop-types'
 import {schemeCategory20c} from 'd3-scale'
 
@@ -6,58 +6,40 @@ import {asset} from '#/main/app/config'
 import {toKey} from '#/main/core/scaffolding/text'
 import {LiquidGauge} from '#/main/core/layout/gauge/components/liquid-gauge'
 import {displayDuration, number, trans} from '#/main/app/intl'
-import {LINK_BUTTON, MODAL_BUTTON} from '#/main/app/buttons'
 import {DataCard} from '#/main/app/data/components/card'
-import {route as resourceRoute} from '#/main/core/resource/routing'
 
-import {MODAL_RESOURCE_EVALUATIONS} from '#/main/evaluation/modals/resource-evaluations'
-import {ResourceUserEvaluation as ResourceUserEvaluationTypes} from '#/main/evaluation/resource/prop-types'
+import {constants} from '#/main/evaluation/constants'
+import {ResourceEvaluation as ResourceEvaluationTypes} from '#/main/evaluation/resource/prop-types'
+import {displayScore} from '#/main/evaluation/utils'
 
-const ResourceCard = (props) => {
-  let progression = 0
-  if (props.data.progression) {
-    progression = props.data.progression
-    if (props.data.progressionMax) {
-      progression = (progression / props.data.progressionMax) * 100
+const ResourceCard = (props) =>
+  <DataCard
+    {...props}
+    id={props.data.id}
+    className="resource-evaluation-card"
+    poster={props.data.resourceNode.thumbnail ? asset(props.data.resourceNode.thumbnail) : null}
+    icon={
+      <LiquidGauge
+        id={`user-progression-${props.data.id}`}
+        type="user"
+        value={props.data.progression || 0}
+        displayValue={(value) => number(value) + '%'}
+        width={'lg' === props.size ? 100 : 60}
+        height={'lg' === props.size ? 100 : 60}
+      />
     }
-  }
+    title={
+      <Fragment>
+        <span className={`label label-${constants.EVALUATION_STATUS_COLOR[props.data.status]} icon-with-text-right`}>
+          {constants.EVALUATION_STATUSES_SHORT[props.data.status]}
+        </span>
 
-  return (
-    <DataCard
-      {...props}
-      id={props.data.id}
-      className="resource-evaluation-card"
-      poster={props.data.resourceNode.thumbnail ? asset(props.data.resourceNode.thumbnail) : null}
-      icon={
-        <LiquidGauge
-          id={`user-progression-${props.data.id}`}
-          type="user"
-          value={progression}
-          displayValue={(value) => number(value) + '%'}
-          width={60}
-          height={60}
-        />
-      }
-      title={props.data.resourceNode.name}
-      subtitle={trans(props.data.resourceNode.meta.type, {}, 'resource')}
-      actions={[
-        {
-          name: 'open',
-          type: LINK_BUTTON,
-          icon: 'fa fa-fw fa-external-link',
-          label: trans('open', {}, 'actions'),
-          target: resourceRoute(props.data.resourceNode)
-        }, {
-          name: 'about',
-          type: MODAL_BUTTON,
-          icon: 'fa fa-fw fa-info',
-          label: trans('show-info', {}, 'actions'),
-          modal: [MODAL_RESOURCE_EVALUATIONS, {
-            userEvaluation: props.data
-          }]
-        }
-      ]}
-    >
+        {props.data.resourceNode.name}
+      </Fragment>
+    }
+    subtitle={trans(props.data.resourceNode.meta.type, {}, 'resource')}
+  >
+    {-1 === ['xs', 'sm'].indexOf(props.size) && (!props.display || -1 !== props.display.indexOf('footer')) &&
       <div className="resource-evaluation-details">
         {[
           {
@@ -76,13 +58,13 @@ const ResourceCard = (props) => {
             icon: 'fa fa-fw fa-award',
             label: trans('score'),
             displayed: !!props.data.scoreMax,
-            value: (number(props.data.score) || 0) + ' / ' + number(props.data.scoreMax)
+            value: !!props.data.scoreMax && displayScore(props.data.scoreMax, props.data.score, 100) + ' / 100'
           }
         ]
           .filter(item => undefined === item.displayed || item.displayed)
           .map((item, index) => (
             <article key={toKey(item.label)}>
-              <span className={item.icon} style={{backgroundColor: schemeCategory20c[(index * 4) + 1]}} />
+              <span className={item.icon} style={{backgroundColor: schemeCategory20c[(index * 4) + 1]}}/>
               <h5>
                 <small>{item.label}</small>
                 {item.value}
@@ -91,13 +73,14 @@ const ResourceCard = (props) => {
           ))
         }
       </div>
-    </DataCard>
-  )
-}
+    }
+  </DataCard>
 
 ResourceCard.propTypes = {
+  size: T.string,
+  display: T.array, // from list
   data: T.shape(
-    ResourceUserEvaluationTypes.propTypes
+    ResourceEvaluationTypes.propTypes
   )
 }
 

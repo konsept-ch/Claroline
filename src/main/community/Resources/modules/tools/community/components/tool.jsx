@@ -4,15 +4,15 @@ import get from 'lodash/get'
 
 import {Routes} from '#/main/app/router'
 import {constants as toolConstants} from '#/main/core/tool/constants'
-import {getToolBreadcrumb, showToolBreadcrumb} from '#/main/core/tool/utils'
 
-import {User as UserType} from '#/main/community/prop-types'
-import {Profile} from '#/main/community/profile/containers/main'
-import {UserTab} from '#/main/community/tools/community/user/containers/tab'
-import {GroupTab} from '#/main/community/tools/community/group/containers/tab'
-import {RoleTab} from '#/main/community/tools/community/role/containers/tab'
-import {ParametersTab} from '#/main/community/tools/community/parameters/containers/tab'
-import {PendingTab} from '#/main/community/tools/community/pending/containers/tab'
+import {ActivityMain} from '#/main/community/tools/community/activity/containers/main'
+import {UserMain} from '#/main/community/tools/community/user/containers/main'
+import {GroupMain} from '#/main/community/tools/community/group/containers/main'
+import {RoleMain} from '#/main/community/tools/community/role/containers/main'
+import {PendingMain} from '#/main/community/tools/community/pending/containers/main'
+import {ProfileMain} from '#/main/community/tools/community/profile/containers/main'
+import {OrganizationMain} from '#/main/community/tools/community/organization/containers/main'
+import {TeamMain} from '#/main/community/tools/community/team/containers/main'
 
 const CommunityTool = (props) =>
   <Routes
@@ -23,37 +23,37 @@ const CommunityTool = (props) =>
     ]}
     routes={[
       {
+        path: '/activity',
+        component: ActivityMain,
+        disabled: !props.canShowActivity || (props.contextType === toolConstants.TOOL_WORKSPACE && get(props.workspace, 'meta.model'))
+      }, {
         path: '/users',
-        component: UserTab,
+        component: UserMain,
         disabled: props.contextType === toolConstants.TOOL_WORKSPACE && get(props.workspace, 'meta.model')
       }, {
         path: '/groups',
-        component: GroupTab,
-        disabled:  props.contextType !== toolConstants.TOOL_WORKSPACE && get(props.workspace, 'meta.model')
+        component: GroupMain,
+        disabled:  props.contextType === toolConstants.TOOL_WORKSPACE && get(props.workspace, 'meta.model')
       }, {
         path: '/roles',
-        component: RoleTab,
-        disabled: !props.canAdministrate || props.contextType !== toolConstants.TOOL_WORKSPACE
+        component: RoleMain,
+        disabled: !props.canEdit
+      }, {
+        path: '/organizations',
+        component: OrganizationMain,
+        disabled: props.contextType !== toolConstants.TOOL_DESKTOP/* || !props.canEdit*/
+      }, {
+        path: '/teams',
+        component: TeamMain,
+        disabled: props.contextType === toolConstants.TOOL_DESKTOP
       }, {
         path: '/pending',
-        component: PendingTab,
-        disabled: !props.canAdministrate || props.contextType !== toolConstants.TOOL_WORKSPACE || !get(props.workspace, 'registration.selfRegistration') || !get(props.workspace, 'registration.validation')
+        component: PendingMain,
+        disabled: !props.canEdit || props.contextType !== toolConstants.TOOL_WORKSPACE || !get(props.workspace, 'registration.selfRegistration') || !get(props.workspace, 'registration.validation')
       }, {
-        path: '/parameters',
-        component: ParametersTab,
-        disabled: !props.canAdministrate || props.contextType !== toolConstants.TOOL_WORKSPACE
-      }, {
-        path: '/profile/:username',
-        render(routerProps) {
-          return (
-            <Profile
-              path={props.path + '/profile/' + routerProps.match.params.username}
-              showBreadcrumb={showToolBreadcrumb(props.contextType, props.contextData)}
-              breadcrumb={getToolBreadcrumb('community', props.contextType, props.contextData)}
-              username={routerProps.match.params.username}
-            />
-          )
-        }
+        path: '/parameters/profile',
+        component: ProfileMain,
+        disabled: props.contextType !== toolConstants.TOOL_DESKTOP || !props.canEdit
       }
     ]}
   />
@@ -62,10 +62,9 @@ CommunityTool.propTypes = {
   contextType: T.string,
   contextData: T.object,
   path: T.string.isRequired,
-  currentUser: T.shape(UserType.propTypes),
   workspace: T.object,
-  loadUser: T.func.isRequired,
-  canAdministrate: T.bool.isRequired
+  canEdit: T.bool.isRequired,
+  canShowActivity: T.bool.isRequired
 }
 
 export {

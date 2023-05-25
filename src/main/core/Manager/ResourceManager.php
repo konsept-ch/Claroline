@@ -16,6 +16,7 @@ use Claroline\AppBundle\Event\StrictDispatcher;
 use Claroline\AppBundle\Log\LoggableTrait;
 use Claroline\AppBundle\Manager\File\TempFileManager;
 use Claroline\AppBundle\Persistence\ObjectManager;
+use Claroline\CommunityBundle\Repository\RoleRepository;
 use Claroline\CoreBundle\Entity\Resource\AbstractResource;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
 use Claroline\CoreBundle\Entity\Resource\ResourceType;
@@ -24,15 +25,13 @@ use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\CoreBundle\Event\CatalogEvents\ResourceEvents;
 use Claroline\CoreBundle\Event\Resource\DownloadResourceEvent;
+use Claroline\CoreBundle\Event\Resource\EmbedResourceEvent;
 use Claroline\CoreBundle\Event\Resource\LoadResourceEvent;
 use Claroline\CoreBundle\Exception\ResourceNotFoundException;
-use Claroline\CoreBundle\Library\Utilities\ClaroUtilities;
+use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
 use Claroline\CoreBundle\Manager\Resource\RightsManager;
 use Claroline\CoreBundle\Repository\Resource\ResourceNodeRepository;
 use Claroline\CoreBundle\Repository\Resource\ResourceTypeRepository;
-use Claroline\CoreBundle\Repository\User\RoleRepository;
-use Doctrine\ORM\NonUniqueResultException;
-use Doctrine\ORM\NoResultException;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Mime\MimeTypes;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -42,36 +41,23 @@ class ResourceManager implements LoggerAwareInterface
 {
     use LoggableTrait;
 
-    /** @var AuthorizationCheckerInterface */
-    private $authorization;
-    /** @var StrictDispatcher */
-    private $dispatcher;
-    /** @var ObjectManager */
-    private $om;
-    /** @var ClaroUtilities */
-    private $ut;
-    /** @var Crud */
-    private $crud;
-    /** @var RightsManager */
-    private $rightsManager;
-    /** @var TempFileManager */
-    private $tempManager;
-    /** @var Security */
-    private $security;
+    private AuthorizationCheckerInterface $authorization;
+    private StrictDispatcher $dispatcher;
+    private ObjectManager $om;
+    private Crud $crud;
+    private RightsManager $rightsManager;
+    private TempFileManager $tempManager;
+    private Security $security;
 
-    /** @var ResourceTypeRepository */
-    private $resourceTypeRepo;
-    /** @var ResourceNodeRepository */
-    private $resourceNodeRepo;
-    /** @var RoleRepository */
-    private $roleRepo;
+    private ResourceTypeRepository $resourceTypeRepo;
+    private ResourceNodeRepository $resourceNodeRepo;
+    private RoleRepository $roleRepo;
 
     public function __construct(
         AuthorizationCheckerInterface $authorization,
         RightsManager $rightsManager,
         StrictDispatcher $dispatcher,
         ObjectManager $om,
-        ClaroUtilities $ut,
         Crud $crud,
         TempFileManager $tempManager,
         Security $security
@@ -80,7 +66,6 @@ class ResourceManager implements LoggerAwareInterface
         $this->om = $om;
         $this->rightsManager = $rightsManager;
         $this->dispatcher = $dispatcher;
-        $this->ut = $ut;
         $this->crud = $crud;
         $this->tempManager = $tempManager;
         $this->security = $security;
@@ -121,6 +106,7 @@ class ResourceManager implements LoggerAwareInterface
             $resource->getMimeType();
         $node->setMimeType($mimeType);
         $node->setName($resource->getName());
+        $node->setCode($this->getUniqueCode($resource->getName()));
 
         if (!empty($creator)) {
             $node->setCreator($creator);
@@ -167,7 +153,11 @@ class ResourceManager implements LoggerAwareInterface
     public function createRights(ResourceNode $node, array $rights = [], bool $withDefault = true, bool $log = true)
     {
         foreach ($rights as $data) {
-            $resourceTypes = $this->checkResourceTypes($data['create']);
+            $resourceTypes = [];
+            if (isset($data['create'])) {
+                $resourceTypes = $this->checkResourceTypes($data['create']);
+            }
+
             $this->rightsManager->create($data, $data['role'], $node, false, $resourceTypes, $log);
         }
 
@@ -298,12 +288,12 @@ class ResourceManager implements LoggerAwareInterface
                         $obj = $event->getItem();
 
                         if (null !== $obj) {
-                            $archive->addFile($obj, iconv($this->ut->detectEncoding($filename), $this->getEncoding(), $filename));
+                            $archive->addFile($obj, TextNormalizer::toUtf8($filename));
                         } else {
-                            $archive->addFromString(iconv($this->ut->detectEncoding($filename), $this->getEncoding(), $filename), '');
+                            $archive->addFromString(TextNormalizer::toUtf8($filename), '');
                         }
                     } else {
-                        $archive->addEmptyDir(iconv($this->ut->detectEncoding($filename), $this->getEncoding(), $filename));
+                        $archive->addEmptyDir(TextNormalizer::toUtf8($filename));
                     }
 
                     $this->dispatcher->dispatch('log', 'Log\LogResourceExport', [$node]);
@@ -320,25 +310,14 @@ class ResourceManager implements LoggerAwareInterface
         return $data;
     }
 
-    /**
-     * @return ResourceNode
-     */
-    public function getWorkspaceRoot(Workspace $workspace)
+    public function getWorkspaceRoot(Workspace $workspace): ?ResourceNode
     {
         return $this->resourceNodeRepo->findWorkspaceRoot($workspace);
     }
 
-    /**
-     * @param string $name
-     *
-     * @return ResourceType
-     */
-    public function getResourceTypeByName($name)
+    public function getResourceTypeByName(string $name): ?ResourceType
     {
-        /** @var ResourceType $type */
-        $type = $this->resourceTypeRepo->findOneBy(['name' => $name]);
-
-        return $type;
+        return $this->resourceTypeRepo->findOneBy(['name' => $name]);
     }
 
     /**
@@ -377,19 +356,6 @@ class ResourceManager implements LoggerAwareInterface
         }
 
         return null;
-    }
-
-    public function getLastIndex(ResourceNode $parent)
-    {
-        try {
-            $lastIndex = $this->resourceNodeRepo->findLastIndex($parent);
-        } catch (NonUniqueResultException $e) {
-            $lastIndex = 0;
-        } catch (NoResultException $e) {
-            $lastIndex = 0;
-        }
-
-        return $lastIndex;
     }
 
     public function getNotDeletableResourcesByWorkspace(Workspace $workspace)
@@ -441,14 +407,48 @@ class ResourceManager implements LoggerAwareInterface
         throw new ResourceNotFoundException();
     }
 
+    /**
+     * Embed a resource inside a rich text.
+     */
+    public function embed(ResourceNode $resourceNode)
+    {
+        $resource = $this->getResourceFromNode($resourceNode);
+        if ($resource) {
+            /** @var EmbedResourceEvent $event */
+            $event = $this->dispatcher->dispatch(
+                ResourceEvents::EMBED,
+                EmbedResourceEvent::class,
+                [$resource]
+            );
+
+            return $event->getData();
+        }
+
+        throw new ResourceNotFoundException();
+    }
+
     public function isManager(ResourceNode $resourceNode)
     {
         return $this->rightsManager->isManager($resourceNode);
     }
 
-    private function getEncoding()
+    /**
+     * Generates an unique resource code from given one by iterating it.
+     */
+    public function getUniqueCode(string $code): string
     {
-        return 'UTF-8//TRANSLIT';
+        $existingCodes = $this->resourceNodeRepo->findCodesWithPrefix($code);
+        if (empty($existingCodes)) {
+            return $code;
+        }
+
+        do {
+            $index = count($existingCodes) + 1;
+            $currentCode = $code.'_'.$index;
+            $upperCurrentCode = strtoupper($currentCode);
+        } while (in_array($upperCurrentCode, $existingCodes));
+
+        return $currentCode;
     }
 
     /**

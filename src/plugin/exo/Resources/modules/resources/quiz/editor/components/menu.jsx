@@ -15,21 +15,23 @@ import {MODAL_STEP_POSITION} from '#/plugin/exo/resources/quiz/editor/modals/ste
 
 const EditorMenu = props =>
   <ContentSummary
-    links={[{
-      type: LINK_BUTTON,
-      icon: 'fa fa-fw fa-cog',
-      label: trans('parameters'),
-      target: `${props.path}/edit/parameters`,
-      subscript: !isEmpty(omit(props.errors, 'steps')) ? {
-        type: 'text',
-        status: props.validating ? 'danger' : 'warning',
-        value: <span className={classes('fa fa-fw', {'fa-warning': props.validating, 'fa-clock-o': !props.validating})} />
-      } : undefined,
-      onClick: (e) => {
-        props.autoClose(e)
-        scrollTo('.main-page-content')
+    links={[
+      {
+        type: LINK_BUTTON,
+        icon: 'fa fa-fw fa-cog',
+        label: trans('parameters'),
+        target: `${props.path}/edit/parameters`,
+        subscript: !isEmpty(omit(props.errors, 'steps')) ? {
+          type: 'text',
+          status: props.validating ? 'danger' : 'warning',
+          value: <span className={classes('fa fa-fw', {'fa-warning': props.validating, 'fa-clock': !props.validating})} />
+        } : undefined,
+        onClick: (e) => {
+          props.autoClose(e)
+          scrollTo('.main-page-content')
+        }
       }
-    }].concat(props.steps.map((step, index) => ({
+    ].concat(props.steps.map((step, index) => ({
       type: LINK_BUTTON,
       label: step.title || trans('step', {number: index + 1}, 'quiz'),
       target: `${props.path}/edit/${step.slug}`,
@@ -37,7 +39,7 @@ const EditorMenu = props =>
       subscript: !isEmpty(get(props.errors, `steps[${index}]`)) ? {
         type: 'text',
         status: props.validating ? 'danger' : 'warning',
-        value: <span className={classes('fa fa-fw', {'fa-warning': props.validating, 'fa-clock-o': !props.validating})} />
+        value: <span className={classes('fa fa-fw', {'fa-warning': props.validating, 'fa-clock': !props.validating})} />
       } : undefined,
       onClick: (e) => {
         props.autoClose(e)
@@ -95,7 +97,7 @@ const EditorMenu = props =>
         }, {
           name: 'delete',
           type: CALLBACK_BUTTON,
-          icon: 'fa fa-fw fa-trash-o',
+          icon: 'fa fa-fw fa-trash',
           label: trans('delete', {}, 'actions'),
           callback: () => {
             props.removeStep(step.id)
@@ -121,6 +123,15 @@ const EditorMenu = props =>
         const newSlug = props.addStep(props.steps)
         props.history.push(`${props.path}/edit/${newSlug}`)
       },
+      onClick: (e) => {
+        props.autoClose(e)
+        scrollTo('.main-page-content')
+      }
+    }, {
+      type: LINK_BUTTON,
+      icon: 'fa fa-fw fa-database',
+      label: trans('show_questions_bank', {}, 'actions'),
+      target: `${props.path}/edit/bank`,
       onClick: (e) => {
         props.autoClose(e)
         scrollTo('.main-page-content')

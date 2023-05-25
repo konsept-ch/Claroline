@@ -55,14 +55,16 @@ class MessageController extends AbstractCrudController
      */
     public function createComment(Message $message, Request $request): JsonResponse
     {
+        $options = static::getOptions();
+
         $comment = new Message();
         $comment->setSubject($message->getSubject());
         $comment->setParent($message);
 
-        $this->crud->create($comment, $this->decodeRequest($request), array_merge($this->options['create'], [Crud::THROW_EXCEPTION]));
+        $this->crud->create($comment, $this->decodeRequest($request), $options['create'] ?? []);
 
         return new JsonResponse(
-            $this->serializer->serialize($comment, $this->options['get']),
+            $this->serializer->serialize($comment, $options['get'] ?? []),
             201
         );
     }

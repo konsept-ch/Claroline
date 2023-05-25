@@ -95,13 +95,10 @@ services:
 
     Claroline\CoreBundle\Controller\APINew\Workspace\RoleController:
         arguments:
-            - '@security.token_storage'
             - '@security.authorization_checker'
-            - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\AppBundle\API\FinderProvider'
             - '@Claroline\AppBundle\API\SerializerProvider'
             - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceManager'
-            - '@Claroline\CoreBundle\Manager\Tool\ToolManager'
 
     Claroline\CoreBundle\Controller\APINew\Workspace\WorkspaceController:
         parent: Claroline\AppBundle\Controller\AbstractCrudController
@@ -133,6 +130,8 @@ services:
     Claroline\CoreBundle\Controller\APINew\FileController:
         parent: Claroline\AppBundle\Controller\AbstractCrudController
         public: true
+        arguments:
+            - '@Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler'
 
     Claroline\CoreBundle\Controller\APINew\ObjectLockController:
         arguments:
@@ -169,7 +168,7 @@ services:
         arguments:
             - '@security.authorization_checker'
             - '@security.token_storage'
-            - '@claroline.manager.tool_manager'
+            - '@Claroline\CoreBundle\Manager\Tool\ToolManager'
             - '@Claroline\AppBundle\Event\StrictDispatcher'
 
     Claroline\CoreBundle\Controller\AuthenticationController:
@@ -187,7 +186,7 @@ services:
             - '@security.token_storage'
             - '@Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler'
             - '@Claroline\AppBundle\API\SerializerProvider'
-            - '@claroline.manager.tool_manager'
+            - '@Claroline\CoreBundle\Manager\Tool\ToolManager'
             - '@Claroline\AppBundle\Event\StrictDispatcher'
 
     Claroline\CoreBundle\Controller\FileController:
@@ -195,7 +194,7 @@ services:
             - '@session'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\CoreBundle\API\Serializer\Resource\ResourceNodeSerializer'
-            - '@claroline.manager.resource_manager'
+            - '@Claroline\CoreBundle\Manager\ResourceManager'
             - '@Claroline\CoreBundle\Manager\RoleManager'
             - '@Claroline\CoreBundle\Manager\FileManager'
             - '@Claroline\AppBundle\API\FinderProvider'
@@ -205,9 +204,8 @@ services:
     Claroline\CoreBundle\Controller\ResourceController:
         arguments:
             - '@security.token_storage'
-            - '@twig'
             - '@Claroline\AppBundle\API\SerializerProvider'
-            - '@claroline.manager.resource_manager'
+            - '@Claroline\CoreBundle\Manager\ResourceManager'
             - '@Claroline\CoreBundle\Manager\Resource\ResourceActionManager'
             - '@Claroline\CoreBundle\Manager\Resource\ResourceRestrictionsManager'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
@@ -225,7 +223,7 @@ services:
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@security.token_storage'
             - '@Claroline\AppBundle\API\SerializerProvider'
-            - '@claroline.manager.tool_manager'
+            - '@Claroline\CoreBundle\Manager\Tool\ToolManager'
             - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceManager'
             - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceRestrictionsManager'
             - '@Claroline\EvaluationBundle\Manager\WorkspaceEvaluationManager'

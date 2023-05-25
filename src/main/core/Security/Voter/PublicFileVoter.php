@@ -11,37 +11,23 @@
 
 namespace Claroline\CoreBundle\Security\Voter;
 
+use Claroline\AppBundle\Security\Voter\AbstractVoter;
 use Claroline\CoreBundle\Entity\File\PublicFile;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
 class PublicFileVoter extends AbstractVoter
 {
-    public function checkPermission(TokenInterface $token, $object, array $attributes, array $options)
+    /**
+     * @param PublicFile $object
+     */
+    public function checkPermission(TokenInterface $token, $object, array $attributes, array $options): int
     {
-        switch ($attributes[0]) {
-            case self::CREATE: return $this->check($token, $object);
-            case self::EDIT:   return $this->check($token, $object);
-            case self::DELETE: return $this->check($token, $object);
-            case self::PATCH:  return $this->check($token, $object);
-        }
-
-        return VoterInterface::ACCESS_ABSTAIN;
-    }
-
-    public function check(TokenInterface $token, PublicFile $file)
-    {
-        //no real permission check right now, we'll have to discuss it later
         return VoterInterface::ACCESS_GRANTED;
     }
 
-    public function getClass()
+    public function getClass(): string
     {
-        return 'Claroline\CoreBundle\Entity\File\PublicFile';
-    }
-
-    public function getSupportedActions()
-    {
-        return [self::CREATE, self::EDIT, self::DELETE, self::PATCH];
+        return PublicFile::class;
     }
 }

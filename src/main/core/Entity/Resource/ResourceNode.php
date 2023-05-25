@@ -11,6 +11,7 @@
 
 namespace Claroline\CoreBundle\Entity\Resource;
 
+use Claroline\AppBundle\Entity\Identifier\Code;
 use Claroline\AppBundle\Entity\Identifier\Id;
 use Claroline\AppBundle\Entity\Identifier\Uuid;
 use Claroline\AppBundle\Entity\Meta\Creator;
@@ -21,7 +22,7 @@ use Claroline\AppBundle\Entity\Meta\Thumbnail;
 use Claroline\AppBundle\Entity\Restriction\AccessibleFrom;
 use Claroline\AppBundle\Entity\Restriction\AccessibleUntil;
 use Claroline\AppBundle\Entity\Restriction\Hidden;
-use Claroline\CoreBundle\Entity\Workspace\Workspace;
+use Claroline\CoreBundle\Model\HasWorkspace;
 use Claroline\EvaluationBundle\Entity\Evaluated;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Event\PreFlushEventArgs;
@@ -41,12 +42,14 @@ class ResourceNode
     // identifiers
     use Id;
     use Uuid;
+    use Code;
     // meta
     use Thumbnail;
     use Poster;
     use Description;
     use Creator;
     use Published;
+    use HasWorkspace;
     // restrictions
     use Hidden;
     use AccessibleFrom;
@@ -143,16 +146,6 @@ class ResourceNode
     protected $children;
 
     /**
-     * The parent workspace of the resource.
-     *
-     * @ORM\ManyToOne(targetEntity="Claroline\CoreBundle\Entity\Workspace\Workspace")
-     * @ORM\JoinColumn(onDelete="CASCADE", nullable=true)
-     *
-     * @var Workspace
-     */
-    protected $workspace;
-
-    /**
      * @var string
      *
      * @Gedmo\TreePath(separator="`")
@@ -201,19 +194,6 @@ class ResourceNode
     private $pathForCreationLog = '';
 
     /**
-     * @var ArrayCollection|\Claroline\CoreBundle\Entity\Log\Log[]
-     *
-     * @ORM\OneToMany(
-     *  targetEntity="Claroline\CoreBundle\Entity\Log\Log",
-     *  fetch="EXTRA_LAZY",
-     *  mappedBy="resourceNode"
-     * )
-     *
-     * @todo : remove me. this relation should not be bi-directional
-     */
-    protected $logs;
-
-    /**
      * @var string
      *
      * @ORM\Column(nullable=true)
@@ -233,7 +213,7 @@ class ResourceNode
     protected $fullscreen = false;
 
     /**
-     * @ORM\Column(type="json_array", nullable=true)
+     * @ORM\Column(type="json", nullable=true)
      *
      * @todo split IPS & access code into 2 props.
      */
@@ -245,13 +225,6 @@ class ResourceNode
      * @ORM\Column(nullable=false, type="integer", name="views_count", options={"default": 0})
      */
     protected $viewsCount = 0;
-
-    /**
-     * @var bool
-     *
-     * @ORM\Column(type="boolean", options={"default": 1})
-     */
-    protected $deletable = true;
 
     /**
      * @var bool
@@ -296,7 +269,6 @@ class ResourceNode
 
         $this->rights = new ArrayCollection();
         $this->children = new ArrayCollection();
-        $this->logs = new ArrayCollection();
         $this->comments = new ArrayCollection();
     }
 
@@ -410,24 +382,6 @@ class ResourceNode
     public function getChildren()
     {
         return $this->children;
-    }
-
-    /**
-     * Sets the workspace containing the resource instance.
-     */
-    public function setWorkspace(Workspace $workspace)
-    {
-        $this->workspace = $workspace;
-    }
-
-    /**
-     * Returns the workspace containing the resource instance.
-     *
-     * @return Workspace
-     */
-    public function getWorkspace()
-    {
-        return $this->workspace;
     }
 
     public function getShowIcon()
@@ -744,11 +698,6 @@ class ResourceNode
         $this->accesses = $accesses;
     }
 
-    public function getLogs()
-    {
-        return $this->logs;
-    }
-
     /**
      * Gets how many times a resource has been viewed.
      *
@@ -772,31 +721,11 @@ class ResourceNode
     }
 
     /**
-     * Checks if the resource node can be deleted.
-     *
-     * @return bool
-     */
-    public function isDeletable()
-    {
-        return $this->deletable;
-    }
-
-    /**
-     * Sets the deletable option.
-     *
-     * @param bool $deletable
-     */
-    public function setDeletable($deletable)
-    {
-        $this->deletable = $deletable;
-    }
-
-    /**
      * Returns the ancestors of a resource.
      *
      * @return array[array] An array of resources represented as arrays
      */
-    public function getAncestors()
+    public function getAncestors(): array
     {
         // No need to access DB to get ancestors as they are given by the materialized path.
         //I use \/ instead of PATH_SEPARATOR for escape purpose
@@ -832,7 +761,7 @@ class ResourceNode
             return;
         }
 
-        $entityManager = $args->getEntityManager();
+        $entityManager = $args->getObjectManager();
 
         $this->materializedPath = $this->makePath($this);
         $entityManager->persist($this);
@@ -854,7 +783,7 @@ class ResourceNode
      *
      * @return array[array] An array of resources represented as arrays
      */
-    public function getOldAncestors()
+    private function getOldAncestors(): array
     {
         // No need to access DB to get ancestors as they are given by the materialized path.
         $parts = preg_split('/-(\d+)'.ResourceNode::PATH_OLDSEPARATOR.'/', $this->path, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);

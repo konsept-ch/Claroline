@@ -1,7 +1,5 @@
 services:
     _defaults:
-        autowire: false #change to true
-        autoconfigure: false
         public: true
 
     UJM\ExoBundle\Manager\Attempt\AnswerManager:
@@ -24,6 +22,7 @@ services:
 
     UJM\ExoBundle\Manager\Item\ItemManager:
         arguments:
+            - '@security.authorization_checker'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@UJM\ExoBundle\Manager\Attempt\ScoreManager'
             - '@UJM\ExoBundle\Validator\JsonSchema\Item\ItemValidator'
@@ -33,8 +32,8 @@ services:
 
     UJM\ExoBundle\Manager\Item\ShareManager:
         arguments:
+            - '@security.authorization_checker'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
-            - '@UJM\ExoBundle\Manager\Item\ItemManager'
 
     UJM\ExoBundle\Manager\AttemptManager:
         arguments:
@@ -64,9 +63,7 @@ services:
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@UJM\ExoBundle\Validator\JsonSchema\ExerciseValidator'
             - '@ujm_exo.serializer.exercise'
-            - '@claroline.manager.resource_manager'
             - '@UJM\ExoBundle\Manager\Item\ItemManager'
             - '@UJM\ExoBundle\Manager\Attempt\PaperManager'
-            - '@Claroline\CoreBundle\Library\Utilities\ClaroUtilities'
             - '@ujm_exo.collection.item_definitions'
             - '@event_dispatcher'

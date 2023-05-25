@@ -5,7 +5,7 @@ import {trans} from '#/main/app/intl/translation'
 import {ContentPlaceholder} from '#/main/app/content/components/placeholder'
 
 import {Role as RoleTypes} from '#/main/community/prop-types'
-import {RoleCard} from '#/main/core/user/data/components/role-card'
+import {RoleCard} from '#/main/community/role/components/card'
 
 const RoleDisplay = (props) => props.data ?
   <RoleCard
@@ -13,7 +13,7 @@ const RoleDisplay = (props) => props.data ?
     size="xs"
   /> :
   <ContentPlaceholder
-    icon="fa fa-id-card"
+    icon="fa fa-fw fa-id-badge"
     title={trans('no_role')}
   />
 

@@ -2,9 +2,18 @@ services:
     _defaults:
         tags: [claroline.transfer.exporter]
 
+    # Resource
+    Claroline\CoreBundle\Transfer\Exporter\Resource\ListExporter:
+        parent: Claroline\TransferBundle\Transfer\Exporter\AbstractListExporter
+
     # Workspace
     Claroline\CoreBundle\Transfer\Exporter\Workspace\ListExporter:
         parent: Claroline\TransferBundle\Transfer\Exporter\AbstractListExporter
+
+    Claroline\CoreBundle\Transfer\Exporter\Workspace\ListGroupsExporter:
+        parent: Claroline\TransferBundle\Transfer\Exporter\AbstractListExporter
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
 
     Claroline\CoreBundle\Transfer\Exporter\Workspace\ListUsersExporter:
         parent: Claroline\TransferBundle\Transfer\Exporter\AbstractListExporter

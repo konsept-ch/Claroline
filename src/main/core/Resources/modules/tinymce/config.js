@@ -8,7 +8,8 @@ import {url} from '#/main/app/api'
 import {makeId} from '#/main/core/scaffolding/id'
 import {trans} from '#/main/app/intl/translation'
 import {locale} from '#/main/app/intl/locale'
-import {asset, param, theme} from '#/main/app/config'
+import {asset, param} from '#/main/app/config'
+import {theme} from '#/main/theme/config'
 import {url as urlValidator} from '#/main/app/data/types/validators'
 import {getExternalPlugins} from '#/main/core/tinymce/plugins/external-plugins'
 
@@ -113,6 +114,7 @@ const config = getExternalPlugins().then(extPlugins => {
     },
 
     extended_valid_elements: 'user[id], a[data-toggle|data-parent], span[*]',
+    invalid_elements : param('richTextScript') ? undefined : 'script',
     remove_script_host: false,
     browser_spellcheck: true,
 

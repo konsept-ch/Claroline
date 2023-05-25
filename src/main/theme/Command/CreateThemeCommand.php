@@ -19,6 +19,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class CreateThemeCommand extends Command
 {
+    /** @var ThemeManager */
     private $themeManager;
 
     public function __construct(ThemeManager $themeManager)
@@ -41,7 +42,7 @@ class CreateThemeCommand extends Command
 
         $output->writeln('Create a new theme "'.$name.'".');
 
-        $this->themeManager->create(['name' => $name]);
+        $this->themeManager->createTheme($name);
 
         $output->writeln('Done !');
 

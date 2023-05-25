@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {createElement} from 'react'
 import {PropTypes as T} from 'prop-types'
 import classes from 'classnames'
 import get from 'lodash/get'
@@ -84,12 +84,14 @@ const FormData = (props) => {
   const otherSections = 1 !== sections.length ? sections.filter(section => !section.primary) : []
   const openedSection = otherSections.find(section => section.defaultOpened)
 
+  const disabled = typeof props.disabled === 'function' ? props.disabled(props.data) : props.disabled
+
   return (
     <Form
       id={props.id}
       className={props.className}
       embedded={props.embedded}
-      disabled={props.disabled}
+      disabled={disabled}
       level={props.level}
       displayLevel={props.displayLevel}
       title={props.title}
@@ -154,8 +156,8 @@ const FormData = (props) => {
               updateProp={props.updateProp}
               setErrors={props.setErrors}
             >
-              {primarySection.component}
-              {!primarySection.component && primarySection.render && primarySection.render()}
+              {primarySection.component && createElement(primarySection.component)}
+              {!primarySection.component && primarySection.render && primarySection.render(props.data, props.errors)}
             </FormFieldset>
           </div>
         </div>
@@ -165,13 +167,13 @@ const FormData = (props) => {
         <FormSections
           level={hLevel}
           displayLevel={hDisplay}
-          defaultOpened={openedSection ? (openedSection.id || toKey(openedSection.title)) : undefined}
+          defaultOpened={openedSection ? getSectionId(openedSection, props.id) : undefined}
         >
           {otherSections.map(section => (
             <FormSection
-              id={`${getSectionId(section, props.id)}-section`}
+              id={getSectionId(section, props.id)}
               className={section.className}
-              key={section.id || toKey(section.title)}
+              key={getSectionId(section, props.id)}
               icon={section.icon}
               title={section.title}
               subtitle={section.subtitle}
@@ -180,11 +182,11 @@ const FormData = (props) => {
               actions={section.actions}
             >
               <FormFieldset
-                id={getSectionId(section, props.id)}
+                id={`${getSectionId(section, props.id)}-fieldset`}
                 fill={true}
                 className="panel-body"
                 mode={props.mode}
-                disabled={props.disabled || section.disabled}
+                disabled={props.disabled || (typeof section.disabled === 'function' ? section.disabled(props.data) : section.disabled)}
                 fields={section.fields}
                 data={props.data}
                 errors={props.errors}
@@ -193,8 +195,8 @@ const FormData = (props) => {
                 updateProp={props.updateProp}
                 setErrors={props.setErrors}
               >
-                {section.component}
-                {!section.component && section.render && section.render()}
+                {section.component && createElement(section.component)}
+                {!section.component && section.render && section.render(props.data, props.errors)}
               </FormFieldset>
             </FormSection>
           ))}
@@ -219,7 +221,7 @@ FormData.propTypes = {
   title: T.string,
   className: T.string,
   mode: T.string.isRequired,
-  disabled: T.bool,
+  disabled: T.oneOfType([T.bool, T.func]),
   errors: T.object,
   validating: T.bool,
   pendingChanges: T.bool,
@@ -235,7 +237,7 @@ FormData.propTypes = {
    */
   sections: T.arrayOf(T.shape(
     DataFormSectionTypes.propTypes
-  )).isRequired,
+  )),
   definition: T.arrayOf(T.shape(
     DataFormSectionTypes.propTypes
   )).isRequired,
@@ -274,6 +276,7 @@ FormData.propTypes = {
 
 FormData.defaultProps = {
   level: 2,
+  disabled: false,
   mode: constants.FORM_MODE_DEFAULT,
   data: {}
 }

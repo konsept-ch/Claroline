@@ -72,7 +72,7 @@ class SubjectController extends AbstractCrudController
         return new JsonResponse(
           $this->finder->search(Message::class, array_merge(
               $request->query->all(),
-              ['hiddenFilters' => ['subject' => $subject->getId(), 'parent' => null, 'first' => false]]
+              ['hiddenFilters' => ['subject' => $subject->getUuid(), 'parent' => null, 'first' => false]]
             ))
         );
     }
@@ -92,13 +92,15 @@ class SubjectController extends AbstractCrudController
     {
         $this->checkPermission('OPEN', $subject, [], true);
 
+        $options = static::getOptions();
+
         $message = new Message();
         $message->setSubject($subject);
 
-        $this->crud->create($message, $this->decodeRequest($request), array_merge($this->options['create'], [Crud::THROW_EXCEPTION]));
+        $this->crud->create($message, $this->decodeRequest($request), $options['create'] ?? []);
 
         return new JsonResponse(
-            $this->serializer->serialize($message, $this->options['get']),
+            $this->serializer->serialize($message, $options['get'] ?? []),
             201
         );
     }

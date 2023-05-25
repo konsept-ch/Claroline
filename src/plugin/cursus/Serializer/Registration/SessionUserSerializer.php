@@ -1,19 +1,14 @@
 <?php
 
-/*
- * This file is part of the Claroline Connect package.
- *
- * (c) Claroline Consortium <consortium@claroline.net>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 namespace Claroline\CursusBundle\Serializer\Registration;
 
-use Claroline\AppBundle\API\Options;
+use Claroline\AppBundle\API\Serializer\SerializerInterface;
 use Claroline\AppBundle\API\Serializer\SerializerTrait;
+use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CommunityBundle\Serializer\UserSerializer;
+use Claroline\CoreBundle\Entity\Facet\FieldFacet;
+use Claroline\CoreBundle\Entity\Facet\FieldFacetValue;
+use Claroline\CoreBundle\Manager\FacetManager;
 use Claroline\CursusBundle\Entity\Registration\AbstractUserRegistration;
 use Claroline\CursusBundle\Entity\Registration\SessionUser;
 use Claroline\CursusBundle\Serializer\SessionSerializer;
@@ -23,37 +18,83 @@ class SessionUserSerializer extends AbstractUserSerializer
 {
     use SerializerTrait;
 
-    /** @var SessionSerializer */
-    private $sessionSerializer;
-
-    /** @var TranslatorInterface */
-    private $translator;
+    private SessionSerializer $sessionSerializer;
+    private ObjectManager $om;
+    private FacetManager $facetManager;
 
     public function __construct(
         UserSerializer $userSerializer,
         SessionSerializer $sessionSerializer,
-        TranslatorInterface $translator
+        ObjectManager $om,
+        FacetManager $facetManager
     ) {
         parent::__construct($userSerializer);
 
         $this->sessionSerializer = $sessionSerializer;
-        $this->translator = $translator;
+        $this->om = $om;
+        $this->facetManager = $facetManager;
     }
 
-    public function getClass()
+    public function getClass(): string
     {
         return SessionUser::class;
     }
 
     /**
-     * @param SessionUser $sessionUser
+     * @param SessionUser $userRegistration
      */
-    public function serialize(AbstractUserRegistration $sessionUser, array $options = []): array
+    public function serialize(AbstractUserRegistration $userRegistration, array $options = []): array
     {
-        return array_merge(parent::serialize($sessionUser, $options), [
-            'session' => $this->sessionSerializer->serialize($sessionUser->getSession(), [Options::SERIALIZE_MINIMAL]),
-            'status' => $sessionUser->getStatus(),
-            'remark' => $sessionUser->getRemark(),
+        $serialized = array_merge(parent::serialize($userRegistration, $options), [
+            'session' => $this->sessionSerializer->serialize($userRegistration->getSession(), [SerializerInterface::SERIALIZE_MINIMAL]),
+            'status' => $userRegistration->getStatus(),
+            'remark' => $userRegistration->getRemark(),
         ]);
+
+        if (0 !== $userRegistration->getFacetValues()->count()) {
+            $serialized['data'] = [];
+            foreach ($userRegistration->getFacetValues() as $field) {
+                // we just flatten field facets in the base user structure
+                $serialized['data'][$field->getFieldFacet()->getUuid()] = $this->facetManager->serializeFieldValue(
+                    $userRegistration,
+                    $field->getType(),
+                    $field->getValue()
+                );
+            }
+        }
+
+        return $serialized;
+    }
+
+    /**
+     * @param SessionUser $userRegistration
+     */
+    public function deserialize(array $data, AbstractUserRegistration $userRegistration, ?array $options = []): AbstractUserRegistration
+    {
+        parent::deserialize($data, $userRegistration, $options);
+
+        if (isset($data['data'])) {
+            foreach ($data['data'] as $fieldId => $fieldValue) {
+                $fieldFacetValue = $userRegistration->getFacetValue($fieldId) ?? new FieldFacetValue();
+                $fieldFacet = $this->om->getRepository(FieldFacet::class)->findOneBy(['uuid' => $fieldId]);
+                if (empty($fieldFacet)) {
+                    $userRegistration->removeFacetValue($fieldFacetValue);
+                } else {
+                    $fieldFacetValue->setUser($userRegistration->getUser());
+                    $fieldFacetValue->setFieldFacet($fieldFacet);
+                    $fieldFacetValue->setValue(
+                        $this->facetManager->deserializeFieldValue(
+                            $userRegistration->getUser(),
+                            $fieldFacet->getType(),
+                            $fieldValue
+                        )
+                    );
+
+                    $userRegistration->addFacetValue($fieldFacetValue);
+                }
+            }
+        }
+
+        return $userRegistration;
     }
 }

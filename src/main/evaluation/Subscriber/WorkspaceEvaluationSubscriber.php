@@ -32,6 +32,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
+/**
+ * Updates the WorkspaceEvaluation in response to application events.
+ */
 class WorkspaceEvaluationSubscriber implements EventSubscriberInterface
 {
     /** @var TokenStorageInterface */
@@ -115,7 +118,7 @@ class WorkspaceEvaluationSubscriber implements EventSubscriberInterface
         $workspace = $resourceNode->getWorkspace();
         $user = $resourceUserEvaluation->getUser();
 
-        $this->manager->computeEvaluation($workspace, $user, $resourceUserEvaluation);
+        $this->manager->computeEvaluation($workspace, $user);
     }
 
     /**

@@ -65,7 +65,7 @@ const CourseSessions = (props) =>
         {
           name: 'open-workspace',
           type: CALLBACK_BUTTON,
-          icon: 'fa fa-fw fa-arrow-circle-o-right',
+          icon: 'fa fa-fw fa-arrow-circle-right',
           label: trans('open-training', {}, 'actions'),
           displayed: !isEmpty(getInfo(props.course, rows[0], 'workspace')) && (hasPermission('edit', rows[0]) || getInfo(props.course, rows[0], 'registration.autoRegistration') || isRegistered(rows[0], props.registrations)),
           callback: () => {
@@ -117,7 +117,7 @@ const CourseSessions = (props) =>
           course: props.course,
           onSave: (newSession) => {
             // open created session, but let user on sessions list to allow multiples creations
-            props.history.push(route(props.path, props.course, newSession)+'/sessions')
+            props.history.push(route(props.course, newSession)+'/sessions')
             props.reload(props.course.slug)
           }
         }]}

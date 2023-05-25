@@ -20,40 +20,61 @@ const CommunityMenu = (props) =>
       buttonName="list-group-item"
       actions={[
         {
+          name: 'activity',
+          type: LINK_BUTTON,
+          icon: 'fa fa-fw fa-wave-square',
+          label: trans('activity'),
+          target: `${props.path}/activity`,
+          displayed: props.canShowActivity && (props.contextType !== toolConstants.TOOL_WORKSPACE || !get(props.workspace, 'meta.model'))
+        }, {
           name: 'users',
           type: LINK_BUTTON,
           icon: 'fa fa-fw fa-user',
-          label: trans('users'),
+          label: trans('users', {}, 'community'),
           target: `${props.path}/users`,
           displayed: props.contextType !== toolConstants.TOOL_WORKSPACE || !get(props.workspace, 'meta.model')
         }, {
           name: 'groups',
           type: LINK_BUTTON,
           icon: 'fa fa-fw fa-users',
-          label: trans('groups'),
+          label: trans('groups', {}, 'community'),
           target: `${props.path}/groups`,
-          displayed: props.contextType === toolConstants.TOOL_WORKSPACE && !get(props.workspace, 'meta.model')
-        }, {
-          name: 'roles',
-          type: LINK_BUTTON,
-          icon: 'fa fa-fw fa-id-badge',
-          label: trans('roles'),
-          target: `${props.path}/roles`,
-          displayed: props.contextType === toolConstants.TOOL_WORKSPACE && props.canAdministrate
+          displayed: props.contextType !== toolConstants.TOOL_WORKSPACE || !get(props.workspace, 'meta.model')
         }, {
           name: 'pending',
           type: LINK_BUTTON,
           icon: 'fa fa-fw fa-user-plus',
           label: trans('pending_registrations'),
           target: `${props.path}/pending`,
-          displayed: props.contextType === toolConstants.TOOL_WORKSPACE && props.canAdministrate && get(props.workspace, 'registration.selfRegistration') && get(props.workspace, 'registration.validation')
+          displayed: props.contextType === toolConstants.TOOL_WORKSPACE && props.canEdit && get(props.workspace, 'registration.selfRegistration') && get(props.workspace, 'registration.validation')
         }, {
-          name: 'parameters',
+          name: 'teams',
           type: LINK_BUTTON,
-          icon: 'fa fa-fw fa-cog',
-          label: trans('parameters'),
-          target: `${props.path}/parameters`,
-          displayed: props.contextType === toolConstants.TOOL_WORKSPACE  && props.canAdministrate
+          icon: 'fa fa-fw fa-user-group',
+          label: trans('teams', {}, 'community'),
+          target: `${props.path}/teams`,
+          displayed: props.contextType === toolConstants.TOOL_WORKSPACE
+        }, {
+          name: 'organizations',
+          type: LINK_BUTTON,
+          icon: 'fa fa-fw fa-building',
+          label: trans('organizations'),
+          target: `${props.path}/organizations`,
+          displayed: props.contextType === toolConstants.TOOL_DESKTOP/* && props.canEdit*/
+        }, {
+          name: 'roles',
+          type: LINK_BUTTON,
+          icon: 'fa fa-fw fa-id-badge',
+          label: trans('roles', {}, 'community'),
+          target: `${props.path}/roles`,
+          displayed: props.canEdit
+        }, {
+          name: 'profile',
+          type: LINK_BUTTON,
+          icon: 'fa fa-fw fa-user-circle',
+          label: trans('user_profile'),
+          target: `${props.path}/parameters/profile`,
+          displayed: props.contextType === toolConstants.TOOL_DESKTOP && props.canEdit
         }
       ]}
       onClick={props.autoClose}
@@ -67,7 +88,8 @@ CommunityMenu.propTypes = {
     UserType.propTypes
   ),
   workspace: T.object,
-  canAdministrate: T.bool.isRequired,
+  canEdit: T.bool.isRequired,
+  canShowActivity: T.bool.isRequired,
 
   // from menu
   opened: T.bool.isRequired,

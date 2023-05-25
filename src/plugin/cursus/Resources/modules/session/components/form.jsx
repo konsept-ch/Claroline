@@ -35,7 +35,7 @@ const SessionForm = (props) =>
           }
         ]
       }, {
-        icon: 'fa fa-fw fa-info',
+        icon: 'fa fa-fw fa-circle-info',
         title: trans('information'),
         fields: [
           {
@@ -194,6 +194,31 @@ const SessionForm = (props) =>
               multiple: false,
               choices: constants.REGISTRATION_TYPES
             }
+          }
+        ]
+      }, {
+        icon: 'fa fa-fw fa-book',
+        title: trans('workspace'),
+        displayed: (session) => get(session, 'workspace', null),
+        fields: [
+          {
+            name: 'workspace',
+            type: 'workspace',
+            label: trans('workspace'),
+            disabled: true,
+            required: true
+          }, {
+            name: 'registration.tutorRole',
+            type: 'role',
+            label: trans('tutor_role', {}, 'cursus'),
+            disabled: true,
+            required: true
+          }, {
+            name: 'registration.learnerRole',
+            type: 'role',
+            label: trans('learner_role', {}, 'cursus'),
+            disabled: true,
+            required: true
           }
         ]
       }, {

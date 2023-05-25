@@ -7,7 +7,7 @@ import {Button} from '#/main/app/action/components/button'
 import {DataInput as DataInputTypes} from '#/main/app/data/types/prop-types'
 import {ContentPlaceholder} from '#/main/app/content/components/placeholder'
 
-import {RoleCard} from '#/main/core/user/data/components/role-card'
+import {RoleCard} from '#/main/community/role/components/card'
 import {Role as RoleType} from '#/main/community/prop-types'
 import {MODAL_ROLES} from '#/main/community/modals/roles'
 
@@ -48,7 +48,7 @@ const RoleInput = props => {
     {
       name: 'delete',
       type: CALLBACK_BUTTON,
-      icon: 'fa fa-fw fa-trash-o',
+      icon: 'fa fa-fw fa-trash',
       label: trans('delete', {}, 'actions'),
       dangerous: true,
       callback: () => props.onChange(null)
@@ -78,7 +78,7 @@ const RoleInput = props => {
   return (
     <ContentPlaceholder
       id={props.id}
-      icon="fa fa-id-card"
+      icon="fa fa-id-badge"
       title={trans('no_role')}
       size={props.size}
     >

@@ -13,6 +13,9 @@ namespace Claroline\AnalyticsBundle\Manager;
 
 use Claroline\AppBundle\API\FinderProvider;
 use Claroline\AppBundle\Persistence\ObjectManager;
+use Claroline\CommunityBundle\Repository\GroupRepository;
+use Claroline\CommunityBundle\Repository\RoleRepository;
+use Claroline\CommunityBundle\Repository\UserRepository;
 use Claroline\CoreBundle\Entity\Group;
 use Claroline\CoreBundle\Entity\Log\Connection\LogConnectPlatform;
 use Claroline\CoreBundle\Entity\Log\Connection\LogConnectWorkspace;
@@ -34,9 +37,6 @@ use Claroline\CoreBundle\Repository\Log\Connection\LogConnectWorkspaceRepository
 use Claroline\CoreBundle\Repository\Log\LogRepository;
 use Claroline\CoreBundle\Repository\Resource\ResourceNodeRepository;
 use Claroline\CoreBundle\Repository\Resource\ResourceTypeRepository;
-use Claroline\CoreBundle\Repository\User\GroupRepository;
-use Claroline\CoreBundle\Repository\User\RoleRepository;
-use Claroline\CoreBundle\Repository\User\UserRepository;
 use Claroline\CoreBundle\Repository\WorkspaceRepository;
 use Doctrine\ORM\EntityRepository;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -203,15 +203,6 @@ class AnalyticsManager
         $queryParams = FinderProvider::parseQueryParams($query);
 
         return $this->logRepo->findTopResourcesByAction($queryParams['allFilters'], $queryParams['limit']);
-    }
-
-    public function userRolesData(Workspace $workspace = null, $organizations = null)
-    {
-        if ($workspace) {
-            return $this->workspaceManager->countUsersForRoles($workspace);
-        }
-
-        return $this->userManager->countUsersForPlatformRoles($organizations);
     }
 
     private function formatQueryParams(array $finderParams = [])

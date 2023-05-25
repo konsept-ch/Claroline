@@ -115,7 +115,7 @@ class KeywordItem extends Component {
             id={`keyword-${this.props.keyword._id}-feedback-toggle`}
             className="btn-link"
             type={CALLBACK_BUTTON}
-            icon="fa fa-fw fa-comments-o"
+            icon="fa fa-fw fa-comments"
             label={trans('words_feedback_info', {}, 'quiz')}
             callback={() => this.setState({showFeedback: !this.state.showFeedback})}
             tooltip="top"
@@ -125,7 +125,7 @@ class KeywordItem extends Component {
             id={`keyword-${this.props.keyword._id}-delete`}
             className="btn-link"
             type={CALLBACK_BUTTON}
-            icon="fa fa-fw fa-trash-o"
+            icon="fa fa-fw fa-trash"
             label={trans('delete', {}, 'actions')}
             callback={() => this.props.keyword._deletable && this.props.removeKeyword()}
             disabled={!this.props.keyword._deletable}
@@ -312,7 +312,7 @@ const KeywordsPopover = props =>
               id={`keywords-popover-${props.id}-remove`}
               className="btn-link"
               type={CALLBACK_BUTTON}
-              icon="fa fa-fw fa-trash-o"
+              icon="fa fa-fw fa-trash"
               label={trans('delete', {}, 'actions')}
               callback={props.remove}
               tooltip="top"
@@ -341,6 +341,17 @@ const KeywordsPopover = props =>
       value={props._multiple}
       onChange={checked => props.onChange('_multiple', checked)}
     />
+
+    {props._multiple &&
+      <div className="sub-fields">
+        <CheckGroup
+          id={`keywords-${props.id}-shuffle`}
+          label={trans('shuffle_answers', {}, 'quiz')}
+          value={props.random}
+          onChange={checked => props.onChange('random', checked)}
+        />
+      </div>
+    }
 
     <KeywordItems
       keywords={props.keywords}
@@ -387,6 +398,8 @@ KeywordsPopover.propTypes = {
    * If false, the user will have to type his answer in a text input.
    */
   _multiple: T.bool.isRequired,
+
+  random: T.bool,
 
   /**
    * The collection of keywords for the solution

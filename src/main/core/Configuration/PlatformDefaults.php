@@ -95,6 +95,7 @@ class PlatformDefaults implements ParameterProviderInterface
                 'breadcrumb' => true,
             ],
             'footer' => [
+                'show' => true,
                 'content' => null,
                 'show_locale' => false,
                 'show_help' => false,
@@ -134,6 +135,11 @@ class PlatformDefaults implements ParameterProviderInterface
             'locales' => [
                 'default' => 'fr',
                 'available' => ['fr', 'en'],
+            ],
+            'intl' => [
+                'timezone' => null, // default to UTC
+                'dateFormat' => 'd/m/Y',
+                'timeFormat' => 'H:i',
             ],
             'maintenance' => [
                 'enable' => false,
@@ -206,11 +212,15 @@ class PlatformDefaults implements ParameterProviderInterface
             'changelogMessage' => [
                 // display a connection message when a new minor version is installed
                 'enabled' => true,
-                // how many time the changelog is displayed
+                // how many times the changelog is displayed
                 'duration' => 'P7D',
                 // which roles see the changelog message
                 'roles' => ['ROLE_ADMIN'],
             ],
+            // a list of file mime types disallowed on the whole platform
+            'file_blacklist' => [],
+            // allow embedded javascript in TinyMCE contents
+            'rich_text_script' => true,
         ];
     }
 }

@@ -26,16 +26,11 @@ class ResourceNodeSerializer
 
     const NO_PARENT = 'no_parent';
 
-    /** @var ObjectManager */
-    private $om;
-    /** @var EventDispatcherInterface */
-    private $eventDispatcher;
-    /** @var UserSerializer */
-    private $userSerializer;
-    /** @var RightsManager */
-    private $rightsManager;
-    /** @var SerializerProvider */
-    private $serializer;
+    private ObjectManager $om;
+    private EventDispatcherInterface $eventDispatcher;
+    private UserSerializer $userSerializer;
+    private RightsManager $rightsManager;
+    private SerializerProvider $serializer;
 
     public function __construct(
         ObjectManager $om,
@@ -71,11 +66,17 @@ class ResourceNodeSerializer
      */
     public function serialize(ResourceNode $resourceNode, array $options = []): array
     {
+        $serializedWorkspace = null;
+        if ($resourceNode->getWorkspace()) {
+            $serializedWorkspace = $this->serializer->serialize($resourceNode->getWorkspace(), [Options::SERIALIZE_MINIMAL]);
+        }
+
         if (in_array(SerializerInterface::SERIALIZE_MINIMAL, $options)) {
             return [
                 'id' => $resourceNode->getUuid(),
                 'slug' => $resourceNode->getSlug(),
                 'name' => $resourceNode->getName(),
+                'code' => $resourceNode->getCode(),
                 'thumbnail' => $resourceNode->getThumbnail(),
                 'meta' => [
                     'published' => $resourceNode->isPublished(), // not required but nice to have
@@ -83,6 +84,8 @@ class ResourceNodeSerializer
                     'type' => $resourceNode->getType(), // try to remove. use mimeType instead
                     'mimeType' => $resourceNode->getMimeType(),
                 ],
+                // for now this is required in the minimal representation to generate the correct resource path
+                'workspace' => $serializedWorkspace,
             ];
         }
 
@@ -91,6 +94,7 @@ class ResourceNodeSerializer
             'autoId' => $resourceNode->getId(),
             'slug' => $resourceNode->getSlug(),
             'name' => $resourceNode->getName(),
+            'code' => $resourceNode->getCode(),
             'path' => $resourceNode->getAncestors(),
             'meta' => [
                 'type' => $resourceNode->getType(), // try to remove. use mimeType instead
@@ -111,6 +115,7 @@ class ResourceNodeSerializer
             ],
             'thumbnail' => $resourceNode->getThumbnail(),
             'poster' => $resourceNode->getPoster(),
+            'workspace' => $serializedWorkspace,
             'evaluation' => [
                 'evaluated' => $resourceNode->isEvaluated(),
                 'required' => $resourceNode->isRequired(),
@@ -127,17 +132,6 @@ class ResourceNodeSerializer
 
         if (!in_array(SerializerInterface::SERIALIZE_TRANSFER, $options)) {
             $serializedNode['permissions'] = $this->rightsManager->getCurrentPermissionArray($resourceNode);
-        }
-
-        if ($resourceNode->getWorkspace()) {
-            $serializedNode['workspace'] = [ // TODO : use workspace serializer with minimal option
-                'id' => $resourceNode->getWorkspace()->getUuid(),
-                'autoId' => $resourceNode->getWorkspace()->getId(),
-                'slug' => $resourceNode->getWorkspace()->getSlug(),
-                'name' => $resourceNode->getWorkspace()->getName(),
-                'code' => $resourceNode->getWorkspace()->getCode(),
-                'thumbnail' => $resourceNode->getWorkspace()->getThumbnail(),
-            ];
         }
 
         if (!empty($resourceNode->getParent())) {
@@ -198,10 +192,11 @@ class ResourceNodeSerializer
     public function deserialize(array $data, ResourceNode $resourceNode, array $options = []): ResourceNode
     {
         $this->sipe('name', 'setName', $data, $resourceNode);
+        $this->sipe('code', 'setCode', $data, $resourceNode);
         $this->sipe('poster', 'setPoster', $data, $resourceNode);
         $this->sipe('thumbnail', 'setThumbnail', $data, $resourceNode);
 
-        if (!in_array(Options::REFRESH_UUID, $options)) {
+        if (!in_array(SerializerInterface::REFRESH_UUID, $options)) {
             $this->sipe('id', 'setUuid', $data, $resourceNode);
             $this->sipe('slug', 'setSlug', $data, $resourceNode);
         } else {
@@ -266,7 +261,7 @@ class ResourceNodeSerializer
         }
 
         if (!in_array(Options::NO_RIGHTS, $options) && isset($data['rights'])) {
-            // only used to be able to directly create a node with rights. Used in transfer feature and ui creation. To move later
+            // only used to be able to directly create a node with rights. Used in transfer feature. To move later
             $this->deserializeRights($data['rights'], $resourceNode, $options);
         }
 

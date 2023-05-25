@@ -17,7 +17,9 @@ services:
         tags: [claroline.serializer]
         arguments:
             - '@security.token_storage'
-            - '@ujm_exo.serializer.step'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\CoreBundle\API\Serializer\Resource\ResourceNodeSerializer'
+            - '@UJM\ExoBundle\Serializer\StepSerializer'
             - '@UJM\ExoBundle\Manager\Item\ItemManager'
 
     ujm_exo.serializer.exercise:
@@ -41,14 +43,14 @@ services:
     UJM\ExoBundle\Serializer\Item\ItemSerializer:
         tags: [claroline.serializer]
         arguments:
-            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@security.authorization_checker'
             - '@security.token_storage'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@ujm_exo.collection.item_definitions'
             - '@Claroline\CommunityBundle\Serializer\UserSerializer'
             - '@ujm_exo.serializer.hint'
             - '@ujm_exo.serializer.resource_content'
             - '@ujm_exo.serializer.item_object'
-            - '@service_container'
             - '@event_dispatcher'
 
     ujm_exo.serializer.item:
@@ -186,7 +188,7 @@ services:
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '%claroline.param.files_directory%'
             - '@router'
-            - '@claroline.manager.resource_manager'
+            - '@Claroline\CoreBundle\Manager\ResourceManager'
 
     ujm_exo.serializer.resource_content:
          alias: UJM\ExoBundle\Serializer\Content\ResourceContentSerializer

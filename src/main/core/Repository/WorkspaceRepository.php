@@ -64,7 +64,7 @@ class WorkspaceRepository extends EntityRepository
      */
     public function findByRoles(array $roleNames)
     {
-        return $this->_em
+        return $this->getEntityManager()
             ->createQuery('
                 SELECT DISTINCT w 
                 FROM Claroline\\CoreBundle\\Entity\\Workspace\\Workspace w
@@ -107,7 +107,7 @@ class WorkspaceRepository extends EntityRepository
             $dql .= ' AND t.name = :toolName';
         }
 
-        $query = $this->_em->createQuery($dql);
+        $query = $this->getEntityManager()->createQuery($dql);
         $query->setParameter('workspaceId', $workspace->getId());
         $query->setParameter('roleNames', $roleNames);
         $query->setParameter('action', $action);
@@ -117,36 +117,6 @@ class WorkspaceRepository extends EntityRepository
         }
 
         return 0 < (int) $query->getSingleScalarResult();
-    }
-
-    /**
-     * Returns the name, code and number of resources of each workspace.
-     *
-     * @param int $max
-     *
-     * @return array
-     */
-    public function findWorkspacesWithMostResources($max, array $organizations = [])
-    {
-        $qb = $this
-            ->createQueryBuilder('ws')
-            ->select('ws.name, ws.code, COUNT(rs.id) AS total')
-            ->leftJoin('Claroline\CoreBundle\Entity\Resource\ResourceNode', 'rs', 'WITH', 'ws = rs.workspace')
-            ->groupBy('ws.id')
-            ->orderBy('total', 'DESC');
-
-        if (!empty($organizations)) {
-            $qb
-                ->leftJoin('ws.organizations', 'o')
-                ->andWhere('o IN (:organizations)')
-                ->setParameter('organizations', $organizations);
-        }
-
-        if ($max > 1) {
-            $qb->setMaxResults($max);
-        }
-
-        return $qb->getQuery()->getResult();
     }
 
     public function findManaged(string $userId)
@@ -176,7 +146,7 @@ class WorkspaceRepository extends EntityRepository
             WHERE w.code IN (:codes)
             ';
 
-        $query = $this->_em->createQuery($dql);
+        $query = $this->getEntityManager()->createQuery($dql);
         $query->setParameter('codes', $codes);
 
         return $query->getResult();
@@ -186,13 +156,13 @@ class WorkspaceRepository extends EntityRepository
      * Returns the list of workspace codes starting with $prefix.
      * Useful to auto generate unique workspace codes.
      */
-    public function findWorkspaceCodesWithPrefix(string $prefix): array
+    public function findCodesWithPrefix(string $prefix): array
     {
         return array_map(
             function (array $ws) {
                 return $ws['code'];
             },
-            $this->_em->createQuery('
+            $this->getEntityManager()->createQuery('
                 SELECT UPPER(w.code) AS code
                 FROM Claroline\CoreBundle\Entity\Workspace\Workspace w
                 WHERE UPPER(w.code) LIKE :search

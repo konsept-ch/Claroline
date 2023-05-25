@@ -5,7 +5,7 @@ import classes from 'classnames'
 import {trans} from '#/main/app/intl/translation'
 import {LinkButton} from '#/main/app/buttons/link'
 
-import {route} from '#/main/community/routing'
+import {route} from '#/main/community/user/routing'
 import {UserAvatar} from '#/main/core/user/components/avatar'
 
 /**

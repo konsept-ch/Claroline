@@ -9,13 +9,13 @@ import {Modal} from '#/main/app/overlays/modal/components/modal'
 import {DetailsData} from '#/main/app/content/details/components/data'
 
 import {route} from '#/main/core/resource/routing'
-import {ResourceIcon} from '#/main/core/resource/components/icon'
 import {ResourceNode as ResourceNodeTypes} from '#/main/core/resource/prop-types'
+import {ResourceIcon} from '#/main/core/resource/components/icon'
 
 const AboutModal = props =>
   <Modal
     {...omit(props, 'resourceNode')}
-    icon="fa fa-fw fa-info"
+    icon="fa fa-fw fa-circle-info"
     title={trans('about')}
     subtitle={props.resourceNode.name}
     poster={props.resourceNode.poster}
@@ -23,7 +23,7 @@ const AboutModal = props =>
     <DetailsData
       meta={true}
       data={props.resourceNode}
-      sections={[
+      definition={[
         {
           title: trans('general'),
           primary: true,

@@ -1,5 +1,4 @@
 services:
-
     Claroline\ThemeBundle\Command\CreateThemeCommand:
         arguments:
             - '@Claroline\ThemeBundle\Manager\ThemeManager'

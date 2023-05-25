@@ -15,13 +15,21 @@ export default {
     definition: [
       {
         name: 'name',
+        type: 'string',
         label: trans('name'),
         displayed: true,
         primary: true
       }, {
         name: 'code',
+        type: 'string',
         label: trans('code'),
         displayed: true
+      }, {
+        name: 'meta.description',
+        type: 'string',
+        label: trans('description'),
+        sortable: false,
+        options: {long: true}
       }, {
         name: 'meta.created',
         label: trans('creation_date'),
@@ -67,6 +75,13 @@ export default {
         filterable: true,
         displayable: false
       }, {
+        name: 'restrictions.hidden',
+        label: trans('hidden'),
+        type: 'boolean',
+        alias: 'hidden',
+        filterable: true,
+        displayable: false
+      }, {
         name: 'tags',
         type: 'tag',
         label: trans('tags'),
@@ -75,6 +90,14 @@ export default {
         options: {
           objectClass: 'Claroline\\CoreBundle\\Entity\\Workspace\\Workspace'
         }
+      }, {
+        name: 'organizations',
+        type: 'organizations',
+        label: trans('organizations'),
+        displayable: false,
+        displayed: false,
+        sortable: false,
+        filterable: true
       }
     ],
     card: WorkspaceCard

@@ -76,6 +76,10 @@ class ResourceNodeSubscriber implements EventSubscriberInterface
         /** @var ResourceNode $resourceNode */
         $resourceNode = $event->getObject();
 
+        // make sure the resource code is unique
+        // use name as code if not defined
+        $resourceNode->setCode($this->resourceManager->getUniqueCode(!empty($resourceNode->getCode()) ? $resourceNode->getCode() : $resourceNode->getName()));
+
         // set the creator of the resource
         $user = $this->tokenStorage->getToken()->getUser();
         if ($user instanceof User) {
@@ -172,8 +176,7 @@ class ResourceNodeSubscriber implements EventSubscriberInterface
             return;
         }
 
-        /** @var ResourceNode $newParent */
-        $newParent = $event->getExtra()['parent'];
+        $newNode->setCode($this->resourceManager->getUniqueCode($newNode->getCode() ?? $newNode->getName()));
 
         // set the creator of the copy
         $user = $this->tokenStorage->getToken()->getUser();
@@ -182,6 +185,8 @@ class ResourceNodeSubscriber implements EventSubscriberInterface
         }
 
         // link new node to its parent
+        /** @var ResourceNode $newParent */
+        $newParent = $event->getExtra()['parent'];
         $newNode->setWorkspace($newParent->getWorkspace());
         $newNode->setParent($newParent);
         $newParent->addChild($newNode);

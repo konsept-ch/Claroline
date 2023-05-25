@@ -12,19 +12,16 @@
 namespace Claroline\CommunityBundle\Installation;
 
 use Claroline\CommunityBundle\Installation\Updater\Updater130500;
-use Claroline\InstallationBundle\Additional\AdditionalInstaller as BaseInstaller;
+use Claroline\CommunityBundle\Installation\Updater\Updater130700;
+use Claroline\InstallationBundle\Additional\AdditionalInstaller;
 
-class ClarolineCommunityInstaller extends BaseInstaller
+class ClarolineCommunityInstaller extends AdditionalInstaller
 {
     public static function getUpdaters(): array
     {
         return [
             '13.5.0' => Updater130500::class,
+            '13.7.0' => Updater130700::class,
         ];
-    }
-
-    public function hasMigrations(): bool
-    {
-        return false;
     }
 }

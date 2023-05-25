@@ -186,7 +186,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
       const deleteAction = {
         name: 'delete',
         type: CALLBACK_BUTTON,
-        icon: 'fa fa-fw fa-trash-o',
+        icon: 'fa fa-fw fa-trash',
         label: ownProps.delete.label || trans('delete', {}, 'actions'),
         dangerous: true,
         confirm: {
@@ -201,14 +201,15 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
 
       if (actions instanceof Promise) {
         if (actions) {
-          actions = actions.then((actions) => actions.concat([deleteAction]))
+          actions = actions.then((actions) => [deleteAction].concat(actions))
+          //actions = actions.then((actions) => actions.concat([deleteAction]))
         } else {
           actions = Promise.resolve([deleteAction])
         }
-
       } else {
         if (actions) {
-          actions = actions.concat([deleteAction])
+          actions = [deleteAction].concat(actions)
+          // actions = actions.concat([deleteAction])
         } else {
           actions = [deleteAction]
         }

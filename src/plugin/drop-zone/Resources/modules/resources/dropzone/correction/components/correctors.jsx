@@ -18,7 +18,7 @@ const Correctors = props =>
   <div id="correctors-list">
     <h2>{trans('correctors_list', {}, 'dropzone')}</h2>
     {!props.corrections ?
-      <span className="fa fa-fw fa-circle-o-notch fa-spin" /> :
+      <span className="fa fa-fw fa-circle-notch fa-spin" /> :
       <ListData
         name={`${selectors.STORE_NAME}.drops`}
         fetch={{
@@ -90,7 +90,7 @@ const Correctors = props =>
             type: 'boolean'
           }, {
             name: 'userDisabled',
-            label: trans('user_disabled'),
+            label: trans('user_disabled', {}, 'community'),
             type: 'boolean',
             displayable: false,
             sortable: false,

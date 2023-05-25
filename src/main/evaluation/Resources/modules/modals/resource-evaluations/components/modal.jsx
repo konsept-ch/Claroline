@@ -6,8 +6,8 @@ import {trans} from '#/main/app/intl/translation'
 import {Modal} from '#/main/app/overlays/modal/components/modal'
 import {ListData} from '#/main/app/content/list/containers/data'
 
-import {constants} from '#/main/core/resource/constants'
-import {ResourceUserEvaluation as ResourceUserEvaluationTypes} from '#/main/evaluation/resource/prop-types'
+import {constants} from '#/main/evaluation/constants'
+import {ResourceEvaluation as ResourceEvaluationTypes} from '#/main/evaluation/resource/prop-types'
 import {selectors} from '#/main/evaluation/modals/resource-evaluations/store'
 
 const ResourceEvaluationsModal = props =>
@@ -27,6 +27,19 @@ const ResourceEvaluationsModal = props =>
       }}
       definition={[
         {
+          name: 'status',
+          type: 'choice',
+          label: trans('status'),
+          options: {
+            choices: constants.EVALUATION_STATUSES_SHORT
+          },
+          displayed: true,
+          render: (row) => (
+            <span className={`label label-${constants.EVALUATION_STATUS_COLOR[row.status]}`}>
+              {constants.EVALUATION_STATUSES_SHORT[row.status]}
+            </span>
+          )
+        }, {
           name: 'date',
           type: 'date',
           label: trans('last_activity'),
@@ -35,20 +48,11 @@ const ResourceEvaluationsModal = props =>
           },
           displayed: true
         }, {
-          name: 'status',
-          type: 'choice',
-          label: trans('status'),
-          options: {
-            choices: constants.EVALUATION_STATUSES
-          },
-          displayed: true
-        }, {
           name: 'progression',
           type: 'progression',
           label: trans('progression'),
           displayed: true,
           filterable: false,
-          calculated: (row) => ((row.progression || 0) / (row.progressionMax || 1)) * 100,
           options: {
             type: 'user'
           }
@@ -76,7 +80,7 @@ const ResourceEvaluationsModal = props =>
 
 ResourceEvaluationsModal.propTypes = {
   userEvaluation: T.shape(
-    ResourceUserEvaluationTypes.propTypes
+    ResourceEvaluationTypes.propTypes
   ).isRequired,
   fadeModal: T.func.isRequired,
 

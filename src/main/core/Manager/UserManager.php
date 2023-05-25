@@ -16,14 +16,14 @@ use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\Event\StrictDispatcher;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CommunityBundle\Messenger\Message\DisableInactiveUsers;
+use Claroline\CommunityBundle\Repository\RoleRepository;
+use Claroline\CommunityBundle\Repository\UserRepository;
 use Claroline\CoreBundle\Entity\Role;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Event\CatalogEvents\SecurityEvents;
 use Claroline\CoreBundle\Event\Security\UserDisableEvent;
 use Claroline\CoreBundle\Event\Security\UserEnableEvent;
 use Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler;
-use Claroline\CoreBundle\Repository\User\RoleRepository;
-use Claroline\CoreBundle\Repository\User\UserRepository;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 class UserManager
@@ -34,14 +34,15 @@ class UserManager
     private $om;
     /** @var PlatformConfigurationHandler */
     private $platformConfigHandler;
-    /** @var UserRepository */
-    private $userRepo;
-    /** @var RoleRepository */
-    private $roleRepo;
     /** @var StrictDispatcher */
     private $dispatcher;
     /** @var MessageBusInterface */
     private $messageBus;
+
+    /** @var UserRepository */
+    private $userRepo;
+    /** @var RoleRepository */
+    private $roleRepo;
 
     public function __construct(
         ObjectManager $om,
@@ -71,73 +72,14 @@ class UserManager
         return $user;
     }
 
-    public function countUsersForPlatformRoles($organizations = null)
+    public function getByResetPasswordHash(string $resetPassword): ?User
     {
-        $roles = $this->roleRepo->findAllPlatformRoles();
-        $roleNames = array_map(function (Role $r) {return $r->getName(); }, $roles);
-        $usersInRoles = [];
-        foreach ($roles as $role) {
-            $restrictionRoleNames = null;
-            if ('ROLE_USER' === $role->getName()) {
-                $restrictionRoleNames = array_diff($roleNames, ['ROLE_USER']);
-            } elseif ('ROLE_WS_CREATOR' !== $role->getName() && 'ROLE_ADMIN' !== $role->getName()) {
-                $restrictionRoleNames = ['ROLE_WS_CREATOR', 'ROLE_ADMIN'];
-            } elseif ('ROLE_ADMIN' !== $role->getName()) {
-                $restrictionRoleNames = ['ROLE_ADMIN'];
-            }
-            $usersInRoles[] = [
-                'name' => $role->getTranslationKey(),
-                'total' => floatval($this->userRepo->countUsersByRole($role, $restrictionRoleNames, $organizations)),
-            ];
-        }
-
-        return $usersInRoles;
+        return $this->userRepo->findOneBy(['resetPasswordHash' => $resetPassword]);
     }
 
-    /**
-     * @param int $max
-     *
-     * @return User[]
-     */
-    public function getUsersEnrolledInMostWorkspaces($max, $organizations = null)
+    public function getByEmailValidationHash(string $validationHash): ?User
     {
-        return $this->userRepo->findUsersEnrolledInMostWorkspaces($max, $organizations);
-    }
-
-    /**
-     * @param int $max
-     *
-     * @return User[]
-     */
-    public function getUsersOwnersOfMostWorkspaces($max, $organizations = null)
-    {
-        return $this->userRepo->findUsersOwnersOfMostWorkspaces($max, $organizations);
-    }
-
-    /**
-     * @param string $resetPassword
-     *
-     * @return User
-     */
-    public function getByResetPasswordHash($resetPassword)
-    {
-        /** @var User $user */
-        $user = $this->userRepo->findOneBy(['resetPasswordHash' => $resetPassword]);
-
-        return $user;
-    }
-
-    /**
-     * @param string $validationHash
-     *
-     * @return User
-     */
-    public function getByEmailValidationHash($validationHash)
-    {
-        /** @var User $user */
-        $user = $this->userRepo->findOneBy(['emailValidationHash' => $validationHash]);
-
-        return $user;
+        return $this->userRepo->findOneBy(['emailValidationHash' => $validationHash]);
     }
 
     public function validateEmailHash($validationHash): bool
@@ -158,42 +100,17 @@ class UserManager
     /**
      * Set the user locale.
      *
-     * @todo use crud instead
-     * @todo REMOVE ME
-     *
-     * @param string $locale Language with format en, fr, es, etc
+     * @todo REMOVE ME. use crud instead
      */
-    public function setLocale(User $user, $locale = 'en')
+    public function setLocale(User $user, ?string $locale = 'en'): void
     {
         $user->setLocale($locale);
+
         $this->om->persist($user);
         $this->om->flush();
     }
 
-    public function countUsersByRoleIncludingGroup(Role $role)
-    {
-        return $this->userRepo->countUsersByRoleIncludingGroup($role);
-    }
-
-    public function setUserInitDate(User $user)
-    {
-        $accountDuration = $this->platformConfigHandler->getParameter('account_duration');
-        if ($accountDuration) {
-            $expirationDate = new \DateTime();
-            $expirationYear = (strtotime('2100-01-01')) ? 2100 : 2038;
-
-            (null === $accountDuration) ?
-                $expirationDate->setDate($expirationYear, 1, 1) :
-                $expirationDate->add(new \DateInterval('P'.$accountDuration.'D'));
-
-            $user->setExpirationDate($expirationDate);
-            $user->setInitDate(new \DateTime());
-            $this->om->persist($user);
-            $this->om->flush();
-        }
-    }
-
-    public function countEnabledUsers(array $organizations = [])
+    public function countEnabledUsers(?array $organizations = []): int
     {
         return $this->userRepo->countUsers($organizations);
     }
@@ -201,40 +118,47 @@ class UserManager
     /**
      * Activates a User and set the init date to now.
      */
-    public function activateUser(User $user)
+    public function activateUser(User $user): void
     {
         $user->setIsEnabled(true);
         $user->setIsMailValidated(true);
         $user->setResetPasswordHash(null);
-        $user->setInitDate(new \DateTime());
 
         $this->om->persist($user);
         $this->om->flush();
     }
 
-    public function setInitDate(User $user)
+    public function setInitDate(User $user): void
     {
         if (null === $user->getInitDate()) {
-            $this->setUserInitDate($user);
-        }
+            $accountDuration = $this->platformConfigHandler->getParameter('account_duration');
+            if (!empty($accountDuration)) {
+                $expirationDate = new \DateTime();
+                $expirationDate->add(new \DateInterval('P'.$accountDuration.'D'));
 
-        $this->om->persist($user);
-        $this->om->flush();
+                $user->setInitDate(new \DateTime());
+                $user->setExpirationDate($expirationDate);
+
+                $this->om->persist($user);
+                $this->om->flush();
+            }
+        }
     }
 
-    public function initializePassword(User $user)
+    public function initializePassword(User $user): void
     {
-        $user->setHashTime(time());
         $password = sha1(rand(1000, 10000).$user->getUsername().$user->getSalt());
         $user->setResetPasswordHash($password);
+
         $this->om->persist($user);
         $this->om->flush();
     }
 
-    public function enable(User $user)
+    public function enable(User $user): User
     {
         if (!$user->isEnabled()) {
             $user->enable();
+
             $this->om->persist($user);
             $this->om->flush();
 
@@ -244,10 +168,11 @@ class UserManager
         return $user;
     }
 
-    public function disable(User $user)
+    public function disable(User $user): User
     {
         if ($user->isEnabled()) {
             $user->disable();
+
             $this->om->persist($user);
             $this->om->flush();
 
@@ -257,12 +182,12 @@ class UserManager
         return $user;
     }
 
-    public function disableInactive(\DateTimeInterface $lastActivity)
+    public function disableInactive(\DateTimeInterface $lastActivity): void
     {
         $this->messageBus->dispatch(new DisableInactiveUsers($lastActivity));
     }
 
-    public function getDefaultClarolineAdmin()
+    public function getDefaultClarolineAdmin(): User
     {
         $user = $this->getUserByUsername('support@claroline.com');
 
@@ -288,25 +213,10 @@ class UserManager
             $this->om->flush();
         }
 
+        // hide this user for everyone
+        $user->setTechnical(true);
+
         return $user;
-    }
-
-    /**
-     * Merges two users and transfers every resource to the kept user.
-     *
-     * @return int
-     */
-    public function transferRoles(User $from, User $to)
-    {
-        $roles = $from->getEntityRoles();
-
-        foreach ($roles as $role) {
-            $to->addRole($role);
-        }
-
-        $this->om->flush();
-
-        return count($roles);
     }
 
     public function hasReachedLimit(): bool

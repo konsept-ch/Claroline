@@ -15,9 +15,11 @@ const CatalogCreation = (props) =>
       {
         type: LINK_BUTTON,
         label: trans('catalog', {}, 'cursus'),
-        target: props.path
+        target: props.path + '/catalog'
       }, {
-        label: trans('new_course', {}, 'cursus')
+        type: LINK_BUTTON,
+        label: trans('new_course', {}, 'cursus'),
+        target: '' // current page, no need to add a link
       }
     ]}
     title={trans('trainings', {}, 'tools')}
@@ -29,14 +31,14 @@ const CatalogCreation = (props) =>
         type: LINK_BUTTON,
         icon: 'fa fa-fw fa-plus',
         label: trans('add_course', {}, 'cursus'),
-        target: `${props.path}/new`,
+        target: `${props.path}/catalog/new`,
         group: trans('management'),
         primary: true
       }
     ]}
   >
     <CourseForm
-      path={props.path}
+      path={props.path+'/catalog'}
       name={selectors.FORM_NAME}
     />
   </ToolPage>

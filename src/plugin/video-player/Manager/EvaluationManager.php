@@ -49,7 +49,14 @@ class EvaluationManager
 
         $status = AbstractEvaluation::STATUS_OPENED;
         if ($progressionMax) {
-            if ($progression >= $progressionMax) {
+            $progression = ($progression / $progressionMax) * 100;
+
+            // mark the video as finished if the user has watched over 90% of it
+            if ($progression >= 90) {
+                $progression = 100;
+            }
+
+            if ($progression >= 100) {
                 $status = AbstractEvaluation::STATUS_COMPLETED;
             } else {
                 $status = AbstractEvaluation::STATUS_INCOMPLETE;
@@ -58,15 +65,14 @@ class EvaluationManager
 
         $evaluationData = [
             'status' => $status,
-            'progression' => $progressionMax ? ($progression / $progressionMax) * 100 : $progression,
-            'progressionMax' => 100,
+            'progression' => $progression,
         ];
 
         if ($evaluation) {
-            return $this->resourceEvalManager->updateResourceEvaluation($evaluation, $evaluationData);
+            return $this->resourceEvalManager->updateAttempt($evaluation, $evaluationData);
         }
 
-        return $this->resourceEvalManager->createResourceEvaluation(
+        return $this->resourceEvalManager->createAttempt(
             $node,
             $user,
             $evaluationData

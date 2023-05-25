@@ -4,7 +4,8 @@ import {ProfileMain} from '#/main/community/account/profile/containers/main'
 
 export default {
   name: 'profile',
-  icon: 'fa fa-fw fa-id-card',
+  icon: 'fa fa-fw fa-user-circle',
   label: trans('user_profile'),
-  component: ProfileMain
+  component: ProfileMain,
+  order: 1
 }

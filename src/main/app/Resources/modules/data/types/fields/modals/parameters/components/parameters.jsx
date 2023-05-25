@@ -107,7 +107,7 @@ class ParametersModal extends Component {
           }))
         }}
         title={trans('edit_field')}
-        sections={[
+        definition={[
           {
             id: 'general',
             title: trans('general'),
@@ -142,7 +142,7 @@ class ParametersModal extends Component {
             fields: this.generateParametersForm(this.state.typeDef.configure(this.state.options))
           }, {
             id: 'help',
-            icon: 'fa fa-fw fa-info',
+            icon: 'fa fa-fw fa-circle-question',
             title: trans('help'),
             fields: [
               {
@@ -226,11 +226,6 @@ class ParametersModal extends Component {
                 type: 'boolean',
                 label: trans('confidential_data'),
                 onChange: (value) => this.updateRestrictions('metadata', value)
-              }, {
-                name: 'restrictions.hidden',
-                type: 'boolean',
-                label: trans('hide'),
-                onChange: (value) => this.updateRestrictions('hidden', value)
               }, {
                 name: 'restrictions.locked',
                 type: 'boolean',

@@ -23,7 +23,7 @@ const empty = createSelector(
 
 const showOverview = createSelector(
   [path],
-  (path) => get(path, 'display.showOverview') || false
+  (path) => get(path, 'overview.display') || false
 )
 
 // is step navigation enabled ?
@@ -37,6 +37,17 @@ const attempt = createSelector(
   (resource) => resource.attempt
 )
 
+const stepsProgression = createSelector(
+  [resource],
+  (resource) => resource.stepsProgression
+)
+
+// evaluation for the required resource of the path
+const resourceEvaluations = createSelector(
+  [resource],
+  (resource) => resource.resourceEvaluations
+)
+
 export const selectors = {
   STORE_NAME,
   resource,
@@ -45,5 +56,7 @@ export const selectors = {
   empty,
   navigationEnabled,
   showOverview,
-  attempt
+  attempt,
+  resourceEvaluations,
+  stepsProgression
 }

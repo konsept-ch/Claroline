@@ -35,16 +35,6 @@
       doc: application/widgets
 
 
-- title: JSON API
-  home: json/index
-  docs:
-    - title: Schemas
-      doc: json/schemas
-
-    - title: Endpoints
-      doc: json/endpoints
-
-
 - title: API
   home: api/index
   docs:
@@ -85,6 +75,8 @@
       - title: API
         doc: user-interface/api
 
+      - title: Tools
+        doc: user-interface/tools
 
 - title: Themes
   doc: themes
@@ -101,6 +93,9 @@
 
       - title: Quiz
         doc: plugins/quiz
+
+      - title: Notification
+        doc: plugins/notification
 
       - title: Path
         doc: plugins/path

@@ -35,13 +35,13 @@ use Claroline\ClacoFormBundle\Repository\EntryRepository;
 use Claroline\ClacoFormBundle\Repository\EntryUserRepository;
 use Claroline\ClacoFormBundle\Repository\FieldValueRepository;
 use Claroline\ClacoFormBundle\Repository\KeywordRepository;
+use Claroline\CommunityBundle\Repository\UserRepository;
 use Claroline\CoreBundle\Entity\Facet\FieldFacet;
 use Claroline\CoreBundle\Entity\Facet\FieldFacetChoice;
 use Claroline\CoreBundle\Entity\Facet\FieldFacetValue;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Messenger\Message\SendMessage;
-use Claroline\CoreBundle\Repository\User\UserRepository;
 use Claroline\CoreBundle\Security\Collection\ResourceCollection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Psr\Log\LoggerAwareInterface;
@@ -679,12 +679,11 @@ class ClacoFormManager implements LoggerAwareInterface
         $newField->setClacoForm($newClacoForm);
         $newField->setLabel($field->getLabel());
         $newField->setType($field->getType());
-        $newField->setPosition($field->getPosition());
+        $newField->setOrder($field->getOrder());
         $newField->setRequired($field->isRequired());
         $newField->setMetadata($field->isMetadata());
         $newField->setLocked($field->isLocked());
         $newField->setLockedEditionOnly($field->getLockedEditionOnly());
-        $newField->setHidden($field->isHidden());
         $newField->setOptions($field->getOptions());
         $newField->setHelp($field->getHelp());
 

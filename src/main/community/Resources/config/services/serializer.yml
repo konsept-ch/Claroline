@@ -2,13 +2,14 @@ services:
     Claroline\CommunityBundle\Serializer\GroupSerializer:
         tags: [claroline.serializer]
         arguments:
+            - '@security.authorization_checker'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
-            - '@Claroline\CommunityBundle\Serializer\OrganizationSerializer'
             - '@Claroline\CommunityBundle\Serializer\RoleSerializer'
 
     Claroline\CommunityBundle\Serializer\OrganizationSerializer:
         tags: [claroline.serializer]
         arguments:
+            - '@security.authorization_checker'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
 
     Claroline\CommunityBundle\Serializer\ProfileSerializer:
@@ -20,11 +21,19 @@ services:
     Claroline\CommunityBundle\Serializer\RoleSerializer:
         tags: [claroline.serializer]
         arguments:
+            - '@security.authorization_checker'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
-            - '@Claroline\CoreBundle\Manager\Tool\ToolMaskDecoderManager'
-            - '@Claroline\CoreBundle\Manager\Tool\ToolRightsManager'
             - '@Claroline\CoreBundle\API\Serializer\Workspace\WorkspaceSerializer'
             - '@Claroline\CommunityBundle\Serializer\UserSerializer'
+
+    Claroline\CommunityBundle\Serializer\TeamSerializer:
+        tags: [claroline.serializer]
+        arguments:
+            - '@security.authorization_checker'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\CoreBundle\API\Serializer\Resource\ResourceNodeSerializer'
+            - '@Claroline\CommunityBundle\Serializer\RoleSerializer'
+            - '@Claroline\CoreBundle\API\Serializer\Workspace\WorkspaceSerializer'
 
     Claroline\CommunityBundle\Serializer\UserSerializer:
         tags: [claroline.serializer]

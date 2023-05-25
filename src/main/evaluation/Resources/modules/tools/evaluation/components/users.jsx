@@ -2,33 +2,19 @@ import React from 'react'
 import {PropTypes as T} from 'prop-types'
 import get from 'lodash/get'
 
-import {url} from '#/main/app/api'
 import {trans} from '#/main/app/intl/translation'
-import {LINK_BUTTON, MODAL_BUTTON, URL_BUTTON} from '#/main/app/buttons'
-import {DOWNLOAD_BUTTON} from '#/main/app/buttons'
+import {CALLBACK_BUTTON, LINK_BUTTON, MODAL_BUTTON} from '#/main/app/buttons'
 import {ToolPage} from '#/main/core/tool/containers/page'
 import {ListData} from '#/main/app/content/list/containers/data'
-import {constants} from '#/main/core/workspace/constants'
-import {constants as evalConstants} from '#/main/evaluation/constants'
 
 import {MODAL_MESSAGE} from '#/plugin/message/modals/message'
+import {constants} from '#/main/evaluation/constants'
+import {WorkspaceCard} from '#/main/evaluation/workspace/components/card'
 import {selectors} from '#/main/evaluation/tools/evaluation/store'
 
 const EvaluationUsers = (props) =>
   <ToolPage
     subtitle={trans('users_progression', {}, 'evaluation')}
-    actions={[
-      {
-        name: 'download',
-        type: DOWNLOAD_BUTTON,
-        icon: 'fa fa-fw fa-download',
-        label: trans('export', {}, 'actions'),
-        file: {
-          url: url(['apiv2_workspace_evaluation_csv', {workspaceId: props.contextId}])+props.searchQueryString
-        },
-        group: trans('transfer')
-      }
-    ]}
   >
     <ListData
       name={selectors.STORE_NAME + '.workspaceEvaluations'}
@@ -40,6 +26,19 @@ const EvaluationUsers = (props) =>
       }}
       definition={[
         {
+          name: 'status',
+          type: 'choice',
+          label: trans('status'),
+          options: {
+            choices: constants.EVALUATION_STATUSES_SHORT
+          },
+          displayed: true,
+          render: (row) => (
+            <span className={`label label-${constants.EVALUATION_STATUS_COLOR[row.status]}`}>
+              {constants.EVALUATION_STATUSES_SHORT[row.status]}
+            </span>
+          )
+        }, {
           name: 'workspace',
           type: 'workspace',
           label: trans('workspace'),
@@ -68,14 +67,6 @@ const EvaluationUsers = (props) =>
           },
           displayed: true
         }, {
-          name: 'status',
-          type: 'choice',
-          label: trans('status'),
-          options: {
-            choices: constants.EVALUATION_STATUSES
-          },
-          displayed: true
-        }, {
           name: 'duration',
           type: 'time',
           label: trans('duration'),
@@ -87,7 +78,6 @@ const EvaluationUsers = (props) =>
           label: trans('progression'),
           displayed: true,
           filterable: false,
-          calculated: (row) => ((row.progression || 0) / (row.progressionMax || 1)) * 100,
           options: {
             type: 'user'
           }
@@ -109,7 +99,7 @@ const EvaluationUsers = (props) =>
           filterable: false
         }, {
           name: 'userDisabled',
-          label: trans('user_disabled'),
+          label: trans('user_disabled', {}, 'community'),
           type: 'boolean',
           displayable: false,
           sortable: false,
@@ -126,14 +116,6 @@ const EvaluationUsers = (props) =>
           displayed: !!get(rows[0], 'user.id'),
           scope: ['object']
         }, {
-          name: 'export',
-          type: URL_BUTTON,
-          icon: 'fa fa-fw fa-download',
-          label: trans('export-csv', {}, 'actions'),
-          target: ['apiv2_workspace_export_user_progression', {workspace: get(rows[0], 'workspace.id'), user: get(rows[0], 'user.id')}],
-          group: trans('transfer'),
-          scope: ['object']
-        }, {
           type: MODAL_BUTTON,
           icon: 'fa fa-fw fa-envelope',
           label: trans('send-message', {}, 'actions'),
@@ -143,39 +125,51 @@ const EvaluationUsers = (props) =>
           }]
         }, {
           name: 'download-participation-certificate',
-          type: URL_BUTTON,
+          type: CALLBACK_BUTTON,
           icon: 'fa fa-fw fa-file-pdf',
           label: trans('download_participation_certificate', {}, 'actions'),
-          target: ['apiv2_workspace_download_participation_certificate', {workspace: get(rows[0], 'workspace.id'), user: get(rows[0], 'user.id')}],
-          disabled: ![
-            evalConstants.EVALUATION_STATUS_COMPLETED,
-            evalConstants.EVALUATION_STATUS_PASSED,
-            evalConstants.EVALUATION_STATUS_PARTICIPATED,
-            evalConstants.EVALUATION_STATUS_FAILED
-          ].includes(get(rows[0], 'status', evalConstants.EVALUATION_STATUS_UNKNOWN)),
+          displayed: -1 !== rows.findIndex(row => [
+            constants.EVALUATION_STATUS_COMPLETED,
+            constants.EVALUATION_STATUS_PARTICIPATED
+          ].includes(get(row, 'status', constants.EVALUATION_STATUS_UNKNOWN))),
+          callback: () => {
+            rows.map(row => {
+              if ([
+                constants.EVALUATION_STATUS_COMPLETED,
+                constants.EVALUATION_STATUS_PARTICIPATED
+              ].includes(get(row, 'status', constants.EVALUATION_STATUS_UNKNOWN))) {
+                props.downloadParticipationCertificate(row)
+              }
+            })
+          },
           group: trans('transfer'),
-          scope: ['object']
+          scope: ['object', 'collection']
         }, {
           name: 'download-success-certificate',
-          type: URL_BUTTON,
+          type: CALLBACK_BUTTON,
           icon: 'fa fa-fw fa-file-pdf',
           label: trans('download_success_certificate', {}, 'actions'),
-          target: ['apiv2_workspace_download_success_certificate', {workspace: get(rows[0], 'workspace.id'), user: get(rows[0], 'user.id')}],
-          disabled: ![
-            evalConstants.EVALUATION_STATUS_PASSED,
-            evalConstants.EVALUATION_STATUS_FAILED
-          ].includes(get(rows[0], 'status', evalConstants.EVALUATION_STATUS_UNKNOWN)),
+          displayed: -1 !== rows.findIndex((row) => constants.EVALUATION_STATUS_PASSED === get(row, 'status', constants.EVALUATION_STATUS_UNKNOWN)),
+          callback: () => {
+            rows.map(row => {
+              if (constants.EVALUATION_STATUS_PASSED === get(row, 'status', constants.EVALUATION_STATUS_UNKNOWN)) {
+                props.downloadSuccessCertificate(row)
+              }
+            })
+          },
           group: trans('transfer'),
-          scope: ['object']
+          scope: ['object', 'collection']
         }
       ]}
+      card={WorkspaceCard}
     />
   </ToolPage>
 
 EvaluationUsers.propTypes = {
   path: T.string.isRequired,
   contextId: T.string.isRequired,
-  searchQueryString: T.string
+  downloadParticipationCertificate: T.func.isRequired,
+  downloadSuccessCertificate: T.func.isRequired
 }
 
 export {

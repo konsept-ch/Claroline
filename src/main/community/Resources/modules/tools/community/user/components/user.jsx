@@ -24,7 +24,7 @@ const UserForm = props =>
       target: props.path+'/users',
       exact: true
     }}
-    sections={[
+    definition={[
       {
         title: trans('general'),
         primary: true,
@@ -67,7 +67,7 @@ const UserForm = props =>
           }
         ]
       }, {
-        icon: 'fa fa-fw fa-info',
+        icon: 'fa fa-fw fa-circle-info',
         title: trans('information'),
         fields: [
           {
@@ -103,10 +103,6 @@ const UserForm = props =>
         title: trans('access_restrictions'),
         fields: [
           {
-            name: 'restrictions.disabled',
-            type: 'boolean',
-            label: trans('disable_user')
-          }, {
             name: 'restrictions.enableDates',
             type: 'boolean',
             label: trans('restrict_by_dates'),
@@ -145,8 +141,7 @@ UserForm.propTypes = {
       dates: T.arrayOf(T.string).isRequired
     })
   }).isRequired,
-  updateProp: T.func.isRequired,
-  pickRoles: T.func.isRequired
+  updateProp: T.func.isRequired
 }
 
 const User = connect(

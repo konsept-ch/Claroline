@@ -104,7 +104,7 @@ class FieldsValues extends Component {
               callback={() => this.removeField(idx)}
               dangerous={true}
             >
-              <span className="fa fa-trash-o" />
+              <span className="fa fa-trash" />
             </CallbackButton>
             <DataInput
               label={fv.field.label}
@@ -191,7 +191,7 @@ const CategoryFormModal = props => {
                   inline: false,
                   choices: {
                     notify_addition: trans('addition', {}, 'clacoform'),
-                    notify_edition: trans('edition', {}, 'clacoform'),
+                    notify_edition: trans('edition'),
                     notify_removal: trans('removal', {}, 'clacoform'),
                     notify_pending_comment: trans('comment_to_moderate', {}, 'clacoform')
                   }

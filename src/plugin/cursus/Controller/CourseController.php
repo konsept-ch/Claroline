@@ -15,7 +15,7 @@ use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\Controller\AbstractCrudController;
 use Claroline\AppBundle\Manager\PdfManager;
 use Claroline\CoreBundle\Entity\Organization\Organization;
-use Claroline\CoreBundle\Entity\Tool\Tool;
+use Claroline\CoreBundle\Entity\Tool\AbstractTool;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
 use Claroline\CoreBundle\Library\RoutingHelper;
@@ -36,7 +36,6 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-use Twig\Environment;
 
 /**
  * @Route("/cursus_course")
@@ -45,23 +44,15 @@ class CourseController extends AbstractCrudController
 {
     use PermissionCheckerTrait;
 
-    /** @var TokenStorageInterface */
-    private $tokenStorage;
-    /** @var Environment */
-    private $templating;
-    /** @var RoutingHelper */
-    private $routing;
-    /** @var ToolManager */
-    private $toolManager;
-    /** @var CourseManager */
-    private $manager;
-    /** @var PdfManager */
-    private $pdfManager;
+    private TokenStorageInterface $tokenStorage;
+    private RoutingHelper $routing;
+    private ToolManager $toolManager;
+    private CourseManager $manager;
+    private PdfManager $pdfManager;
 
     public function __construct(
         AuthorizationCheckerInterface $authorization,
         TokenStorageInterface $tokenStorage,
-        Environment $templating,
         RoutingHelper $routing,
         ToolManager $toolManager,
         CourseManager $manager,
@@ -69,7 +60,6 @@ class CourseController extends AbstractCrudController
     ) {
         $this->authorization = $authorization;
         $this->tokenStorage = $tokenStorage;
-        $this->templating = $templating;
         $this->routing = $routing;
         $this->toolManager = $toolManager;
         $this->manager = $manager;
@@ -91,7 +81,7 @@ class CourseController extends AbstractCrudController
         return ['copyBulk', 'schema'];
     }
 
-    public function getOptions(): array
+    public static function getOptions(): array
     {
         return array_merge(parent::getOptions(), [
             'create' => [Options::PERSIST_TAG],
@@ -107,10 +97,9 @@ class CourseController extends AbstractCrudController
             $user = $this->tokenStorage->getToken()->getUser();
 
             // filter by organizations
+            $organizations = [];
             if ($user instanceof User) {
                 $organizations = $user->getOrganizations();
-            } else {
-                $organizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
             }
 
             $filters['organizations'] = array_map(function (Organization $organization) {
@@ -157,12 +146,12 @@ class CourseController extends AbstractCrudController
             ]);
 
             $registrations = [
-                'users' => array_map(function (SessionUser $sessionUser) use ($registeredSessions) {
+                'users' => array_map(function (SessionUser $sessionUser) use (&$registeredSessions) {
                     $registeredSessions[] = $sessionUser->getSession();
 
                     return $this->serializer->serialize($sessionUser);
                 }, $userRegistrations),
-                'groups' => array_map(function (SessionGroup $sessionGroup) use ($registeredSessions) {
+                'groups' => array_map(function (SessionGroup $sessionGroup) use (&$registeredSessions) {
                     $registeredSessions[] = $sessionGroup->getSession();
 
                     return $this->serializer->serialize($sessionGroup);
@@ -253,46 +242,10 @@ class CourseController extends AbstractCrudController
     }
 
     /**
-     * @Route("/{id}/users", name="apiv2_cursus_course_list_users", methods={"GET"})
+     * @Route("/{id}/users", name="apiv2_cursus_course_add_pending", methods={"PATCH"})
      * @EXT\ParamConverter("course", class="Claroline\CursusBundle\Entity\Course", options={"mapping": {"id": "uuid"}})
      */
-    public function listUsersAction(Course $course, Request $request): JsonResponse
-    {
-        $this->checkPermission('OPEN', $course, [], true);
-
-        $params = $request->query->all();
-        if (!isset($params['hiddenFilters'])) {
-            $params['hiddenFilters'] = [];
-        }
-        $params['hiddenFilters']['course'] = $course->getUuid();
-
-        // only list participants of the same organization
-        if (!$this->authorization->isGranted('ROLE_ADMIN')) {
-            /** @var User $user */
-            $user = $this->tokenStorage->getToken()->getUser();
-
-            // filter by organizations
-            if ($user instanceof User) {
-                $organizations = $user->getOrganizations();
-            } else {
-                $organizations = $this->om->getRepository(Organization::class)->findBy(['default' => true]);
-            }
-
-            $params['hiddenFilters']['organizations'] = array_map(function (Organization $organization) {
-                return $organization->getUuid();
-            }, $organizations);
-        }
-
-        return new JsonResponse(
-            $this->finder->search(CourseUser::class, $params)
-        );
-    }
-
-    /**
-     * @Route("/{id}/users", name="apiv2_cursus_course_add_users", methods={"PATCH"})
-     * @EXT\ParamConverter("course", class="Claroline\CursusBundle\Entity\Course", options={"mapping": {"id": "uuid"}})
-     */
-    public function addUsersAction(Course $course, Request $request): JsonResponse
+    public function addPendingAction(Course $course, Request $request): JsonResponse
     {
         $this->checkPermission('REGISTER', $course, [], true);
 
@@ -306,24 +259,10 @@ class CourseController extends AbstractCrudController
     }
 
     /**
-     * @Route("/{id}/users", name="apiv2_cursus_course_remove_users", methods={"DELETE"})
+     * @Route("/{id}/move/users", name="apiv2_cursus_course_move_pending", methods={"PUT"})
      * @EXT\ParamConverter("course", class="Claroline\CursusBundle\Entity\Course", options={"mapping": {"id": "uuid"}})
      */
-    public function removeUsersAction(Course $course, Request $request): JsonResponse
-    {
-        $this->checkPermission('REGISTER', $course, [], true);
-
-        $courseUsers = $this->decodeIdsString($request, CourseUser::class);
-        $this->manager->removeUsers($courseUsers);
-
-        return new JsonResponse(null, 204);
-    }
-
-    /**
-     * @Route("/{id}/move/users", name="apiv2_cursus_course_move_users", methods={"PUT"})
-     * @EXT\ParamConverter("course", class="Claroline\CursusBundle\Entity\Course", options={"mapping": {"id": "uuid"}})
-     */
-    public function moveUsersAction(Course $course, Request $request): JsonResponse
+    public function movePendingAction(Course $course, Request $request): JsonResponse
     {
         $this->checkPermission('REGISTER', $course, [], true);
 
@@ -353,7 +292,7 @@ class CourseController extends AbstractCrudController
     }
 
     /**
-     * @Route("/{id}/move/pending", name="apiv2_cursus_course_move_pending", methods={"PUT"})
+     * @Route("/{id}/move/pending", name="apiv2_cursus_course_move_to_pending", methods={"PUT"})
      * @EXT\ParamConverter("course", class="Claroline\CursusBundle\Entity\Course", options={"mapping": {"id": "uuid"}})
      */
     public function moveToPendingAction(Course $course, Request $request): JsonResponse
@@ -386,7 +325,7 @@ class CourseController extends AbstractCrudController
      * @EXT\ParamConverter("course", class="Claroline\CursusBundle\Entity\Course", options={"mapping": {"id": "uuid"}})
      * @EXT\ParamConverter("user", converter="current_user", options={"allowAnonymous"=false})
      */
-    public function selfRegisterAction(Course $course, User $user): JsonResponse
+    public function selfRegisterAction(Course $course, User $user, Request $request): JsonResponse
     {
         $this->checkPermission('OPEN', $course, [], true);
 
@@ -394,14 +333,39 @@ class CourseController extends AbstractCrudController
             throw new AccessDeniedException();
         }
 
-        $courseUsers = $this->manager->addUsers($course, [$user]);
+        $registrationData = $this->decodeRequest($request);
+
+        $courseUsers = $this->manager->addUsers($course, [$user], [
+            $user->getUuid() => $registrationData,
+        ]);
 
         return new JsonResponse($this->serializer->serialize($courseUsers[0]));
     }
 
+    /**
+     * @Route("/{id}/stats", name="apiv2_cursus_course_stats", methods={"GET"})
+     * @EXT\ParamConverter("course", class="Claroline\CursusBundle\Entity\Course", options={"mapping": {"id": "uuid"}})
+     */
+    public function getStatsAction(Course $course): JsonResponse
+    {
+        $this->checkPermission('REGISTER', $course, [], true);
+
+        $stats = $this->om->getRepository(Course::class)->getRegistrationStats($course);
+
+        return new JsonResponse([
+            'total' => $stats['total'],
+            'fields' => array_map(function (array $fieldStats) {
+                return [
+                    'field' => $this->serializer->serialize($fieldStats['field']),
+                    'values' => $fieldStats['values'],
+                ];
+            }, $stats['fields']),
+        ]);
+    }
+
     private function checkToolAccess(string $rights = 'OPEN'): bool
     {
-        $trainingsTool = $this->toolManager->getOrderedTool('trainings', Tool::DESKTOP);
+        $trainingsTool = $this->toolManager->getOrderedTool('trainings', AbstractTool::DESKTOP);
 
         if (is_null($trainingsTool) || !$this->authorization->isGranted($rights, $trainingsTool)) {
             return false;

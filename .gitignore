@@ -5,6 +5,7 @@ config/parameters.yml
 coverage
 files/*
 node_modules
+jsconfig.json
 npm-debug.log
 theme-assets.json
 webpack-*.json
@@ -20,7 +21,6 @@ docker-compose.override.yml
 installed
 composer.lock
 symfony.lock
-package-lock.json
 .php_cs.cache
 .phpunit.result.cache
 ###> symfony/framework-bundle ###

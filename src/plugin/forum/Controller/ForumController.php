@@ -105,10 +105,11 @@ class ForumController extends AbstractCrudController
         $subject = new Subject();
         $subject->setForum($forum);
 
-        $this->crud->create($subject, $this->decodeRequest($request), array_merge($this->options['create'], [Crud::THROW_EXCEPTION]));
+        $options = static::getOptions();
+        $this->crud->create($subject, $this->decodeRequest($request), $options['create'] ?? []);
 
         return new JsonResponse(
-            $this->serializer->serialize($subject, $this->options['get']),
+            $this->serializer->serialize($subject, $options['get'] ?? []),
             201
         );
     }
@@ -129,7 +130,7 @@ class ForumController extends AbstractCrudController
 
         $filters = [
             'forum' => $forum->getUuid(),
-            'creatorId' => $user->getUuid(),
+            'creator' => $user->getUuid(),
             'moderation' => true,
         ];
         // validate all moderated subjects for this user and forum

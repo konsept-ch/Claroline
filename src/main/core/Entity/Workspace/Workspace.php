@@ -28,10 +28,12 @@ use Claroline\AppBundle\Entity\Restriction\AccessibleFrom;
 use Claroline\AppBundle\Entity\Restriction\AccessibleUntil;
 use Claroline\AppBundle\Entity\Restriction\AllowedIps;
 use Claroline\AppBundle\Entity\Restriction\Hidden;
-use Claroline\CoreBundle\Entity\Model\OrganizationsTrait;
+use Claroline\CommunityBundle\Model\HasOrganizations;
+use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CoreBundle\Entity\Role;
 use Claroline\CoreBundle\Entity\Tool\OrderedTool;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 
@@ -62,7 +64,7 @@ class Workspace implements IdentifiableInterface
     use AccessibleUntil;
     use AccessCode;
     use AllowedIps;
-    use OrganizationsTrait;
+    use HasOrganizations;
 
     /**
      * @Gedmo\Slug(fields={"code"})
@@ -89,7 +91,7 @@ class Workspace implements IdentifiableInterface
      *
      * @var OrderedTool[]|ArrayCollection
      *
-     * @todo : remove me. relation should be unidirectional
+     * @deprecated relation should be unidirectional
      */
     private $orderedTools;
 
@@ -101,6 +103,8 @@ class Workspace implements IdentifiableInterface
      * )
      *
      * @var Role[]|ArrayCollection
+     *
+     * @deprecated relation should be unidirectional (not sure it's possible to remove it)
      */
     private $roles;
 
@@ -112,6 +116,8 @@ class Workspace implements IdentifiableInterface
      * @ORM\JoinColumn(name="default_role_id", onDelete="SET NULL")
      *
      * @var Role
+     *
+     * @deprecated to move in community parameters
      */
     private $defaultRole;
 
@@ -119,6 +125,8 @@ class Workspace implements IdentifiableInterface
      * @ORM\Column(name="self_registration", type="boolean")
      *
      * @var bool
+     *
+     * @deprecated to move in community parameters
      */
     private $selfRegistration = false;
 
@@ -126,6 +134,8 @@ class Workspace implements IdentifiableInterface
      * @ORM\Column(name="registration_validation", type="boolean")
      *
      * @var bool
+     *
+     * @deprecated to move in community parameters
      */
     private $registrationValidation = false;
 
@@ -133,8 +143,19 @@ class Workspace implements IdentifiableInterface
      * @ORM\Column(name="self_unregistration", type="boolean")
      *
      * @var bool
+     *
+     * @deprecated to move in community parameters
      */
     private $selfUnregistration = false;
+
+    /**
+     * @ORM\Column(name="max_teams", type="integer", nullable=true)
+     *
+     * @var int
+     *
+     * @deprecated to move in community parameters
+     */
+    private $maxTeams;
 
     /**
      * @ORM\Column(name="is_personal", type="boolean")
@@ -194,9 +215,9 @@ class Workspace implements IdentifiableInterface
      *     inversedBy="workspaces"
      * )
      *
-     * @var ArrayCollection
+     * @var Collection|Organization[]
      */
-    private $organizations;
+    private Collection $organizations;
 
     //not mapped. Used for creation
     private $workspaceModel;
@@ -241,17 +262,25 @@ class Workspace implements IdentifiableInterface
      * Get ordered tools.
      *
      * @return OrderedTool[]|ArrayCollection
+     *
+     * @deprecated
      */
     public function getOrderedTools()
     {
         return $this->orderedTools;
     }
 
+    /**
+     * @deprecated
+     */
     public function addOrderedTool(OrderedTool $tool)
     {
         $this->orderedTools->add($tool);
     }
 
+    /**
+     * @deprecated
+     */
     public function removeOrderedTool(OrderedTool $tool)
     {
         $this->orderedTools->removeElement($tool);
@@ -261,12 +290,17 @@ class Workspace implements IdentifiableInterface
      * Get roles.
      *
      * @return Role[]|ArrayCollection
+     *
+     * @deprecated
      */
     public function getRoles()
     {
         return $this->roles;
     }
 
+    /**
+     * @deprecated
+     */
     public function addRole(Role $role)
     {
         if (!$this->roles->contains($role)) {
@@ -274,39 +308,76 @@ class Workspace implements IdentifiableInterface
         }
     }
 
+    /**
+     * @deprecated
+     */
     public function removeRole(Role $role)
     {
         $this->roles->removeElement($role);
     }
 
+    /**
+     * @deprecated
+     */
     public function setSelfRegistration($selfRegistration)
     {
         $this->selfRegistration = $selfRegistration;
     }
 
+    /**
+     * @deprecated
+     */
     public function getSelfRegistration()
     {
         return $this->selfRegistration;
     }
 
+    /**
+     * @deprecated
+     */
     public function getRegistrationValidation()
     {
         return $this->registrationValidation;
     }
 
+    /**
+     * @deprecated
+     */
     public function setRegistrationValidation($registrationValidation)
     {
         $this->registrationValidation = $registrationValidation;
     }
 
+    /**
+     * @deprecated
+     */
     public function setSelfUnregistration($selfUnregistration)
     {
         $this->selfUnregistration = $selfUnregistration;
     }
 
+    /**
+     * @deprecated
+     */
     public function getSelfUnregistration()
     {
         return $this->selfUnregistration;
+    }
+
+    /**
+     * @deprecated
+     */
+    public function getMaxTeams(): ?int
+    {
+        return $this->maxTeams;
+    }
+
+    /**
+     * @deprecated
+     */
+    public function setMaxTeams(?int $maxTeams = null): void
+    {
+        $this->maxTeams = $maxTeams;
     }
 
     public function setPersonal(bool $personal)
@@ -374,11 +445,17 @@ class Workspace implements IdentifiableInterface
         $this->disabledNotifications = !$notifications;
     }
 
+    /**
+     * @deprecated
+     */
     public function setDefaultRole(?Role $role = null)
     {
         $this->defaultRole = $role;
     }
 
+    /**
+     * @deprecated
+     */
     public function getDefaultRole(): ?Role
     {
         if (!$this->defaultRole && 0 !== $this->roles->count()) {
