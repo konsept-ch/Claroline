@@ -11,9 +11,6 @@ services:
     Claroline\CursusBundle\Security\Voter\EventVoter:
         parent: Claroline\AppBundle\Security\Voter\AbstractVoter
 
-    Claroline\CursusBundle\Security\Voter\EventVoter:
-        parent: Claroline\AppBundle\Security\Voter\AbstractVoter
-
     Claroline\CursusBundle\Security\Voter\QuotaVoter:
         parent: Claroline\AppBundle\Security\Voter\AbstractVoter
 
