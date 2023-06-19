@@ -57,7 +57,7 @@ echo "Setting correct file permissions for DEV"
 chmod -R 777 var files config
 
 echo "webpack-dev-server starting as a background process..."
-nohup npm run webpack:dev -- --host=0.0.0.0 --disable-host-check &
+nohup npm run webpack:dev -- --host=0.0.0.0 &
 
 echo "Starting Apache2 in the foreground"
 exec "$@"
