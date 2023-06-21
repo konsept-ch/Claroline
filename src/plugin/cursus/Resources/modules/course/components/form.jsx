@@ -57,7 +57,7 @@ const CourseForm = (props) =>
             name: 'plainDescription',
             type: 'string',
             label: trans('plain_description'),
-            options: {long: true},
+            options: {long: true, minLength: 0, maxLength: 255},
             help: trans('plain_description_help')
           }, {
             name: 'meta.days',
