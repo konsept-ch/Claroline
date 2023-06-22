@@ -23,11 +23,6 @@ const CourseDetails = (props) =>
   <Fragment>
     <header className="row content-heading">
       <ContentTabs
-        backAction={{
-          type: LINK_BUTTON,
-          target: props.path,
-          exact: true
-        }}
         sections={[
           {
             name: 'about',
@@ -42,7 +37,7 @@ const CourseDetails = (props) =>
             icon: 'fa fa-fw fa-calendar-week',
             label: trans('sessions', {}, 'cursus'),
             target: `${route(props.path, props.course, props.activeSession)}/sessions`,
-            displayed: !get(props.course, 'display.hideSessions')
+            displayed: !get(props.course, 'display.hideSessions') && !props.activeSession
           }, {
             name: 'pending',
             type: LINK_BUTTON,
@@ -51,19 +46,19 @@ const CourseDetails = (props) =>
             displayed: hasPermission('register', props.course) && get(props.course, 'registration.pendingRegistrations'),
             target: `${route(props.path, props.course, props.activeSession)}/pending`
           }, {
-            name: 'participants',
-            type: LINK_BUTTON,
-            icon: 'fa fa-fw fa-users',
-            label: trans('participants'),
-            target: `${route(props.path, props.course, props.activeSession)}/participants`,
-            displayed: props.isAuthenticated && !!props.activeSession
-          }, {
             name: 'events',
             type: LINK_BUTTON,
             icon: 'fa fa-fw fa-clock',
             label: trans('session_events', {}, 'cursus'),
             target: `${route(props.path, props.course, props.activeSession)}/events`,
             displayed: !!props.activeSession
+          }, {
+            name: 'participants',
+            type: LINK_BUTTON,
+            icon: 'fa fa-fw fa-users',
+            label: trans('participants'),
+            target: `${route(props.path, props.course, props.activeSession)}/participants`,
+            displayed: props.isAuthenticated && !!props.activeSession
           }
         ]}
       />

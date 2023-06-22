@@ -211,7 +211,7 @@ const CourseParticipants = (props) =>
               path: '/groups'
             }, {
               icon: 'fa fa-fw fa-hourglass-half',
-              title: trans('Refus RH'),
+              title: trans('En attente'),
               path: '/pending',
               displayed: hasPermission('register', props.activeSession)
             }, {
