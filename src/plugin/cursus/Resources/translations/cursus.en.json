@@ -138,5 +138,9 @@
     "subscription_validated_help": "The status will be validated.",
     "subscription_managed_help": "The status will be validated with quota",
     "cancellations": "Cancellations",
-    "cancellation_date": "Cancellation date"
+    "cancellation_date": "Cancellation date",
+    "session_period": "Period",
+    "period_am": "Morning",
+    "period_pm": "Afternoon",
+    "period_fd": "All day"
 }

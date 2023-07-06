@@ -169,18 +169,15 @@ const CourseAbout = (props) => {
             </li>
 
             <li className="list-group-item">
-              {trans('duration')}
+              {trans('session_period', {}, 'cursus')}
               <span className="value">
-                {(() => {
-                  const days = getInfo(props.course, props.activeSession, 'meta.days')
-                  const hours = getInfo(props.course, props.activeSession, 'meta.hours')
-                  const output = []
-
-                  if (days) output.push(days + ' ' + trans(days < 2 ? 'day' : 'days'))
-                  if (hours) output.push(hours + ' ' + trans(hours < 2 ? 'hour' : 'hours'))
-
-                  return output.length == 0 ? trans('empty_value') : output.join(' + ')
-                })()}
+                {
+                  {
+                    'am': trans('period_am', {}, 'cursus'),
+                    'pm': trans('period_pm', {}, 'cursus'),
+                    'fd': trans('period_fd', {}, 'cursus')
+                  }[getInfo(props.course, props.activeSession, 'meta.period')] || trans('empty_value')
+                }
               </span>
             </li>
 

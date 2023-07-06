@@ -102,14 +102,9 @@ class Course extends AbstractTraining
     private $sessionOpening = 'first_available';
 
     /**
-     * @ORM\Column(name="session_days", nullable=false, type="float", options={"default" = 1})
+     * @ORM\Column(name="session_period", type="string", nullable=false, options={"default" = "fd"})
      */
-    private $defaultSessionDays = 1;
-
-    /**
-     * @ORM\Column(name="session_hours", nullable=false, type="float", options={"default" = 0})
-     */
-    private $defaultSessionHours = 0;
+    private $defaultSessionPeriod = 'fd';
 
     /**
      * @ORM\ManyToMany(
@@ -230,24 +225,14 @@ class Course extends AbstractTraining
         $this->hideSessions = $hideSessions;
     }
 
-    public function getDefaultSessionDays()
+    public function getDefaultSessionPeriod()
     {
-        return $this->defaultSessionDays;
+        return $this->defaultSessionPeriod;
     }
 
-    public function setDefaultSessionDays($defaultSessionDays)
+    public function setDefaultSessionPeriod($defaultSessionPeriod)
     {
-        $this->defaultSessionDays = $defaultSessionDays;
-    }
-
-    public function getDefaultSessionHours()
-    {
-        return $this->defaultSessionHours;
-    }
-
-    public function setDefaultSessionHours($defaultSessionHours)
-    {
-        $this->defaultSessionHours = $defaultSessionHours;
+        $this->defaultSessionPeriod = $defaultSessionPeriod;
     }
 
     public function getSessionOpening(): ?string
