@@ -20,6 +20,7 @@ registry.add('ClarolineCursusBundle', {
       'course'          : () => { return import(/* webpackChunkName: "cursus-data-course" */  '#/plugin/cursus/data/types/course') },
       'training_session': () => { return import(/* webpackChunkName: "cursus-data-session" */ '#/plugin/cursus/data/types/session') },
       'date-event': () => { return import(/* webpackChunkName: "cursus-data-date-event" */ '#/plugin/cursus/data/types/date-event') },
+      'period': () => { return import(/* webpackChunkName: "cursus-data-period" */ '#/plugin/cursus/data/types/period') },
       'quota': () => { return import(/* webpackChunkName: "cursus-data-quota" */ '#/plugin/cursus/data/types/quota') }
     },
     sources: {

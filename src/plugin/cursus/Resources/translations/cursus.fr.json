@@ -147,7 +147,7 @@
     "annual_exercices": "Exercices annuels",
     "add_year": "Ajouter exercice",
     "session_period": "Période",
-    "session_period_am": "Matin",
-    "session_period_pm": "Après-midi",
-    "session_period_fd": "Toute la journée"
+    "period_am": "Matin",
+    "period_pm": "Après-midi",
+    "period_fd": "Toute la journée"
 }

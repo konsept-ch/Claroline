@@ -20,6 +20,7 @@ const CourseEvents = (props) =>
   <Fragment>
     <EventList
       name={selectors.STORE_NAME+'.courseEvents'}
+      path={props.path}
       url={['apiv2_cursus_session_list_events', {id: props.activeSession.id}]}
       primaryAction={(row) => ({
         type: MODAL_BUTTON,
