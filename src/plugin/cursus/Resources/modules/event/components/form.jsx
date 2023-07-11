@@ -2,9 +2,7 @@ import React from 'react'
 import {PropTypes as T} from 'prop-types'
 import get from 'lodash/get'
 import isEmpty from 'lodash/isEmpty'
-import moment from 'moment'
 
-import {getApiFormat} from '#/main/app/intl/date'
 import {trans} from '#/main/app/intl/translation'
 import {FormData} from '#/main/app/content/form/containers/data'
 
@@ -35,12 +33,8 @@ const EventForm = (props) =>
             required: true,
             calculated: (event) => [event.start, event.end],
             onChange: (datesRange) => {
-              console.log(datesRange[0], datesRange[1])
               props.update('start', datesRange[0])
               props.update('end', datesRange[1])
-            },
-            options: {
-              time: true
             }
           }
         ]

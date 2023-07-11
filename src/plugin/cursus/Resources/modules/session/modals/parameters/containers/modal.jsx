@@ -23,6 +23,7 @@ const SessionFormModal = withReducer(selectors.STORE_NAME, reducer)(
         if (session) {
           formData = session
         } else {
+          const nextId = course.meta.sessions + 1
           formData = merge(
             {
               course: {
@@ -31,7 +32,12 @@ const SessionFormModal = withReducer(selectors.STORE_NAME, reducer)(
                 code: course.code,
                 slug: course.slug
               }
-            }, SessionTypes.defaultProps, omit(course, 'id', 'description', 'plainDescription')
+            }, SessionTypes.defaultProps, {
+              ...omit(course, 'id', 'description', 'plainDescription', 'name', 'code', 'slug'),
+              name: `${course.name} | ${nextId}`,
+              code: `${course.code}-${nextId}`,
+              slug: `${course.slug}-${nextId}`,
+            }
           ) // todo : omit props not needed for sessions
         }
 

@@ -5,6 +5,9 @@ import omit from 'lodash/omit'
 import {withReducer} from '#/main/app/store/components/withReducer'
 import {actions as formActions, selectors as formSelectors} from '#/main/app/content/form/store'
 
+import {actions as catalogActions} from '#/plugin/cursus/tools/trainings/catalog/store/actions'
+import {selectors as catalogSelectors} from '#/plugin/cursus/tools/trainings/catalog/store/selectors'
+
 import {selectors, reducer} from '#/plugin/cursus/event/modals/parameters/store'
 import {EventFormModal as EventFormModalComponent} from '#/plugin/cursus/event/modals/parameters/components/modal'
 import {Event as EventTypes} from '#/plugin/cursus/prop-types'
@@ -21,6 +24,7 @@ const EventFormModal = withReducer(selectors.STORE_NAME, reducer)(
         if (event) {
           formData = event
         } else {
+          const nextId = session.meta.events + 1
           formData = merge(
             {
               session: {
@@ -30,7 +34,12 @@ const EventFormModal = withReducer(selectors.STORE_NAME, reducer)(
                 slug: session.slug,
                 restrictions: session.restrictions
               }
-            }, EventTypes.defaultProps, omit(session, 'id')
+            }, EventTypes.defaultProps, {
+              ...omit(session, 'id', 'name', 'code', 'slug'),
+              name: `${session.name} | ${nextId}`,
+              code: `${session.code}-${nextId}`,
+              slug: `${session.slug}-${nextId}`,
+            }
           ) // todo : omit props not needed for events
         }
 
@@ -42,6 +51,7 @@ const EventFormModal = withReducer(selectors.STORE_NAME, reducer)(
       saveEvent(eventId = null, onSave = () => true) {
         dispatch(formActions.saveForm(selectors.STORE_NAME, eventId ? ['apiv2_cursus_event_update', {id: eventId}] : ['apiv2_cursus_event_create'])).then((response) => {
           if (onSave) {
+            dispatch(catalogActions.openSession(response.session.id, true))
             onSave(response)
           }
         })

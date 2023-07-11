@@ -121,6 +121,7 @@ class CourseSerializer
                     'tutorRoleName' => $course->getTutorRoleName(),
                     'learnerRoleName' => $course->getLearnerRoleName(),
                     'period' => $course->getDefaultSessionPeriod(),
+                    'sessions' => count($course->getSessions()),
                 ],
                 'display' => [
                     'order' => $course->getOrder(),

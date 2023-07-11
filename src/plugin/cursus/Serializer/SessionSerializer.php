@@ -160,6 +160,7 @@ class SessionSerializer
                 'tutorRole' => $session->getTutorRole() ?
                     $this->roleSerializer->serialize($session->getTutorRole(), [SerializerInterface::SERIALIZE_MINIMAL]) :
                     null,
+                'events' => count($session->getEvents()),
             ],
             'display' => [
                 'order' => $session->getOrder(),
