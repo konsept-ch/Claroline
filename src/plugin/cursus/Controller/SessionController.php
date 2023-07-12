@@ -595,6 +595,23 @@ class SessionController extends AbstractCrudController
         );
     }
 
+    /**
+     * @Route("/pendings", name="apiv2_cursus_session_list_pendings", methods={"GET"})
+     */
+    public function listPendingsAction(Request $request): JsonResponse
+    {
+        $params = $request->query->all();
+        if (!isset($params['hiddenFilters'])) {
+            $params['hiddenFilters'] = [];
+        }
+        $params['hiddenFilters']['type'] = SessionUser::LEARNER;
+        $params['hiddenFilters']['pending'] = true;
+
+        return new JsonResponse(
+            $this->finder->search(SessionUser::class, $params)
+        );
+    }
+
     private function checkToolAccess(string $rights = 'OPEN'): bool
     {
         $trainingsTool = $this->toolManager->getOrderedTool('trainings', Tool::DESKTOP);

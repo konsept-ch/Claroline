@@ -6,6 +6,7 @@ import {Routes} from '#/main/app/router'
 import {CatalogMain} from '#/plugin/cursus/tools/trainings/catalog/containers/main'
 import {SessionMain} from '#/plugin/cursus/tools/trainings/session/containers/main'
 import {EventMain} from '#/plugin/cursus/tools/trainings/event/containers/main'
+import {PendingMain} from '#/plugin/cursus/tools/trainings/pending/containers/main'
 import {QuotaMain} from '#/plugin/cursus/tools/trainings/quota/containers/main'
 import {SubscriptionMain} from '#/plugin/cursus/tools/trainings/subscription/containers/main'
 
@@ -34,6 +35,10 @@ const TrainingsTool = (props) =>
         path: '/subscription',
         component: SubscriptionMain,
         disabled: !props.canValidateSubscriptions
+      }, {
+        path: '/pending',
+        component: PendingMain,
+        disabled: !props.canEdit
       }
     ]}
   />
@@ -42,7 +47,8 @@ TrainingsTool.propTypes = {
   path: T.string.isRequired,
   authenticated: T.bool.isRequired,
   canManageQuotas: T.bool.isRequired,
-  canValidateSubscriptions: T.bool.isRequired
+  canValidateSubscriptions: T.bool.isRequired,
+  canEdit: T.bool.isRequired
 }
 
 export {

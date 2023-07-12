@@ -21,6 +21,9 @@ class PlatformDefaults implements ParameterProviderInterface
             'quotas' => [
                 'enabled' => false,
             ],
+            'pendings' => [
+                'enabled' => false,
+            ],
         ];
     }
 }

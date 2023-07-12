@@ -52,6 +52,12 @@ const TrainingsMenu = (props) =>
           label: trans('validations', {}, 'cursus'),
           target: props.path + '/subscription',
           displayed: param('quotas.enabled') && props.canValidateSubscriptions
+        }, {
+          name: 'pendings',
+          type: LINK_BUTTON,
+          label: trans('pendings', {}, 'cursus'),
+          target: props.path + '/pending',
+          displayed: param('pendings.enabled') && props.canEdit
         }
       ]}
       onClick={props.autoClose}

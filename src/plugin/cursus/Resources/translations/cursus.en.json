@@ -142,5 +142,6 @@
     "session_period": "Period",
     "period_am": "Morning",
     "period_pm": "Afternoon",
-    "period_fd": "All day"
+    "period_fd": "All day",
+    "pendings": "Pending list"
 }

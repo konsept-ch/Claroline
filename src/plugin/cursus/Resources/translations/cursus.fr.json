@@ -149,5 +149,6 @@
     "session_period": "Période",
     "period_am": "Matin",
     "period_pm": "Après-midi",
-    "period_fd": "Toute la journée"
+    "period_fd": "Toute la journée",
+    "pendings": "Liste d'attente"
 }
