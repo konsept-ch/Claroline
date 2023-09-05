@@ -13,7 +13,7 @@ export const CookiesBanner = () => {
       <div className="cookies-banner">
         <p>
           Ce site utilise des cookies afin de vous offrir une expérience optimale de navigation. En continuant de
-          visiter ce site, vous acceptez l'utilisation de ces cookies.
+          visiter ce site, vous acceptez l&lsquo;utilisation de ces cookies.
         </p>
         <div>
           <a href="#/home/cg">
