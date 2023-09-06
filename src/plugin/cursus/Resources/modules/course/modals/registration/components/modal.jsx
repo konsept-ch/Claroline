@@ -8,6 +8,7 @@ import {trans} from '#/main/app/intl/translation'
 import {AlertBlock} from '#/main/app/alert/components/alert-block'
 import {Button} from '#/main/app/action/components/button'
 import {CALLBACK_BUTTON, LINK_BUTTON} from '#/main/app/buttons'
+import {Checkbox} from '#/main/app/input/components/checkbox'
 import {Modal} from '#/main/app/overlays/modal/components/modal'
 import {DetailsData} from '#/main/app/content/details/components/data'
 
@@ -18,6 +19,7 @@ import {getInfo, isFull} from '#/plugin/cursus/utils'
 const RegistrationModal = props => {
   const [loaded, setLoaded] = useState(false)
   const [requirements, setRequirements] = useState(false)
+  const [accept, setAccept] = useState(false)
 
   useEffect(() => {
     fetch(url(['apiv2_profile_requirements']), {
@@ -100,16 +102,30 @@ const RegistrationModal = props => {
       }
 
       {loaded && requirements == 0 &&
-        <Button
-          className="btn modal-btn"
-          type={CALLBACK_BUTTON}
-          primary={true}
-          label={trans(!props.session || isFull(props.session) ? 'register_waiting_list' : 'self_register', {}, 'actions')}
-          callback={() => {
-            props.register(props.course, props.session ? props.session.id : null)
-            props.fadeModal()
-          }}
-        />
+        <Fragment>
+          <div style={{padding:'1rem 2rem'}}>
+            <div className="checkbox">
+            </div>
+            <Checkbox
+              id="requirements-accept"
+              label={<span>Je confirme avoir pris connaissance des <a style={{textDecoration:'underline'}} href="/#/home/cg" target="_blank">conditions générales</a> du CEP et les accepter.</span>}
+              checked={accept}
+              onChange={(value) => setAccept(value)}
+            />
+          </div>
+          {accept &&
+            <Button
+              className="btn modal-btn"
+              type={CALLBACK_BUTTON}
+              primary={true}
+              label={trans(!props.session || isFull(props.session) ? 'register_waiting_list' : 'self_register', {}, 'actions')}
+              callback={() => {
+                props.register(props.course, props.session ? props.session.id : null)
+                props.fadeModal()
+              }}
+            />
+          }
+        </Fragment>
       }
       {loaded && requirements != 0 &&
         <Fragment>
