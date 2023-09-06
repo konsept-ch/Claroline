@@ -23,6 +23,8 @@ import {AccountMain} from '#/main/app/layout/sections/account/components/main'
 import {WorkspaceMenu} from '#/main/core/workspace/containers/menu'
 import {WorkspaceMain} from '#/main/core/workspace/containers/main'
 
+import {CookiesBanner} from './CookiesBanner'
+
 const LayoutMain = props =>
   <Fragment>
     <div className="app" role="presentation">
@@ -110,6 +112,8 @@ const LayoutMain = props =>
           open={props.openSidebar}
         />
       }
+
+      <CookiesBanner />
     </div>
 
     {(false && props.authenticated && props.sidebar) &&
