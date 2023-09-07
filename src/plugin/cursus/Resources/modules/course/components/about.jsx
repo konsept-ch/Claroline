@@ -280,8 +280,9 @@ const CourseAbout = (props) => {
             <Button
               className="btn btn-block"
               type={LINK_BUTTON}
-              label={trans('show_training_events', {}, 'actions')}
-              target={route(props.path, props.course, props.activeSession)+'/events'}
+              exact={true}
+              label={trans('back_to_course', {}, 'actions')}
+              target={route(props.path, props.course)}
             />
           }
 
