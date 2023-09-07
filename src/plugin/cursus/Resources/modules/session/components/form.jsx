@@ -180,12 +180,6 @@ const SessionForm = (props) =>
               }
             ]
           }, {
-            name: 'registration.selfUnregistration',
-            type: 'boolean',
-            label: trans('activate_self_unregistration'),
-            displayed: (session) => !get(session, 'registration.autoRegistration'),
-            help: trans('self_unregistration_training_help', {}, 'cursus')
-          }, {
             name: 'registration.eventRegistrationType',
             type: 'choice',
             label: trans('session_event_registration', {}, 'cursus'),

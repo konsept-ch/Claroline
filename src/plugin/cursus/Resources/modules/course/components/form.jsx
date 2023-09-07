@@ -122,8 +122,7 @@ const CourseForm = (props) =>
               choices: {
                 none: trans('opening_session_none', {}, 'cursus')
               }
-            },
-            help: trans('opening_session_help', {}, 'cursus')
+            }
           }
         ]
       }, {
@@ -220,17 +219,6 @@ const CourseForm = (props) =>
                 displayed: (course) => get(course, 'registration.mail')
               }
             ]
-          }, {
-            name: 'registration.selfUnregistration',
-            type: 'boolean',
-            label: trans('activate_self_unregistration'),
-            help: trans('self_unregistration_training_help', {}, 'cursus'),
-            displayed: (course) => !get(course, 'registration.autoRegistration')
-          }, {
-            name: 'registration.propagate',
-            type: 'boolean',
-            label: trans('propagate_registration', {}, 'cursus'),
-            help: trans('propagate_registration_help', {}, 'cursus')
           }
         ]
       }, {

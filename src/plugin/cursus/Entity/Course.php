@@ -99,7 +99,7 @@ class Course extends AbstractTraining
      *
      * @var string
      */
-    private $sessionOpening = 'first_available';
+    private $sessionOpening = 'none';
     
     /**
      * @ORM\Column(name="session_days", nullable=false, type="float", options={"default" = 1})
