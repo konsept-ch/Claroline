@@ -30,7 +30,6 @@ const reducer = combineReducers({
     [LOAD_COURSE]: (state, action) => action.availableSessions
   }),
   courseSessions: makeListReducer(selectors.STORE_NAME+'.courseSessions', {
-    filters: [{property: 'status', value: 'not_ended'}],
     sortBy: {property: 'startDate', direction: 1}
   }, {
     invalidated: makeReducer(false, {

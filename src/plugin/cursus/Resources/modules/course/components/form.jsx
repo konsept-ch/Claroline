@@ -120,9 +120,7 @@ const CourseForm = (props) =>
               noEmpty: true,
               condensed: true,
               choices: {
-                none: trans('opening_session_none', {}, 'cursus'),
-                first_available: trans('opening_session_first_available', {}, 'cursus'),
-                default: trans('opening_session_default', {}, 'cursus')
+                none: trans('opening_session_none', {}, 'cursus')
               }
             },
             help: trans('opening_session_help', {}, 'cursus')
