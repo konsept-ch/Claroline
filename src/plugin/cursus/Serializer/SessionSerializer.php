@@ -152,7 +152,7 @@ class SessionSerializer
                     null,
                 'created' => DateNormalizer::normalize($session->getCreatedAt()),
                 'updated' => DateNormalizer::normalize($session->getUpdatedAt()),
-                'period' => $session->getCourse() ? $session->getCourse()->getDefaultSessionPeriod() : null,
+                'days' => $session->getCourse() ? $session->getCourse()->getDefaultSessionDays() : null,
                 'default' => $session->isDefaultSession(),
                 'learnerRole' => $session->getLearnerRole() ?
                     $this->roleSerializer->serialize($session->getLearnerRole(), [SerializerInterface::SERIALIZE_MINIMAL]) :

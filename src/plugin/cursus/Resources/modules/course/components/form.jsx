@@ -60,18 +60,12 @@ const CourseForm = (props) =>
             options: {long: true, minLength: 0, maxLength: 255},
             help: trans('plain_description_help')
           }, {
-            name: 'meta.period',
-            type: 'choice',
-            label: trans('session_period', {}, 'cursus'),
-            required: true,
+            name: 'meta.days',
+            type: 'number',
+            label: trans('session_days', {}, 'cursus'),
             options: {
-              multiple: false,
-              condensed: false,
-              choices: {
-                'am': trans('period_am', {}, 'cursus'),
-                'pm': trans('period_pm', {}, 'cursus'),
-                'fd': trans('period_fd', {}, 'cursus')
-              }
+              min: 0,
+              unit: trans('days')
             }
           }, {
             name: 'tags',
