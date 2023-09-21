@@ -185,7 +185,7 @@ const CourseParticipants = (props) =>
         label={trans('occupation', {}, 'cursus')}
         color={schemeCategory20c[13]}
         value={get(props.activeSession, 'restrictions.users') ?
-          get(props.activeSession, 'participants.learners', 0) + ' / ' + get(props.activeSession, 'restrictions.users')
+          (get(props.activeSession, 'participants.learners', 0) + get(props.activeSession, 'participants.pending', 0)) + ' / ' + get(props.activeSession, 'restrictions.users')
           : <span className="fa fa-fw fa-infinity" />
         }
       />
