@@ -72,7 +72,7 @@
     "session_full_help": "Nous vous prions de bien vouloir sélectionner une autre session.",
     "session_registration_tutor": "Vous êtes formateur pour cette session.",
     "session_registration": "Vous êtes inscrit à cette session.",
-    "session_registration_pending": "Votre inscription a été refusée.",
+    "session_registration_pending": "Nous avons bien pris en compte votre demande. Elle sera validée prochainement",
     "session_registration_full_help": "La session est complète pour le moment. Il sera possible de terminer l'inscription si des places se libèrent.",
     "session_registration_pending_help": "Votre Service RH a refusé votre inscription pour cette session. Il n’est pas possible de vous y inscrire à nouveau.",
     "session_registration_manager_help": "Si vous pensez qu’il s’agit d’une erreur, veuillez nous contacter.",
