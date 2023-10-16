@@ -41,7 +41,7 @@ class DateEventInput extends Component {
 
   invokeChange(newState) {
     const { date, period } = newState
-    const range = period == 'am' ? [8, 0, 12, 0] : (period == 'pm' ? [13, 30, 17, 0] : [8, 0, 17, 0])
+    const range = period == 'am' ? [8, 30, 12, 0] : (period == 'pm' ? [13, 30, 17, 0] : [8, 30, 17, 0])
 
     this.setState(newState)
     this.props.onChange([this.getUtcMoment(moment(date), range[0], range[1], 0), this.getUtcMoment(moment(date), range[2], range[3], 0)])
