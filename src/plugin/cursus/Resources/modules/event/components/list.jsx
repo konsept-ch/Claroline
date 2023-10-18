@@ -147,6 +147,12 @@ const EventList = (props) =>
         placeholder: trans('online_session', {}, 'cursus'),
         displayed: true
       }, {
+        name: 'room',
+        type: 'room',
+        label: trans('room'),
+        placeholder: trans('online_session', {}, 'cursus'),
+        displayed: true
+      }, {
         name: 'start',
         alias: 'startDate',
         type: 'date',

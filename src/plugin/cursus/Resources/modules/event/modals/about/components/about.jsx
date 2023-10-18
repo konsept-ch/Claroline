@@ -37,14 +37,19 @@ const AboutModal = props =>
               label: trans('description'),
               type: 'html'
             }, {
+              name: 'code',
+              label: trans('code'),
+              type: 'string'
+            }, {
               name: 'location',
               type: 'location',
               label: trans('location'),
               placeholder: trans('online_session', {}, 'cursus')
             }, {
-              name: 'code',
-              label: trans('code'),
-              type: 'string'
+              name: 'room',
+              type: 'room',
+              label: trans('room'),
+              placeholder: trans('online_session', {}, 'cursus')
             }, {
               name: 'session',
               label: trans('session', {}, 'cursus'),
