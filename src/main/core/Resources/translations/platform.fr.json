@@ -1293,5 +1293,6 @@
     "platform_home_none": "Aucun (Affichage de la page de connexion)",
     "platform_home_tool": "Outil (Affichage de l'accueil de la plateforme)",
     "no_title": "Aucun titre",
-    "time_spent": "Temps passé"
+    "time_spent": "Temps passé",
+    "no_room": "Pas de salle"
 }
