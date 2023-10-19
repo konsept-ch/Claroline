@@ -12,6 +12,5 @@
   "resource": "Ressource sélectionnée",
   "resource_desc": "Permet d'afficher une ressource choisie.",
   "personal_workspace": "Dossier de l'espace personnel",
-  "personal_workspace_desc": "Permet d'afficher le dossier racine de l'espace personnel de l'utilisateur courant.",
-  "no_room": "Pas de salle"
+  "personal_workspace_desc": "Permet d'afficher le dossier racine de l'espace personnel de l'utilisateur courant."
 }
