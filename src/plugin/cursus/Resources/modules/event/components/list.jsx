@@ -150,7 +150,7 @@ const EventList = (props) =>
         name: 'room',
         type: 'room',
         label: trans('room'),
-        placeholder: trans('online_session', {}, 'cursus'),
+        placeholder: trans('no_room'),
         displayed: true
       }, {
         name: 'start',
