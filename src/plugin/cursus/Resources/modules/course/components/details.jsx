@@ -56,7 +56,7 @@ const CourseDetails = (props) =>
             icon: 'fa fa-fw fa-users',
             label: trans('participants'),
             target: `${route(props.path, props.course, props.activeSession)}/participants`,
-            displayed: props.isAuthenticated && !!props.activeSession
+            displayed: props.isAuthenticated && !!props.activeSession && hasPermission('edit', props.course)
           }, {
             name: 'events',
             type: LINK_BUTTON,
@@ -111,7 +111,7 @@ const CourseDetails = (props) =>
           }
         }, {
           path: '/participants',
-          disabled: !props.activeSession || !props.isAuthenticated,
+          disabled: !props.activeSession || !props.isAuthenticated || !hasPermission('edit', props.course),
           render() {
             return (
               <CourseParticipants
