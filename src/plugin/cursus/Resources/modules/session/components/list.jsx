@@ -104,7 +104,7 @@ const SessionList = (props) =>
         label: trans('occupation', {}, 'cursus'),
         calculated: (row) => {
           if (get(row, 'restrictions.users')) {
-            return get(row, 'participants.learners', 0) + ' / ' + get(row, 'restrictions.users')
+            return (get(row, 'participants.learners', 0) + get(row, 'participants.pending', 0)) + ' / ' + get(row, 'restrictions.users')
           }
 
           return trans('not_limited', {}, 'cursus')
