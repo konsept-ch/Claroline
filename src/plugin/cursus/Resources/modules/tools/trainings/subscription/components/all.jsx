@@ -17,7 +17,6 @@ import {
 } from '#/plugin/cursus/prop-types'
 
 import {SubscriptionCard} from '#/plugin/cursus/subscription/components/card'
-import { quotaByYear } from '../../../../utils'
 
 const SubscriptionAll = (props) =>
   <ListData

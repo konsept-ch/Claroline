@@ -72,10 +72,7 @@ class OrganizationChoice extends Component {
         required: true,
         options: {
           condensed: true,
-          choices: currentDepthOrganizations.reduce((acc, current) => ({
-            ...acc,
-            [current.id]: current.name
-          }), {})
+          choices: currentDepthOrganizations.toSorted((a, b) => depth == 2 ? a.name.localeCompare(b.name) : 0).reduce((acc, current) => acc.set(current.id, current.name), new Map())
         },
         onChange: (newValue) => {
           let newSelectedOrganization = null
