@@ -163,7 +163,7 @@ const CourseAbout = (props) => {
 
               {getInfo(props.course, props.activeSession, 'restrictions.users') && props.activeSession &&
                 <span className="value">
-                  {get(props.activeSession, 'participants.learners') + ' / ' + get(props.activeSession, 'restrictions.users')}
+                  {(get(props.activeSession, 'participants.learners') + get(props.activeSession, 'participants.pending', 0)) + ' / ' + get(props.activeSession, 'restrictions.users')}
                 </span>
               }
             </li>
@@ -241,11 +241,11 @@ const CourseAbout = (props) => {
             <Alert type="warning">{trans('registration_requires_manager', {}, 'cursus')}</Alert>
           }
 
-          {selfRegistration &&
+          {selfRegistration && !isEmpty(props.activeSession) && !isFull(props.activeSession) &&
             <Button
               className="btn btn-block btn-emphasis"
               type={MODAL_BUTTON}
-              label={trans(isEmpty(props.activeSession) || isFull(props.activeSession) ? 'register_waiting_list' : 'self_register', {}, 'actions')}
+              label={trans('self_register', {}, 'actions')}
               modal={[MODAL_COURSE_REGISTRATION, {
                 path: props.path,
                 course: props.course,

@@ -39,7 +39,7 @@ function isRegistered(session, registrations) {
 
 function isFull(session) {
   if (get(session, 'restrictions.users')) {
-    return get(session, 'restrictions.users') <= get(session, 'participants.learners')
+    return get(session, 'restrictions.users') <= get(session, 'participants.learners') + get(session, 'participants.pending', 0)
   }
 
   return false
