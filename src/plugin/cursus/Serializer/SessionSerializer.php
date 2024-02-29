@@ -167,6 +167,7 @@ class SessionSerializer
                 ],
                 'pricing' => [
                     'description' => $session->getPriceDescription(),
+                    'price' => $session->getPrice(),
                 ],
                 'participants' => $this->sessionRepo->countParticipants($session),
                 'tutors' => array_map(function (SessionUser $sessionUser) {
