@@ -157,7 +157,7 @@ const SessionForm = (props) =>
                   }
                 }
               }, {
-                name: 'registrations.pendingRegistrations',
+                name: 'registration.pendingRegistrations',
                 type: 'boolean',
                 label: trans('enable_session_pending_list', {}, 'cursus'),
                 displayed: (session) => get(session, 'registration.selfRegistration')
