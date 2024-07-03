@@ -42,7 +42,7 @@ class CleanWorkspaceCommand extends Command
         $sessionUsers = $this->om->getRepository(SessionUser::class)->findAll();
 
         foreach ($sessionUsers as $sessionUser) {
-            if (SessionUser::STATUS_REFUSED != $sessionUser->getStatus() || !$sessionUser->getSession()->getWorkspace()) continue;
+            if ((SessionUser::STATUS_REFUSED != $sessionUser->getStatus() && SessionUser::STATUS_CANCELLED != $sessionUser->getStatus()) || !$sessionUser->getSession()->getWorkspace()) continue;
 
             $this->workspaceManager->unregister($sessionUser->getUser(), $sessionUser->getSession()->getWorkspace(), [Crud::NO_PERMISSIONS]);
         }

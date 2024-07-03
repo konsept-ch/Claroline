@@ -260,11 +260,8 @@ class SessionController extends AbstractCrudController
         $sessionUsers = $this->decodeIdsString($request, SessionUser::class);
 
         foreach ($sessionUsers as $sessionUser) {
-            $cancellation = new SessionCancellation();
-            $cancellation->setUser($sessionUser->getUser());
-            $cancellation->setSession($sessionUser->getSession());
-            $cancellation->setInscriptionUuid($sessionUser->getUuid());
-            $this->om->persist($cancellation);
+            $sessionUser->setCancelled(true);
+            $sessionUser->setDate(new \DateTime());
         }
 
         $this->manager->removeUsers($session, $sessionUsers);
@@ -589,9 +586,10 @@ class SessionController extends AbstractCrudController
             $params['hiddenFilters'] = [];
         }
         $params['hiddenFilters']['session'] = $session->getUuid();
+        $params['hiddenFilters']['cancelled'] = 1;
 
         return new JsonResponse(
-            $this->finder->search(SessionCancellation::class, $params)
+            $this->finder->search(SessionUser::class, $params)
         );
     }
 

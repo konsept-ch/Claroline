@@ -53,4 +53,22 @@ class SessionUserRepository extends EntityRepository
             ])
             ->getResult();
     }
+
+    public function countValid(Session $session, User $user, string $type)
+    {
+        return $this->_em
+            ->createQuery('
+                SELECT COUNT(su) FROM Claroline\CursusBundle\Entity\Registration\SessionUser AS su
+                WHERE su.user = :user
+                AND su.session = :session
+                AND su.type = :type
+                AND su.cancelled = 0
+            ')
+            ->setParameters([
+                'user' => $user,
+                'session' => $session,
+                'type' => $type
+            ])
+            ->getSingleScalarResult();
+    }
 }

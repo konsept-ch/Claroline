@@ -17,10 +17,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity(repositoryClass="Claroline\CursusBundle\Repository\SessionUserRepository")
  * @ORM\Table(
- *     name="claro_cursusbundle_course_session_user",
- *     uniqueConstraints={
- *         @ORM\UniqueConstraint(name="training_session_unique_user", columns={"session_id", "user_id"})
- *     }
+ *     name="claro_cursusbundle_course_session_user"
  * )
  */
 class SessionUser extends AbstractUserRegistration
@@ -46,6 +43,13 @@ class SessionUser extends AbstractUserRegistration
      * @var int
      */
     protected $status = self::STATUS_PENDING;
+
+    /**
+     * @ORM\Column(type="boolean")
+     *
+     * @var bool
+     */
+    protected $cancelled = false;
 
     /**
      * @ORM\Column(type="text")
@@ -85,5 +89,15 @@ class SessionUser extends AbstractUserRegistration
     public function setRemark(string $remark)
     {
         $this->remark = $remark;
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->cancelled;
+    }
+
+    public function setCancelled(bool $cancelled)
+    {
+        $this->cancelled = $cancelled;
     }
 }

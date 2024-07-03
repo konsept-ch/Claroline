@@ -78,6 +78,7 @@ class SessionRepository extends EntityRepository
                 WHERE su.type = :registrationType
                   AND su.session = :session
                   AND (su.confirmed = 0 OR su.validated = 0)
+                  AND su.cancelled = 0
                   AND u.isRemoved = 0
             ')
             ->setParameters([
@@ -96,6 +97,7 @@ class SessionRepository extends EntityRepository
                 WHERE su.type = :registrationType
                   AND su.session = :session
                   AND (su.confirmed = 1 AND su.validated = 1)
+                  AND su.cancelled = 0
                   AND u.isRemoved = 0
             ')
             ->setParameters([

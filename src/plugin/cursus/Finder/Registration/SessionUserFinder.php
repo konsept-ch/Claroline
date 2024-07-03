@@ -41,12 +41,14 @@ class SessionUserFinder extends AbstractFinder
                     break;
 
                 case 'status':
-                    $qb->andWhere("(obj.status = :{$filterName})");
+                    $qb->andWhere("obj.status = :{$filterName}");
+                    $qb->andWhere("obj.cancelled = 0");
                     $qb->setParameter($filterName, $filterValue);
                     break;
 
                 case 'ignored_status':
                     $qb->andWhere("obj.status != :{$filterName}");
+                    $qb->andWhere("obj.cancelled = 0");
                     $qb->setParameter($filterName, $filterValue);
                     break;
 
@@ -90,10 +92,15 @@ class SessionUserFinder extends AbstractFinder
 
                 case 'pending':
                     if ($filterValue) {
-                        $qb->andWhere('(obj.confirmed = 0 OR obj.validated = 0)');
+                        $qb->andWhere('(obj.confirmed = 0 OR obj.validated = 0 AND obj.cancelled = 0)');
                     } else {
-                        $qb->andWhere('(obj.confirmed = 1 AND obj.validated = 1)');
+                        $qb->andWhere('(obj.confirmed = 1 AND obj.validated = 1 AND obj.cancelled = 0)');
                     }
+                    break;
+
+                case 'cancelled':
+                    $qb->andWhere("obj.cancelled = 1");
+                    $qb->andWhere('u.isRemoved = FALSE');
                     break;
 
                 default:
