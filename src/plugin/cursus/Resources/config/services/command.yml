@@ -3,6 +3,12 @@ services:
         autowire: false
         autoconfigure: false
 
+    Claroline\CursusBundle\Installation\Command\MigrateCancellationsCommand:
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+        tags:
+            - { name: 'console.command', command: 'claroline:cancellations:migrate' }
+
     Claroline\CursusBundle\Installation\Command\MigrateQuotasCommand:
         arguments:
             - '@Claroline\AppBundle\Persistence\ObjectManager'
