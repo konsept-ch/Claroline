@@ -142,6 +142,15 @@ const SessionList = (props) =>
           group: trans('transfer'),
           target: ['apiv2_cursus_session_download_pdf', {id: rows[0].id}],
           scope: ['object']
+        }, {
+          name: 'export-presence',
+          type: URL_BUTTON,
+          icon: 'fa fa-fw fa-file-pdf-o',
+          label: trans('export-presences-empty', {}, 'cursus'),
+          displayed: hasPermission('open', rows[0]),
+          group: trans('transfer'),
+          target: ['apiv2_cursus_session_presence_download', {id: rows[0].id}],
+          scope: ['object']
         }
       ]
 

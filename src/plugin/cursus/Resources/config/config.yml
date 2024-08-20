@@ -86,6 +86,16 @@ plugin:
               - session_trainers
               - session_location_description
 
+        - name: training_session_presences
+          type: pdf
+          placeholders:
+              - session_name
+              - session_code
+              - session_description
+              - session_start
+              - session_end
+              - session_presences_table
+
         - name: training_session_unregistred
           type: email
           placeholders:

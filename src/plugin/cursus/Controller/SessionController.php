@@ -11,6 +11,8 @@
 
 namespace Claroline\CursusBundle\Controller;
 
+use Claroline\AppBundle\API\FinderProvider;
+use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\Controller\AbstractCrudController;
 use Claroline\AppBundle\Manager\PdfManager;
 use Claroline\CoreBundle\Entity\Group;
@@ -595,6 +597,26 @@ class SessionController extends AbstractCrudController
         );
     }
 
+    /**
+     * @Route("/{id}/presence", name="apiv2_cursus_session_presence_download", methods={"GET"})
+     * @EXT\ParamConverter("session", class="Claroline\CursusBundle\Entity\Session", options={"mapping": {"id": "uuid"}})
+     */
+    public function downloadPresenceAction(Session $session, Request $request): StreamedResponse
+    {
+        $this->checkPermission('EDIT', $session, [], true);
+
+        $sessionUsers = $this->getUserList($session, SessionUser::LEARNER, $request);
+
+        return new StreamedResponse(function () use ($session, $sessionUsers, $request) {
+            echo $this->pdfManager->fromHtml(
+                $this->manager->download($session, $sessionUsers, $request->getLocale())
+            );
+        }, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename='.TextNormalizer::toKey($session->getName()).'-presences.pdf',
+        ]);
+    }
+
     private function checkToolAccess(string $rights = 'OPEN'): bool
     {
         $trainingsTool = $this->toolManager->getOrderedTool('trainings', Tool::DESKTOP);
@@ -615,5 +637,41 @@ class SessionController extends AbstractCrudController
         }
 
         return false;
+    }
+
+    private function getUserList(Session $session, string $type, Request $request) {
+        $params = $request->query->all();
+        if (!isset($params['hiddenFilters'])) {
+            $params['hiddenFilters'] = [];
+        }
+        $params['hiddenFilters']['session'] = $session->getUuid();
+        $params['hiddenFilters']['type'] = $type;
+        $params['hiddenFilters']['pending'] = false;
+
+        // only list participants of the same organization
+        if (SessionUser::LEARNER === $type && !$this->authorization->isGranted('ROLE_ADMIN')) {
+            /** @var User $user */
+            $user = $this->tokenStorage->getToken()->getUser();
+            $organizations = null;
+
+            // filter by organizations
+            if ($user instanceof User) {
+                $registrations = $this->om->getRepository(SessionUser::class)->findByUser($session, $user);
+                if (0 == count($registrations)) return [];
+
+                if (!$this->isTutor($registrations)) {
+                    $organizations = $user->getOrganizations();
+                }
+            } else return [];
+
+            if (null != $organizations) {
+                $params['hiddenFilters']['organizations'] = array_map(function (Organization $organization) {
+                    return $organization->getUuid();
+                }, $organizations);
+            }
+        }
+
+        return $this->finder->get(SessionUser::class)->find($params['hiddenFilters']);
+        //return $this->om->getRepository(SessionUser::class)->findBy($params['hiddenFilters']);
     }
 }
