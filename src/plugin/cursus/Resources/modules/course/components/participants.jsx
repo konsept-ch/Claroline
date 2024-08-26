@@ -259,7 +259,7 @@ const CourseParticipants = (props) =>
                       </AlertBlock>
                     }
 
-                    {hasPermission('edit', props.activeSession) && <div style={{
+                    {(hasPermission('edit', props.activeSession) || get(props.activeSession, 'meta.export')) && <div style={{
                       display:'flex',
                       justifyContent: 'flex-end'
                     }}>

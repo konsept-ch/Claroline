@@ -32,6 +32,7 @@ use Claroline\CursusBundle\Entity\Registration\SessionUser;
 use Claroline\CursusBundle\Entity\Session;
 use Claroline\CursusBundle\Repository\SessionRepository;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class SessionSerializer
 {
@@ -39,6 +40,8 @@ class SessionSerializer
 
     /** @var AuthorizationCheckerInterface */
     private $authorization;
+    /** @var TokenStorageInterface */
+    private $tokenStorage;
     /** @var ObjectManager */
     private $om;
     /** @var PublicFileSerializer */
@@ -62,6 +65,7 @@ class SessionSerializer
 
     public function __construct(
         AuthorizationCheckerInterface $authorization,
+        TokenStorageInterface $tokenStorage,
         ObjectManager $om,
         PublicFileSerializer $fileSerializer,
         UserSerializer $userSerializer,
@@ -72,6 +76,7 @@ class SessionSerializer
         CourseSerializer $courseSerializer
     ) {
         $this->authorization = $authorization;
+        $this->tokenStorage = $tokenStorage;
         $this->om = $om;
         $this->fileSerializer = $fileSerializer;
         $this->userSerializer = $userSerializer;
@@ -132,6 +137,8 @@ class SessionSerializer
                 'confirmed' => true,
             ]);
 
+            $user = $this->tokenStorage->getToken()->getUser();
+
             $serialized = array_merge($serialized, [
                 'location' => $session->getLocation() ?
                     $this->locationSerializer->serialize($session->getLocation(), [Options::SERIALIZE_MINIMAL]) :
@@ -151,6 +158,7 @@ class SessionSerializer
                     'tutorRole' => $session->getTutorRole() ?
                         $this->roleSerializer->serialize($session->getTutorRole(), [Options::SERIALIZE_MINIMAL]) :
                         null,
+                    'export' => $this->authorization->isGranted('ROLE_ADMIN') || ($user instanceof User ? $this->hasTutor($this->om->getRepository(SessionUser::class)->findByUser($session, $user)) : false)
                 ],
                 'display' => [
                     'order' => $session->getOrder(),
@@ -306,5 +314,13 @@ class SessionSerializer
         }
 
         return null;
+    }
+
+    private function hasTutor(array $registrations)
+    {
+        foreach ($registrations as $registration) {
+            if ('tutor' == $registration->getType()) return true;
+        }
+        return false;
     }
 }

@@ -204,13 +204,8 @@ class SessionController extends AbstractCrudController
             // filter by organizations
             if ($user instanceof User) {
                 $registrations = $this->om->getRepository(SessionUser::class)->findByUser($session, $user);
-                if (0 == count($registrations)) {
-                    return new JsonResponse($this->finder->formatPaginatedData([], 0, 0, -1, [], []));
-                }
-
-                if (!$this->isTutor($registrations)) {
-                    $organizations = $user->getOrganizations();
-                }
+                if (0 == count($registrations)) return new JsonResponse($this->finder->formatPaginatedData([], 0, 0, -1, [], []));
+                if (!$this->hastutor($registrations)) $organizations = $user->getOrganizations();
             } else {
                 return new JsonResponse($this->finder->formatPaginatedData([], 0, 0, -1, [], []));
             }
@@ -222,9 +217,7 @@ class SessionController extends AbstractCrudController
             }
         }
 
-        return new JsonResponse(
-            $this->finder->search(SessionUser::class, $params)
-        );
+        return new JsonResponse($this->finder->search(SessionUser::class, $params));
     }
 
     /**
@@ -603,9 +596,30 @@ class SessionController extends AbstractCrudController
      */
     public function downloadPresenceAction(Session $session, Request $request): StreamedResponse
     {
-        $this->checkPermission('EDIT', $session, [], true);
+        /** @var User $user */
+        $user = $this->tokenStorage->getToken()->getUser();
+        $isTutor = $user instanceof User ? $this->hasTutor($this->om->getRepository(SessionUser::class)->findByUser($session, $user)) : false;
+        if (!$this->authorization->isGranted('ROLE_ADMIN') && !$isTutor) throw new AccessDeniedException('Permission denied');
 
-        $sessionUsers = $this->getUserList($session, SessionUser::LEARNER, $request);
+        $params = $request->query->all();
+        if (!isset($params['hiddenFilters'])) $params['hiddenFilters'] = [];
+        $params['hiddenFilters']['session'] = $session->getUuid();
+        $params['hiddenFilters']['type'] = SessionUser::LEARNER;
+        $params['hiddenFilters']['pending'] = false;
+
+        // only list participants of the same organization
+        if (SessionUser::LEARNER === SessionUser::LEARNER && !$this->authorization->isGranted('ROLE_ADMIN')) {
+            $organizations = null;
+
+            // filter by organizations
+            if ($user instanceof User) {
+                if (!$isTutor) $organizations = $user->getOrganizations();
+            } else return [];
+
+            if (null != $organizations) $params['hiddenFilters']['organizations'] = array_map(fn(Organization $organization) => $organization->getUuid(), $organizations);
+        }
+
+        $sessionUsers = $this->finder->get(SessionUser::class)->find($params['hiddenFilters']);
 
         return new StreamedResponse(function () use ($session, $sessionUsers, $request) {
             echo $this->pdfManager->fromHtml(
@@ -628,7 +642,7 @@ class SessionController extends AbstractCrudController
         return true;
     }
     
-    private function isTutor(array $registrations)
+    private function hasTutor(array $registrations)
     {
         foreach ($registrations as $registration) {
             if ('tutor' == $registration->getType()) {
@@ -637,41 +651,5 @@ class SessionController extends AbstractCrudController
         }
 
         return false;
-    }
-
-    private function getUserList(Session $session, string $type, Request $request) {
-        $params = $request->query->all();
-        if (!isset($params['hiddenFilters'])) {
-            $params['hiddenFilters'] = [];
-        }
-        $params['hiddenFilters']['session'] = $session->getUuid();
-        $params['hiddenFilters']['type'] = $type;
-        $params['hiddenFilters']['pending'] = false;
-
-        // only list participants of the same organization
-        if (SessionUser::LEARNER === $type && !$this->authorization->isGranted('ROLE_ADMIN')) {
-            /** @var User $user */
-            $user = $this->tokenStorage->getToken()->getUser();
-            $organizations = null;
-
-            // filter by organizations
-            if ($user instanceof User) {
-                $registrations = $this->om->getRepository(SessionUser::class)->findByUser($session, $user);
-                if (0 == count($registrations)) return [];
-
-                if (!$this->isTutor($registrations)) {
-                    $organizations = $user->getOrganizations();
-                }
-            } else return [];
-
-            if (null != $organizations) {
-                $params['hiddenFilters']['organizations'] = array_map(function (Organization $organization) {
-                    return $organization->getUuid();
-                }, $organizations);
-            }
-        }
-
-        return $this->finder->get(SessionUser::class)->find($params['hiddenFilters']);
-        //return $this->om->getRepository(SessionUser::class)->findBy($params['hiddenFilters']);
     }
 }

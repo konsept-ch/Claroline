@@ -706,16 +706,6 @@ class SessionManager
         }
         $table .= '</table>';
 
-        /*$placeholders = [
-            'session_name' => $session->getName(),
-            'session_code' => $session->getCode(),
-            'session_description' => $session->getDescription(),
-            'session_start' => $session->getStartDate()->format('d/m/Y H:i'),
-            'session_end' => $session->getEndDate()->format('d/m/Y H:i'),
-            'session_presences_table' => $table,
-        ];
-
-        return $this->templateManager->getTemplate('training_session_presences', $placeholders, $locale);*/
         $placeholders = [
             'session_name' => $session->getName(),
             'session_code' => $session->getCode(),
