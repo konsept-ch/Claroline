@@ -255,6 +255,7 @@ class SessionController extends AbstractCrudController
         $sessionUsers = $this->decodeIdsString($request, SessionUser::class);
 
         foreach ($sessionUsers as $sessionUser) {
+            if ($this->om->getRepository(SessionCancellation::class)->findOneBy(['inscriptionUuid' => $sessionUser->getUuid()]) != null) continue;
             $cancellation = new SessionCancellation();
             $cancellation->setUser($sessionUser->getUser());
             $cancellation->setSession($sessionUser->getSession());
