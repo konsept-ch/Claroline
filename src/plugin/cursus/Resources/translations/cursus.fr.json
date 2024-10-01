@@ -145,5 +145,7 @@
     "cancellations": "Annulations",
     "cancellation_date": "Date d'annulation",
     "annual_exercices": "Exercices annuels",
-    "add_year": "Ajouter exercice"
+    "add_year": "Ajouter exercice",
+    "billing": "Facturation",
+    "generate_invoice": "Générer facture groupée"
 }
