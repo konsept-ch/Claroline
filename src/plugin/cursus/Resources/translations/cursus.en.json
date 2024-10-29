@@ -140,5 +140,5 @@
     "cancellations": "Cancellations",
     "cancellation_date": "Cancellation date",
     "billing": "Billing",
-    "generate_invoice": "Generate invoice"
+    "generate_invoice": "No billing"
 }
