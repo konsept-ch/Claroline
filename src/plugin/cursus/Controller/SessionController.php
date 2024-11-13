@@ -31,6 +31,7 @@ use Claroline\CursusBundle\Entity\Registration\SessionGroup;
 use Claroline\CursusBundle\Entity\Registration\SessionUser;
 use Claroline\CursusBundle\Entity\Session;
 use Claroline\CursusBundle\Manager\SessionManager;
+use DateTime;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -425,6 +426,10 @@ class SessionController extends AbstractCrudController
         $this->checkPermission('OPEN', $session, [], true);
 
         if (!$session->getPublicRegistration() && !$session->getAutoRegistration()) {
+            throw new AccessDeniedException();
+        }
+
+        if (new DateTime() > $session->getEndDate()) {
             throw new AccessDeniedException();
         }
 

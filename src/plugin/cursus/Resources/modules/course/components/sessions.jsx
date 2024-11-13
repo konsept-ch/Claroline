@@ -3,6 +3,7 @@ import {PropTypes as T} from 'prop-types'
 import get from 'lodash/get'
 import isEmpty from 'lodash/isEmpty'
 
+import {now} from '#/main/app/intl'
 import {trans} from '#/main/app/intl/translation'
 import {hasPermission} from '#/main/app/security'
 import {Button} from '#/main/app/action/components/button'
@@ -22,6 +23,7 @@ function canSelfRegister(course, session, registrations) {
     && !getInfo(course, session, 'registration.autoRegistration')
     && !isRegistered(session, registrations)
     && (getInfo(course, session, 'registration.pendingRegistrations') || !isFull(session))
+    && get(session, 'restrictions.dates[1]') >= now(false)
 }
 
 const CourseSessions = (props) =>
