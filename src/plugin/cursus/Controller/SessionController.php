@@ -429,7 +429,7 @@ class SessionController extends AbstractCrudController
             throw new AccessDeniedException();
         }
 
-        if (new DateTime() > $session->getEndDate()) {
+        if (new DateTime() > $session->getStartDate()) {
             throw new AccessDeniedException();
         }
 

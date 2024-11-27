@@ -23,7 +23,7 @@ function canSelfRegister(course, session, registrations) {
     && !getInfo(course, session, 'registration.autoRegistration')
     && !isRegistered(session, registrations)
     && (getInfo(course, session, 'registration.pendingRegistrations') || !isFull(session))
-    && get(session, 'restrictions.dates[1]') >= now(false)
+    && get(session, 'restrictions.dates[0]') >= now(false)
 }
 
 const CourseSessions = (props) =>
