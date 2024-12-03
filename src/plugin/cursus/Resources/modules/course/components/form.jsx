@@ -245,6 +245,16 @@ const CourseForm = (props) =>
           }
         ]
       }, {
+        icon: 'fa fa-fw fa-dollar-sign',
+        title: trans('billing', {}, 'cursus'),
+        fields: [
+          {
+            name: 'generateInvoice',
+            type: 'boolean',
+            label: trans('generate_invoice', {}, 'cursus')
+          }
+        ]
+      }, {
         icon: 'fa fa-fw fa-calendar-week',
         title: trans('training_sessions', {}, 'cursus'),
         fields: [

@@ -40,7 +40,15 @@ const Select = props =>
       <option value="">{props.placeholder}</option>
     }
 
-    {Object.keys(props.choices).map(option =>
+    {props.choices instanceof Map ? Array.from(props.choices.entries()).map(entry =>
+      <option
+        key={entry[0]}
+        value={entry[0]}
+        disabled={-1 !== props.disabledChoices.indexOf(entry[0])}
+      >
+        {entry[1]}
+      </option>
+    ) : Object.keys(props.choices).map(option =>
       <option
         key={option}
         value={option}
@@ -52,7 +60,7 @@ const Select = props =>
   </select>
 
 implementPropTypes(Select, DataInputTypes, {
-  choices: T.object.isRequired,
+  //choices: T.object.isRequired,
   disabledChoices: T.arrayOf(T.string),
   value: T.oneOfType([T.string, T.number, T.array]),
   multiple: T.bool,

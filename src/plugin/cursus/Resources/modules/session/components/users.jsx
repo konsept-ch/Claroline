@@ -30,6 +30,20 @@ const SessionUsers = (props) =>
           label: trans('user'),
           displayed: true
         }, {
+          name: 'organization',
+          type: 'string',
+          label: trans('organization'),
+          displayed: true,
+          sortable: false,
+          filterable: false
+        }, {
+          name: 'user.email',
+          type: 'email',
+          label: trans('email'),
+          displayed: true,
+          sortable: false,
+          filterable: false
+        }, {
           name: 'date',
           type: 'date',
           label: trans('registration_date', {}, 'cursus'),
@@ -48,7 +62,7 @@ const SessionUsers = (props) =>
       actions={props.actions}
       card={(cardProps) => <UserCard {...cardProps} data={cardProps.data.user} />}
       display={{
-        current: listConst.DISPLAY_TILES_SM
+        current: listConst.DISPLAY_TABLE
       }}
     />
 

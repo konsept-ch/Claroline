@@ -11,6 +11,7 @@
 
 namespace Claroline\CursusBundle\Controller;
 
+use Claroline\AppBundle\API\Crud;
 use Claroline\AppBundle\API\FinderProvider;
 use Claroline\AppBundle\Controller\AbstractCrudController;
 use Claroline\AppBundle\Persistence\ObjectManager;
@@ -18,6 +19,7 @@ use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler;
 use Claroline\CoreBundle\Manager\LocaleManager;
+use Claroline\CoreBundle\Manager\Workspace\WorkspaceManager;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
 use Claroline\CursusBundle\Entity\Quota;
 use Claroline\CursusBundle\Entity\Registration\AbstractRegistration;
@@ -58,6 +60,8 @@ class QuotaController extends AbstractCrudController
     private $quotaManager;
     /** @var SessionManager */
     private $sessionManager;
+    /** @var WorkspaceManager */
+    private $workspaceManager;
 
     public function __construct(
         EventDispatcherInterface $eventDispatcher,
@@ -68,7 +72,8 @@ class QuotaController extends AbstractCrudController
         PlatformConfigurationHandler $config,
         ObjectManager $om,
         QuotaManager $quotaManager,
-        SessionManager $sessionManager
+        SessionManager $sessionManager,
+        WorkspaceManager $workspaceManager
     ) {
         $this->eventDispatcher = $eventDispatcher;
         $this->authorization = $authorization;
@@ -79,6 +84,7 @@ class QuotaController extends AbstractCrudController
         $this->om = $om;
         $this->quotaManager = $quotaManager;
         $this->sessionManager = $sessionManager;
+        $this->workspaceManager = $workspaceManager;
     }
 
     public function getName(): string
@@ -352,6 +358,9 @@ class QuotaController extends AbstractCrudController
                     }
                     $sessionUser->setValidated(false);
                     $sessionUser->setConfirmed(false);
+
+                    $session = $sessionUser->getSession();
+                    if ($session->getWorkspace()) $this->workspaceManager->unregister($sessionUser->getUser(), $session->getWorkspace(), [Crud::NO_PERMISSIONS]);
                     $this->sessionManager->checkUsersRegistration($sessionUser->getSession(), [$sessionUser]);
                     break;
             }

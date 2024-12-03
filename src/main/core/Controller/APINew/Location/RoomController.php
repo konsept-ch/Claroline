@@ -56,7 +56,7 @@ class RoomController extends AbstractCrudController
 
         $query = $request->query->all();
         $query['hiddenFilters'] = [
-            'room' => $room,
+            'room' => $room->getUuid()
         ];
 
         return new JsonResponse(

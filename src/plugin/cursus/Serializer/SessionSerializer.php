@@ -31,6 +31,7 @@ use Claroline\CursusBundle\Entity\Registration\SessionUser;
 use Claroline\CursusBundle\Entity\Session;
 use Claroline\CursusBundle\Repository\SessionRepository;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class SessionSerializer
 {
@@ -38,6 +39,8 @@ class SessionSerializer
 
     /** @var AuthorizationCheckerInterface */
     private $authorization;
+    /** @var TokenStorageInterface */
+    private $tokenStorage;
     /** @var ObjectManager */
     private $om;
     /** @var PublicFileSerializer */
@@ -61,6 +64,7 @@ class SessionSerializer
 
     public function __construct(
         AuthorizationCheckerInterface $authorization,
+        TokenStorageInterface $tokenStorage,
         ObjectManager $om,
         PublicFileSerializer $fileSerializer,
         UserSerializer $userSerializer,
@@ -71,6 +75,7 @@ class SessionSerializer
         CourseSerializer $courseSerializer
     ) {
         $this->authorization = $authorization;
+        $this->tokenStorage = $tokenStorage;
         $this->om = $om;
         $this->fileSerializer = $fileSerializer;
         $this->userSerializer = $userSerializer;
@@ -143,46 +148,74 @@ class SessionSerializer
             'workspace' => $session->getWorkspace() ?
                 $this->workspaceSerializer->serialize($session->getWorkspace(), [SerializerInterface::SERIALIZE_MINIMAL]) :
                 null,
-            'location' => $session->getLocation() ?
-                $this->locationSerializer->serialize($session->getLocation(), [SerializerInterface::SERIALIZE_MINIMAL]) :
-                null,
-            'meta' => [
-                'creator' => $session->getCreator() ?
-                    $this->userSerializer->serialize($session->getCreator(), [SerializerInterface::SERIALIZE_MINIMAL]) :
-                    null,
-                'created' => DateNormalizer::normalize($session->getCreatedAt()),
-                'updated' => DateNormalizer::normalize($session->getUpdatedAt()),
-                'days' => $session->getCourse() ? $session->getCourse()->getDefaultSessionDays() : null,
-                'hours' => $session->getCourse() ? $session->getCourse()->getDefaultSessionHours() : null,
-                'default' => $session->isDefaultSession(),
-                'learnerRole' => $session->getLearnerRole() ?
-                    $this->roleSerializer->serialize($session->getLearnerRole(), [SerializerInterface::SERIALIZE_MINIMAL]) :
-                    null,
-                'tutorRole' => $session->getTutorRole() ?
-                    $this->roleSerializer->serialize($session->getTutorRole(), [SerializerInterface::SERIALIZE_MINIMAL]) :
-                    null,
+            'pricing' => [
+                'price' => $session->getPrice(),
             ],
-            'display' => [
-                'order' => $session->getOrder(),
+            'quotas' => [
+                'used' => $session->usedByQuotas(),
+                'days' => $session->getQuotaDays(),
             ],
-            'registration' => [
-                'selfRegistration' => $session->getPublicRegistration(),
-                'autoRegistration' => $session->getAutoRegistration(),
-                'selfUnregistration' => $session->getPublicUnregistration(),
-                'validation' => $session->getRegistrationValidation(),
-                'userValidation' => $session->getUserValidation(),
-                'mail' => $session->getRegistrationMail(),
-                'pendingRegistrations' => $session->getPendingRegistrations(),
-                'eventRegistrationType' => $session->getEventRegistrationType(),
-            ],
-            'participants' => $this->sessionRepo->countParticipants($session),
-            'tutors' => array_map(function (SessionUser $sessionUser) {
-                return $this->userSerializer->serialize($sessionUser->getUser(), [SerializerInterface::SERIALIZE_MINIMAL]);
-            }, $tutors),
-            'resources' => array_map(function (ResourceNode $resource) {
-                return $this->resourceSerializer->serialize($resource, [SerializerInterface::SERIALIZE_MINIMAL]);
-            }, $session->getResources()->toArray()),
         ];
+
+        if (!in_array(Options::SERIALIZE_MINIMAL, $options)) {
+            $tutors = $this->om->getRepository(SessionUser::class)->findBy([
+                'session' => $session,
+                'type' => AbstractRegistration::TUTOR,
+                'validated' => true,
+                'confirmed' => true,
+            ]);
+
+            $user = $this->tokenStorage->getToken()->getUser();
+
+            $serialized = array_merge($serialized, [
+                'location' => $session->getLocation() ?
+                    $this->locationSerializer->serialize($session->getLocation(), [SerializerInterface::SERIALIZE_MINIMAL]) :
+                    null,
+                'meta' => [
+                    'creator' => $session->getCreator() ?
+                        $this->userSerializer->serialize($session->getCreator(), [SerializerInterface::SERIALIZE_MINIMAL]) :
+                        null,
+                    'created' => DateNormalizer::normalize($session->getCreatedAt()),
+                    'updated' => DateNormalizer::normalize($session->getUpdatedAt()),
+                    'days' => $session->getCourse() ? $session->getCourse()->getDefaultSessionDays() : null,
+                    'hours' => $session->getCourse() ? $session->getCourse()->getDefaultSessionHours() : null,
+                    'default' => $session->isDefaultSession(),
+                    'learnerRole' => $session->getLearnerRole() ?
+                        $this->roleSerializer->serialize($session->getLearnerRole(), [SerializerInterface::SERIALIZE_MINIMAL]) :
+                        null,
+                    'tutorRole' => $session->getTutorRole() ?
+                        $this->roleSerializer->serialize($session->getTutorRole(), [SerializerInterface::SERIALIZE_MINIMAL]) :
+                        null,
+                    'export' => $this->authorization->isGranted('ROLE_ADMIN') || ($user instanceof User ? $this->hasTutor($this->om->getRepository(SessionUser::class)->findByUser($session, $user)) : false)
+                ],
+                'display' => [
+                    'order' => $session->getOrder(),
+                ],
+                'registration' => [
+                    'selfRegistration' => $session->getPublicRegistration(),
+                    'autoRegistration' => $session->getAutoRegistration(),
+                    'selfUnregistration' => $session->getPublicUnregistration(),
+                    'validation' => $session->getRegistrationValidation(),
+                    'userValidation' => $session->getUserValidation(),
+                    'mail' => $session->getRegistrationMail(),
+                    'pendingRegistrations' => $session->getPendingRegistrations(),
+                    'eventRegistrationType' => $session->getEventRegistrationType(),
+                ],
+                'pricing' => [
+                    'description' => $session->getPriceDescription(),
+                    'price' => $session->getPrice(),
+                ],
+                'participants' => $this->sessionRepo->countParticipants($session),
+                'tutors' => array_map(function (SessionUser $sessionUser) {
+                    return $this->userSerializer->serialize($sessionUser->getUser(), [SerializerInterface::SERIALIZE_MINIMAL]);
+                }, $tutors),
+                'resources' => array_map(function (ResourceNode $resource) {
+                    return $this->resourceSerializer->serialize($resource, [SerializerInterface::SERIALIZE_MINIMAL]);
+                }, $session->getResources()->toArray()),
+            ]);
+        }
+
+        return $serialized;
     }
 
     public function deserialize(array $data, Session $session): Session
@@ -271,5 +304,13 @@ class SessionSerializer
         }
 
         return $session;
+    }
+
+    private function hasTutor(array $registrations)
+    {
+        foreach ($registrations as $registration) {
+            if ('tutor' == $registration->getType()) return true;
+        }
+        return false;
     }
 }

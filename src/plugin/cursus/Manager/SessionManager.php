@@ -690,4 +690,31 @@ class SessionManager
             }
         }
     }
+
+    public function download(Session $session, array $users, string $locale): string
+    {
+        // sort presence by name
+        usort($users, fn(SessionUser $a, SessionUser $b) => $a->getUser()->getLastName() === $b->getUser()->getLastName() ? 0 : (($a->getUser()->getLastName() < $b->getUser()->getLastName()) ? -1 : 1));
+
+        $table = '<table style="border: 1px solid black; width: 100%; border-collapse: collapse;">';
+        foreach ($users as $user) {
+            $table .= '<tr>';
+            $table .= "<td style='border: 1px solid black; width: 40%; padding: 10px;'>{$user->getUser()->getLastName()} {$user->getUser()->getFirstName()}</td>";
+            $table .= "<td style='border: 1px solid black; width: 40%; padding: 10px;'>{$user->getUser()->getMainOrganization()->getName()}</td>";
+            $table .= '<td style="border: 1px solid black; padding: 10px;">&nbsp;</td>';
+            $table .= '</tr>';
+        }
+        $table .= '</table>';
+
+        $placeholders = [
+            'session_name' => $session->getName(),
+            'session_code' => $session->getCode(),
+            'session_description' => $session->getDescription(),
+            'session_start' => $session->getStartDate()->format('d/m/Y H:i'),
+            'session_end' => $session->getEndDate()->format('d/m/Y H:i'),
+            'session_presences_table' => $table,
+        ];
+
+        return $this->templateManager->getTemplate('training_session_presences', $placeholders, $locale);
+    }
 }

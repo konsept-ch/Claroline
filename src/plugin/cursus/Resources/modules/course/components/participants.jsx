@@ -5,8 +5,9 @@ import {schemeCategory20c} from 'd3-scale'
 
 import {trans} from '#/main/app/intl/translation'
 import {hasPermission} from '#/main/app/security'
+import {Button} from '#/main/app/action/components/button'
 import {LinkButton} from '#/main/app/buttons/link'
-import {LINK_BUTTON, CALLBACK_BUTTON, MODAL_BUTTON} from '#/main/app/buttons'
+import {LINK_BUTTON, CALLBACK_BUTTON, MODAL_BUTTON, URL_BUTTON} from '#/main/app/buttons'
 import {AlertBlock} from '#/main/app/alert/components/alert-block'
 import {constants as listConst} from '#/main/app/content/list/constants'
 import {ListData} from '#/main/app/content/list/containers/data'
@@ -257,6 +258,19 @@ const CourseParticipants = (props) =>
                         {trans('Toutes les nouvelles inscriptions seront automatiquement ajoutées en liste d\'attente.', {}, 'cursus')}
                       </AlertBlock>
                     }
+
+                    {(hasPermission('edit', props.activeSession) || get(props.activeSession, 'meta.export')) && <div style={{
+                      display:'flex',
+                      justifyContent: 'flex-end'
+                    }}>
+                      <Button
+                        type={URL_BUTTON}
+                        className="btn component-container"
+                        label={trans('export-presences-empty', {}, 'cursus')}
+                        target={['apiv2_cursus_session_presence_download', {id: props.activeSession.id}]}
+                        primary={true}
+                      />
+                    </div>}
 
                     {get(props.activeSession, 'registration.userValidation') &&
                       <AlertBlock title={trans('registration_user_confirmation_title', {}, 'cursus')}>

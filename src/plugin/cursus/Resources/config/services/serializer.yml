@@ -19,6 +19,7 @@ services:
     Claroline\CursusBundle\Serializer\SessionSerializer:
         arguments:
             - '@security.authorization_checker'
+            - '@security.token_storage'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\CoreBundle\API\Serializer\File\PublicFileSerializer'
             - '@Claroline\CommunityBundle\Serializer\UserSerializer'
@@ -46,6 +47,10 @@ services:
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\CommunityBundle\Serializer\OrganizationSerializer'
 
+    Claroline\CursusBundle\Serializer\QuotaSerializer:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\CoreBundle\API\Serializer\User\OrganizationSerializer'
+
     # Registrations
     Claroline\CursusBundle\Serializer\Registration\CourseUserSerializer:
         arguments:
@@ -66,6 +71,11 @@ services:
     Claroline\CursusBundle\Serializer\Registration\SessionCancellationSerializer:
         arguments:
             - '@Claroline\CommunityBundle\Serializer\UserSerializer'
+            - '@Claroline\CursusBundle\Serializer\SessionSerializer'
+
+    Claroline\CursusBundle\Serializer\Registration\SessionCancellationSerializer:
+        arguments:
+            - '@Claroline\CoreBundle\API\Serializer\User\UserSerializer'
             - '@Claroline\CursusBundle\Serializer\SessionSerializer'
 
     Claroline\CursusBundle\Serializer\Registration\EventUserSerializer:

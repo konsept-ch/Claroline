@@ -128,6 +128,13 @@ class Course extends AbstractTraining
     private $resource;
 
     /**
+     * @ORM\Column(type="boolean", options={"default" = 0})
+     *
+     * @var bool
+     */
+    private $generateInvoice = false;
+
+    /**
      * Course constructor.
      */
     public function __construct()
@@ -306,6 +313,16 @@ class Course extends AbstractTraining
     public function setResource(ResourceNode $resource = null)
     {
         $this->resource = $resource;
+    }
+
+    public function getGenerateInvoice()
+    {
+        return $this->generateInvoice;
+    }
+
+    public function setGenerateInvoice(bool $generateInvoice)
+    {
+        $this->generateInvoice = $generateInvoice;
     }
 
     public function getChildren()

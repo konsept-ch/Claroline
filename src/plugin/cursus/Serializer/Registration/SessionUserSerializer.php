@@ -52,6 +52,7 @@ class SessionUserSerializer extends AbstractUserSerializer
     {
         return array_merge(parent::serialize($sessionUser, $options), [
             'session' => $this->sessionSerializer->serialize($sessionUser->getSession(), [Options::SERIALIZE_MINIMAL]),
+            'organization' => $sessionUser->getUser()->getMainOrganization()->getName(),
             'status' => $sessionUser->getStatus(),
             'remark' => $sessionUser->getRemark(),
         ]);

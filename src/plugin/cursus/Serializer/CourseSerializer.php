@@ -146,6 +146,7 @@ class CourseSerializer
                     'price' => $course->getPrice(),
                     'description' => $course->getPriceDescription(),
                 ],
+                'generateInvoice' => $course->getGenerateInvoice(),
                 'workspace' => $course->getWorkspace() ?
                     $this->workspaceSerializer->serialize($course->getWorkspace(), [Options::SERIALIZE_MINIMAL]) :
                     null,
@@ -200,6 +201,8 @@ class CourseSerializer
 
         $this->sipe('pricing.price', 'setPrice', $data, $course);
         $this->sipe('pricing.description', 'setPriceDescription', $data, $course);
+
+        $this->sipe('generateInvoice', 'setGenerateInvoice', $data, $course);
 
         if (isset($data['meta'])) {
             if (isset($data['meta']['created'])) {

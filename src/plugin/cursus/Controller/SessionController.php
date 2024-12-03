@@ -11,6 +11,8 @@
 
 namespace Claroline\CursusBundle\Controller;
 
+use Claroline\AppBundle\API\FinderProvider;
+use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\Controller\AbstractCrudController;
 use Claroline\AppBundle\Manager\PdfManager;
 use Claroline\CoreBundle\Entity\Group;
@@ -29,6 +31,7 @@ use Claroline\CursusBundle\Entity\Registration\SessionGroup;
 use Claroline\CursusBundle\Entity\Registration\SessionUser;
 use Claroline\CursusBundle\Entity\Session;
 use Claroline\CursusBundle\Manager\SessionManager;
+use DateTime;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -202,13 +205,8 @@ class SessionController extends AbstractCrudController
             // filter by organizations
             if ($user instanceof User) {
                 $registrations = $this->om->getRepository(SessionUser::class)->findByUser($session, $user);
-                if (0 == count($registrations)) {
-                    return new JsonResponse($this->finder->formatPaginatedData([], 0, 0, -1, [], []));
-                }
-
-                if (!$this->isTutor($registrations)) {
-                    $organizations = $user->getOrganizations();
-                }
+                if (0 == count($registrations)) return new JsonResponse($this->finder->formatPaginatedData([], 0, 0, -1, [], []));
+                if (!$this->hastutor($registrations)) $organizations = $user->getOrganizations();
             } else {
                 return new JsonResponse($this->finder->formatPaginatedData([], 0, 0, -1, [], []));
             }
@@ -220,9 +218,7 @@ class SessionController extends AbstractCrudController
             }
         }
 
-        return new JsonResponse(
-            $this->finder->search(SessionUser::class, $params)
-        );
+        return new JsonResponse($this->finder->search(SessionUser::class, $params));
     }
 
     /**
@@ -432,6 +428,10 @@ class SessionController extends AbstractCrudController
             throw new AccessDeniedException();
         }
 
+        if (new DateTime() > $session->getStartDate()) {
+            throw new AccessDeniedException();
+        }
+
         $sessionUsers = $this->manager->addUsers($session, [$user], AbstractRegistration::LEARNER);
 
         return new JsonResponse($this->serializer->serialize($sessionUsers[0]));
@@ -595,6 +595,47 @@ class SessionController extends AbstractCrudController
         );
     }
 
+    /**
+     * @Route("/{id}/presence", name="apiv2_cursus_session_presence_download", methods={"GET"})
+     * @EXT\ParamConverter("session", class="Claroline\CursusBundle\Entity\Session", options={"mapping": {"id": "uuid"}})
+     */
+    public function downloadPresenceAction(Session $session, Request $request): StreamedResponse
+    {
+        /** @var User $user */
+        $user = $this->tokenStorage->getToken()->getUser();
+        $isTutor = $user instanceof User ? $this->hasTutor($this->om->getRepository(SessionUser::class)->findByUser($session, $user)) : false;
+        if (!$this->authorization->isGranted('ROLE_ADMIN') && !$isTutor) throw new AccessDeniedException('Permission denied');
+
+        $params = $request->query->all();
+        if (!isset($params['hiddenFilters'])) $params['hiddenFilters'] = [];
+        $params['hiddenFilters']['session'] = $session->getUuid();
+        $params['hiddenFilters']['type'] = SessionUser::LEARNER;
+        $params['hiddenFilters']['pending'] = false;
+
+        // only list participants of the same organization
+        if (SessionUser::LEARNER === SessionUser::LEARNER && !$this->authorization->isGranted('ROLE_ADMIN')) {
+            $organizations = null;
+
+            // filter by organizations
+            if ($user instanceof User) {
+                if (!$isTutor) $organizations = $user->getOrganizations();
+            } else return [];
+
+            if (null != $organizations) $params['hiddenFilters']['organizations'] = array_map(fn(Organization $organization) => $organization->getUuid(), $organizations);
+        }
+
+        $sessionUsers = $this->finder->get(SessionUser::class)->find($params['hiddenFilters']);
+
+        return new StreamedResponse(function () use ($session, $sessionUsers, $request) {
+            echo $this->pdfManager->fromHtml(
+                $this->manager->download($session, $sessionUsers, $request->getLocale())
+            );
+        }, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename='.TextNormalizer::toKey($session->getName()).'-presences.pdf',
+        ]);
+    }
+
     private function checkToolAccess(string $rights = 'OPEN'): bool
     {
         $trainingsTool = $this->toolManager->getOrderedTool('trainings', Tool::DESKTOP);
@@ -605,8 +646,8 @@ class SessionController extends AbstractCrudController
 
         return true;
     }
-
-    private function isTutor(array $registrations)
+    
+    private function hasTutor(array $registrations)
     {
         foreach ($registrations as $registration) {
             if ('tutor' == $registration->getType()) {
