@@ -17,6 +17,8 @@ services:
         tags: [ claroline.finder ]
 
     Claroline\CursusBundle\Finder\QuotaFinder:
+        parent: Claroline\AppBundle\API\Finder\AbstractFinder
+        tags: [ claroline.finder ]
         arguments:
           - '@security.authorization_checker'
           - '@security.token_storage'
