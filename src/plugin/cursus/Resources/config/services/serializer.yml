@@ -45,10 +45,6 @@ services:
 
     Claroline\CursusBundle\Serializer\QuotaSerializer:
             - '@Claroline\AppBundle\Persistence\ObjectManager'
-            - '@Claroline\CommunityBundle\Serializer\OrganizationSerializer'
-
-    Claroline\CursusBundle\Serializer\QuotaSerializer:
-            - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\CoreBundle\API\Serializer\User\OrganizationSerializer'
 
     # Registrations
