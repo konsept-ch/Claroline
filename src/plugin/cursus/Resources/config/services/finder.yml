@@ -21,11 +21,6 @@ services:
           - '@security.authorization_checker'
           - '@security.token_storage'
 
-    Claroline\CursusBundle\Finder\QuotaFinder:
-        arguments:
-          - '@security.authorization_checker'
-          - '@security.token_storage'
-
     # Registrations
     Claroline\CursusBundle\Finder\Registration\CourseUserFinder:
         parent: Claroline\AppBundle\API\Finder\AbstractFinder
