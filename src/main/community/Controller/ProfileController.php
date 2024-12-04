@@ -116,11 +116,7 @@ class ProfileController
             return new JsonResponse(2);
         }
 
-<<<<<<< HEAD
-        $serializedUser = $this->serializer->serialize($user, [Options::SERIALIZE_FACET]);
-=======
         $serializedUser = $this->serializer->serialize($user, [Options::SERIALIZE_MINIMAL, Options::SERIALIZE_FACET]);
->>>>>>> tags/cep-1.1.3
         if (!isset($serializedUser['profile'])) {
             return new JsonResponse(2);
         }
