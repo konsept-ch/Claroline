@@ -155,6 +155,10 @@ class SessionSerializer
                 'used' => $session->usedByQuotas(),
                 'days' => $session->getQuotaDays(),
             ],
+            'participants' => $this->sessionRepo->countParticipants($session),
+            'tutors' => array_map(function (SessionUser $sessionUser) {
+                return $this->userSerializer->serialize($sessionUser->getUser(), [SerializerInterface::SERIALIZE_MINIMAL]);
+            }, $tutors),
         ];
 
         if (!in_array(Options::SERIALIZE_MINIMAL, $options)) {
