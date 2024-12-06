@@ -11,10 +11,12 @@
 
 namespace Claroline\CoreBundle\Controller;
 
+use Claroline\AppBundle\API\Crud;
 use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\AppBundle\Event\StrictDispatcher;
 use Claroline\AppBundle\Persistence\ObjectManager;
+use Claroline\AuthenticationBundle\Security\Authentication\Authenticator;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
 use Claroline\CoreBundle\Entity\Role;
 use Claroline\CoreBundle\Entity\Tool\AbstractTool;
@@ -31,7 +33,9 @@ use Claroline\CoreBundle\Event\Workspace\OpenWorkspaceEvent;
 use Claroline\CoreBundle\Manager\Tool\ToolManager;
 use Claroline\CoreBundle\Manager\Workspace\WorkspaceManager;
 use Claroline\CoreBundle\Manager\Workspace\WorkspaceRestrictionsManager;
+use Claroline\CoreBundle\Security\PlatformRoles;
 use Claroline\EvaluationBundle\Manager\WorkspaceEvaluationManager;
+use DateTime;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -67,6 +71,10 @@ class WorkspaceController
     private $evaluationManager;
     /** @var StrictDispatcher */
     private $strictDispatcher;
+    /** @var Crud */
+    private $crud;
+    /** @var Authenticator */
+    private $authenticator;
 
     public function __construct(
         AuthorizationCheckerInterface $authorization,
@@ -78,7 +86,9 @@ class WorkspaceController
         WorkspaceManager $manager,
         WorkspaceRestrictionsManager $restrictionsManager,
         WorkspaceEvaluationManager $evaluationManager,
-        StrictDispatcher $strictDispatcher
+        StrictDispatcher $strictDispatcher,
+        Crud $crud,
+        Authenticator $authenticator
     ) {
         $this->authorization = $authorization;
         $this->om = $om;
@@ -90,6 +100,8 @@ class WorkspaceController
         $this->restrictionsManager = $restrictionsManager;
         $this->evaluationManager = $evaluationManager;
         $this->strictDispatcher = $strictDispatcher;
+        $this->crud = $crud;
+        $this->authenticator = $authenticator;
     }
 
     /**
@@ -125,36 +137,39 @@ class WorkspaceController
                 [$workspace]
             );
 
-            $userEvaluation = null;
-            if ($user) {
-                $userEvaluation = $this->serializer->serialize(
-                    $this->evaluationManager->getUserEvaluation($workspace, $user),
-                    [Options::SERIALIZE_MINIMAL]
-                );
+            $this->om->getRepository(User::class)->deleteExpiredTemp();
+
+            if (!$user) {
+                $name = uniqid('tmp.');
+                $user = $this->crud->create(User::class, [
+                    'username' => $name,
+                    'firstName' => $name,
+                    'lastName' => $name,
+                    'email' => $name.'@tmp.tmp',
+                    'plainPassword' => uniqid(), // I cannot create a user without pass
+                    'meta' => [
+                        'mailValidated' => true, // because we receive a trusted email
+                    ],
+                    'restrictions' => [
+                        'disabled' => false,
+                    ],
+                ], [Crud::THROW_EXCEPTION, Crud::NO_PERMISSIONS, Options::NO_EMAIL, Options::NO_PERSONAL_WORKSPACE]);
+                $user->setExpirationDate((new DateTime())->modify('+1 month'));
+                $this->om->persist($user);
+                $this->authenticator->createToken($user, [PlatformRoles::USER]);
+            }
+
+            if (str_starts_with($user->getUsername(), 'tmp.') && $workspace->getDefaultRole() && !$user->hasRole($workspace->getDefaultRole()->getName())) {
+                $this->crud->patch($user, 'role', Crud::COLLECTION_ADD, [$workspace->getDefaultRole()], [Crud::NO_PERMISSIONS]);
             }
 
             return new JsonResponse([
                 'workspace' => $this->serializer->serialize($workspace),
-                'managed' => $isManager,
-                'impersonated' => $this->manager->isImpersonated($this->tokenStorage->getToken()),
-                // the list of current workspace roles the user owns
-                'roles' => array_map(function (Role $role) {
-                    return $this->serializer->serialize($role, [Options::SERIALIZE_MINIMAL]);
-                }, $this->manager->getTokenRoles($this->tokenStorage->getToken(), $workspace)),
-                // append access restrictions to the loaded data if any
-                // to let the manager knows that other users can not enter the workspace
                 'accessErrors' => $accessErrors,
-                'userEvaluation' => $userEvaluation,
-                // get the list of enabled workspace tool
                 'tools' => array_values(array_map(function (OrderedTool $orderedTool) {
                     return $this->serializer->serialize($orderedTool, [Options::SERIALIZE_MINIMAL]);
                 }, $this->toolManager->getOrderedToolsByWorkspace($workspace))),
-                'root' => $this->serializer->serialize($this->om->getRepository(ResourceNode::class)->findOneBy(['workspace' => $workspace, 'parent' => null]), [Options::SERIALIZE_MINIMAL]),
-                // TODO : only export current user shortcuts (we get all roles for the configuration in community/editor)
-                //'shortcuts' => $this->manager->getShortcuts($workspace, $this->tokenStorage->getToken()->getRoleNames()),
-                'shortcuts' => array_values(array_map(function (Shortcuts $shortcuts) {
-                    return $this->serializer->serialize($shortcuts);
-                }, $workspace->getShortcuts()->toArray())),
+                'root' => $this->serializer->serialize($this->om->getRepository(ResourceNode::class)->findOneBy(['workspace' => $workspace, 'parent' => null]), [Options::SERIALIZE_MINIMAL])
             ]);
         }
 

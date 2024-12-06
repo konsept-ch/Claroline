@@ -63,23 +63,6 @@ class MenuMain extends Component {
       >
         <Fragment>
           <aside className="app-menu">
-            <header className="app-menu-header">
-              {this.props.backAction &&
-                <Button
-                  {...this.props.backAction}
-                  id="app-menu-back"
-                  className="app-menu-back"
-                  icon="fa fa-arrow-up"
-                  tooltip="right"
-                  onClick={this.autoClose}
-                />
-              }
-
-              {this.props.title &&
-                <h1 className="app-menu-title h5">{this.props.title}</h1>
-              }
-            </header>
-
             {this.props.children && Children.map(this.props.children, child => child && cloneElement(child, {
               autoClose: this.autoClose
             }))}
@@ -117,24 +100,6 @@ class MenuMain extends Component {
                       return -1
                     })
                   }
-                  onClick={this.autoClose}
-                />
-              </MenuSection>
-            }
-
-            {(!isEmpty(this.props.actions) || !Array.isArray(this.props.actions)) &&
-              <MenuSection
-                className="actions"
-                icon="fa fa-fw fa-ellipsis-v"
-                title={trans('more')}
-                opened={'actions' === this.props.section}
-                toggle={() => this.props.changeSection('actions')}
-              >
-                <Toolbar
-                  id="app-menu-actions"
-                  className="list-group"
-                  buttonName="list-group-item"
-                  actions={this.props.actions}
                   onClick={this.autoClose}
                 />
               </MenuSection>

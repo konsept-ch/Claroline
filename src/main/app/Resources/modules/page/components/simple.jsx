@@ -6,7 +6,6 @@ import {implementPropTypes} from '#/main/app/prop-types'
 import {asset} from '#/main/app/config/asset'
 
 import {PageSimple as PageSimpleTypes} from '#/main/app/page/prop-types'
-import {PageBreadcrumb} from '#/main/app/page/components/breadcrumb'
 import {PageWrapper} from '#/main/app/page/components/wrapper'
 
 /**
@@ -42,15 +41,6 @@ const PageSimple = props =>
           <meta name="description" property="og:description" content={props.meta.description} />
         }
       </Helmet>
-    }
-
-    {!props.embedded &&
-      <PageBreadcrumb
-        path={props.path}
-        className={classes({
-          'sr-only': !props.showBreadcrumb || props.fullscreen
-        })}
-      />
     }
 
     {props.children}

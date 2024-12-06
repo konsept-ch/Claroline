@@ -412,6 +412,7 @@ const WorkspaceForm = connect(
       })
     },
     updateProp(propName, propValue) {
+      console.log(propName, propValue)
       dispatch(formActions.updateProp(ownProps.name, propName, propValue))
     }
   })

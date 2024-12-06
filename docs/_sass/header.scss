@@ -2,18 +2,6 @@
  * Header
  */
 
-.app-header {
-  z-index: 2;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  background: #262626;
-  color: white;
-  height: 60px;
-  min-height: 60px;
-  box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.5);
-}
-
 .app-brand {
   color: white;
   text-decoration: none;

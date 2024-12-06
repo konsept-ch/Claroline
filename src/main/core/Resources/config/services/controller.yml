@@ -236,6 +236,8 @@ services:
             - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceRestrictionsManager'
             - '@Claroline\EvaluationBundle\Manager\WorkspaceEvaluationManager'
             - '@Claroline\AppBundle\Event\StrictDispatcher'
+            - '@Claroline\AppBundle\API\Crud'
+            - '@Claroline\AuthenticationBundle\Security\Authentication\Authenticator'
 
     Claroline\CoreBundle\Controller\APINew\Location\LocationController:
         parent: Claroline\AppBundle\Controller\AbstractCrudController

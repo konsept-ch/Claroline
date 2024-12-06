@@ -63,18 +63,6 @@ const PageHeader = props =>
     }
 
     {props.children}
-
-    {(!isEmpty(props.actions) || props.actions instanceof Promise) &&
-      <Toolbar
-        id={props.id || toKey(props.title)}
-        className="page-actions"
-        tooltip="bottom"
-        toolbar={props.toolbar}
-        actions={props.actions}
-        disabled={props.disabled}
-        scope="object"
-      />
-    }
   </header>
 
 PageHeader.propTypes = {
