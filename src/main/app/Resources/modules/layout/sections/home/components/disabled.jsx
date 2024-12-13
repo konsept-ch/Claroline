@@ -6,8 +6,6 @@ import {trans} from '#/main/app/intl/translation'
 import {now, displayDate} from '#/main/app/intl/date'
 import {AlertBlock} from '#/main/app/alert/components/alert-block'
 import {ContentHtml} from '#/main/app/content/components/html'
-import {Toolbar} from '#/main/app/action/components/toolbar'
-import {CALLBACK_BUTTON, LINK_BUTTON} from '#/main/app/buttons'
 import {PageSimple} from '#/main/app/page/components/simple'
 import {ContentHelp} from '#/main/app/content/components/help'
 
@@ -62,27 +60,6 @@ const HomeDisabled = (props) => {
             }
           </section>
         }
-
-        <Toolbar
-          buttonName="btn btn-block btn-emphasis"
-          actions={[
-            {
-              name: 'login',
-              type: LINK_BUTTON,
-              label: trans('login', {}, 'actions'),
-              target: '/login',
-              displayed: !props.authenticated,
-              primary: true
-            }, {
-              name: 'reactivate',
-              type: CALLBACK_BUTTON,
-              label: trans('reactivate', {}, 'actions'),
-              callback: () => props.reactivate(),
-              displayed: props.authenticated && !props.restrictions.disabled && ended,
-              primary: true
-            }
-          ]}
-        />
 
         {!props.authenticated &&
           <ContentHelp help={trans('only_admin_login_help', {}, 'administration')} />
