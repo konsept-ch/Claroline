@@ -146,6 +146,11 @@ services:
             - { name: kernel.event_listener, event: resource.restore, method: restore }
             - { name: kernel.event_listener, event: resource.copy, method: copy }
             - { name: kernel.event_listener, event: resource.move, method: move }
+    
+    Claroline\CoreBundle\Listener\Resource\ResourceNodeListener:
+        tags:
+            - { name: kernel.event_listener, event: crud.pre.copy.resource_node, method: onCopy }
+            - { name: kernel.event_listener, event: crud.pre.delete.resource_node, method: onDelete }
 
     Claroline\CoreBundle\Listener\ViewAsListener:
         arguments:

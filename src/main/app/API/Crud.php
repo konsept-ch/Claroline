@@ -9,6 +9,7 @@ use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\AppBundle\Security\ObjectCollection;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
 use Claroline\CoreBundle\Validator\Exception\InvalidDataException;
+use Exception;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 /**
