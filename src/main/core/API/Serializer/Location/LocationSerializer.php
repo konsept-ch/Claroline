@@ -94,6 +94,11 @@ class LocationSerializer
             $this->sipe('address.country', 'setAddressCountry', $data, $location);
         }
 
+        if (isset($data['gps'])) {
+            $this->sipe('gps.latitude', 'setLatitude', $data, $location);
+            $this->sipe('gps.longitude', 'setLongitude', $data, $location);
+        }
+
         if (isset($data['poster'])) {
             $location->setPoster($data['poster']['url'] ?? null);
         }
