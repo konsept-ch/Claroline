@@ -245,23 +245,19 @@ class CourseSerializer
             $course->setThumbnail($data['thumbnail']['url'] ?? null);
         }
 
-        if (isset($data['workspace'])) {
-            $workspace = null;
-            if (isset($data['workspace']['id'])) {
-                /** @var Workspace $workspace */
-                $workspace = $this->workspaceRepo->findOneBy(['uuid' => $data['workspace']['id']]);
-            }
-            $course->setWorkspace($workspace);
+        $workspace = null;
+        if (isset($data['workspace']) && isset($data['workspace']['id'])) {
+            /** @var Workspace $workspace */
+            $workspace = $this->workspaceRepo->findOneBy(['uuid' => $data['workspace']['id']]);
         }
+        $course->setWorkspace($workspace);
 
-        if (isset($data['workspaceModel'])) {
-            $workspace = null;
-            if (isset($data['workspaceModel']['id'])) {
-                /** @var Workspace $workspace */
-                $workspace = $this->workspaceRepo->findOneBy(['uuid' => $data['workspaceModel']['id']]);
-            }
-            $course->setWorkspaceModel($workspace);
+        $workspace = null;
+        if (isset($data['workspaceModel']) && isset($data['workspaceModel']['id'])) {
+            /** @var Workspace $workspace */
+            $workspace = $this->workspaceRepo->findOneBy(['uuid' => $data['workspaceModel']['id']]);
         }
+        $course->setWorkspaceModel($workspace);
 
         if (isset($data['organizations'])) {
             $course->emptyOrganizations();
