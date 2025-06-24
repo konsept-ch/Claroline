@@ -61,7 +61,7 @@ class MenuMain extends Component {
         disabled={constants.SIZE_SM !== this.state.computedSize && constants.SIZE_XS !== this.state.computedSize}
         onRootClose={() => this.props.close()}
       >
-        {(this.props.administration || !this.props.path.startsWith('/desktop/home')) &&
+        {(this.props.administration || !this.props.path.startsWith('/home')) &&
           <Fragment>
             <aside className="app-menu">
               <header className="app-menu-header">

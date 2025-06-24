@@ -14,7 +14,7 @@ import {getMenu} from '#/main/app/layout/header/utils'
 const HeaderMain = props =>
   <header className="app-header-container">
     <div className="app-header" role="presentation">
-      {(props.administration || !props.path.startsWith('/desktop/home')) &&
+      {(props.administration || !props.path.startsWith('/home')) &&
         <Button
           className="app-header-item app-header-btn"
           type={CALLBACK_BUTTON}
