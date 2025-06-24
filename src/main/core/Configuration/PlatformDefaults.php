@@ -146,15 +146,6 @@ class PlatformDefaults implements ParameterProviderInterface
                 'search' => [
                     'order' => 1,
                 ],
-                'history' => [
-                    'order' => 2,
-                ],
-                'favourites' => [
-                    'order' => 3,
-                ],
-                'notifications' => [
-                    'order' => 4,
-                ],
             ],
             'search' => [
                 'limit' => 5,

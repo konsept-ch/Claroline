@@ -14,14 +14,16 @@ import {getMenu} from '#/main/app/layout/header/utils'
 const HeaderMain = props =>
   <header className="app-header-container">
     <div className="app-header" role="presentation">
-      <Button
-        className="app-header-item app-header-btn"
-        type={CALLBACK_BUTTON}
-        icon="fa fa-fw fa-bars"
-        label={trans('menu')}
-        tooltip="bottom"
-        callback={props.toggleMenu}
-      />
+      {(props.administration || !props.path.startsWith('/desktop/home')) &&
+        <Button
+          className="app-header-item app-header-btn"
+          type={CALLBACK_BUTTON}
+          icon="fa fa-fw fa-bars"
+          label={trans('menu')}
+          tooltip="bottom"
+          callback={props.toggleMenu}
+        />
+      }
 
       {((props.display.name && props.title) || props.logo) &&
         <HeaderBrand

@@ -30,6 +30,9 @@ class UserFinder extends AbstractFinder
         $groupJoin = false;
         $groupRoleJoin = false;
 
+        $qb->andWhere('obj.username NOT LIKE :tmp');
+        $qb->setParameter('tmp', 'tmp.%');
+
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
                 case 'username':

@@ -3,6 +3,7 @@ import {connect} from 'react-redux'
 import {withReducer} from '#/main/app/store/components/withReducer'
 import {selectors as configSelectors} from '#/main/app/config/store'
 import {selectors as securitySelectors} from '#/main/app/security/store'
+import {selectors as toolSelectors} from '#/main/core/tool/store'
 
 import {actions, selectors, reducer} from '#/main/app/layout/header/store'
 import {HeaderMain as HeaderMainComponent} from '#/main/app/layout/header/components/main'
@@ -26,7 +27,8 @@ const HeaderMain = withReducer(selectors.STORE_NAME, reducer)(
       currentUser: securitySelectors.currentUser(state) || securitySelectors.fakeUser(state),
       authenticated: securitySelectors.isAuthenticated(state),
       impersonated: securitySelectors.isImpersonated(state),
-      administration: securitySelectors.hasAdministration(state)
+      administration: securitySelectors.hasAdministration(state),
+      path: toolSelectors.path(state)
     }),
     (dispatch) => ({
       sendValidationEmail() {

@@ -91,40 +91,40 @@ const UserMenu = props =>
         <Button
           type={LINK_BUTTON}
           className="list-group-item"
-          icon="fa fa-fw fa-atlas"
-          label={trans('desktop')}
-          target="/desktop"
-          exact={true}
-          onClick={props.closeMenu}
-        />
-
-        <Button
-          type={LINK_BUTTON}
-          className="list-group-item"
           icon="fa fa-fw fa-user"
           label={trans('my_account')}
           target="/account"
           onClick={props.closeMenu}
         />
 
-        <Button
-          type={LINK_BUTTON}
-          className="list-group-item"
-          icon="fa fa-fw fa-graduation-cap"
-          label={trans('my_courses', {}, 'cursus')}
-          target="/home/mes-formations"
-          onClick={props.closeMenu}
-        />
-
         {props.administration &&
-          <Button
-            type={LINK_BUTTON}
-            className="list-group-item"
-            icon="fa fa-fw fa-cogs"
-            label={trans('administration')}
-            target="/admin"
-            onClick={props.closeMenu}
-          />
+          <>
+            <Button
+              type={LINK_BUTTON}
+              className="list-group-item"
+              icon="fa fa-fw fa-graduation-cap"
+              label={trans('my_courses', {}, 'cursus')}
+              target="/home/mes-formations"
+              onClick={props.closeMenu}
+            />
+            <Button
+              type={LINK_BUTTON}
+              className="list-group-item"
+              icon="fa fa-fw fa-atlas"
+              label={trans('desktop')}
+              target="/desktop"
+              exact={true}
+              onClick={props.closeMenu}
+            />
+            <Button
+              type={LINK_BUTTON}
+              className="list-group-item"
+              icon="fa fa-fw fa-cogs"
+              label={trans('administration')}
+              target="/admin"
+              onClick={props.closeMenu}
+            />
+          </>
         }
       </div>
     }
