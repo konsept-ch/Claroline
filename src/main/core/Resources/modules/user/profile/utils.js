@@ -192,7 +192,7 @@ function isFieldDisplayed(fieldDef, allFields, data) {
       let displayed = false
       switch (fieldDef.display.condition.comparator) {
         case 'equal':
-          displayed = parentValue === fieldDef.display.condition.value
+          displayed = typeof parentValue === 'object' && parentValue.id ? parentValue.id == fieldDef.display.condition.value.id : parentValue === fieldDef.display.condition.value
           break
         case 'different':
           displayed = parentValue !== fieldDef.display.condition.value
@@ -202,6 +202,9 @@ function isFieldDisplayed(fieldDef, allFields, data) {
           break
         case 'not_empty':
           displayed = !isEmpty(parentValue)
+          break
+        case 'contains':
+          displayed = fieldDef.display.condition.value.id == parentValue?.parent?.id
           break
       }
 

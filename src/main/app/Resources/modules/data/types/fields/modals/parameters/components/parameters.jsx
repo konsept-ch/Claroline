@@ -201,7 +201,8 @@ class ParametersModal extends Component {
                         'equal': trans('equal'),
                         'different': trans('different'),
                         'empty': trans('empty'),
-                        'not_empty': trans('not_empty')
+                        'not_empty': trans('not_empty'),
+                        'contains': trans('contains')
                       }
                     }
                   }, {
