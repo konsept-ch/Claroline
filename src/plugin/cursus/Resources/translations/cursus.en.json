@@ -140,5 +140,10 @@
     "cancellations": "Cancellations",
     "cancellation_date": "Cancellation date",
     "billing": "Billing",
-    "generate_invoice": "No billing"
+    "generate_invoice": "No billing",
+    "registration_pending": "pending",
+    "registration_validated": "validated",
+    "registration_refused": "refused",
+    "registration_cancelled": "cancelled",
+    "registration_participated": "participated"
 }

@@ -17,10 +17,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity(repositoryClass="Claroline\CursusBundle\Repository\SessionUserRepository")
  * @ORM\Table(
- *     name="claro_cursusbundle_course_session_user",
- *     uniqueConstraints={
- *         @ORM\UniqueConstraint(name="training_session_unique_user", columns={"session_id", "user_id"})
- *     }
+ *     name="claro_cursusbundle_course_session_user"
  * )
  */
 class SessionUser extends AbstractUserRegistration
@@ -28,7 +25,7 @@ class SessionUser extends AbstractUserRegistration
     const STATUS_PENDING = 0;
     const STATUS_REFUSED = 1;
     const STATUS_VALIDATED = 2;
-    const STATUS_MANAGED = 3;
+    const STATUS_MANAGED = 4;
 
     /**
      * @ORM\ManyToOne(targetEntity="Claroline\CursusBundle\Entity\Session")
@@ -73,7 +70,7 @@ class SessionUser extends AbstractUserRegistration
     {
         $this->status = $status;
     }
-
+    
     /**
      * @return string
      */

@@ -133,7 +133,7 @@ class SessionSerializer
             $tutors = $this->om->getRepository(SessionUser::class)->findBy([
                 'session' => $session,
                 'type' => AbstractRegistration::TUTOR,
-                'validated' => true,
+                'state' => SessionUser::STATE_VALIDATED,
                 'confirmed' => true,
             ]);
 

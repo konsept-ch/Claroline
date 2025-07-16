@@ -39,7 +39,14 @@ const CourseUsers = (props) =>
       target: route(row.user)
     })}
     actions={(rows) => [
-      {
+      (props.validateParticipation && {
+        name: 'participation',
+        type: CALLBACK_BUTTON,
+        icon: 'fa fa-fw fa-check',
+        label: trans('validate_participation', {}, 'actions'),
+        callback: () => props.validateParticipation(props.activeSession.id, rows),
+        displayed: hasPermission('register', props.activeSession) && -1 !== rows.findIndex(row => row.validated)
+      }), {
         name: 'invite',
         type: CALLBACK_BUTTON,
         icon: 'fa fa-fw fa-envelope',
@@ -95,7 +102,8 @@ CourseUsers.propTypes = {
   addUsers: T.func.isRequired,
   moveUsers: T.func.isRequired,
   inviteUsers: T.func.isRequired,
-  movePending: T.func.isRequired
+  movePending: T.func.isRequired,
+  validateParticipation: T.func
 }
 
 const CourseGroups = (props) =>
@@ -212,7 +220,7 @@ const CourseParticipants = (props) =>
               path: '/groups'
             }, {
               icon: 'fa fa-fw fa-hourglass-half',
-              title: trans('Refus RH'),
+              title: trans('En attente'),
               path: '/pending',
               displayed: hasPermission('register', props.activeSession)
             }, {
@@ -290,6 +298,7 @@ const CourseParticipants = (props) =>
                       moveUsers={props.moveUsers}
                       hasPendingRegistrations={get(props.course, 'registration.pendingRegistrations', false)}
                       movePending={(sessionUsers) => props.movePending(props.course.id, sessionUsers)}
+                      validateParticipation={props.validateParticipation}
                     />
                   </Fragment>
                 )
@@ -345,6 +354,15 @@ const CourseParticipants = (props) =>
                           icon: 'fa fa-fw fa-check',
                           label: trans('validate_registration', {}, 'actions'),
                           callback: () => props.validatePending(props.activeSession.id, rows),
+                          disabled: isFull(props.activeSession),
+                          displayed: hasPermission('register', props.activeSession) && -1 !== rows.findIndex(row => !row.validated),
+                          group: trans('management')
+                        }, {
+                          name: 'refuse',
+                          type: CALLBACK_BUTTON,
+                          icon: 'fa fa-fw fa-times',
+                          label: trans('refuse_registration', {}, 'actions'),
+                          callback: () => props.refusePending(props.activeSession.id, rows),
                           disabled: isFull(props.activeSession),
                           displayed: hasPermission('register', props.activeSession) && -1 !== rows.findIndex(row => !row.validated),
                           group: trans('management')
@@ -457,7 +475,9 @@ CourseParticipants.propTypes = {
   addPending: T.func.isRequired,
   confirmPending: T.func.isRequired,
   validatePending: T.func.isRequired,
-  movePending: T.func.isRequired
+  refusePending: T.func.isRequired,
+  movePending: T.func.isRequired,
+  validateParticipation: T.func.isRequired
 }
 
 export {

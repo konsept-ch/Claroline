@@ -1,5 +1,6 @@
 import React, {Fragment} from 'react'
 import {PropTypes as T} from 'prop-types'
+import classes from 'classnames'
 
 import {trans} from '#/main/app/intl/translation'
 import {hasPermission} from '#/main/app/security'
@@ -9,6 +10,7 @@ import {constants as listConst} from '#/main/app/content/list/constants'
 import {UserCard} from '#/main/core/user/components/card'
 
 import {Session as SessionTypes} from '#/plugin/cursus/prop-types'
+import {constants} from '#/plugin/cursus/constants'
 
 const SessionUsers = (props) =>
   <Fragment>
@@ -56,6 +58,18 @@ const SessionUsers = (props) =>
           displayable: false,
           sortable: false,
           filterable: true
+      }, {
+        name: 'status',
+        type: 'choice',
+        label: trans('status'),
+        displayed: true,
+        sortable: false,
+        filterable: false,
+        render: (row) => (
+          <span className={classes('label', `label-${constants.REGISTRATION_STATE_COLORS[row.state]}`)}>
+            {constants.REGISTRATION_STATES[row.state]}
+          </span>
+        )
         }
       ]}
       primaryAction={props.primaryAction}

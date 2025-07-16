@@ -242,3 +242,13 @@ plugin:
               - user_last_name
               - session_start
               - session_end
+
+        - name: training_attestation
+          type: pdf
+          placeholders:
+              - course_name
+              - user_first_name
+              - user_last_name
+              - course_start
+              - course_location
+              - today

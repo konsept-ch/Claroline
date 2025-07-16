@@ -147,5 +147,10 @@
     "annual_exercices": "Exercices annuels",
     "add_year": "Ajouter exercice",
     "billing": "Facturation",
-    "generate_invoice": "Aucune facturation"
+    "generate_invoice": "Aucune facturation",
+    "registration_pending": "en attente",
+    "registration_validated": "validée",
+    "registration_refused": "refusée",
+    "registration_cancelled": "annulée",
+    "registration_participated": "participée"
 }

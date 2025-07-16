@@ -227,6 +227,32 @@ actions.validatePending = (sessionId, users) => ({
   }
 })
 
+actions.refusePending = (sessionId, users) => ({
+  [API_REQUEST]: {
+    url: url(['apiv2_cursus_session_refuse_pending', {id: sessionId}], {ids: users.map(user => user.id)}),
+    request: {
+      method: 'PUT'
+    },
+    success: (data, dispatch) => {
+      // TODO : do something better (I need it to recompute session available space)
+      dispatch(actions.openSession(sessionId, true))
+    }
+  }
+})
+
+actions.validateParticipation = (sessionId, users) => ({
+  [API_REQUEST]: {
+    url: url(['apiv2_cursus_session_validate_participation', {id: sessionId}], {ids: users.map(user => user.id)}),
+    request: {
+      method: 'PUT'
+    },
+    success: (data, dispatch) => {
+      // TODO : do something better (I need it to recompute session available space)
+      dispatch(actions.openSession(sessionId, true))
+    }
+  }
+})
+
 actions.register = (course, sessionId = null) => ({
   [API_REQUEST]: {
     url: sessionId ?

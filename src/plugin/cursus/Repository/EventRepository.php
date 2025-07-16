@@ -61,7 +61,7 @@ class EventRepository extends EntityRepository
                 SELECT COUNT(su) FROM Claroline\CursusBundle\Entity\Registration\EventUser AS su
                 WHERE su.type = :registrationType
                   AND su.event = :event
-                  AND (su.confirmed = 1 AND su.validated = 1)
+                  AND (su.confirmed = 1 AND su.state = 1)
             ')
             ->setParameters([
                 'registrationType' => $type,

@@ -92,7 +92,7 @@ class EventSerializer
             $tutors = $this->om->getRepository(EventUser::class)->findBy([
                 'event' => $event,
                 'type' => AbstractRegistration::TUTOR,
-                'validated' => true,
+                'state' => EventUser::STATE_VALIDATED,
                 'confirmed' => true,
             ]);
 

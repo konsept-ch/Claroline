@@ -34,9 +34,15 @@ const CourseParticipants = connect(
     validatePending(sessionId, users) {
       dispatch(actions.validatePending(sessionId, users))
     },
+    refusePending(sessionId, users) {
+      dispatch(actions.refusePending(sessionId, users))
+    },
     movePending(courseId, sessionUsers) {
       dispatch(actions.movePending(courseId, sessionUsers))
-    }
+    },
+    validateParticipation(sessionId, users) {
+      dispatch(actions.validateParticipation(sessionId, users))
+    },
   })
 )(CourseParticipantsComponent)
 

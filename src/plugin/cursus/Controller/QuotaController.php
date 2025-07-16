@@ -356,7 +356,7 @@ class QuotaController extends AbstractCrudController
                     } else {
                         $this->quotaManager->sendRefusedStatusMail($sessionUser);
                     }
-                    $sessionUser->setValidated(false);
+                    $sessionUser->setState(SessionUser::STATE_PENDING);
                     $sessionUser->setConfirmed(false);
 
                     $session = $sessionUser->getSession();

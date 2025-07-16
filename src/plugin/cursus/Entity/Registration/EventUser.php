@@ -17,10 +17,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity(repositoryClass="Claroline\CursusBundle\Repository\Registration\EventUserRepository")
  * @ORM\Table(
- *     name="claro_cursusbundle_session_event_user",
- *     uniqueConstraints={
- *         @ORM\UniqueConstraint(name="training_event_unique_user", columns={"event_id", "user_id"})
- *     }
+ *     name="claro_cursusbundle_session_event_user"
  * )
  */
 class EventUser extends AbstractUserRegistration

@@ -194,7 +194,7 @@ class SessionController extends AbstractCrudController
         }
         $params['hiddenFilters']['session'] = $session->getUuid();
         $params['hiddenFilters']['type'] = $type;
-        $params['hiddenFilters']['pending'] = false;
+        $params['hiddenFilters']['state'] = [SessionUser::STATE_VALIDATED, SessionUser::STATE_PARTICIPATED];
 
         // only list participants of the same organization
         if (SessionUser::LEARNER === $type && !$this->authorization->isGranted('ROLE_ADMIN')) {
@@ -256,12 +256,8 @@ class SessionController extends AbstractCrudController
         $sessionUsers = $this->decodeIdsString($request, SessionUser::class);
 
         foreach ($sessionUsers as $sessionUser) {
-            if ($this->om->getRepository(SessionCancellation::class)->findOneBy(['inscriptionUuid' => $sessionUser->getUuid()]) != null) continue;
-            $cancellation = new SessionCancellation();
-            $cancellation->setUser($sessionUser->getUser());
-            $cancellation->setSession($sessionUser->getSession());
-            $cancellation->setInscriptionUuid($sessionUser->getUuid());
-            $this->om->persist($cancellation);
+            $sessionUser->setState(SessionUser::STATE_CANCELLED);
+            $sessionUser->setDate(new \DateTime());
         }
 
         $this->manager->removeUsers($session, $sessionUsers);
@@ -410,6 +406,52 @@ class SessionController extends AbstractCrudController
 
         $users = $this->decodeIdsString($request, SessionUser::class);
         $sessionUsers = $this->manager->validateUsers($session, $users);
+
+        return new JsonResponse(array_map(function (SessionUser $sessionUser) {
+            return $this->serializer->serialize($sessionUser);
+        }, $sessionUsers));
+    }
+
+    /**
+     * @Route("/{id}/pending/refuse", name="apiv2_cursus_session_refuse_pending", methods={"PUT"})
+     * @EXT\ParamConverter("session", class="Claroline\CursusBundle\Entity\Session", options={"mapping": {"id": "uuid"}})
+     */
+    public function refusePendingAction(Session $session, Request $request): JsonResponse
+    {
+        $this->checkPermission('REGISTER', $session, [], true);
+
+        $sessionUsers = $this->decodeIdsString($request, SessionUser::class);
+        $this->om->startFlushSuite();
+
+        foreach ($sessionUsers as $sessionUser) {
+            $sessionUser->setState(SessionUser::STATE_REFUSED);
+            $this->om->persist($sessionUser);
+        }
+
+        $this->om->endFlushSuite();
+
+        return new JsonResponse(array_map(function (SessionUser $sessionUser) {
+            return $this->serializer->serialize($sessionUser);
+        }, $sessionUsers));
+    }
+
+    /**
+     * @Route("/{id}/validate/participation", name="apiv2_cursus_session_validate_participation", methods={"PUT"})
+     * @EXT\ParamConverter("session", class="Claroline\CursusBundle\Entity\Session", options={"mapping": {"id": "uuid"}})
+     */
+    public function validateParticipationAction(Session $session, Request $request): JsonResponse
+    {
+        $this->checkPermission('REGISTER', $session, [], true);
+
+        $sessionUsers = $this->decodeIdsString($request, SessionUser::class);
+        /*$this->om->startFlushSuite();
+
+        foreach ($sessionUsers as $sessionUser) {
+            $sessionUser->setState(SessionUser::STATE_PARTICIPATED);
+            $this->om->persist($sessionUser);
+        }
+
+        $this->om->endFlushSuite();*/
 
         return new JsonResponse(array_map(function (SessionUser $sessionUser) {
             return $this->serializer->serialize($sessionUser);
@@ -590,9 +632,10 @@ class SessionController extends AbstractCrudController
             $params['hiddenFilters'] = [];
         }
         $params['hiddenFilters']['session'] = $session->getUuid();
+        $params['hiddenFilters']['state'] = SessionUser::STATE_CANCELLED;
 
         return new JsonResponse(
-            $this->finder->search(SessionCancellation::class, $params)
+            $this->finder->search(SessionUser::class, $params)
         );
     }
 

@@ -17,10 +17,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity
  * @ORM\Table(
- *     name="claro_cursusbundle_course_course_user",
- *     uniqueConstraints={
- *         @ORM\UniqueConstraint(name="training_session_unique_user", columns={"course_id", "user_id"})
- *     }
+ *     name="claro_cursusbundle_course_course_user"
  * )
  */
 class CourseUser extends AbstractUserRegistration

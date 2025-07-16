@@ -57,6 +57,29 @@ const SUBSCRIPTION_STATUS_COLORS = {
   [SUBSCRIPTION_STATUS_MANAGED]: 'success'
 }
 
+
+const REGISTRATION_STATE_PENDING = 0
+const REGISTRATION_STATE_VALIDATED = 1
+const REGISTRATION_STATE_REFUSED = 2
+const REGISTRATION_STATE_CANCELLED = 3
+const REGISTRATION_STATE_PARTICIPATED = 4
+
+const REGISTRATION_STATES = {
+  [REGISTRATION_STATE_PENDING]: trans('registration_pending', {}, 'cursus'),
+  [REGISTRATION_STATE_VALIDATED]: trans('registration_validated', {}, 'cursus'),
+  [REGISTRATION_STATE_REFUSED]: trans('registration_refused', {}, 'cursus'),
+  [REGISTRATION_STATE_CANCELLED]: trans('registration_cancelled', {}, 'cursus'),
+  [REGISTRATION_STATE_PARTICIPATED]: trans('registration_participated', {}, 'cursus')
+}
+
+const REGISTRATION_STATE_COLORS = {
+  [REGISTRATION_STATE_PENDING]: 'default',
+  [REGISTRATION_STATE_VALIDATED]: 'info',
+  [REGISTRATION_STATE_REFUSED]: 'danger',
+  [REGISTRATION_STATE_CANCELLED]: 'warning',
+  [REGISTRATION_STATE_PARTICIPATED]: 'success'
+}
+
 const LEARNER_TYPE = 'learner'
 const TEACHER_TYPE = 'tutor'
 
@@ -73,5 +96,7 @@ export const constants = {
   SUBSCRIPTION_STATUS_COLORS,
   LEARNER_TYPE,
   TEACHER_TYPE,
-  SUBSCRIPTION_STATUS_PENDING
+  SUBSCRIPTION_STATUS_PENDING,
+  REGISTRATION_STATES,
+  REGISTRATION_STATE_COLORS
 }

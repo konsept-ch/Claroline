@@ -9,3 +9,9 @@ services:
             - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceManager'
         tags:
             - { name: 'console.command', command: 'claroline:clean:workspace' }
+        
+    Claroline\CursusBundle\Installation\Command\MigrateCancellationsCommand:
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+        tags:
+            - { name: 'console.command', command: 'claroline:cancellations:migrate' }

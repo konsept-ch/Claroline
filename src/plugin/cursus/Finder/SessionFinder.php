@@ -90,7 +90,7 @@ class SessionFinder extends AbstractFinder
                     $qb->leftJoin('Claroline\CursusBundle\Entity\Registration\SessionGroup', 'sg', 'WITH', 'sg.session = obj');
                     $qb->leftJoin('sg.group', 'g');
                     $qb->leftJoin('g.users', 'gu');
-                    $qb->andWhere('su.confirmed = 1 AND su.validated = 1');
+                    $qb->andWhere('su.confirmed = 1 AND su.state = 1');
                     $qb->andWhere($qb->expr()->orX(
                         $qb->expr()->eq('u.uuid', ':userId'),
                         $qb->expr()->eq('gu.uuid', ':userId')
@@ -101,7 +101,7 @@ class SessionFinder extends AbstractFinder
                 case 'userPending':
                     $qb->leftJoin('Claroline\CursusBundle\Entity\Registration\SessionUser', 'su', 'WITH', 'su.session = obj');
                     $qb->leftJoin('su.user', 'u');
-                    $qb->andWhere('(su.confirmed = 0 AND su.validated = 0)');
+                    $qb->andWhere('(su.confirmed = 0 AND su.state = 0)');
                     $qb->andWhere('u.uuid = :userId');
                     $qb->setParameter('userId', $filterValue);
                     break;

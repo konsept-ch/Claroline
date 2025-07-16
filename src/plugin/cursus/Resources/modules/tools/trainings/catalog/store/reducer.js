@@ -87,7 +87,7 @@ const reducer = combineReducers({
     invalidated: makeReducer(false, {
       [LOAD_COURSE]: () => true,
       [LOAD_COURSE_SESSION]: () => true,
-      'LIST_DATA_INVALIDATE/trainingCatalog.sessionUsers': () => true
+      //'LIST_DATA_INVALIDATE/trainingCatalog.sessionUsers': () => true
     })
   })
 })

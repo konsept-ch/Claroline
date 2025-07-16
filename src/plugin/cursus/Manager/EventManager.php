@@ -124,7 +124,7 @@ class EventManager
                 $eventUser->setType($type);
                 $eventUser->setDate($registrationDate);
                 // no validation for events
-                $eventUser->setValidated(true);
+                $eventUser->setState(EventUser::STATE_VALIDATED);
                 $eventUser->setConfirmed(true);
 
                 $this->om->persist($eventUser);
@@ -265,7 +265,7 @@ class EventManager
             $eventUsers = $this->eventUserRepo->findBy([
                 'sessionEvent' => $event,
                 'confirmed' => true,
-                'validated' => true,
+                'state' => EventUser::STATE_VALIDATED,
             ]);
             $nbUsers = count($eventUsers);
             $hasPlace = $nbUsers + $count <= $maxUsers;
@@ -358,7 +358,7 @@ class EventManager
         $sessionLearners = $this->eventUserRepo->findBy([
             'event' => $event,
             'type' => AbstractRegistration::LEARNER,
-            'validated' => true,
+            'state' => EventUser::STATE_VALIDATED,
         ]);
 
         /** @var EventGroup[] $sessionGroups */

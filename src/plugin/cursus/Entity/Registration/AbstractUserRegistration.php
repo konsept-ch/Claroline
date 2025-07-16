@@ -10,6 +10,12 @@ use Doctrine\ORM\Mapping as ORM;
  */
 abstract class AbstractUserRegistration extends AbstractRegistration
 {
+    const STATE_PENDING = 0;
+    const STATE_VALIDATED = 1;
+    const STATE_REFUSED = 2;
+    const STATE_CANCELLED = 3;
+    const STATE_PARTICIPATED = 4;
+
     /**
      * The registration request has been confirmed by the user.
      *
@@ -28,6 +34,15 @@ abstract class AbstractUserRegistration extends AbstractRegistration
      * @var bool
      */
     protected $validated = false;
+
+    /**
+     * The registration has to be managed by another service.
+     *
+     * @ORM\Column(type="integer")
+     *
+     * @var int
+     */
+    protected $state = self::STATE_PENDING;
 
     /**
      * @ORM\ManyToOne(targetEntity="Claroline\CoreBundle\Entity\User")
@@ -49,12 +64,22 @@ abstract class AbstractUserRegistration extends AbstractRegistration
 
     public function isValidated(): bool
     {
-        return $this->validated;
+        return $this->state == self::STATE_VALIDATED;
     }
 
-    public function setValidated(bool $validated)
+    public function isCancelled(): bool
     {
-        $this->validated = $validated;
+        return $this->state == self::STATE_CANCELLED;
+    }
+
+    public function getState(): int
+    {
+        return $this->state;
+    }
+
+    public function setState(int $state)
+    {
+        $this->state = $state;
     }
 
     public function getUser(): User

@@ -6,6 +6,7 @@
   "register_waiting_list": "Join the waiting list",
   "confirm_registration": "Confirm registration",
   "validate_registration": "Validate registration",
+  "refuse_registration": "Refuse registration",
   "send_invitation": "Send an invitation",
   "open-training": "Open training",
   "manage_quotas": "Manage quotas",

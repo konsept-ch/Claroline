@@ -48,7 +48,7 @@ class EventCrud
                 'session' => $trainingEvent->getSession(),
                 'type' => AbstractRegistration::LEARNER,
                 'confirmed' => true,
-                'validated' => true,
+                'state' => SessionUser::STATE_VALIDATED,
             ]);
 
             if (!empty($sessionLearners)) {
@@ -61,7 +61,7 @@ class EventCrud
                 'session' => $trainingEvent->getSession(),
                 'type' => AbstractRegistration::TUTOR,
                 'confirmed' => true,
-                'validated' => true,
+                'state' => SessionUser::STATE_VALIDATED,
             ]);
 
             if (!empty($sessionTutors)) {

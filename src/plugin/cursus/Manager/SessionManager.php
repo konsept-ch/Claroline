@@ -187,52 +187,51 @@ class SessionManager
         $this->om->startFlushSuite();
 
         foreach ($users as $user) {
-            $sessionUser = $this->sessionUserRepo->findOneBy(['session' => $session, 'user' => $user, 'type' => $type]);
+            //dd($this->sessionUserRepo->countValid($session, $user, $type));
+            if ($this->sessionUserRepo->countValid($session, $user, $type) > 0) continue;
 
-            if (empty($sessionUser)) {
-                $sessionUser = new SessionUser();
-                $sessionUser->setSession($session);
-                $sessionUser->setUser($user);
-                $sessionUser->setType($type);
-                $sessionUser->setDate($registrationDate);
+            $sessionUser = new SessionUser();
+            $sessionUser->setSession($session);
+            $sessionUser->setUser($user);
+            $sessionUser->setType($type);
+            $sessionUser->setDate($registrationDate);
 
-                if (AbstractRegistration::TUTOR === $type) {
-                    // no validation on tutors
-                    $sessionUser->setValidated(true);
-                    $sessionUser->setConfirmed(true);
-                } else {
-                    // set validations for users based on session config
-                    $sessionUser->setValidated(!$session->getRegistrationValidation() || $validated);
-                    $sessionUser->setConfirmed(!$session->getUserValidation());
-                }
-
-                // grant workspace role if registration is fully validated
-                $role = AbstractRegistration::TUTOR === $type ? $session->getTutorRole() : $session->getLearnerRole();
-                if ($role && $sessionUser->isValidated() && $sessionUser->isConfirmed() && !$user->hasRole($role->getName())) {
-                    $this->crud->patch($user, 'role', Crud::COLLECTION_ADD, [$role], [Crud::NO_PERMISSIONS]);
-                }
-                $this->om->persist($sessionUser);
-
-                $this->eventDispatcher->dispatch(new LogSessionUserRegistrationEvent($sessionUser), 'log');
-
-                $managers = $user->getMainOrganization()->getAdministrators()->toArray();
-                $locale = $this->localeManager->getLocale($user);
-                $placeholders = [
-                    'session_name' => $sessionUser->getSession()->getName(),
-                    'user_first_name' => $user->getFirstName(),
-                    'user_last_name' => $user->getLastName(),
-                    'session_start' => $sessionUser->getSession()->getStartDate()->format('d/m/Y'),
-                    'session_end' => $sessionUser->getSession()->getEndDate()->format('d/m/Y'),
-                ];
-
-                if (AbstractRegistration::LEARNER === $type) {
-                    $subject = $this->templateManager->getTemplate('training_quota_subscription_created', $placeholders, $locale, 'title');
-                    $body = $this->templateManager->getTemplate('training_quota_subscription_created', $placeholders, $locale);
-                    $this->mailManager->send($subject, $body, $managers, null, [], true);
-                }
-
-                $results[] = $sessionUser;
+            if (AbstractRegistration::TUTOR === $type) {
+                // no validation on tutors
+                $sessionUser->setState(SessionUser::STATE_VALIDATED);
+                $sessionUser->setConfirmed(true);
+            } else {
+                // set validations for users based on session config
+                $sessionUser->setState(!$session->getRegistrationValidation() || $validated ? SessionUser::STATE_VALIDATED : SessionUser::STATE_PENDING);
+                $sessionUser->setConfirmed(!$session->getUserValidation());
             }
+
+            // grant workspace role if registration is fully validated
+            $role = AbstractRegistration::TUTOR === $type ? $session->getTutorRole() : $session->getLearnerRole();
+            if ($role && $sessionUser->isValidated() && $sessionUser->isConfirmed() && !$user->hasRole($role->getName())) {
+                $this->crud->patch($user, 'role', Crud::COLLECTION_ADD, [$role], [Crud::NO_PERMISSIONS]);
+            }
+            $this->om->persist($sessionUser);
+
+            $this->eventDispatcher->dispatch(new LogSessionUserRegistrationEvent($sessionUser), 'log');
+
+            $managers = $user->getMainOrganization()->getAdministrators()->toArray();
+            $locale = $this->localeManager->getLocale($user);
+            $placeholders = [
+                'session_name' => $sessionUser->getSession()->getName(),
+                'user_first_name' => $user->getFirstName(),
+                'user_last_name' => $user->getLastName(),
+                'session_start' => $sessionUser->getSession()->getStartDate()->format('d/m/Y'),
+                'session_end' => $sessionUser->getSession()->getEndDate()->format('d/m/Y'),
+            ];
+
+            if (AbstractRegistration::LEARNER === $type) {
+                $subject = $this->templateManager->getTemplate('training_quota_subscription_created', $placeholders, $locale, 'title');
+                $body = $this->templateManager->getTemplate('training_quota_subscription_created', $placeholders, $locale);
+                $this->mailManager->send($subject, $body, $managers, null, [], true);
+            }
+
+            $results[] = $sessionUser;
         }
 
         $this->checkUsersRegistration($session, $results);
@@ -266,8 +265,6 @@ class SessionManager
     public function removeUsers(Session $session, array $sessionUsers)
     {
         foreach ($sessionUsers as $sessionUser) {
-            $this->om->remove($sessionUser);
-
             // unregister user from the linked workspace
             if ($session->getWorkspace()) {
                 $this->workspaceManager->unregister($sessionUser->getUser(), $session->getWorkspace(), [Crud::NO_PERMISSIONS]);
@@ -294,7 +291,7 @@ class SessionManager
     {
         $this->om->startFlushSuite();
 
-        // unregister users from current session
+        foreach ($sessionUsers as $sessionUser) $this->om->remove($sessionUser);
         $this->removeUsers($originalSession, $sessionUsers);
 
         // register to the new session
@@ -336,7 +333,7 @@ class SessionManager
         $this->om->startFlushSuite();
 
         foreach ($sessionUsers as $sessionUser) {
-            $sessionUser->setValidated(true);
+            $sessionUser->setState(SessionUser::STATE_VALIDATED);
             $this->om->persist($sessionUser);
         }
 
@@ -524,7 +521,7 @@ class SessionManager
             'session' => $session,
             'type' => AbstractRegistration::LEARNER,
             'confirmed' => true,
-            'validated' => true,
+            'state' => SessionUser::STATUS_VALIDATED,
         ]);
         /** @var SessionGroup[] $sessionGroups */
         $sessionGroups = $this->sessionGroupRepo->findBy([

@@ -64,7 +64,7 @@ class EventFinder extends AbstractFinder
                     $qb->leftJoin('Claroline\CursusBundle\Entity\Registration\EventGroup', 'eg', 'WITH', 'eg.event = obj');
                     $qb->leftJoin('eg.group', 'g');
                     $qb->leftJoin('g.users', 'gu');
-                    $qb->andWhere('eu.confirmed = 1 AND eu.validated = 1');
+                    $qb->andWhere('eu.confirmed = 1 AND eu.state = 1');
                     $qb->andWhere($qb->expr()->orX(
                         $qb->expr()->eq('u.uuid', ':userId'),
                         $qb->expr()->eq('gu.uuid', ':userId')
@@ -75,7 +75,7 @@ class EventFinder extends AbstractFinder
                 case 'userPending':
                     $qb->leftJoin('Claroline\CursusBundle\Entity\Registration\EventUser', 'eu', 'WITH', 'eu.event = obj');
                     $qb->leftJoin('eu.user', 'u');
-                    $qb->andWhere('(eu.confirmed = 0 AND eu.validated = 0)');
+                    $qb->andWhere('(eu.confirmed = 0 AND eu.state = 0)');
                     $qb->andWhere('u.uuid = :userId');
                     $qb->setParameter('userId', $filterValue);
                     break;

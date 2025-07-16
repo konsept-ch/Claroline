@@ -19,6 +19,8 @@
     "training_event_presence_help": "Template used for printing the certificate of attendance of a user to a training event.",
     "training_session_presences": "Attendance grid for a course session",
     "training_session_presences_help": "Template used for printing the attendance grid empty of a course session.",
+    "training_attestation": "Course attestation",
+    "training_attestation_desc": "Template used for course attestation",
 
     "course_code_desc": "The code of the training",
     "course_description_desc": "The description of the training",
@@ -37,5 +39,16 @@
     "session_name_desc": "The name of the training session",
     "session_start_desc": "The end date of the training session",
     "session_trainers_desc": "The list of the trainers of the training session",
-    "registration_confirmation_url": "The registration confirmation link"
+    "registration_confirmation_url": "The registration confirmation link",
+
+    "training_quota_status_validated": "Quota subscription validated",
+    "training_quota_status_validated_desc": "Template used when subscription is validated.",
+    "training_quota_status_managed": "Quota subscription validated with quota",
+    "training_quota_status_managed_desc": "Template used when subscription is validated with quota.",
+    "training_quota_status_refused": "Quota subscription refused",
+    "training_quota_status_refused_desc": "Template used when subscription is refused.",
+    "training_quota_status_cancelled": "Quota subscription cancelled",
+    "training_quota_status_cancelled_desc": "Template used when subscription is cancelled.",
+    "training_quota_subscription_created": "Quota new subscription",
+    "training_quota_subscription_created_desc": "Template used when subscription is created."
 }
