@@ -11,8 +11,6 @@
 
 namespace Claroline\CursusBundle\Controller;
 
-use Claroline\AppBundle\API\FinderProvider;
-use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\Controller\AbstractCrudController;
 use Claroline\AppBundle\Manager\PdfManager;
 use Claroline\CoreBundle\Entity\Group;
@@ -26,7 +24,6 @@ use Claroline\CoreBundle\Security\PermissionCheckerTrait;
 use Claroline\CoreBundle\Validator\Exception\InvalidDataException;
 use Claroline\CursusBundle\Entity\Event;
 use Claroline\CursusBundle\Entity\Registration\AbstractRegistration;
-use Claroline\CursusBundle\Entity\Registration\SessionCancellation;
 use Claroline\CursusBundle\Entity\Registration\SessionGroup;
 use Claroline\CursusBundle\Entity\Registration\SessionUser;
 use Claroline\CursusBundle\Entity\Session;
@@ -444,14 +441,20 @@ class SessionController extends AbstractCrudController
         $this->checkPermission('REGISTER', $session, [], true);
 
         $sessionUsers = $this->decodeIdsString($request, SessionUser::class);
-        /*$this->om->startFlushSuite();
+        $updated = [];
 
+        $this->om->startFlushSuite();
         foreach ($sessionUsers as $sessionUser) {
+            if ($sessionUser->getState() != SessionUser::STATE_VALIDATED) continue;
             $sessionUser->setState(SessionUser::STATE_PARTICIPATED);
             $this->om->persist($sessionUser);
+            $updated[] = $sessionUser;
         }
+        $this->om->endFlushSuite();
 
-        $this->om->endFlushSuite();*/
+        foreach ($updated as $sessionUser) {
+            $this->manager->sendAttestation($sessionUser, $request->getLocale());
+        }
 
         return new JsonResponse(array_map(function (SessionUser $sessionUser) {
             return $this->serializer->serialize($sessionUser);

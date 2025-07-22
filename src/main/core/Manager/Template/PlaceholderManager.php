@@ -61,8 +61,8 @@ class PlaceholderManager
             '%platform_url%' => $this->platformManager->getUrl(),
             '%platform_logo%' => $this->config->getParameter('logo'),
 
-            '%date%' => $now->format('Y-m-d'), // should be in locale format
-            '%datetime%' => $now->format('Y-m-d H:i:s'), // should be in locale format
+            '%date%' => $now->format('d.m.Y'), // should be in locale format
+            '%datetime%' => $now->format('d.m.Y H:i:s'), // should be in locale format
             '%current_user_id%' => $currentUser ? $currentUser->getUuid() : null,
             '%current_user_username%' => $currentUser ? $currentUser->getUsername() : null,
             '%current_user_first_name%' => $currentUser ? $currentUser->getFirstName() : null,

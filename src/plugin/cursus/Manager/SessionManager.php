@@ -12,6 +12,7 @@
 namespace Claroline\CursusBundle\Manager;
 
 use Claroline\AppBundle\API\Crud;
+use Claroline\AppBundle\Manager\PdfManager;
 use Claroline\AppBundle\Manager\PlatformManager;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\Entity\Role;
@@ -66,6 +67,8 @@ class SessionManager
     private $mailManager;
     /** @var LocaleManager */
     private $localeManager;
+    /** @var PdfManager */
+    private $pdfManager;
 
     private $sessionRepo;
     private $sessionUserRepo;
@@ -84,7 +87,8 @@ class SessionManager
         WorkspaceManager $workspaceManager,
         EventManager $sessionEventManager,
         MailManager $mailManager,
-        LocaleManager $localeManager
+        LocaleManager $localeManager,
+        PdfManager $pdfManager
     ) {
         $this->eventDispatcher = $eventDispatcher;
         $this->translator = $translator;
@@ -99,6 +103,7 @@ class SessionManager
         $this->sessionEventManager = $sessionEventManager;
         $this->mailManager = $mailManager;
         $this->localeManager = $localeManager;
+        $this->pdfManager = $pdfManager;
 
         $this->sessionRepo = $om->getRepository(Session::class);
         $this->sessionUserRepo = $om->getRepository(SessionUser::class);
@@ -686,6 +691,36 @@ class SessionManager
                 }
             }
         }
+    }
+
+    public function sendAttestation(SessionUser $sessionUser, string $locale): void
+    {
+        $placeholders = [
+            'course_name' => $sessionUser->getSession()->getName(),
+            'course_location' => $sessionUser->getSession()->getLocation()->getName(),
+            'course_start' => $sessionUser->getSession()->getStartDate()->format('d.m.Y'),
+            'course_end' => $sessionUser->getSession()->getEndDate()->format('d.m.Y'),
+            'user_first_name' => $sessionUser->getUser()->getFirstName(),
+            'user_last_name' => $sessionUser->getUser()->getLastName(),
+            'today' => (new \DateTime())->format('d.m.Y')
+        ];
+
+        //$this->pdfManager->fromHtml($this->templateManager->getTemplate('training_attestation', $placeholders, $locale), '@ClarolineCursus/template/training_attestation.pdf.twig');
+        //return $this->templateManager->getTemplate('training_attestation', $placeholders, $locale);
+
+        $filename = $this->pdfManager->saveFromHtml($this->templateManager->getTemplate('training_attestation', $placeholders, $locale), '@ClarolineCursus/template/training_attestation.pdf.twig');
+
+        $subject = $this->templateManager->getTemplate('training_session_participated', $placeholders, $locale, 'title');
+        $body = $this->templateManager->getTemplate('training_session_participated', $placeholders, $locale);
+        $this->mailManager->send($subject, $body, [$sessionUser->getUser()], null, [
+            'attachments' => [
+                [
+                    'name' => 'test.pdf',
+                    'type' => 'application/pdf',
+                    'url' => $filename
+                ]
+            ]
+        ], true);
     }
 
     public function download(Session $session, array $users, string $locale): string

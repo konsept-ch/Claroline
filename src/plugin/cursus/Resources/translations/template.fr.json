@@ -17,6 +17,8 @@
     "training_session_confirmation_desc": "Template utilisé pour le mail de demande de confirmation d'inscription à une session de formation.",
     "training_session_presences": "Grille de présence d'une session de formation",
     "training_session_presences_help": "Template utilisé pour l'impression de la grille de présence vide d'une session de formation.",
+    "training_session_participated": "Participation à la session",
+    "training_session_participated_desc": "Template utilisé lorsque la participation a été validée par le formateur.",
     "training_attestation": "Attestation de cours",
     "training_attestation_desc": "Template utilisé pour les attestations de cours",
 

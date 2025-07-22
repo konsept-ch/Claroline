@@ -19,6 +19,8 @@
     "training_event_presence_help": "Template used for printing the certificate of attendance of a user to a training event.",
     "training_session_presences": "Attendance grid for a course session",
     "training_session_presences_help": "Template used for printing the attendance grid empty of a course session.",
+    "training_session_participated": "Participation to the session",
+    "training_session_participated_desc": "Template used when the participation is validated by tutors.",
     "training_attestation": "Course attestation",
     "training_attestation_desc": "Template used for course attestation",
 

@@ -127,6 +127,16 @@ plugin:
               - registration_confirmation_url
               - session_location_description
 
+        - name: training_session_participated
+          type: email
+          placeholders:
+              - course_name
+              - course_location
+              - course_start
+              - course_end
+              - user_first_name
+              - user_last_name
+
         - name: training_event
           type: pdf
           placeholders:
@@ -250,5 +260,5 @@ plugin:
               - user_first_name
               - user_last_name
               - course_start
+              - course_end
               - course_location
-              - today

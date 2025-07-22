@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+
+<html lang="{{ app.request.locale }}">
+    <head>
+        <meta charset="utf-8" />
+
+        {# This is required in order to DOMPDF manage correctly relative path (mostly for tinyMce contents) #}
+        <base href="{{ baseUrl ~ '/' }}" />
+        		
+        <style>
+            @page {
+                size: A4 landscape;
+            }
+
+            @font-face {
+                font-family: "Mundial";
+                font-weight: 100;
+                src: url({{ absolute_url('/themes/dgjes/fonts/MundialHair.ttf') }});
+            }
+            @font-face {
+                font-family: "Mundial";
+                font-weight: 200;
+                src: url({{ absolute_url('/themes/dgjes/fonts/MundialThin.ttf') }});
+            }
+            @font-face {
+                font-family: "Mundial";
+                font-weight: 300;
+                src: url({{ absolute_url('/themes/dgjes/fonts/MundialLight.ttf') }});
+            }
+            @font-face {
+                font-family: "Mundial";
+                font-weight: 400;
+                src: url({{ absolute_url('/themes/dgjes/fonts/MundialRegular.ttf') }});
+            }
+            @font-face {
+                font-family: "Mundial";
+                font-weight: 600;
+                src: url({{ absolute_url('/themes/dgjes/fonts/MundialDemibold.ttf') }});
+            }
+            @font-face {
+                font-family: "Questa-Grande";
+                font-weight: 500;
+                src: url({{ absolute_url('/themes/dgjes/fonts/Questa-Grande-Medium.ttf') }});
+            }
+
+            body {
+                font-family: "Mundial";
+                text-align: center;
+                border: 1px solid #129A38;
+                padding: 32px;
+				position: relative;
+                background-image: url({{ absolute_url('/themes/dgjes/images/map.png') }});
+                background-size: 55%;
+                background-position: center;
+                background-repeat: no-repeat;
+            }
+        </style>
+    </head>
+
+    <body>
+        <h2 style="margin:0;font-weight:600;font-size:46px;line-height:46px;">ATTESTATION DE PARTICIPATION</h2>
+        <h4 style="margin-top:16px;font-weight:600;font-size:16px;">LE SERVICE DE LA SÉCURITÉ<br>CIVILE ET MILITAIRE<br>CERTIFIE QUE</h4>
+
+        {{ content | raw }}
+
+        <div style="position:absolute;bottom:32px;right:32px;">
+            <p style="font-size:11px;font-weight:100;margin-bottom:2rem;">Le chef du service et de<br>l’Etat-major cantonal de<br>conduite</p>
+            <p style="font-size:11px;font-weight:300;margin:0;">Louis-Henri Delarageaz</p>
+        </div>
+        <div style="position:absolute;bottom:32px;left:32px;">
+            <img width="195" height="120" src="{{ absolute_url('/themes/dgjes/images/logo.png') }}" />
+        </div>
+    </body>
+</html>

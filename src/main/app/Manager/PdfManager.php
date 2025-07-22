@@ -25,7 +25,7 @@ class PdfManager
         $this->platformManager = $platformManager;
     }
 
-    public function fromHtml(string $htmlContent): ?string
+    public function fromHtml(string $htmlContent, string $layout = '@ClarolineApp/pdf.html.twig'): ?string
     {
         $domPdf = new Dompdf([
             'isHtml5ParserEnabled' => true,
@@ -35,7 +35,7 @@ class PdfManager
             'fontCache' => $this->tempFileManager->getDirectory(),
         ]);
 
-        $domPdf->loadHtml($this->templating->render('@ClarolineApp/pdf.html.twig', [
+        $domPdf->loadHtml($this->templating->render($layout, [
             'baseUrl' => $this->platformManager->getUrl(),
             'content' => $htmlContent,
         ]));
@@ -44,5 +44,12 @@ class PdfManager
         $domPdf->render();
 
         return $domPdf->output();
+    }
+
+    public function saveFromHtml(string $htmlContent, string $layout): ?string
+    {
+        $filename = $this->tempFileManager->generate();
+        file_put_contents($filename, $this->fromHtml($htmlContent, $layout));
+        return $filename;
     }
 }
