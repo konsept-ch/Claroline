@@ -68,7 +68,6 @@ class OrganizationChoice extends Component {
       {
         name: depth+'',
         type: 'choice',
-        label: trans('organization_select_level', {level: depth + 1}),
         required: true,
         options: {
           condensed: true,
