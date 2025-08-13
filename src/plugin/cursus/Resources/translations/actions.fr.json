@@ -13,5 +13,6 @@
   "nothing": "Ne fait rien",
   "move-pending": "Déplacer en liste d'attente",
   "export_with_filter": "Exporter avec filtre",
-  "export_all": "Exporter tout"
+  "export_all": "Exporter tout",
+  "validate_participation": "Valider la participation"
 }
