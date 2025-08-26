@@ -39,14 +39,14 @@ const CourseUsers = (props) =>
       target: route(row.user)
     })}
     actions={(rows) => [
-      (props.validateParticipation && {
+      {
         name: 'participation',
         type: CALLBACK_BUTTON,
         icon: 'fa fa-fw fa-check',
         label: trans('validate_participation', {}, 'actions'),
         callback: () => props.validateParticipation(props.activeSession.id, rows),
-        displayed: hasPermission('register', props.activeSession) && -1 !== rows.findIndex(row => row.validated)
-      }), {
+        displayed: hasPermission('register', props.activeSession) && -1 !== rows.findIndex(row => row.validated) && props.validateParticipation
+      }, {
         name: 'invite',
         type: CALLBACK_BUTTON,
         icon: 'fa fa-fw fa-envelope',
