@@ -8,7 +8,7 @@ import {SessionMain} from '#/plugin/cursus/tools/trainings/session/containers/ma
 import {EventMain} from '#/plugin/cursus/tools/trainings/event/containers/main'
 import {QuotaMain} from '#/plugin/cursus/tools/trainings/quota/containers/main'
 import {SubscriptionMain} from '#/plugin/cursus/tools/trainings/subscription/containers/main'
-import {RegistrationsMain} from '#/plugin/cursus/tools/trainings/registrations/components/main'
+import {RegistrationMain} from '#/plugin/cursus/tools/trainings/registration/components/main'
 
 const TrainingsTool = (props) =>
   <Routes
@@ -38,12 +38,14 @@ const TrainingsTool = (props) =>
       }, {
         path: '/registrations/emcc',
         exact: true,
-        render: () =>  <RegistrationsMain path={`${props.path}/registrations/emcc`} tag="emcc" />,
+        onEnter: () => props.invalidateRegistrationList(),
+        render: () =>  <RegistrationMain path={`${props.path}/registrations/emcc`} tag="emcc" />,
         disabled: !props.canValidateEmcc
       }, {
         path: '/registrations/pci',
         exact: true,
-        render: () => <RegistrationsMain path={`${props.path}/registrations/pci`} tag="pci" />,
+        onEnter: () => props.invalidateRegistrationList(),
+        render: () => <RegistrationMain path={`${props.path}/registrations/pci`} tag="pci" />,
         disabled: !props.canValidatePci
       }
     ]}
@@ -55,7 +57,8 @@ TrainingsTool.propTypes = {
   canManageQuotas: T.bool.isRequired,
   canValidateSubscriptions: T.bool.isRequired,
   canValidateEmcc: T.bool.isRequired,
-  canValidatePci: T.bool.isRequired
+  canValidatePci: T.bool.isRequired,
+  invalidateRegistrationList: T.func.isRequired
 }
 
 export {

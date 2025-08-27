@@ -7,10 +7,10 @@ import {LINK_BUTTON} from '#/main/app/buttons'
 import {ListData} from '#/main/app/content/list/containers/data'
 import {ToolPage} from '#/main/core/tool/containers/page'
 import {UserCard} from '#/main/core/user/components/card'
-import {selectors} from '#/plugin/cursus/tools/trainings/quota/store/selectors'
+import {selectors} from '#/plugin/cursus/tools/trainings/registration/store/selectors'
 import {constants} from '#/plugin/cursus/constants'
 
-const RegistrationsMain = (props) =>
+const RegistrationMain = (props) =>
   <ToolPage
     path={[{
       type: LINK_BUTTON,
@@ -82,10 +82,11 @@ const RegistrationsMain = (props) =>
     />
   </ToolPage>
 
-RegistrationsMain.propTypes = {
-  path: T.string.isRequired
+RegistrationMain.propTypes = {
+  path: T.string.isRequired,
+  tag: T.string.isRequired
 }
 
 export {
-  RegistrationsMain
+  RegistrationMain
 }
