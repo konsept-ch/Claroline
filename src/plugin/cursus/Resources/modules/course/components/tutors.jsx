@@ -24,7 +24,7 @@ const CourseTutors = (props) =>
       }}
       delete={{
         url: ['apiv2_cursus_session_remove_users', {type: constants.TEACHER_TYPE, id: props.activeSession.id}],
-        label: trans('cancel', {}, 'actions')
+        label: trans('delete', {}, 'actions')
       }}
       definition={[
         {
