@@ -147,5 +147,7 @@
     "registration_cancelled": "cancelled",
     "registration_participated": "participated",
     "pendings": "Registration to valide",
-    "presences_validation": "Presence validation"
+    "presences_validation": "Presence validation",
+    "validation_emcc": "Validation EMCC",
+    "validation_pci": "Validation PCI"
 }

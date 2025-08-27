@@ -109,6 +109,14 @@ class SessionUserFinder extends AbstractFinder
                     $qb->setParameter($filterName, $filterValue);
                     break;
 
+                case 'tag':
+                    $qb->join('Claroline\TagBundle\Entity\Tag', 't');
+                    $qb->join('t.taggedObjects', 'o');
+                    $qb->andWhere('t.name = :tag AND o.objectClass = :class AND o.objectId = c.uuid');
+                    $qb->setParameter('class', 'Claroline\\CursusBundle\\Entity\\Course');
+                    $qb->setParameter($filterName, $filterValue);
+                    break;
+
                 default:
                     $this->setDefaults($qb, $filterName, $filterValue);
             }

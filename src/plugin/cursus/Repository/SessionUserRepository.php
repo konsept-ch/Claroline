@@ -71,4 +71,21 @@ class SessionUserRepository extends EntityRepository
             ])
             ->getSingleScalarResult();
     }
+
+    public function findSessionsByTag(string $tag)
+    {
+        $query = $this->_em->createQuery("
+            SELECT su FROM Claroline\CursusBundle\Entity\Registration\SessionUser su
+            INNER JOIN su.session s
+            INNER JOIN s.course c
+            INNER JOIN Claroline\TagBundle\Entity\Tag t
+            INNER JOIN t.taggedObjects o
+            WHERE t.name = :tag AND o.objectClass = :class AND o.objectId = c.uuid
+            LIMIT 
+        ");
+        $query->setParameter('class', 'Claroline\\CursusBundle\\Entity\\Course');
+        $query->setParameter('tag', $tag);
+
+        return $query->getResult();
+    }
 }

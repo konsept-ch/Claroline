@@ -154,5 +154,7 @@
     "registration_cancelled": "annulée",
     "registration_participated": "participée",
     "pendings": "Inscriptions à valider",
-    "presences_validation": "Liste de classe à valider"
+    "presences_validation": "Liste de classe à valider",
+    "validation_emcc": "Validation EMCC",
+    "validation_pci": "Validation PCI"
 }

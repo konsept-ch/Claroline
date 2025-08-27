@@ -51,6 +51,12 @@ services:
             - '@Claroline\CursusBundle\Manager\QuotaManager'
             - '@Claroline\CursusBundle\Manager\SessionManager'
             - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceManager'
+            
+    Claroline\CursusBundle\Controller\RegistrationController:
+        parent: Claroline\AppBundle\Controller\AbstractCrudController
+        public: true
+        arguments:
+            - '@security.authorization_checker'
 
     Claroline\CursusBundle\Controller\EventPresenceController:
         arguments:

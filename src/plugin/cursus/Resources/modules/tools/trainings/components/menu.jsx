@@ -52,6 +52,18 @@ const TrainingsMenu = (props) =>
           label: trans('validations', {}, 'cursus'),
           target: props.path + '/subscription',
           displayed: param('quotas.enabled') && props.canValidateSubscriptions
+        }, {
+          name: 'emcc',
+          type: LINK_BUTTON,
+          label: trans('validation_emcc', {}, 'cursus'),
+          target: props.path + '/registrations/emcc',
+          displayed: props.canValidateEmcc
+        }, {
+          name: 'pci',
+          type: LINK_BUTTON,
+          label: trans('validation_pci', {}, 'cursus'),
+          target: props.path + '/registrations/pci',
+          displayed: props.canValidatePci
         }
       ]}
       onClick={props.autoClose}
@@ -64,6 +76,8 @@ TrainingsMenu.propTypes = {
   canRegister: T.bool.isRequired,
   canManageQuotas: T.bool.isRequired,
   canValidateSubscriptions: T.bool.isRequired,
+  canValidateEmcc: T.bool.isRequired,
+  canValidatePci: T.bool.isRequired,
   authenticated: T.bool.isRequired,
 
   // from menu
