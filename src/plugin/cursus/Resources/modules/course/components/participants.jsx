@@ -40,13 +40,6 @@ const CourseUsers = (props) =>
     })}
     actions={(rows) => [
       {
-        name: 'participation',
-        type: CALLBACK_BUTTON,
-        icon: 'fa fa-fw fa-check',
-        label: trans('validate_participation', {}, 'actions'),
-        callback: () => props.validateParticipation(props.activeSession.id, rows),
-        displayed: hasPermission('register', props.activeSession) && -1 !== rows.findIndex(row => row.validated) && props.validateParticipation
-      }, {
         name: 'invite',
         type: CALLBACK_BUTTON,
         icon: 'fa fa-fw fa-envelope',
@@ -220,8 +213,13 @@ const CourseParticipants = (props) =>
               path: '/groups'
             }, {
               icon: 'fa fa-fw fa-hourglass-half',
-              title: trans('En attente'),
+              title: trans('registrations_to_valide', {}, 'cursus'),
               path: '/pending',
+              displayed: hasPermission('register', props.activeSession)
+            }, {
+              icon: 'fa fa-fw fa-hourglass-half',
+              title: trans('presences_validation', {}, 'cursus'),
+              path: '/presences',
               displayed: hasPermission('register', props.activeSession)
             }, {
               icon: 'fa fa-fw fa-ban',

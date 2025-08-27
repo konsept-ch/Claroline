@@ -3,7 +3,6 @@ import {PropTypes as T} from 'prop-types'
 import get from 'lodash/get'
 
 import {trans} from '#/main/app/intl'
-import {hasPermission} from '#/main/app/security'
 import {Routes} from '#/main/app/router/components/routes'
 import {LINK_BUTTON} from '#/main/app/buttons'
 import {ContentTabs} from '#/main/app/content/components/tabs'
@@ -14,10 +13,12 @@ import {
 } from '#/plugin/cursus/prop-types'
 import {route} from '#/plugin/cursus/routing'
 import {CourseAbout} from '#/plugin/cursus/course/containers/about'
-import {CourseParticipants} from '#/plugin/cursus/course/containers/participants'
+import {CourseCancellations} from '#/plugin/cursus/course/components/cancellations'
 import {CourseSessions} from '#/plugin/cursus/course/containers/sessions'
 import {CourseEvents} from '#/plugin/cursus/course/containers/events'
-import {CoursePending} from '#/plugin/cursus/course/containers/pending'
+import {CoursePendings} from '#/plugin/cursus/course/containers/pendings'
+import {CoursePresences} from '#/plugin/cursus/course/containers/presences'
+import {CourseTutors} from '#/plugin/cursus/course/containers/tutors'
 
 const CourseDetails = (props) =>
   <Fragment>
@@ -44,26 +45,40 @@ const CourseDetails = (props) =>
             target: `${route(props.path, props.course, props.activeSession)}/sessions`,
             displayed: !get(props.course, 'display.hideSessions')
           }, {
-            name: 'pending',
-            type: LINK_BUTTON,
-            icon: 'fa fa-fw fa-hourglass-half',
-            label: trans('En attente'),
-            displayed: hasPermission('register', props.course) && get(props.course, 'registration.pendingRegistrations'),
-            target: `${route(props.path, props.course, props.activeSession)}/pending`
-          }, {
-            name: 'participants',
-            type: LINK_BUTTON,
-            icon: 'fa fa-fw fa-users',
-            label: trans('participants'),
-            target: `${route(props.path, props.course, props.activeSession)}/participants`,
-            displayed: props.isAuthenticated && !!props.activeSession
-          }, {
             name: 'events',
             type: LINK_BUTTON,
             icon: 'fa fa-fw fa-clock',
             label: trans('session_events', {}, 'cursus'),
             target: `${route(props.path, props.course, props.activeSession)}/events`,
             displayed: !!props.activeSession
+          }, {
+            name: 'tutors',
+            type: LINK_BUTTON,
+            icon: 'fa fa-fw fa-chalkboard-teacher',
+            label: trans('tutors', {}, 'cursus'),
+            target: `${route(props.path, props.course, props.activeSession)}/tutors`,
+            displayed: props.canValidateRegistrations && !!props.activeSession
+          }, {
+            name: 'pendings',
+            type: LINK_BUTTON,
+            icon: 'fa fa-fw fa-hourglass-half',
+            label: trans('pendings', {}, 'cursus'),
+            displayed: props.canValidateRegistrations && !!props.activeSession,
+            target: `${route(props.path, props.course, props.activeSession)}/pendings`
+          }, {
+            name: 'presences',
+            type: LINK_BUTTON,
+            icon: 'fa fa-fw fa-users',
+            label: trans('presences_validation', {}, 'cursus'),
+            target: `${route(props.path, props.course, props.activeSession)}/presences`,
+            displayed: (props.canValidateRegistrations || props.canValidatePresences) && !!props.activeSession,
+          }, {
+            name: 'cancellations',
+            type: LINK_BUTTON,
+            icon: 'fa fa-fw fa-ban',
+            label: trans('cancellations', {}, 'cursus'),
+            target: `${route(props.path, props.course, props.activeSession)}/cancellations`,
+            displayed: (props.canValidateRegistrations || props.canValidatePresences) && !!props.activeSession,
           }
         ]}
       />
@@ -99,22 +114,11 @@ const CourseDetails = (props) =>
             )
           }
         }, {
-          path: '/pending',
-          disabled: !hasPermission('register', props.course) || !get(props.course, 'registration.pendingRegistrations'),
+          path: '/events',
+          disabled: !props.activeSession,
           render() {
             return (
-              <CoursePending
-                path={props.path}
-                course={props.course}
-              />
-            )
-          }
-        }, {
-          path: '/participants',
-          disabled: !props.activeSession || !props.isAuthenticated,
-          render() {
-            return (
-              <CourseParticipants
+              <CourseEvents
                 path={props.path}
                 course={props.course}
                 activeSession={props.activeSession}
@@ -122,11 +126,47 @@ const CourseDetails = (props) =>
             )
           }
         }, {
-          path: '/events',
-          disabled: !props.activeSession,
+          path: '/tutors',
+          disabled: !props.activeSession || !(props.canValidateRegistrations || props.canValidatePresences),
           render() {
             return (
-              <CourseEvents
+              <CourseTutors
+                path={props.path}
+                course={props.course}
+                activeSession={props.activeSession}
+              />
+            )
+          }
+        }, {
+          path: '/pendings',
+          disabled: !props.activeSession || !(props.canValidateRegistrations || props.canValidatePresences),
+          render() {
+            return (
+              <CoursePendings
+                path={props.path}
+                course={props.course}
+                activeSession={props.activeSession}
+              />
+            )
+          }
+        }, {
+          path: '/presences',
+          disabled: !props.activeSession || !(props.canValidateRegistrations || props.canValidatePresences),
+          render() {
+            return (
+              <CoursePresences
+                path={props.path}
+                course={props.course}
+                activeSession={props.activeSession}
+              />
+            )
+          }
+        }, {
+          path: '/cancellations',
+          disabled: !props.activeSession || !(props.canValidateRegistrations || props.canValidatePresences),
+          render() {
+            return (
+              <CourseCancellations
                 path={props.path}
                 course={props.course}
                 activeSession={props.activeSession}
@@ -141,6 +181,8 @@ const CourseDetails = (props) =>
 CourseDetails.propTypes = {
   path: T.string.isRequired,
   isAuthenticated: T.bool.isRequired,
+  canValidateRegistrations: T.bool.isRequired,
+  canValidatePresences: T.bool.isRequired,
   course: T.shape(
     CourseTypes.propTypes
   ).isRequired,
@@ -148,7 +190,6 @@ CourseDetails.propTypes = {
     SessionTypes.propTypes
   ),
   activeSessionRegistration: T.shape({
-
   }),
   courseRegistration: T.shape({
 

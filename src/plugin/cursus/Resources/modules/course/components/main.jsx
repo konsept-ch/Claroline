@@ -33,6 +33,8 @@ const CourseMain = (props) =>
             availableSessions={props.availableSessions}
             courseRegistration={props.courseRegistration}
             isAuthenticated={props.isAuthenticated}
+            canValidateRegistrations={props.canValidateRegistrations}
+            canValidatePresences={props.canValidatePresences}
           />
         )
       }, {
@@ -57,6 +59,8 @@ const CourseMain = (props) =>
             availableSessions={props.availableSessions}
             courseRegistration={props.courseRegistration}
             isAuthenticated={props.isAuthenticated}
+            canValidateRegistrations={props.canValidateRegistrations}
+            canValidatePresences={props.canValidatePresences}
           />
         )
       }

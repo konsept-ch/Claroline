@@ -14,5 +14,9 @@
   "move-pending": "Déplacer en liste d'attente",
   "export_with_filter": "Exporter avec filtre",
   "export_all": "Exporter tout",
-  "validate_participation": "Valider la participation"
+  "validate_participation": "Valider la participation",
+  "validate_emcc": "Validation EMCC",
+  "validate_pci": "Validation PCI",
+  "validate_registrations": "Valider inscriptions",
+  "validate_presences": "Valider liste de classe"
 }

@@ -35,7 +35,7 @@
     "training_sessions": "Training sessions",
     "sessions": "Sessions",
     "tutor_role": "Trainer role",
-    "tutors": "Trainers",
+    "tutors": "Assigned trainers",
     "user_validation": "User validation",
     "users_limit_reached": "The limit of users doesn't allow to register %count% more user(s).",
     "max_participants": "Max. participants",
@@ -145,5 +145,7 @@
     "registration_validated": "validated",
     "registration_refused": "refused",
     "registration_cancelled": "cancelled",
-    "registration_participated": "participated"
+    "registration_participated": "participated",
+    "pendings": "Registration to valide",
+    "presences_validation": "Presence validation"
 }

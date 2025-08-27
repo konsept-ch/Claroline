@@ -13,8 +13,10 @@ plugin:
           class: graduation-cap
           tool_rights:
               - name: register
-              - name: manage_quotas
-              - name: validate_subscriptions
+              - name: validate_emcc
+              - name: validate_pci
+              - name: validate_registrations
+              - name: validate_presences
 
     data_sources:
         - name: course_sessions

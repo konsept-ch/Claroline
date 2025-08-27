@@ -11,7 +11,9 @@ const TrainingsTool = connect(
   (state) => ({
     authenticated: securitySelectors.isAuthenticated(state),
     canManageQuotas: hasPermission('manage_quotas', toolSelectors.toolData(state)),
-    canValidateSubscriptions: hasPermission('validate_subscriptions', toolSelectors.toolData(state))
+    canValidateSubscriptions: hasPermission('validate_subscriptions', toolSelectors.toolData(state)),
+    canValidateEmcc: hasPermission('validate_emcc', toolSelectors.toolData(state)),
+    canValidatePci: hasPermission('validate_pci', toolSelectors.toolData(state))
   })
 )(TrainingsToolComponent)
 

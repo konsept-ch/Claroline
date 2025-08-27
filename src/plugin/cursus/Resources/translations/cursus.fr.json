@@ -35,7 +35,7 @@
     "training_sessions": "Sessions de formation",
     "sessions": "Sessions",
     "tutor_role": "Rôle des formateurs",
-    "tutors": "Formateurs",
+    "tutors": "Formateurs assignés",
     "user_validation": "Validation de l'utilisateur",
     "users_limit_reached": "La limite d'utilisateurs ne permet pas l'inscription de %count% utilisateur(s) supplémentaire(s).",
     "max_participants": "Max. participants",
@@ -152,5 +152,7 @@
     "registration_validated": "validée",
     "registration_refused": "refusée",
     "registration_cancelled": "annulée",
-    "registration_participated": "participée"
+    "registration_participated": "participée",
+    "pendings": "Inscriptions à valider",
+    "presences_validation": "Liste de classe à valider"
 }

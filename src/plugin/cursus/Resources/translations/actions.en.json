@@ -12,5 +12,9 @@
   "manage_quotas": "Manage quotas",
   "validate_subscriptions": "Validate subscription",
   "move-pending": "Move on pending list",
-  "validate_participation": "Validate participation"
+  "validate_participation": "Validate participation",
+  "validate_emcc": "Validate EMCC",
+  "validate_pci": "Validate PCI",
+  "validate_registrations": "Validate registrations",
+  "validate_presences": "Validate presences"
 }

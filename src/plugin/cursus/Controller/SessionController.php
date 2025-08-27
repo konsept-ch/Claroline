@@ -252,12 +252,18 @@ class SessionController extends AbstractCrudController
 
         $sessionUsers = $this->decodeIdsString($request, SessionUser::class);
 
-        foreach ($sessionUsers as $sessionUser) {
-            $sessionUser->setState(SessionUser::STATE_CANCELLED);
-            $sessionUser->setDate(new \DateTime());
-        }
-
         $this->manager->removeUsers($session, $sessionUsers);
+
+        foreach ($sessionUsers as $sessionUser) {
+            if ($sessionUser->getType() == SessionUser::LEARNER) {
+                $sessionUser->setState(SessionUser::STATE_CANCELLED);
+                $sessionUser->setDate(new \DateTime());
+            }
+            else {
+                $this->om->remove($sessionUser);
+            }
+        }
+        $this->om->flush();
 
         return new JsonResponse(null, 204);
     }
