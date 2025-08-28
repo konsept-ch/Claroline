@@ -1,4 +1,4 @@
-FROM php:8.0-apache
+FROM php:8.2-apache
 
 LABEL maintainer="Donovan Tengblad"
 
@@ -32,6 +32,16 @@ RUN apt-get update && apt-get install -y \
 RUN docker-php-ext-install -j$(nproc) xml mysqli curl zip mbstring gettext pdo_mysql gd exif mbstring
 RUN docker-php-ext-configure intl
 RUN docker-php-ext-install intl
+RUN docker-php-ext-install opcache \
+ && { \
+  echo 'opcache.enable=1'; \
+  echo 'opcache.memory_consumption=128'; \
+  echo 'opcache.interned_strings_buffer=16'; \
+  echo 'opcache.max_accelerated_files=10000'; \
+  echo 'opcache.validate_timestamps=1'; \
+  echo 'opcache.revalidate_freq=0'; \
+  echo 'opcache.fast_shutdown=1'; \
+} > /usr/local/etc/php/conf.d/opcache.ini
 
 # RUN curl -sS https://getcomposer.org/installer | php -- --version=2.3 
 # RUN mv composer.phar /usr/local/bin/composer
@@ -44,7 +54,8 @@ RUN pecl install apcu-beta \
 COPY ./.docker.dev/web/config/php.ini /usr/local/etc/php/
 COPY ./.docker.dev/web/files/apache2/claroline.conf /etc/apache2/sites-available/
 COPY ./.docker.dev/web/files/apache2/claroline-ssl.conf /etc/apache2/sites-available/
-RUN a2dissite 000-default && a2dissite default-ssl && a2ensite claroline.conf
+RUN a2dissite 000-default && a2dissite default-ssl && a2ensite claroline.conf && a2ensite claroline-ssl.conf
+RUN bash -lc 'echo "ServerName localhost" > /etc/apache2/conf-available/servername.conf && a2enconf servername'
 
 COPY . /var/www/html/claroline
 WORKDIR /var/www/html/claroline
