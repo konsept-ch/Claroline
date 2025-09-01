@@ -3,14 +3,11 @@ import {PropTypes as T} from 'prop-types'
 
 import {trans} from '#/main/app/intl/translation'
 import {LINK_BUTTON, CALLBACK_BUTTON, MODAL_BUTTON} from '#/main/app/buttons'
-import {Button} from '#/main/app/action/components/button'
 import {ListData} from '#/main/app/content/list/containers/data'
 import {constants as listConst} from '#/main/app/content/list/constants'
 import {route} from '#/main/core/user/routing'
 import {UserCard} from '#/main/core/user/components/card'
-import {MODAL_USERS} from '#/main/core/modals/users'
 
-import {constants} from '#/plugin/cursus/constants'
 import {Course as CourseTypes, Session as SessionTypes} from '#/plugin/cursus/prop-types'
 import {selectors} from '#/plugin/cursus/tools/trainings/catalog/store/selectors'
 

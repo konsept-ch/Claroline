@@ -156,5 +156,6 @@
     "pendings": "Inscriptions à valider",
     "presences_validation": "Liste de classe à valider",
     "validation_emcc": "Validation EMCC",
-    "validation_pci": "Validation PCI"
+    "validation_pci": "Validation PCI",
+    "tutor_resources": "Resources formateur"
 }
