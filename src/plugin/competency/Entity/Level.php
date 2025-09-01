@@ -102,6 +102,7 @@ class Level implements \JsonSerializable
         return $this->scale;
     }
 
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return [

@@ -164,7 +164,7 @@ class AnalyticsManager
         $resourceTypes = $this->resourceTypeRepo->countResourcesByType($workspace, $organizations);
         $chartData = [];
         foreach ($resourceTypes as $type) {
-            $chartData["rt-${type['id']}"] = [
+            $chartData["rt-{$type['id']}"] = [
                 'xData' => $type['name'],
                 'yData' => floatval($type['total']),
             ];

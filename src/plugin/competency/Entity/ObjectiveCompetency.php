@@ -112,6 +112,7 @@ class ObjectiveCompetency implements \JsonSerializable
         return $this->framework;
     }
 
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return [
