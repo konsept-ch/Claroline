@@ -374,7 +374,7 @@ class UserRepository extends ServiceEntityRepository implements UserProviderInte
         $dql = "
             SELECT CONCAT(CONCAT(u.firstName, ' '), u.lastName) AS name, u.username, COUNT(DISTINCT ws.id) AS total
             FROM Claroline\\CoreBundle\\Entity\\User u, Claroline\\CoreBundle\\Entity\\Workspace\\Workspace ws
-            ${orgasJoin}
+            {$orgasJoin}
             WHERE (CONCAT(CONCAT(u.id,':'), ws.id) IN
             (
                 SELECT CONCAT(CONCAT(u1.id, ':'), ws1.id)
@@ -389,7 +389,7 @@ class UserRepository extends ServiceEntityRepository implements UserProviderInte
                 JOIN r2.groups g2
                 JOIN g2.users u2
             ))
-            ${orgasCondition}
+            {$orgasCondition}
             AND u.isRemoved = false
             GROUP BY u.id
             ORDER BY total DESC, name ASC
@@ -464,9 +464,9 @@ class UserRepository extends ServiceEntityRepository implements UserProviderInte
             SELECT CONCAT(CONCAT(u.firstName,' '), u.lastName) AS name, u.username, COUNT(DISTINCT ws.id) AS total
             FROM Claroline\\CoreBundle\\Entity\\Workspace\\Workspace ws
             JOIN ws.creator u
-            ${orgasJoin}
+            {$orgasJoin}
             WHERE u.isRemoved = false
-            ${orgasCondition}
+            {$orgasCondition}
             GROUP BY u.id
             ORDER BY total DESC
         ";
