@@ -22,6 +22,7 @@ services:
       - NODE_ENV=development
       - NODE_OPTIONS=--max_old_space_size=4096
       - WEBPACK_DEV_SERVER=0
+      - GEOIP_DISABLE=1
       - DB_HOST=claroline-db
       - DB_NAME=claroline
       - DB_USER=claroline
