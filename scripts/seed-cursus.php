@@ -62,10 +62,12 @@ if ($existingSession) {
 }
 
 // Add a first planned event inside the session timeframe
-$eventExists = $em->getRepository(CursusEvent::class)->findOneBy(['session' => $session]);
+$eventCode = $sessionCode.'-E1';
+$eventExists = $em->getRepository(CursusEvent::class)->findOneBy(['code' => $eventCode]);
 if (!$eventExists) {
     $event = new CursusEvent();
     $event->setSession($session);
+    $event->setCode($eventCode);
     // PlannedObject metadata (name, start, end) are proxied; use magic accessors
     $event->setName('Kickoff');
     $event->setStartDate((new \DateTime('now'))->modify('+3 days')->setTime(10, 0));
@@ -76,5 +78,4 @@ if (!$eventExists) {
 
 $em->flush();
 
-echo "Seeded:\n - Course: {$course->getCode()} / {$course->getName()}\n - Session: {$session->getCode()} / {$session->getName()}\n - Event: Kickoff (in session)\n";
-
+echo "Seeded:\n - Course: {$course->getCode()} / {$course->getName()}\n - Session: {$session->getCode()} / {$session->getName()}\n - Event: {$eventCode} Kickoff (in session)\n";

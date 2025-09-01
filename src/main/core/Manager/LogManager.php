@@ -128,39 +128,39 @@ class LogManager
         fputcsv($handle, [
             $this->translator->trans('date', [], 'platform'),
             $this->translator->trans('action', [], 'platform'),
-            $this->translator->trans('user', [], 'platform'),
-            $this->translator->trans('description', [], 'platform'),
+            $this->translator->trans('doer', [], 'platform'),
+            $this->translator->trans('receiver', [], 'platform'),
+            $this->translator->trans('workspace', [], 'platform'),
+            $this->translator->trans('tool', [], 'platform'),
+            $this->translator->trans('resource', [], 'platform'),
         ], ';', '"');
 
-        // Get batched logs
-        while (0 === $count || $count < $total) {
-            $logs = $this->finder->searchEntities(Log::class, $query);
-            $total = $logs['totalResults'];
-            $count += self::CSV_LOG_BATCH;
-            ++$query['page'];
+        // Loop
+        while (true) {
+            $query['page'] = $count++;
+            $logs = $this->logRepository->search($query);
+            $total += count($logs);
 
-            /** @var Log $log */
-            foreach ($logs['data'] as $log) {
-                // TODO : merge with serializer
-                // Get log description (depending on log sentence rendering)
-                $eventName = 'create_log_list_item_'.$log->getAction();
-                if (!$this->dispatcher->hasListeners($eventName)) {
-                    $eventName = 'create_log_list_item';
-                }
-
-                /** @var LogCreateDelegateViewEvent $event */
-                $event = $this->dispatcher->dispatch(new LogCreateDelegateViewEvent($log), $eventName);
-                $description = trim(preg_replace('/\s\s+/', ' ', $event->getResponseContent()));
-
-                fputcsv($handle, [
-                    DateNormalizer::normalize($log->getDateLog()),
-                    $this->translator->trans('log_'.$log->getAction().'_shortname', [], 'log'),
-                    $log->getDoer() ? $log->getDoer()->getUsername() : '',
-                    $this->ut->html2Csv($description, true),
-                ], ';', '"');
+            if (empty($logs)) {
+                break;
             }
 
-            $this->om->clear(Log::class);
+            foreach ($logs as $log) {
+                $receiverUser = isset($log['receiverUser']) ? $log['receiverUser']['firstName'].' '.$log['receiverUser']['lastName'] : null;
+                $receiverGroup = isset($log['receiverGroup']) ? $log['receiverGroup']['name'] : null;
+                $receiver = $receiverUser ?: $receiverGroup;
+                $resource = (isset($log['resource']['id']) ? $log['resource']['path'] : null);
+
+                fputcsv($handle, [
+                    DateNormalizer::normalize($log['dateLog'], 'Y-m-d H:i:s'),
+                    $log['action'],
+                    $log['doer']['lastName'].' '.$log['doer']['firstName'],
+                    $receiver,
+                    $log['workspace']['name'] ?? null,
+                    $log['tool'],
+                    $resource,
+                ], ';', '"');
+            }
         }
 
         fclose($handle);
@@ -168,41 +168,103 @@ class LogManager
         return $handle;
     }
 
+    public function logEvent(Log $log)
+    {
+        $this->om->startFlushSuite();
+        $this->om->persist($log);
+        $this->om->endFlushSuite();
+    }
+
+    public function getDelegateView(Log $log, $context)
+    {
+        $event = new LogCreateDelegateViewEvent($log, $context);
+        $this->dispatcher->dispatch('create_log_delegate_view', $event);
+
+        return $event->getResponse();
+    }
+
     /**
-     * Returns users' actions with their corresponding chart data.
+     * Given a query params, it returns a paginated list of users for logs concerning them.
      *
-     * @return array
+     * @param array $finderParams query params (used to filter logs)
+     * @param int   $limit        number of items per page
+     * @param int   $page         index of page
+     * @param array $sortBy       how to sort data
+     *
+     * @return array (items => array of users, total => total number of users)
      */
-    public function getUserActionsList(array $finderParams = [])
+    public function getUsersData(array $finderParams = [], $limit = 10, $page = 0, $sortBy = null)
+    {
+        $filters = FinderProvider::parseQueryParams($finderParams)['allFilters'];
+        $users = $this->logRepository->fetchUsersByActionsList($filters, false, $page, $limit, $sortBy);
+        $totalUsers = intval($this->logRepository->fetchUsersByActionsList($filters, true));
+
+        $data = [];
+        foreach ($users as $user) {
+            $id = $user['doerId'];
+            $data[] = [
+                'doer' => [
+                    'firstName' => $user['doerFirstName'],
+                    'lastName' => $user['doerLastName'],
+                ],
+                'link' => $this->ut->getBaseUrl().'api/logs/user-actions?id='.$id,
+                'chartData' => [
+                    ['xData' => '2019-11-11T00:00:00', 'yData' => 8],
+                    ['xData' => '2019-11-12T00:00:00', 'yData' => 4],
+                    ['xData' => '2019-11-13T00:00:00', 'yData' => 1],
+                ],
+                'actions' => intval($user['actions']),
+            ];
+        }
+
+        return [
+            'items' => $data,
+            'total' => $totalUsers,
+        ];
+    }
+
+    /**
+     * Given a user id and a list of filters,
+     * it returns a paginated list of his log per day.
+     *
+     * @param int $id     id of the user
+     *
+     * @return array paginated list of ["date" => xxx, "total" => xxx]
+     */
+    public function getUserActionsData(array $finderParams = [])
     {
         $queryParams = FinderProvider::parseQueryParams($finderParams);
+        $filters = $queryParams['allFilters'];
         $page = $queryParams['page'];
         $limit = $queryParams['limit'];
-        $allFilters = $queryParams['allFilters'];
-        $filters = $queryParams['filters'];
         $sortBy = $queryParams['sortBy'];
-        $minDate = isset($filters['dateLog']) ? (new \DateTime($filters['dateLog']))->setTime(0, 0, 0) : null;
-        $maxDate = isset($filters['dateTo']) ? (new \DateTime($filters['dateTo']))->setTime(0, 0, 0) : null;
+        $id = $filters['userId'];
 
-        $totalUsers = intval($this->logRepository->fetchUserActionsList($allFilters, true));
-        $userList = $this->logRepository->fetchUserActionsList($allFilters, false, $page, $limit, $sortBy);
+        $minDate = isset($filters['dateLog']) ? $filters['dateLog'] : null;
+        if (is_string($minDate)) {
+            $minDate = new \DateTime($minDate);
+        }
+        $maxDate = isset($filters['dateTo']) ? $filters['dateTo'] : null;
+        if (is_string($maxDate)) {
+            $maxDate = new \DateTime($maxDate);
+        }
 
+        $rawData = $this->logRepository->fetchUserActionsData($id, $filters, $sortBy);
+        $totalUsers = intval($this->logRepository->fetchUserActionsData($id, $filters, $sortBy, true));
+
+        // Format data
         $userData = [];
-        foreach ($userList as $userAction) {
-            $id = $userAction['doerId'];
-            $firstName = $userAction['doerFirstName'];
-            $lastName = $userAction['doerLastName'];
-            $picture = $userAction['doerPicture'];
-            $date = $userAction['date'];
-            $total = $userAction['total'];
+        foreach ($rawData as $row) {
+            $date = $row['date'];
+            $total = $row['total'];
+
             if (!isset($userData['u'.$id])) {
                 $userData['u'.$id] = [
-                    'id' => $id,
                     'doer' => [
-                        'id' => $id,
-                        'name' => $lastName.' '.$firstName,
-                        'picture' => $picture,
+                        'firstName' => $row['doerFirstName'],
+                        'lastName' => $row['doerLastName'],
                     ],
+                    'link' => $this->ut->getBaseUrl().'api/logs/user-actions?id='.$id,
                     'chartData' => [],
                     'actions' => 0,
                 ];
@@ -293,17 +355,17 @@ class LogManager
         foreach ($data as $value) {
             // Fill in with zeros from previous date till this date
             while (null !== $prevDate && $prevDate < $value['date']) {
-                $chartData["c${idx}"] = ['xData' => $prevDate->format('Y-m-d\TH:i:s'), 'yData' => 0];
+                $chartData["c{$idx}"] = ['xData' => $prevDate->format('Y-m-d\TH:i:s'), 'yData' => 0];
                 $prevDate->add(new \DateInterval('P1D'));
                 ++$idx;
             }
-            $chartData["c${idx}"] = ['xData' => $value['date']->format('Y-m-d\TH:i:s'), 'yData' => floatval($value['total'])];
+            $chartData["c{$idx}"] = ['xData' => $value['date']->format('Y-m-d\TH:i:s'), 'yData' => floatval($value['total'])];
             $prevDate = $value['date']->add(new \DateInterval('P1D'));
             ++$idx;
         }
         // Fill in with zeros till maxDate
         while (null !== $prevDate && null !== $maxDate && $maxDate >= $prevDate) {
-            $chartData["c${idx}"] = ['xData' => $prevDate->format('Y-m-d\TH:i:s'), 'yData' => 0];
+            $chartData["c{$idx}"] = ['xData' => $prevDate->format('Y-m-d\TH:i:s'), 'yData' => 0];
             $prevDate->add(new \DateInterval('P1D'));
             ++$idx;
         }
@@ -334,3 +396,4 @@ class LogManager
         );
     }
 }
+
