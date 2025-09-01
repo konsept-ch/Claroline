@@ -202,6 +202,7 @@ class Ability implements \JsonSerializable
         });
     }
 
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return [
