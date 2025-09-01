@@ -4,6 +4,8 @@ set -e
 
 echo "Preparing writable directories and clearing cache"
 mkdir -p var files config var/geoip || true
+# Ensure Symfony cache tree exists to avoid warmup failures on some hosts
+mkdir -p var/cache/dev/doctrine/orm || true
 chmod -R 777 var files config || true
 composer delete-cache || true # proactively clear Symfony cache to avoid rmdir issues
 
@@ -17,9 +19,46 @@ composer install --no-scripts
 composer bundles || true
 # Conditionally download/update GeoIP database (persisted via volume)
 GEOIP_DIR="var/geoip"
-if ! find "$GEOIP_DIR" -maxdepth 1 -type f -name "*.mmdb" -mtime -7 | grep -q .; then
-  echo "GeoIP database missing or older than 7 days. Updating..."
-  php bin/console claroline:geoip:download || echo "GeoIP download skipped or failed (license key not set?)."
+GEOIP_DB="$GEOIP_DIR/GeoLite2-City.mmdb"
+GEOIP_LOCK="$GEOIP_DIR/.geoip.update.lock"
+
+# Helper: return 0 if db missing or older than 7 days
+needs_geoip_update() {
+  if [ ! -s "$GEOIP_DB" ]; then
+    return 0
+  fi
+  # Compare mtime with now-7days; use find to be POSIX-friendly
+  if find "$GEOIP_DIR" -maxdepth 1 -type f -name "$(basename "$GEOIP_DB")" -mtime -7 | grep -q .; then
+    return 1
+  fi
+  return 0
+}
+
+mkdir -p "$GEOIP_DIR" || true
+
+# Allow disabling GeoIP in dev via env toggle
+if [ "${GEOIP_DISABLE:-0}" = "1" ]; then
+  echo "GeoIP download disabled (GEOIP_DISABLE=1). Skipping."
+elif needs_geoip_update; then
+  (
+    # Use a subshell + flock if available; otherwise best-effort lock
+    if command -v flock >/dev/null 2>&1; then
+      exec 9>"$GEOIP_LOCK"
+      if flock -n 9; then
+        echo "GeoIP database missing or older than 7 days. Updating..."
+        php bin/console claroline:geoip:download || echo "GeoIP download skipped or failed (license key not set?)."
+        rm -f "$GEOIP_LOCK" || true
+      fi
+      exec 9>&-
+    else
+      if [ ! -f "$GEOIP_LOCK" ]; then
+        echo "GeoIP database missing or older than 7 days. Updating..."
+        touch "$GEOIP_LOCK"
+        php bin/console claroline:geoip:download || echo "GeoIP download skipped or failed (license key not set?)."
+        rm -f "$GEOIP_LOCK" || true
+      fi
+    fi
+  )
 else
   echo "GeoIP database is fresh (<7 days). Skipping download."
 fi

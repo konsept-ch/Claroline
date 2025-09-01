@@ -1,7 +1,25 @@
 Claroline — Local Setup & Requirements
 =====================================
 
-This document summarizes installation requirements and setup paths found in this repository, for both Docker and from‑source workflows.
+This document summarizes installation requirements and setup paths found in this repository, for both Docker and from-source workflows.
+
+Quick Start
+-----------
+
+- Docker (dev):
+  - `docker compose -f docker-compose.dev.yml up --build`
+  - App: `http://localhost:8088` (webpack dev server on `http://localhost:8080` if enabled)
+  - Default dev admin (from compose env): `root / claroline`
+  - To speed up Windows/dev and avoid hot reload complexity, we default to static assets (`WEBPACK_DEV_SERVER=0`).
+  - GeoIP download is disabled in dev by default (`GEOIP_DISABLE=1`). Set a MaxMind key and remove the toggle if needed.
+- Docker (prod image):
+  - `docker compose -f docker-compose.prod.yml up -d`
+  - Set `APP_URL`, DB env, and optional `PLATFORM_*` in compose or an override file
+- From source:
+  - `composer install` and `npm install` (use `--legacy-peer-deps` with npm 7+)
+  - `php bin/configure` then `npm run webpack`
+  - Install DB schema/data: `php bin/console claroline:install -vvv`
+  - Serve: `php -S 127.0.0.1:8000 -t public`
 
 System Requirements (From Source)
 ---------------------------------
@@ -21,27 +39,28 @@ Docker (Development)
 --------------------
 
 - Requirements: Docker Desktop with Compose v2
-- Ports: `80` (Apache), `8080` (webpack-dev-server), `3306` (MySQL)
-  - You can change mappings in `docker-compose.dev.yml:1` if ports are busy
+- Ports exposed by default:
+  - Web: `8088 -> 80` (Apache HTTP), `8443 -> 443` (Apache HTTPS, self-signed)
+  - Webpack dev-server: `8080 -> 8080` (optional)
+  - MySQL: `3307 -> 3306`
+  - Adjust mappings in `docker-compose.dev.yml`
 - Persistent MySQL data: `../mysql` relative to the repo root must be writable
 - Start stack:
   - `docker compose -f docker-compose.dev.yml up --build`
-  - First boot installs dependencies, waits for DB, installs Claroline, starts webpack dev server, then Apache
+  - First boot installs dependencies, waits for DB, installs Claroline, then starts webpack dev server and Apache
 - Default environment (web service):
   - DB: `DB_HOST=claroline-db`, `DB_NAME=claroline`, `DB_USER=claroline`, `DB_PASSWORD=claroline`
   - Platform branding: `PLATFORM_NAME`, `PLATFORM_SUPPORT_EMAIL`
-  - Optional admin auto‑creation (dev only): set `ADMIN_*` variables
+  - Optional admin auto-creation (dev only): set `ADMIN_*` variables (compose defines `root/claroline` by default)
   - Reference: `docker-compose.dev.yml:1`, `.docker.dev/web/entrypoint.sh:1`
-  - App URL used by the frontend: set `APP_URL=http://localhost:8088` (already configured).
-  - Ports:
-    - `8088 -> Apache (HTTP)`, `8080 -> webpack-dev-server (optional)`, `8443 -> Apache (HTTPS self‑signed)`
+  - App URL used by the frontend: set `APP_URL=http://localhost:8088` (already configured)
 
 From Source (Without Docker)
 ----------------------------
 
 1) Install dependencies
-- `composer install --no-dev --optimize-autoloader`
-- `npm install` (or `npm install --legacy-peer-deps` with npm ≥ 7)
+- `composer install` (use `--no-dev --optimize-autoloader` for prod)
+- `npm install` (or `npm install --legacy-peer-deps` with npm 7+)
 
 2) Configure application
 - Generate `config/parameters.yml` from `config/parameters.yml.dist`:
@@ -59,10 +78,22 @@ From Source (Without Docker)
 - Development: `php -S 127.0.0.1:8000 -t public` and browse http://127.0.0.1:8000
 - Production: configure Apache/Nginx to serve `public/` as document root
 
+Docker (Production)
+-------------------
+
+- Use the prebuilt image and compose file:
+  - `docker compose -f docker-compose.prod.yml up -d`
+- Configure via env/compose:
+  - `APP_URL`, `APP_ENV=prod`, `APP_DEBUG=0`
+  - DB: `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
+  - Optional branding: `PLATFORM_NAME`, `PLATFORM_SUPPORT_EMAIL`
+- Volumes persist `config`, `files`, `public/js`, `public/themes`, `var`
+- References: `docker-compose.prod.yml:1`, `.docker/web/entrypoint.sh:1`
+
 Updating an Existing Install
 ----------------------------
 
-- With Docker (dev): container auto‑runs updates on restart when `files/installed` exists
+- With Docker (dev): container auto-runs updates on restart when `files/installed` exists
   - Reference: `.docker.dev/web/entrypoint.sh:1`
 - From source: `php bin/console claroline:update -vvv`
 
@@ -79,16 +110,16 @@ Known Pitfalls
 
 - Line endings on Windows: shell scripts must use LF, not CRLF
   - Enforced with `.gitattributes` rule `*.sh text eol=lf`
-- npm peer dependency conflicts on npm ≥ 7: use `--legacy-peer-deps`
-- Port conflicts on 80/8080: adjust Compose port mappings if IIS or other services are bound
-- MySQL TLS with self‑signed certs: dev flow disables TLS or falls back automatically.
+- npm peer dependency conflicts on npm 7+: use `--legacy-peer-deps`
+- Port conflicts on 8088/8080: adjust Compose port mappings if IIS or other services are bound
+- MySQL TLS with self-signed certs: dev flow disables TLS or falls back automatically.
 - Apache SSL vhost: remove duplicate `Listen 443` lines; our image strips them at runtime.
 - Public symlinks (e.g., `public/bundles`): ignored in `.dockerignore` to avoid build errors.
 - Webpack assets blank page: ensure `APP_URL` includes the port (e.g., `http://localhost:8088`).
 - Very slow page loads on Windows:
   - Set `APP_DEBUG=0` to disable the Symfony toolbar.
   - Prefer serving static assets: set `WEBPACK_DEV_SERVER=0` (default here).
-  - Keep the repo under WSL2 home for faster bind‑mounts.
+  - Keep the repo under WSL2 home for faster bind-mounts.
   - Increase Docker resources (4 CPU, 6–8 GB RAM).
 
 GeoIP Database (faster, persistent)
@@ -110,11 +141,11 @@ Optional Mail Catcher
 - MailHog is included (SMTP 1025, UI http://localhost:8025).
 - `files/config/platform_options.json` preconfigured for SMTP `mailhog:1025`.
 
-Front‑end assets (dev vs static)
+Front-end assets (dev vs static)
 --------------------------------
 
-- Static (recommended on Windows): `WEBPACK_DEV_SERVER=0` → Apache serves `public/dist` (fast, predictable).
-- Dev‑server (hot reload): `WEBPACK_DEV_SERVER=1` and port `8080:8080`; we also enable `writeToDisk`.
+- Static (recommended on Windows): `WEBPACK_DEV_SERVER=0` — Apache serves `public/dist` (fast, predictable).
+- Dev server (hot reload): `WEBPACK_DEV_SERVER=1` and port `8080:8080`; we also enable `writeToDisk`.
 
 Key Files & References
 ----------------------
@@ -142,3 +173,11 @@ Troubleshooting Cheatsheet
   - Confirm `claroline-db` is up; avoid TLS in dev (`--skip-ssl`).
 - Build errors on public symlinks:
   - We ignore `public/data`, `public/packages`, `public/bundles` in `.dockerignore`.
+
+Stopping and Cleaning Up
+------------------------
+
+- Stop containers: `docker compose -f docker-compose.dev.yml stop`
+- Remove containers: `docker compose -f docker-compose.dev.yml down`
+- Remove containers and volumes (including MySQL data):
+  - `docker compose -f docker-compose.dev.yml down -v`
