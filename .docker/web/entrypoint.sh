@@ -48,9 +48,12 @@ fi
 echo "MySQL is up"
 
 if [ -f files/installed ]; then
-  echo "Claroline is already installed, updating and rebuilding themes and translations..."
-
-  php bin/console claroline:update -vvv
+  if [ -n "$SKIP_REBUILD" ] && [ "$SKIP_REBUILD" != "0" ]; then
+    echo "Claroline is already installed, skipping update/theme/translation rebuild (SKIP_REBUILD=$SKIP_REBUILD)"
+  else
+    echo "Claroline is already installed, updating and rebuilding themes and translations..."
+    php bin/console claroline:update -vvv
+  fi
 else
   echo "Installing Claroline for the first time..."
   chown -R www-data:www-data var files config # set owner to avoid permission issues later on
