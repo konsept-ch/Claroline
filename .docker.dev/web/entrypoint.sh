@@ -17,6 +17,8 @@ php bin/configure || true
 composer install --no-scripts
 # Rebuild bundles that are usually created by composer scripts
 composer bundles || true
+# Optimize Composer autoloader to reduce filesystem lookups in dev
+composer dump-autoload -o || true
 # Conditionally download/update GeoIP database (persisted via volume)
 GEOIP_DIR="var/geoip"
 GEOIP_DB="$GEOIP_DIR/GeoLite2-City.mmdb"
