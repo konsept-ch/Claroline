@@ -73,9 +73,9 @@
         <script src="{{ hotAsset('plugins') }}"></script>
         {# Polyfills #}
         <script src="{{ hotAsset('claroline-distribution-main-app-polyfills') }}"></script>
-        {# Router #}
+        {# Router (use pre-dumped static routes to avoid slow dynamic endpoint) #}
         <script src="{{ asset('bundles/fosjsrouting/js/router.js') }}"></script>
-        <script src="{{ path('fos_js_routing_js', {"callback": "fos.Router.setData"}) }}"></script>
+        <script src="{{ asset('js/fos_js_routes.js') }}"></script>
         {# Main Claroline UI app #}
         <script src="{{ hotAsset('claroline-distribution-main-app-layout') }}"></script>
 
