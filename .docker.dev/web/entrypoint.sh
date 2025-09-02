@@ -66,6 +66,10 @@ fi
 npm install --legacy-peer-deps # if package-lock.json exists, this takes ~3 seconds (every subsequent run with no changes to deps)
 # --legacy-peer-deps is needed until all dependencies are compatible with npm 7 (until npm install runs without error)
 
+# Always dump JS routing to a static file to speed up first page load
+echo "Dumping FOSJsRouting routes to public/js/fos_js_routes.js"
+php bin/console fos:js-routing:dump --format=js --target=public/js/fos_js_routes.js || true
+
 # Wait for MySQL to respond, depends on mysql-client
 echo "Waiting for $DB_HOST (no TLS in dev)..."
 while ! mysqladmin ping -h "$DB_HOST" --protocol=tcp --skip-ssl --connect-timeout=2 --silent; do
@@ -76,9 +80,12 @@ done
 echo "MySQL is up"
 
 if [ -f files/installed ]; then
-  echo "Claroline is already installed, updating and rebuilding themes and translations..."
-
-  php bin/console claroline:update --env=dev -vvv
+  if [ "${SKIP_REBUILD:-0}" = "1" ]; then
+    echo "Claroline already installed. SKIP_REBUILD=1 => skipping claroline:update."
+  else
+    echo "Claroline is already installed, updating and rebuilding themes and translations..."
+    php bin/console claroline:update --env=dev -vvv
+  fi
 else
   echo "Installing Claroline for the first time..."
   php bin/console claroline:install --env=dev -vvv
@@ -121,13 +128,17 @@ if [ -f /etc/apache2/sites-enabled/claroline-ssl.conf ]; then
   sed -i '/^Listen[[:space:]]\+443[[:space:]]*$/d' /etc/apache2/sites-enabled/claroline-ssl.conf || true
 fi
 
-if [ "${WEBPACK_DEV_SERVER:-1}" = "1" ]; then
-  echo "webpack-dev-server starting as a background process..."
-  export NODE_OPTIONS="${NODE_OPTIONS:---max_old_space_size=4096}"
-  nohup npm run webpack:dev -- --host=0.0.0.0 --disable-host-check &
+if [ "${SKIP_REBUILD:-0}" = "1" ]; then
+  echo "SKIP_REBUILD=1 => skipping frontend build."
 else
-  echo "Building assets once (no dev server)..."
-  npm run webpack
+  if [ "${WEBPACK_DEV_SERVER:-1}" = "1" ]; then
+    echo "webpack-dev-server starting as a background process..."
+    export NODE_OPTIONS="${NODE_OPTIONS:---max_old_space_size=4096}"
+    nohup npm run webpack:dev -- --host=0.0.0.0 --disable-host-check &
+  else
+    echo "Building assets once (no dev server)..."
+    npm run webpack
+  fi
 fi
 
 echo "Starting Apache2 in the foreground"
