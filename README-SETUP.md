@@ -48,6 +48,23 @@ Docker (Development)
 - Start stack:
   - `docker compose -f docker-compose.dev.yml up --build`
   - First boot installs dependencies, waits for DB, installs Claroline, then starts webpack dev server and Apache
+  
+Fast dev startup (skip rebuild)
+-------------------------------
+
+- To skip the update/theme/translations rebuild on container restarts, set `SKIP_REBUILD=1` on the `web` service (dev only).
+  - Effect: skips `claroline:update` (which runs `assets:install`, JS translations dump, and theme build). Startup typically saves 2–3 minutes.
+  - When to use: daily dev restarts where code, themes and translations did not change.
+  - When not to use: after composer updates, enabling/disabling bundles/plugins, or when you changed translations/themes — run a full `claroline:update` once (unset `SKIP_REBUILD`).
+  
+Example override in `docker-compose.dev.yml`:
+
+```yaml
+services:
+  web:
+    environment:
+      SKIP_REBUILD: "1"
+```
 - Default environment (web service):
   - DB: `DB_HOST=claroline-db`, `DB_NAME=claroline`, `DB_USER=claroline`, `DB_PASSWORD=claroline`
   - Platform branding: `PLATFORM_NAME`, `PLATFORM_SUPPORT_EMAIL`
