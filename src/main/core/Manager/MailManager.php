@@ -19,6 +19,9 @@ use Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler;
 use Claroline\CoreBundle\Library\Mailing\Mailer;
 use Claroline\CoreBundle\Library\Mailing\Message;
 use Claroline\CoreBundle\Manager\Template\TemplateManager;
+use Claroline\CoreBundle\Manager\Template\UserPlaceholderMapper;
+use Claroline\AppBundle\Persistence\ObjectManager;
+use Claroline\CoreBundle\Manager\FacetManager;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class MailManager
@@ -37,6 +40,12 @@ class MailManager
     private $userManager;
     /** @var StrictDispatcher */
     private $dispatcher;
+    /** @var ObjectManager */
+    private $om;
+    /** @var FacetManager */
+    private $facetManager;
+    /** @var UserPlaceholderMapper */
+    private $userPlaceholderMapper;
 
     public function __construct(
         Mailer $mailer,
@@ -45,7 +54,10 @@ class MailManager
         TemplateManager $templateManager,
         LocaleManager $localeManager,
         UserManager $userManager,
-        StrictDispatcher $dispatcher
+        StrictDispatcher $dispatcher,
+        ObjectManager $om,
+        FacetManager $facetManager,
+        UserPlaceholderMapper $userPlaceholderMapper
     ) {
         $this->mailer = $mailer;
         $this->router = $router;
@@ -54,6 +66,9 @@ class MailManager
         $this->localeManager = $localeManager;
         $this->userManager = $userManager;
         $this->dispatcher = $dispatcher;
+        $this->om = $om;
+        $this->facetManager = $facetManager;
+        $this->userPlaceholderMapper = $userPlaceholderMapper;
     }
 
     public function isMailerAvailable(): bool
@@ -71,6 +86,7 @@ class MailManager
             'last_name' => $user->getLastName(),
             'username' => $user->getUsername(),
         ];
+        $placeholders = array_merge($placeholders, $this->mapUserPlaceholders($user));
 
         if (!$user->isEnabled()) {
             $subject = $this->templateManager->getTemplate('user_disabled', $placeholders, $locale, 'title');
@@ -109,6 +125,7 @@ class MailManager
             'username' => $user->getUsername(),
             'password_initialization_link' => $link,
         ];
+        $placeholders = array_merge($placeholders, $this->mapUserPlaceholders($user));
         $subject = $this->templateManager->getTemplate('password_initialization', $placeholders, $locale, 'title');
         $body = $this->templateManager->getTemplate('password_initialization', $placeholders, $locale);
 
@@ -130,6 +147,7 @@ class MailManager
             'username' => $user->getUsername(),
             'user_activation_link' => $link,
         ];
+        $placeholders = array_merge($placeholders, $this->mapUserPlaceholders($user));
         $subject = $this->templateManager->getTemplate('user_activation', $placeholders, $locale, 'title');
         $body = $this->templateManager->getTemplate('user_activation', $placeholders, $locale);
 
@@ -150,6 +168,7 @@ class MailManager
             'username' => $user->getUsername(),
             'validation_mail' => $url,
         ];
+        $placeholders = array_merge($placeholders, $this->mapUserPlaceholders($user));
         $subject = $this->templateManager->getTemplate('user_email_validation', $placeholders, $locale, 'title');
         $body = $this->templateManager->getTemplate('user_email_validation', $placeholders, $locale);
 
@@ -174,10 +193,22 @@ class MailManager
             'password' => $user->getPlainPassword(),
             'validation_mail' => $url,
         ];
+        $placeholders = array_merge($placeholders, $this->mapUserPlaceholders($user));
         $subject = $this->templateManager->getTemplate('user_registration', $placeholders, $locale, 'title');
         $body = $this->templateManager->getTemplate('user_registration', $placeholders, $locale);
 
         return $this->send($subject, $body, [$user], null, [], true);
+    }
+
+
+    private function mapUserPlaceholders(User $user): array
+    {
+        // Resolve placeholders strictly by FieldFacet label dictionary
+        $wanted = ['civility', 'function', 'partner'];
+        $mapped = $this->userPlaceholderMapper->resolveByLabelDictionary($user, $wanted);
+
+        // Keep only non-empty values
+        return array_filter($mapped, function ($v) { return null !== $v && $v !== ''; });
     }
 
     public function send($subject, $body, array $users, $from = null, array $extra = [], $force = true, $replyToMail = null)
