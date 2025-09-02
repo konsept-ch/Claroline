@@ -10,6 +10,10 @@ services:
       - "8443:443"
     volumes:
       - ./:/var/www/html/claroline
+      # Keep heavy/volatile dirs inside the Linux FS to avoid slow Windows bind-mount stats
+      - vendor:/var/www/html/claroline/vendor
+      - cache:/var/www/html/claroline/var/cache
+      - logs:/var/www/html/claroline/var/log
       - geoip-data:/var/www/html/claroline/var/geoip
     depends_on:
       - db
@@ -61,3 +65,6 @@ services:
 
 volumes:
   geoip-data:
+  vendor:
+  cache:
+  logs:

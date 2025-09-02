@@ -37,9 +37,10 @@ RUN docker-php-ext-install opcache \
   echo 'opcache.enable=1'; \
   echo 'opcache.memory_consumption=128'; \
   echo 'opcache.interned_strings_buffer=16'; \
-  echo 'opcache.max_accelerated_files=10000'; \
+  echo 'opcache.max_accelerated_files=20000'; \
   echo 'opcache.validate_timestamps=1'; \
-  echo 'opcache.revalidate_freq=0'; \
+  # Revalidate at most every 2s (0 = check on every request => very slow on Windows bind mounts)
+  echo 'opcache.revalidate_freq=2'; \
   echo 'opcache.fast_shutdown=1'; \
 } > /usr/local/etc/php/conf.d/opcache.ini
 
