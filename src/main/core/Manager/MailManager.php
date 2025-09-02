@@ -85,8 +85,6 @@ class MailManager
             'first_name' => $user->getFirstName(),
             'last_name' => $user->getLastName(),
             'username' => $user->getUsername(),
-            // civility coming from profile facets if configured
-            'civility' => $this->resolveCivility($user),
         ];
         $placeholders = array_merge($placeholders, $this->mapUserPlaceholders($user));
 
@@ -126,7 +124,6 @@ class MailManager
             'last_name' => $user->getLastName(),
             'username' => $user->getUsername(),
             'password_initialization_link' => $link,
-            'civility' => $this->resolveCivility($user),
         ];
         $placeholders = array_merge($placeholders, $this->mapUserPlaceholders($user));
         $subject = $this->templateManager->getTemplate('password_initialization', $placeholders, $locale, 'title');
@@ -149,7 +146,6 @@ class MailManager
             'last_name' => $user->getLastName(),
             'username' => $user->getUsername(),
             'user_activation_link' => $link,
-            'civility' => $this->resolveCivility($user),
         ];
         $placeholders = array_merge($placeholders, $this->mapUserPlaceholders($user));
         $subject = $this->templateManager->getTemplate('user_activation', $placeholders, $locale, 'title');
@@ -171,7 +167,6 @@ class MailManager
             'last_name' => $user->getLastName(),
             'username' => $user->getUsername(),
             'validation_mail' => $url,
-            'civility' => $this->resolveCivility($user),
         ];
         $placeholders = array_merge($placeholders, $this->mapUserPlaceholders($user));
         $subject = $this->templateManager->getTemplate('user_email_validation', $placeholders, $locale, 'title');
@@ -197,7 +192,6 @@ class MailManager
             'username' => $user->getUsername(),
             'password' => $user->getPlainPassword(),
             'validation_mail' => $url,
-            'civility' => $this->resolveCivility($user),
         ];
         $placeholders = array_merge($placeholders, $this->mapUserPlaceholders($user));
         $subject = $this->templateManager->getTemplate('user_registration', $placeholders, $locale, 'title');
@@ -206,65 +200,12 @@ class MailManager
         return $this->send($subject, $body, [$user], null, [], true);
     }
 
-    private function resolveCivility(User $user): ?string
-    {
-        // 1) Try configuration-driven mapping via UserPlaceholderMapper
-        $mapped = $this->userPlaceholderMapper->resolve($user, ['civility']);
-        if (!empty($mapped['civility'])) {
-            return $mapped['civility'];
-        }
-
-        // 2) Fallback: heuristic search on civility-like facet
-        $mapped = $this->userPlaceholderMapper->resolve($user, []); // will load caches inside
-        // Re-run a quick heuristic using the previous implementation for backward compat
-        $repo = $this->om->getRepository(\Claroline\CoreBundle\Entity\Facet\FieldFacetValue::class);
-        $choiceRepo = $this->om->getRepository(\Claroline\CoreBundle\Entity\Facet\FieldFacetChoice::class);
-        $values = $repo->findPlatformValuesByUser($user);
-
-        foreach ($values as $value) {
-            $field = $value->getFieldFacet();
-            if (!$field) {
-                continue;
-            }
-
-            $label = mb_strtolower($field->getLabel() ?? '');
-            $name  = mb_strtolower($field->getName() ?? '');
-
-            if (false !== strpos($label, 'civility') || false !== strpos($label, 'civilité')
-                || false !== strpos($name, 'civility') || false !== strpos($name, 'civilite')) {
-                $raw = $this->facetManager->serializeFieldValue($user, $value->getType(), $value->getValue());
-
-                $resolveChoice = function ($v) use ($choiceRepo) {
-                    if (is_string($v)) {
-                        $choice = $choiceRepo->findOneBy(['uuid' => $v]);
-                        return $choice ? $choice->getLabel() : $v;
-                    }
-                    return $v;
-                };
-
-                if (is_array($raw)) {
-                    $labels = array_map($resolveChoice, $raw);
-                    $labels = array_filter($labels, function ($x) { return null !== $x && '' !== $x; });
-                    return implode(', ', $labels);
-                }
-
-                return $resolveChoice($raw);
-            }
-        }
-
-        return null;
-    }
 
     private function mapUserPlaceholders(User $user): array
     {
-        // Map additional placeholders via configured facet UUIDs
+        // Resolve placeholders strictly by FieldFacet label dictionary
         $wanted = ['civility', 'function', 'partner'];
-        $mapped = $this->userPlaceholderMapper->resolve($user, $wanted);
-
-        // Fallback civility if not configured
-        if (empty($mapped['civility'])) {
-            $mapped['civility'] = $this->resolveCivility($user);
-        }
+        $mapped = $this->userPlaceholderMapper->resolveByLabelDictionary($user, $wanted);
 
         // Keep only non-empty values
         return array_filter($mapped, function ($v) { return null !== $v && $v !== ''; });

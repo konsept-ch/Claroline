@@ -29,9 +29,11 @@ class UserPlaceholderMapper
     }
 
     /**
-     * Resolve user placeholders based on facet mapping configuration.
+     * Resolve user placeholders based on facet UUID mapping configuration.
      * Mapping parameter key: 'template.placeholder_facet_map'
      * Example: { civility: '<facet-uuid>', function: '<facet-uuid>' }
+     *
+     * Kept for backward compatibility (ID-based). Prefer label dictionary.
      */
     public function resolve(User $user, array $placeholders): array
     {
@@ -67,6 +69,95 @@ class UserPlaceholderMapper
         return $resolved;
     }
 
+    /**
+     * Resolve placeholders by matching the exact FieldFacet label or name.
+     * Provide a map of placeholder => [exact labels]. The comparison is strict
+     * on the string value as stored in the FieldFacet label or name.
+     *
+     * Example input:
+     *   [ 'civility' => ['Civilité/Grade'] ]
+     */
+    public function resolveByExactFieldLabel(User $user, array $labelMap): array
+    {
+        $resolved = [];
+
+        $valueRepo = $this->om->getRepository(FieldFacetValue::class);
+        /** @var FieldFacetValue[] $values */
+        $values = $valueRepo->findPlatformValuesByUser($user);
+
+        // Pre-index by exact label and name for O(1) exact lookups
+        $byLabel = [];
+        $byName = [];
+        foreach ($values as $v) {
+            $field = $v->getFieldFacet();
+            if (!$field) {
+                continue;
+            }
+            if (null !== $field->getLabel()) {
+                $byLabel[(string) $field->getLabel()] = $v;
+            }
+            if (null !== $field->getName()) {
+                $byName[(string) $field->getName()] = $v;
+            }
+        }
+
+        foreach ($labelMap as $placeholder => $labels) {
+            foreach ((array) $labels as $label) {
+                if (isset($byLabel[$label])) {
+                    $resolved[$placeholder] = $this->formatFacetValue($user, $byLabel[$label], $placeholder);
+                    break;
+                }
+                if (isset($byName[$label])) {
+                    $resolved[$placeholder] = $this->formatFacetValue($user, $byName[$label], $placeholder);
+                    break;
+                }
+            }
+        }
+
+        return $resolved;
+    }
+
+    /**
+     * Resolve placeholders using a label dictionary.
+     * The dictionary is a map of placeholder => [exact FieldFacet labels].
+     * It strictly matches the stored labels (including accents and case).
+     *
+     * Default labels are provided for common placeholders but can be
+     * overridden or extended via config parameter 'template.placeholder_label_map'.
+     */
+    public function resolveByLabelDictionary(User $user, array $placeholders): array
+    {
+        // Default dictionary (exact labels as stored in DB)
+        $defaultDict = [
+            'civility'        => ['Civilité/Grade'],
+            'civility_other'  => ['Autre Civilité/Grade'],
+            'function'        => ['Fonction'],
+            'partner'         => ['Partenaire'],
+        ];
+
+        $configDict = (array) $this->config->getParameter('template.placeholder_label_map');
+
+        // Merge defaults with config (config can override or add labels)
+        $dict = $defaultDict;
+        foreach ($configDict as $ph => $labels) {
+            $dict[$ph] = (array) $labels;
+        }
+
+        // Build the map limited to requested placeholders
+        $labelMap = [];
+        foreach ($placeholders as $ph) {
+            if (isset($dict[$ph])) {
+                $labelMap[$ph] = $dict[$ph];
+            }
+        }
+
+        if (empty($labelMap)) {
+            return [];
+        }
+
+        return $this->resolveByExactFieldLabel($user, $labelMap);
+    }
+
     private function formatFacetValue(User $user, FieldFacetValue $value, string $placeholder)
     {
         // Normalize through FacetManager (applies eventual subscribers, eg. organizations)
@@ -74,19 +165,6 @@ class UserPlaceholderMapper
 
         // Special case: organization facet returns an object {id, name, ...}
         if ($value->getType() === 'organization' && is_array($raw)) {
-            // If placeholder asks for all levels (eg. partner), return parent chain
-            if ($placeholder === 'partner') {
-                // Load full organization to traverse parents
-                $orgRepo = $this->om->getRepository(\Claroline\CoreBundle\Entity\Organization\Organization::class);
-                $org = $orgRepo->findOneBy(['uuid' => $raw['id'] ?? null]);
-                $segments = [];
-                while ($org) {
-                    $segments[] = $org->getName();
-                    $org = $org->getParent();
-                }
-                return implode(' > ', array_filter(array_reverse($segments)));
-            }
-
             if (isset($raw['name'])) {
                 return $raw['name'];
             }
