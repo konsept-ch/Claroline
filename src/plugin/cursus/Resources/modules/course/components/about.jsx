@@ -27,6 +27,7 @@ import {Course as CourseTypes, Session as SessionTypes} from '#/plugin/cursus/pr
 import {CourseCard} from '#/plugin/cursus/course/components/card'
 import {SessionCard} from '#/plugin/cursus/session/components/card'
 import {MODAL_COURSE_REGISTRATION} from '#/plugin/cursus/course/modals/registration'
+import {EventTable} from '#/plugin/cursus/event/containers/table'
 
 function canSelfRegister(course, session, registered = false) {
   return !registered
@@ -353,6 +354,16 @@ const CourseAbout = (props) => {
             )}
           </div>
         }
+
+        {props.activeSession && 
+          <Fragment>
+            <ContentTitle
+              level={3}
+              displayLevel={2}
+              title={trans('session_events', {}, 'cursus')}
+            />
+            <EventTable sessionId={props.activeSession.id} />
+          </Fragment>}
 
         {props.activeSession && !isHtmlEmpty(get(props.activeSession, 'description')) &&
           <Fragment>
