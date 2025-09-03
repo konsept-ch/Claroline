@@ -99,3 +99,11 @@ actions.setPresenceStatus = (eventId, presences, status) => ({
     success: (response, dispatch) => dispatch(listActions.invalidateData(selectors.STORE_NAME+'.presences'))
   }
 })
+
+actions.fetchEvents = (sessionId, success) => ({
+  [API_REQUEST]: {
+    url: url(['apiv2_cursus_session_list_events', {id: sessionId}], {filters: {status:'not_ended'}, sortBy: 'startDate'}),
+    silent: true,
+    success
+  }
+})

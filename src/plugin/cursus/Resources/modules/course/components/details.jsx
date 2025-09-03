@@ -63,7 +63,7 @@ const CourseDetails = (props) =>
             icon: 'fa fa-fw fa-clock',
             label: trans('session_events', {}, 'cursus'),
             target: `${route(props.path, props.course, props.activeSession)}/events`,
-            displayed: !!props.activeSession
+            displayed: !!props.activeSession && props.isAdmin
           }
         ]}
       />
@@ -123,7 +123,7 @@ const CourseDetails = (props) =>
           }
         }, {
           path: '/events',
-          disabled: !props.activeSession,
+          disabled: !props.activeSession || !props.isAdmin,
           render() {
             return (
               <CourseEvents
@@ -141,6 +141,7 @@ const CourseDetails = (props) =>
 CourseDetails.propTypes = {
   path: T.string.isRequired,
   isAuthenticated: T.bool.isRequired,
+  isAdmin: T.bool.isRequired,
   course: T.shape(
     CourseTypes.propTypes
   ).isRequired,
