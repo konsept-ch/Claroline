@@ -22,3 +22,7 @@ doctrine:
         dql:
             datetime_functions:
                 year: Claroline\CursusBundle\DQL\Year
+        filters:
+            year_window:
+                class: Claroline\AppBundle\Doctrine\YearWindowFilter
+                enabled: false
