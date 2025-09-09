@@ -17,8 +17,8 @@ const EventTable = (props) => {
 	}, [])
 
 	return loading ? <ContentLoader size="sm" /> : (
-		events.length == 0 ? <h3>Aucunes séances disponibles</h3> : (
-    		<table className="table">
+		events.length == 0 ? <h4>Aucunes séances disponibles</h4> : (
+    		<table className="table table-striped table-bordered">
     			<thead>
         			<tr>
         				<th>{trans('name')}</th>

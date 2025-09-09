@@ -336,6 +336,19 @@ const CourseAbout = (props) => {
           </AlertBlock>
         }
 
+        {props.activeSession && 
+          <Fragment>
+            <ContentTitle
+              level={3}
+              displayLevel={2}
+              title={trans('session_dates', {}, 'cursus')}
+            />
+            <div className="panel panel-default">
+              <EventTable sessionId={props.activeSession.id} />
+            </div>
+          </Fragment>
+        }
+
         {!isHtmlEmpty(get(props.course, 'description')) &&
           <div className="panel panel-default">
             <ContentHtml className="panel-body">
@@ -354,16 +367,6 @@ const CourseAbout = (props) => {
             )}
           </div>
         }
-
-        {props.activeSession && 
-          <Fragment>
-            <ContentTitle
-              level={3}
-              displayLevel={2}
-              title={trans('session_events', {}, 'cursus')}
-            />
-            <EventTable sessionId={props.activeSession.id} />
-          </Fragment>}
 
         {props.activeSession && !isHtmlEmpty(get(props.activeSession, 'description')) &&
           <Fragment>

@@ -147,5 +147,6 @@
     "annual_exercices": "Exercices annuels",
     "add_year": "Ajouter exercice",
     "billing": "Facturation",
-    "generate_invoice": "Aucune facturation"
+    "generate_invoice": "Aucune facturation",
+    "session_dates": "Date(s) de la session"
 }

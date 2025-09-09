@@ -102,7 +102,7 @@ actions.setPresenceStatus = (eventId, presences, status) => ({
 
 actions.fetchEvents = (sessionId, success) => ({
   [API_REQUEST]: {
-    url: url(['apiv2_cursus_session_list_events', {id: sessionId}], {filters: {status:'not_ended'}, sortBy: 'startDate'}),
+    url: url(['apiv2_cursus_session_list_events', {id: sessionId}], {sortBy: 'startDate'}),
     silent: true,
     success
   }
