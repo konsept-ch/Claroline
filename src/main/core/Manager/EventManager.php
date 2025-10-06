@@ -144,10 +144,10 @@ class EventManager
 
         foreach ($eventNames as $eventName) {
             $eventNameChunks = explode('-', $eventName);
-            $eventKey = "log_${eventName}_filter";
+            $eventKey = "log_{$eventName}_filter";
 
             if ('clacoformbundle' !== $eventNameChunks[0] && !isset($sortedEvents[$eventNameChunks[0]])) {
-                $sortedEvents[$eventNameChunks[0]] = ['all' => "${eventNameChunks[0]}::all"];
+                $sortedEvents[$eventNameChunks[0]] = ['all' => "{$eventNameChunks[0]}::all"];
             }
 
             if ($resourceOption === $eventNameChunks[0]) {
@@ -181,10 +181,10 @@ class EventManager
             foreach ($genericResourceEvents as $genericEventKey => $genericEventName) {
                 $eventPrefix = '';
                 if ($allOption !== $resourceType) {
-                    $eventPrefix = "${resourceOption}::${resourceType}::";
+                    $eventPrefix = "{$resourceOption}::{$resourceType}::";
                 }
                 if ($allOption === $resourceType && $genericEventName === $allOption) {
-                    $eventPrefix = "${resourceOption}::";
+                    $eventPrefix = "{$resourceOption}::";
                 }
                 $sortedEvents[$resourceOption][$resourceType][$genericEventKey] = $eventPrefix.$genericEventName;
             }

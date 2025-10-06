@@ -32,7 +32,7 @@ const HeaderMain = props =>
         />
       }
 
-      {!props.unavailable && Object.keys(props.menus)
+      {props.authenticated && !props.unavailable && Object.keys(props.menus)
         .filter(menuName => undefined === props.menus[menuName].displayed || props.menus[menuName].displayed)
         .sort((a, b) => props.menus[a].order - props.menus[b].order)
         .map((menuName) => (

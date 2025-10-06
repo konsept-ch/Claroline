@@ -11,6 +11,20 @@ import {LocaleFlag} from '#/main/app/intl/locale/components/flag'
 import {MODAL_LOCALE} from '#/main/app/modals/locale'
 import {MODAL_TERMS_OF_SERVICE} from '#/main/app/modals/terms-of-service'
 
+// CEP suite version (from this distribution package.json)
+// Fallback to Claroline platform version from props when unavailable
+let cepVersion = null
+try {
+  // go up to Claroline/package.json from this file location
+  // src/main/app/Resources/modules/layout/footer/components/main.jsx -> ../../../../../../../../package.json
+  // Webpack handles JSON imports
+  // eslint-disable-next-line import/no-relative-packages
+  // @ts-ignore - tolerated for webpack/babel
+  cepVersion = require('../../../../../../../../package.json').version
+} catch (e) {
+  cepVersion = null
+}
+
 const FooterMain = (props) =>
   <footer className="app-footer-container">
     <div className="app-footer" role="presentation">
@@ -23,7 +37,10 @@ const FooterMain = (props) =>
 
         <span className="hidden-xs">Claroline Connect</span>
 
-        <small>{props.version}</small>
+        {/* Claroline platform version (from backend) */}
+        <small className="text-muted" title="Claroline platform version">{props.version}</small>
+        {/* CEP distribution version (from package.json) */}
+        {cepVersion && <small className="text-muted" style={{marginLeft: 6}} title="CEP distribution version">CEP v{cepVersion}</small>}
       </a>
 
       {props.display.termsOfService &&

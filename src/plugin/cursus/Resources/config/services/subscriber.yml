@@ -12,3 +12,9 @@ services:
             - '@event_dispatcher'
         tags:
             - { name: kernel.event_subscriber}
+
+    Claroline\CursusBundle\Subscriber\YearScopeSubscriber:
+        arguments:
+            - '@Claroline\AppBundle\Service\YearScope'
+        tags:
+            - { name: kernel.event_listener, event: objects.search, method: onSearchObjects }

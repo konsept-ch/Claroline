@@ -16,6 +16,8 @@ class LoginAccount extends Component {
     this.state = {
       inProgress: false
     }
+
+    this._isMounted = false
   }
 
   render() {
@@ -56,7 +58,11 @@ class LoginAccount extends Component {
           disabled={this.state.inProgress}
           callback={() => {
             this.setState({inProgress: true})
-            this.props.login(this.props.onLogin).then(() => this.setState({inProgress: false}))
+            this.props.login(this.props.onLogin).then(() => {
+              if (this._isMounted) {
+                this.setState({inProgress: false})
+              }
+            })
           }}
           primary={true}
         />
@@ -73,6 +79,14 @@ class LoginAccount extends Component {
       </FormData>
     )
   }
+}
+
+LoginAccount.prototype.componentDidMount = function() {
+  this._isMounted = true
+}
+
+LoginAccount.prototype.componentWillUnmount = function() {
+  this._isMounted = false
 }
 
 

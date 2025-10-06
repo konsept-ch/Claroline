@@ -74,6 +74,7 @@ class CompetencyProgress extends AbstractCompetencyProgress implements \JsonSeri
         return $log;
     }
 
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return [

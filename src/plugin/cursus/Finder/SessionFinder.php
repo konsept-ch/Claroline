@@ -30,6 +30,19 @@ class SessionFinder extends AbstractFinder
 
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
+                case 'year':
+                    if (is_array($filterValue)) {
+                        $qb->andWhere('year(obj.startDate) IN (:year)');
+                    } else {
+                        $qb->andWhere('year(obj.startDate) = :year');
+                    }
+                    $qb->setParameter('year', $filterValue);
+                    break;
+
+                case 'yearBefore':
+                    $qb->andWhere('year(obj.startDate) <= :yearBefore');
+                    $qb->setParameter('yearBefore', $filterValue);
+                    break;
                 case 'organizations':
                     $qb->join('c.organizations', 'o');
                     $qb->andWhere("o.uuid IN (:{$filterName})");

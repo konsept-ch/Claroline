@@ -29,6 +29,8 @@ module.exports = {
     hot: true,
     port: 8080,
     contentBase: paths.output(),
+    // Write bundles to disk so Apache (8088) can serve /dist too
+    writeToDisk: true,
     headers: {
       'Access-Control-Allow-Origin': '*'
     }

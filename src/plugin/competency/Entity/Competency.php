@@ -311,6 +311,7 @@ class Competency implements \JsonSerializable
         $this->resourceCount = $resourceCount;
     }
 
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return [

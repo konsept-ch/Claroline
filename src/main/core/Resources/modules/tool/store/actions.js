@@ -98,7 +98,9 @@ actions.closeTool = (toolName, context) => ({
     url: ['apiv2_tool_close', {name: toolName, context: context.type, contextId: get(context, 'data.id', null)}],
     request: {
       method: 'PUT'
-    }
+    },
+    // Swallow backend 404/ errors on close to avoid unhandled rejections
+    error: () => true
   }
 })
 

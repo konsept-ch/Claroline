@@ -36,8 +36,17 @@ class SessionUserFinder extends AbstractFinder
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
                 case 'year':
-                    $qb->andWhere("year(s.startDate) = :{$filterName}");
-                    $qb->setParameter($filterName, $filterValue);
+                    if (is_array($filterValue)) {
+                        $qb->andWhere('year(s.startDate) IN (:year)');
+                    } else {
+                        $qb->andWhere('year(s.startDate) = :year');
+                    }
+                    $qb->setParameter('year', $filterValue);
+                    break;
+
+                case 'yearBefore':
+                    $qb->andWhere('year(s.startDate) <= :yearBefore');
+                    $qb->setParameter('yearBefore', $filterValue);
                     break;
 
                 case 'status':

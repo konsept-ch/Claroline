@@ -12,7 +12,6 @@
 namespace Claroline\InstallationBundle\Manager;
 
 use Claroline\AppBundle\Manager\CommandManager;
-use Psr\Log\LogLevel;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -133,7 +132,7 @@ class RefreshManager
         } else {
             if (!is_link($this->publicDataDir)) {
                 //we could remove it manually but it might be risky
-                $this->output->writeln('Symlink from public/data to files/data could not be created, please remove your public/data folder manually', LogLevel::ERROR);
+            $this->output->writeln('<error>Symlink from public/data to files/data could not be created, please remove your public/data folder manually</error>');
             } else {
                 $this->output->writeln('Public folder symlinks validated...');
             }

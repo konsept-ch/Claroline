@@ -40,7 +40,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @DoctrineAssert\UniqueEntity("username")
  * @DoctrineAssert\UniqueEntity("email")
  */
-class User extends AbstractRoleSubject implements \Serializable, UserInterface, EquatableInterface, IdentifiableInterface
+class User extends AbstractRoleSubject implements UserInterface, EquatableInterface, IdentifiableInterface
 {
     use Id;
     use Uuid;
@@ -314,24 +314,29 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
      */
     public function serialize()
     {
-        return serialize([
+        return serialize(
+            $this->__serialize()
+        );
+    }
+
+    public function unserialize($serialized)
+    {
+        $this->__unserialize(unserialize($serialized));
+    }
+
+    public function __serialize(): array
+    {
+        return [
             'id' => $this->id,
             'username' => $this->username,
             'roles' => $this->getRoles(),
-        ]);
+        ];
     }
 
-    /**
-     * Required to store user in session.
-     *
-     * @param string $serialized
-     */
-    public function unserialize($serialized)
+    public function __unserialize(array $data): void
     {
-        $user = unserialize($serialized);
-
-        $this->id = $user['id'];
-        $this->username = $user['username'];
+        $this->id = $data['id'] ?? null;
+        $this->username = $data['username'] ?? null;
         $this->roles = new ArrayCollection();
         $this->groups = new ArrayCollection();
         $this->administratedOrganizations = new ArrayCollection();
@@ -1044,3 +1049,5 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
         return $this->code;
     }
 }
+
+

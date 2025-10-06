@@ -5,7 +5,10 @@ const DEFAULT_PLACEHOLDERS = [
   'datetime',
   'username',
   'first_name',
-  'last_name'
+  'last_name',
+  'civility',
+  'function',
+  'partner'
 ]
 
 export const constants = {

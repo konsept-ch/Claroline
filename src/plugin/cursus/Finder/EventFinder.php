@@ -30,6 +30,19 @@ class EventFinder extends AbstractFinder
 
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
+                case 'year':
+                    if (is_array($filterValue)) {
+                        $qb->andWhere('year(s.startDate) IN (:year)');
+                    } else {
+                        $qb->andWhere('year(s.startDate) = :year');
+                    }
+                    $qb->setParameter('year', $filterValue);
+                    break;
+
+                case 'yearBefore':
+                    $qb->andWhere('year(s.startDate) <= :yearBefore');
+                    $qb->setParameter('yearBefore', $filterValue);
+                    break;
                 case 'terminated':
                     if ($filterValue) {
                         $qb->andWhere('po.endDate < :endDate');
