@@ -22,13 +22,13 @@ services:
       - APP_URL=http://localhost:8088
       - ENV=DEV
       - APP_ENV=dev
-      - APP_DEBUG=0
+      - APP_DEBUG=1
       - NODE_ENV=development
       - NODE_OPTIONS=--max_old_space_size=4096
       - WEBPACK_DEV_SERVER=0
       - GEOIP_DISABLE=1
-      - SKIP_REBUILD=1
-      - DB_HOST=claroline-db
+      - SKIP_REBUILD=0
+      - DB_HOST=db
       - DB_NAME=claroline
       - DB_USER=claroline
       - DB_PASSWORD=claroline
