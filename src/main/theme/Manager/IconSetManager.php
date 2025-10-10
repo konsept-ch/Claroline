@@ -39,6 +39,8 @@ class IconSetManager implements LoggerAwareInterface
     private $iconSetsWebDir;
     /** @var string */
     private $webDir;
+    /** @var PlatformConfigurationHandler */
+    private $ch;
     /** @var FileSystem */
     private $fs;
 
