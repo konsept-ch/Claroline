@@ -1,6 +1,6 @@
 import {PropTypes as T} from 'prop-types'
 
-import {User} from '#/main/core/user/prop-types'
+import {User} from '#/main/community/prop-types'
 
 const ResourceType = {
   propTypes: {
@@ -33,9 +33,9 @@ const ResourceNode = {
     id: T.string.isRequired,
     autoId: T.number.isRequired, // for retro-compatibility with old api, will be removed in future.
     name: T.string.isRequired,
-    poster: T.shape({
-      url: T.string
-    }),
+    slug: T.string,
+    thumbnail: T.string,
+    poster: T.string,
 
     /**
      * The workspace to which the resource belongs

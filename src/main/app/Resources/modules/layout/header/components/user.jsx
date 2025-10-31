@@ -12,7 +12,7 @@ import {ContentHelp} from '#/main/app/content/components/help'
 
 import {MODAL_LOCALE} from '#/main/app/modals/locale'
 
-import {getPlatformRoles} from '#/main/core/user/utils'
+import {getPlatformRoles} from '#/main/community/utils'
 import {UserAvatar} from '#/main/core/user/components/avatar'
 
 const UserMenu = props =>
@@ -103,7 +103,16 @@ const UserMenu = props =>
           className="list-group-item"
           icon="fa fa-fw fa-user"
           label={trans('my_account')}
-          target="/account"
+          target="/account/profile"
+          onClick={props.closeMenu}
+        />
+
+        <Button
+          type={LINK_BUTTON}
+          className="list-group-item"
+          icon="fa fa-fw fa-graduation-cap"
+          label={trans('my_courses', {}, 'cursus')}
+          target="/home/mes-formations"
           onClick={props.closeMenu}
         />
 
@@ -163,9 +172,7 @@ UserMenu.propTypes = {
     name: T.string,
     username: T.string,
     email: T.string,
-    picture: T.shape({
-      url: T.string.isRequired
-    }),
+    picture: T.string,
     meta: T.shape({
       mailValidated: T.bool
     }),
@@ -246,9 +253,7 @@ HeaderUser.propTypes = {
     name: T.string,
     username: T.string,
     email: T.string,
-    picture: T.shape({
-      url: T.string.isRequired
-    }),
+    picture: T.string,
     meta: T.shape({
       mailValidated: T.bool
     }),

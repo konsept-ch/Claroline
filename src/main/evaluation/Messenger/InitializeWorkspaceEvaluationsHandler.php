@@ -7,8 +7,8 @@ use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\EvaluationBundle\Entity\AbstractEvaluation;
 use Claroline\EvaluationBundle\Manager\WorkspaceEvaluationManager;
-use Claroline\EvaluationBundle\Messenger\Message\InitializeResourceEvaluations;
 use Claroline\EvaluationBundle\Messenger\Message\InitializeWorkspaceEvaluations;
+use Claroline\EvaluationBundle\Messenger\Message\UpdateResourceEvaluations;
 use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 
@@ -53,14 +53,14 @@ class InitializeWorkspaceEvaluationsHandler implements MessageHandlerInterface
             $this->evaluationManager->getUserEvaluation($workspace, $user, true);
         }
 
+        $this->om->endFlushSuite();
+
         // initialize evaluations for required resources
         // this is not required by the code, but is a feature for managers to see users in evaluation tool/exports
         // event if they have not opened the workspace yet.
         $requiredResources = $this->evaluationManager->getRequiredResources($workspace);
         foreach ($requiredResources as $requiredResource) {
-            $this->messageBus->dispatch(new InitializeResourceEvaluations($requiredResource->getId(), $initMessage->getUserIds(), AbstractEvaluation::STATUS_TODO));
+            $this->messageBus->dispatch(new UpdateResourceEvaluations($requiredResource->getId(), $initMessage->getUserIds(), AbstractEvaluation::STATUS_TODO));
         }
-
-        $this->om->endFlushSuite();
     }
 }

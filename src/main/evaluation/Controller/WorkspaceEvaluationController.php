@@ -27,15 +27,14 @@ use Claroline\CoreBundle\Entity\Workspace\Evaluation;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\CoreBundle\Library\Normalizer\DateNormalizer;
 use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
+use Claroline\EvaluationBundle\Manager\PdfManager;
 use Claroline\EvaluationBundle\Manager\WorkspaceEvaluationManager;
-use Claroline\EvaluationBundle\Messenger\Message\InitializeWorkspaceEvaluations;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -55,8 +54,6 @@ class WorkspaceEvaluationController extends AbstractSecurityController
     private $authorization;
     /** @var TranslatorInterface */
     private $translator;
-    /** @var MessageBusInterface */
-    private $messageBus;
     /** @var ObjectManager */
     private $om;
     /** @var Crud */
@@ -67,27 +64,29 @@ class WorkspaceEvaluationController extends AbstractSecurityController
     private $serializer;
     /** @var WorkspaceEvaluationManager */
     private $manager;
+    /** @var PdfManager */
+    private $pdfManager;
 
     public function __construct(
         TokenStorageInterface $tokenStorage,
         AuthorizationCheckerInterface $authorization,
         TranslatorInterface $translator,
-        MessageBusInterface $messageBus,
         ObjectManager $om,
         Crud $crud,
         FinderProvider $finder,
         SerializerProvider $serializer,
-        WorkspaceEvaluationManager $manager
+        WorkspaceEvaluationManager $manager,
+        PdfManager $pdfManager
     ) {
         $this->tokenStorage = $tokenStorage;
         $this->authorization = $authorization;
         $this->translator = $translator;
-        $this->messageBus = $messageBus;
         $this->om = $om;
         $this->crud = $crud;
         $this->finder = $finder;
         $this->serializer = $serializer;
         $this->manager = $manager;
+        $this->pdfManager = $pdfManager;
     }
 
     /**
@@ -136,6 +135,8 @@ class WorkspaceEvaluationController extends AbstractSecurityController
     /**
      * @Route("/csv/{workspaceId}", name="apiv2_workspace_evaluation_csv", methods={"GET"})
      * @EXT\ParamConverter("workspace", options={"mapping": {"workspace": "uuid"}})
+     *
+     * @deprecated to move inside the Transfer system
      */
     public function exportAction(Request $request, ?string $workspaceId = null): BinaryFileResponse
     {
@@ -197,14 +198,20 @@ class WorkspaceEvaluationController extends AbstractSecurityController
     {
         $this->checkToolAccess('EDIT', $workspace);
 
-        $users = $this->om->getRepository(User::class)->findByWorkspaces([$workspace]);
-        if (!empty($users)) {
-            $this->messageBus->dispatch(
-                new InitializeWorkspaceEvaluations($workspace->getId(), array_map(function (User $user) {
-                    return $user->getId();
-                }, $users))
-            );
-        }
+        $this->manager->initialize($workspace);
+
+        return new JsonResponse(null, 204);
+    }
+
+    /**
+     * @Route("/{workspace}/recompute", name="apiv2_workspace_evaluations_recompute", methods={"PUT"})
+     * @EXT\ParamConverter("workspace", options={"mapping": {"workspace": "uuid"}})
+     */
+    public function recomputeAction(Workspace $workspace): JsonResponse
+    {
+        $this->checkToolAccess('EDIT', $workspace);
+
+        $this->manager->recompute($workspace);
 
         return new JsonResponse(null, 204);
     }
@@ -239,6 +246,8 @@ class WorkspaceEvaluationController extends AbstractSecurityController
      * @Route("/{workspace}/progression/{user}/export", name="apiv2_workspace_export_user_progression", methods={"GET"})
      * @EXT\ParamConverter("user", class="Claroline\CoreBundle\Entity\User", options={"mapping": {"user": "uuid"}})
      * @EXT\ParamConverter("workspace", class="Claroline\CoreBundle\Entity\Workspace\Workspace", options={"mapping": {"workspace": "uuid"}})
+     *
+     * @deprecated to move inside the Transfer system
      */
     public function exportUserProgressionAction(Workspace $workspace, User $user): StreamedResponse
     {
@@ -336,6 +345,68 @@ class WorkspaceEvaluationController extends AbstractSecurityController
     }
 
     /**
+     * @Route("/{workspace}/certificate/{user}/participation", name="apiv2_workspace_download_participation_certificate", methods={"GET"})
+     * @EXT\ParamConverter("user", class="Claroline\CoreBundle\Entity\User", options={"mapping": {"user": "uuid"}})
+     * @EXT\ParamConverter("workspace", class="Claroline\CoreBundle\Entity\Workspace\Workspace", options={"mapping": {"workspace": "uuid"}})
+     */
+    public function downloadParticipationCertificateAction(Workspace $workspace, User $user, Request $request): StreamedResponse
+    {
+        $workspaceEvaluation = $this->om->getRepository(Evaluation::class)->findOneBy([
+            'workspace' => $workspace,
+            'user' => $user,
+        ]);
+
+        if (empty($workspaceEvaluation)) {
+            throw new NotFoundHttpException('Workspace evaluation not found.');
+        }
+
+        $this->checkPermission('OPEN', $workspaceEvaluation, [], true);
+
+        $certificate = $this->pdfManager->getWorkspaceParticipationCertificate($workspaceEvaluation, $request->getLocale());
+        if (empty($certificate)) {
+            throw new NotFoundHttpException('No participation certificate is available yet.');
+        }
+
+        return new StreamedResponse(function () use ($certificate) {
+            echo $certificate;
+        }, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename='.TextNormalizer::toKey($workspace->getName()).'-'.TextNormalizer::toKey($user->getFullName()).'-participation.pdf',
+        ]);
+    }
+
+    /**
+     * @Route("/{workspace}/certificate/{user}/success", name="apiv2_workspace_download_success_certificate", methods={"GET"})
+     * @EXT\ParamConverter("user", class="Claroline\CoreBundle\Entity\User", options={"mapping": {"user": "uuid"}})
+     * @EXT\ParamConverter("workspace", class="Claroline\CoreBundle\Entity\Workspace\Workspace", options={"mapping": {"workspace": "uuid"}})
+     */
+    public function downloadSuccessCertificateAction(Workspace $workspace, User $user, Request $request): StreamedResponse
+    {
+        $workspaceEvaluation = $this->om->getRepository(Evaluation::class)->findOneBy([
+            'workspace' => $workspace,
+            'user' => $user,
+        ]);
+
+        if (empty($workspaceEvaluation)) {
+            throw new NotFoundHttpException('Workspace evaluation not found.');
+        }
+
+        $this->checkPermission('OPEN', $workspaceEvaluation, [], true);
+
+        $certificate = $this->pdfManager->getWorkspaceSuccessCertificate($workspaceEvaluation, $request->getLocale());
+        if (empty($certificate)) {
+            throw new NotFoundHttpException('No success certificate is available yet.');
+        }
+
+        return new StreamedResponse(function () use ($certificate) {
+            echo $certificate;
+        }, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename='.TextNormalizer::toKey($workspace->getName()).'-'.TextNormalizer::toKey($user->getFullName()).'-success.pdf',
+        ]);
+    }
+
+    /**
      * @Route("/{workspace}/requirements", name="apiv2_workspace_required_resource_list", methods={"GET"})
      * @EXT\ParamConverter("workspace", class="Claroline\CoreBundle\Entity\Workspace\Workspace", options={"mapping": {"workspace": "uuid"}})
      */
@@ -361,14 +432,15 @@ class WorkspaceEvaluationController extends AbstractSecurityController
 
         $resources = $this->decodeIdsString($request, ResourceNode::class);
 
-        $this->om->startFlushSuite();
+        // we can not do it inside a flush suite because it will trigger the Workspace to recompute its evaluation
+        // and it requires to have all the data recorded inside the db.
+        // we can create a messenger message for it later if there are performances issues.
         foreach ($resources as $resource) {
             $this->crud->update($resource, [
                 'id' => $resource->getUuid(),
                 'evaluation' => ['required' => true],
             ], [Crud::NO_PERMISSIONS]);
         }
-        $this->om->endFlushSuite();
 
         return new JsonResponse(null, 204);
     }
@@ -383,14 +455,15 @@ class WorkspaceEvaluationController extends AbstractSecurityController
 
         $resources = $this->decodeIdsString($request, ResourceNode::class);
 
-        $this->om->startFlushSuite();
+        // we can not do it inside a flush suite because it will trigger the Workspace to recompute its evaluation
+        // and it requires to have all the data recorded inside the db.
+        // we can create a messenger message for it later if there are performances issues.
         foreach ($resources as $resource) {
             $this->crud->update($resource, [
                 'id' => $resource->getUuid(),
                 'evaluation' => ['required' => false],
             ], [Crud::NO_PERMISSIONS]);
         }
-        $this->om->endFlushSuite();
 
         return new JsonResponse(null, 204);
     }

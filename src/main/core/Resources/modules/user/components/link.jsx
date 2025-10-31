@@ -4,14 +4,15 @@ import {PropTypes as T} from 'prop-types'
 import {trans} from '#/main/app/intl'
 import {LinkButton} from '#/main/app/buttons'
 
-import {route} from '#/main/core/user/routing'
+import {route} from '#/main/community/routing'
 
 const UserLink = (props) => {
   let displayName
   if (props.showUsername) {
     displayName = props.username
   } else {
-    displayName = props.name
+    displayName = props.firstName + ' ' + props.lastName
+    displayName = displayName.trim()
   }
 
   return (
@@ -24,7 +25,8 @@ const UserLink = (props) => {
 }
 
 UserLink.propTypes = {
-  name: T.string,
+  firstName: T.string,
+  lastName: T.string,
   username: T.string,
   className: T.string,
   showUsername: T.bool

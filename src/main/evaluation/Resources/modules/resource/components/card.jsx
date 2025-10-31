@@ -27,7 +27,7 @@ const ResourceCard = (props) => {
       {...props}
       id={props.data.id}
       className="resource-evaluation-card"
-      poster={props.data.resourceNode.thumbnail ? asset(props.data.resourceNode.thumbnail.url) : null}
+      poster={props.data.resourceNode.thumbnail ? asset(props.data.resourceNode.thumbnail) : null}
       icon={
         <LiquidGauge
           id={`user-progression-${props.data.id}`}
@@ -70,7 +70,7 @@ const ResourceCard = (props) => {
             value: number(props.data.nbAttempts)
           }, {
             icon: 'fa fa-fw fa-hourglass-half',
-            label: 'Temps passé',
+            label: trans('time_spent'),
             value: displayDuration(props.data.duration) || trans('unknown')
           }, {
             icon: 'fa fa-fw fa-award',

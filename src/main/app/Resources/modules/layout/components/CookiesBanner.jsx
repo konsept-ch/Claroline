@@ -16,7 +16,7 @@ export const CookiesBanner = () => {
           visiter ce site, vous acceptez l&lsquo;utilisation de ces cookies.
         </p>
         <div>
-          <a href="/#/home/politique-de-protection-des-donn-es">
+          <a href="#/home/cg">
             Pour en savoir plus sur comment les désactiver, ainsi que sur notre politique en matière de protection des
             données
           </a>

@@ -1,11 +1,11 @@
 import {PropTypes as T} from 'prop-types'
 
-import {Role as RoleTypes} from '#/main/core/user/prop-types'
+import {Role as RoleTypes} from '#/main/community/prop-types'
 import {Workspace as WorkspaceTypes} from '#/main/core/workspace/prop-types'
 import {
   Organization as OrganizationTypes,
   User as UserTypes
-} from '#/main/core/user/prop-types'
+} from '#/main/community/prop-types'
 
 import {constants} from '#/plugin/cursus/constants'
 

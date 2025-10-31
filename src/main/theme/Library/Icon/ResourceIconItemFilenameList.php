@@ -169,7 +169,7 @@ class ResourceIconItemFilenameList
     /**
      * @param $key
      *
-     * @return ResourceIconItemFilename | null
+     * @return ResourceIconItemFilename|null
      */
     public function getItemByKey($key)
     {
@@ -183,7 +183,7 @@ class ResourceIconItemFilenameList
     /**
      * @param $mimeType
      *
-     * @return IconItem | null
+     * @return IconItem|null
      */
     public function getIconByMimeType($mimeType)
     {

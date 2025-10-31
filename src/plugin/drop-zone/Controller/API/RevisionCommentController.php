@@ -20,18 +20,18 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class RevisionCommentController extends AbstractCrudController
 {
-    public function getName()
+    public function getName(): string
     {
         return 'revisioncomment';
     }
 
-    public function getClass()
+    public function getClass(): string
     {
         return RevisionComment::class;
     }
 
-    public function getIgnore()
+    public function getIgnore(): array
     {
-        return ['exist', 'copyBulk', 'schema', 'find'];
+        return ['exist', 'copyBulk', 'find'];
     }
 }

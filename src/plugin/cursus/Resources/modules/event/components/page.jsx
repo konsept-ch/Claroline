@@ -27,7 +27,7 @@ const EventPage = (props) => {
     <ToolPage
       path={props.path}
       title={get(props.event, 'name')}
-      poster={get(props.event, 'poster.url')}
+      poster={get(props.event, 'poster')}
       primaryAction="edit"
       actions={[
         {
@@ -53,7 +53,7 @@ const EventPage = (props) => {
         }, {
           name: 'export-pdf',
           type: URL_BUTTON,
-          icon: 'fa fa-fw fa-file-pdf-o',
+          icon: 'fa fa-fw fa-file-pdf',
           label: trans('export-pdf', {}, 'actions'),
           displayed: hasPermission('open', props.event),
           group: trans('transfer'),

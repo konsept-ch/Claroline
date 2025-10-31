@@ -3,7 +3,7 @@
 namespace Claroline\DropZoneBundle\Serializer;
 
 use Claroline\AppBundle\Persistence\ObjectManager;
-use Claroline\CoreBundle\API\Serializer\User\UserSerializer;
+use Claroline\CommunityBundle\Serializer\UserSerializer;
 use Claroline\DropZoneBundle\Entity\Correction;
 
 class CorrectionSerializer
@@ -65,13 +65,7 @@ class CorrectionSerializer
         ];
     }
 
-    /**
-     * @param array      $data
-     * @param Correction $correction
-     *
-     * @return Correction
-     */
-    public function deserialize($data, Correction $correction = null)
+    public function deserialize(array $data, Correction $correction = null): Correction
     {
         if (empty($correction)) {
             $correction = $this->correctionRepo->findOneBy(['uuid' => $data['id']]);

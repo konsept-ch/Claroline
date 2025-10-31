@@ -1,14 +1,12 @@
 import {PropTypes as T} from 'prop-types'
 
-import {User} from '#/main/core/user/prop-types'
+import {User} from '#/main/community/prop-types'
 
 const Badge = {
   propTypes: {
     id: T.string,
     name: T.string,
-    image: T.shape({
-      url: T.string.isRequired
-    }),
+    image: T.string,
     criteria: T.string,
     description: T.string,
     issuingMode: T.arrayOf(T.string),

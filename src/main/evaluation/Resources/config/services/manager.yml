@@ -6,5 +6,13 @@ services:
 
     Claroline\EvaluationBundle\Manager\WorkspaceEvaluationManager:
         arguments:
+            - '@messenger.default_bus'
             - '@event_dispatcher'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
+
+    Claroline\EvaluationBundle\Manager\PdfManager:
+        arguments:
+            - '@translator'
+            - '@Claroline\AppBundle\Manager\PlatformManager'
+            - '@Claroline\AppBundle\Manager\PdfManager'
+            - '@Claroline\CoreBundle\Manager\Template\TemplateManager'

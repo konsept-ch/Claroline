@@ -13,6 +13,7 @@ namespace Claroline\CommunityBundle\Finder;
 
 use Claroline\AppBundle\API\Finder\AbstractFinder;
 use Claroline\CoreBundle\Entity\Role;
+use Claroline\CoreBundle\Security\PlatformRoles;
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -37,7 +38,7 @@ class RoleFinder extends AbstractFinder
         return Role::class;
     }
 
-    public function configureQueryBuilder(QueryBuilder $qb, array $searches = [], array $sortBy = null, array $options = ['count' => false, 'page' => 0, 'limit' => -1])
+    public function configureQueryBuilder(QueryBuilder $qb, array $searches = [], array $sortBy = null): QueryBuilder
     {
         if ($this->tokenStorage->getToken()) {
             $isAdmin = $this->authChecker->isGranted('ROLE_ADMIN');
@@ -45,10 +46,13 @@ class RoleFinder extends AbstractFinder
             $isAdmin = true;
         }
 
-        //if not admin doesnt list platform_admin role, for security purpose
+        // if not admin doesnt list platform_admin role, for security purpose
         if (!$isAdmin) {
-            $qb->andWhere("obj.name != 'ROLE_ADMIN'");
+            $qb->andWhere('obj.name != :roleAdmin');
+            $qb->setParameter('roleAdmin', PlatformRoles::ADMIN);
         }
+
+        $workspaceJoin = false;
 
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
@@ -78,16 +82,26 @@ class RoleFinder extends AbstractFinder
                     $qb->setParameter('groupIds', is_array($filterValue) ? $filterValue : [$filterValue]);
                     break;
                 case 'workspace':
-                    $qb->leftJoin('obj.workspace', 'w');
+                    if (!$workspaceJoin) {
+                        $qb->leftJoin('obj.workspace', 'w');
+                        $workspaceJoin = true;
+                    }
+
                     $qb->andWhere('w.uuid IN (:workspaceIds)');
                     $qb->setParameter('workspaceIds', is_array($filterValue) ? $filterValue : [$filterValue]);
                     break;
                 case 'workspaceConfigurable':
-                    $qb->leftJoin('obj.workspace', 'w');
+                    if (!$workspaceJoin) {
+                        $qb->leftJoin('obj.workspace', 'w');
+                        $workspaceJoin = true;
+                    }
+
                     $qb->andWhere('w.uuid IN (:workspaceIds)');
                     $qb->setParameter('workspaceIds', is_array($filterValue) ? $filterValue : [$filterValue]);
-                    $qb->orWhere("obj.name LIKE 'ROLE_ANONYMOUS'");
-                    $qb->orWhere("obj.name LIKE 'ROLE_USER'");
+                    $qb->orWhere('obj.name LIKE :roleAnonymous');
+                    $qb->orWhere('obj.name LIKE :roleUser');
+                    $qb->setParameter('roleAnonymous', PlatformRoles::ANONYMOUS);
+                    $qb->setParameter('roleUser', PlatformRoles::USER);
                     break;
                 case 'grantable':
                     if (!$isAdmin && $this->tokenStorage->getToken()) {
@@ -95,10 +109,6 @@ class RoleFinder extends AbstractFinder
                         $qb->andWhere('cu.id = :currentUserId');
                         $qb->setParameter('currentUserId', $this->tokenStorage->getToken()->getUser()->getId());
                     }
-                    break;
-                case 'roleNames':
-                    $qb->orWhere('obj.name IN (:roleNames)');
-                    $qb->setParameter('roleNames', is_array($filterValue) ? $filterValue : [$filterValue]);
                     break;
                 default:
                     $this->setDefaults($qb, $filterName, $filterValue);

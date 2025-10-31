@@ -11,7 +11,6 @@
 
 namespace Claroline\CoreBundle\Controller;
 
-use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\AppBundle\Controller\RequestDecoderTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
@@ -95,15 +94,13 @@ class ResourceController
      *
      * @param int|string $id       - the id or slug of the target node (we don't use ParamConverter to support ID and UUID)
      * @param int        $embedded
-     *
-     * @return JsonResponse
      */
-    public function openAction($id, $embedded = 0)
+    public function openAction($id, $embedded = 0): JsonResponse
     {
         /** @var ResourceNode $resourceNode */
         $resourceNode = $this->om->getRepository(ResourceNode::class)->findOneByUuidOrSlug($id);
         if (!$resourceNode) {
-            return new JsonResponse(['resource_not_found'], 404);
+            return new JsonResponse('Resource not found.', 404);
         }
 
         // gets the current user roles to check access restrictions
@@ -116,7 +113,7 @@ class ResourceController
                 $loaded = $this->manager->load($resourceNode, intval($embedded) ? true : false);
             } catch (ResourceNotFoundException $e) {
                 // Not a 404 because we should not have ResourceNode without a linked AbstractResource
-                return new JsonResponse(['resource_not_found'], 500);
+                return new JsonResponse('Resource not found.', 500);
             }
 
             return new JsonResponse(
@@ -140,7 +137,7 @@ class ResourceController
 
         return new JsonResponse([
             'managed' => $isManager,
-            'resourceNode' => $this->serializer->serialize($resourceNode, [Options::SERIALIZE_MINIMAL]),
+            'resourceNode' => $this->serializer->serialize($resourceNode),
             'accessErrors' => $accessErrors,
         ], $statusCode);
     }
@@ -189,7 +186,7 @@ class ResourceController
         $fileName = $data['name'];
 
         if (!file_exists($file)) {
-            return new JsonResponse(['file_not_found'], 500);
+            return new JsonResponse('File not found.', 500);
         }
 
         if ($fileName) {

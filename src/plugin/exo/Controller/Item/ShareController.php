@@ -4,6 +4,7 @@ namespace UJM\ExoBundle\Controller\Item;
 
 use Claroline\AppBundle\Controller\RequestDecoderTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
+use Claroline\CommunityBundle\Serializer\UserSerializer;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Repository\User\UserRepository;
 use Claroline\CoreBundle\Validator\Exception\InvalidDataException;
@@ -12,12 +13,11 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use UJM\ExoBundle\Manager\Item\ShareManager;
-use UJM\ExoBundle\Serializer\UserSerializer;
 
 /**
  * Share Controller exposes REST API.
  *
- * @Route("/questions/share")
+ * @Route("/share/questions")
  */
 class ShareController
 {
@@ -35,8 +35,8 @@ class ShareController
     public function __construct(
         ObjectManager $om,
         UserSerializer $userSerializer,
-        ShareManager $shareManager)
-    {
+        ShareManager $shareManager
+    ) {
         $this->userRepository = $om->getRepository(User::class);
         $this->userSerializer = $userSerializer;
         $this->shareManager = $shareManager;
@@ -74,20 +74,6 @@ class ShareController
     }
 
     /**
-     * @Route("", name="question_share_update", methods={"DELETE"})
-     */
-    public function updateAction(Request $request)
-    {
-    }
-
-    /**
-     * @Route("", name="question_share_delete", methods={"DELETE"})
-     */
-    public function deleteAction(Request $request)
-    {
-    }
-
-    /**
      * Searches users by username, first or last name.
      *
      * @Route("/{search}", name="questions_share_users", methods={"GET"})
@@ -98,7 +84,7 @@ class ShareController
      */
     public function searchUsers($search)
     {
-        $users = $this->userRepository->findByName($search);
+        $users = $this->userRepository->search($search, 15);
 
         return new JsonResponse(array_map(function (User $user) {
             return $this->userSerializer->serialize($user);
