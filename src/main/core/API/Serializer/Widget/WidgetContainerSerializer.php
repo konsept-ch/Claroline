@@ -52,42 +52,56 @@ class WidgetContainerSerializer
 
     public function serialize(WidgetContainer $widgetContainer, array $options = []): array
     {
-        $widgetContainerConfig = $widgetContainer->getWidgetContainerConfigs()[0];
+        $widgetContainerConfigs = $widgetContainer->getWidgetContainerConfigs();
+        $widgetContainerConfig = $widgetContainerConfigs[0] ?? null;
 
-        $contents = [];
-        $arraySize = count($widgetContainerConfig->getLayout());
+        $layout = $widgetContainerConfig ? $widgetContainerConfig->getLayout() : [];
+        $layout = is_array($layout) ? $layout : [];
+        $layoutCount = count($layout);
 
-        for ($i = 0; $i < $arraySize; ++$i) {
-            $contents[$i] = null;
-        }
+        $contents = array_fill(0, $layoutCount, null);
 
         foreach ($widgetContainer->getInstances() as $widgetInstance) {
-            $config = $widgetInstance->getWidgetInstanceConfigs()[0];
+            $config = $widgetInstance->getWidgetInstanceConfigs()[0] ?? null;
+            $serializedInstance = $this->widgetInstanceSerializer->serialize($widgetInstance, $options);
 
-            if ($config) {
-                $contents[$config->getPosition()] = $this->widgetInstanceSerializer->serialize($widgetInstance, $options);
+            if ($config && null !== $config->getPosition() && array_key_exists($config->getPosition(), $contents)) {
+                $contents[$config->getPosition()] = $serializedInstance;
+            } elseif (0 === $layoutCount) {
+                $contents[] = $serializedInstance;
             }
         }
 
         return [
             'id' => $widgetContainer->getUuid(),
-            'name' => $widgetContainerConfig->getName(),
-            'visible' => $widgetContainerConfig->isVisible(),
+            'name' => $widgetContainerConfig ? $widgetContainerConfig->getName() : null,
+            'visible' => $widgetContainerConfig ? $widgetContainerConfig->isVisible() : true,
             'display' => $this->serializeDisplay($widgetContainerConfig),
             'contents' => $contents,
         ];
     }
 
-    public function serializeDisplay(WidgetContainerConfig $widgetContainerConfig)
+    public function serializeDisplay(?WidgetContainerConfig $widgetContainerConfig): array
     {
         $display = [
-            'layout' => $widgetContainerConfig->getLayout(),
-            'alignName' => $widgetContainerConfig->getAlignName(),
-            'color' => $widgetContainerConfig->getColor(),
-            'borderColor' => $widgetContainerConfig->getBorderColor(),
-            'backgroundType' => $widgetContainerConfig->getBackgroundType(),
-            'background' => $widgetContainerConfig->getBackground(),
+            'layout' => [],
+            'alignName' => 'left',
+            'color' => null,
+            'borderColor' => null,
+            'backgroundType' => 'none',
+            'background' => null,
         ];
+
+        if (!$widgetContainerConfig) {
+            return $display;
+        }
+
+        $display['layout'] = $widgetContainerConfig->getLayout() ?? [];
+        $display['alignName'] = $widgetContainerConfig->getAlignName();
+        $display['color'] = $widgetContainerConfig->getColor();
+        $display['borderColor'] = $widgetContainerConfig->getBorderColor();
+        $display['backgroundType'] = $widgetContainerConfig->getBackgroundType();
+        $display['background'] = $widgetContainerConfig->getBackground();
 
         if ('image' === $widgetContainerConfig->getBackgroundType() && $widgetContainerConfig->getBackground()) {
             /** @var PublicFile $file */
