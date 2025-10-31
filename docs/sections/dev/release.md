@@ -11,6 +11,16 @@ Claroline releases follow the [semantic versioning](https://semver.org/) strateg
 - A new **Claroline minor version** (e.g. 13.1, 13.2) comes out *every month*. It contains bug fixes and new features, but it doesn't include any breaking change, so you can safely upgrade your applications;
 - A new **Claroline major version** (e.g. 13.0, 14.0) comes out roughly *every year*. It can contain breaking changes, so you may need to do some changes in your applications before upgrading.
 
+## Environment tags & deployment flow
+
+Every release keeps the same semantic version across environments. When we cut a build, for example `1.1.4`, that exact tag is pushed through each stage:
+
+1. Deploy the new version to `val` (validation) to exercise the fresh features and fixes.
+2. Promote the same tag to `archive`, which runs against a snapshot of former production data and validates backward compatibility.
+3. Roll out the already-tested tag to `prod`.
+
+If validation fails at any step, we fix the issue, bump the version (for example, to `1.1.5`), and restart the promotion sequence with the new tag.
+
 
 # Major version release
 
