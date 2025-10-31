@@ -7,10 +7,8 @@ services:
         public: true
         arguments:
             - '@Claroline\MessageBundle\Manager\ContactManager'
-            - '@claroline.serializer.contact'
-            - '@Claroline\AppBundle\API\FinderProvider'
             - '@security.token_storage'
-            - '@Claroline\CoreBundle\API\Serializer\User\UserSerializer'
+            - '@Claroline\CommunityBundle\Serializer\UserSerializer'
 
     Claroline\MessageBundle\Controller\Contact\OptionsController:
         parent: Claroline\AppBundle\Controller\AbstractCrudController
@@ -20,5 +18,6 @@ services:
         parent: Claroline\AppBundle\Controller\AbstractCrudController
         public: true
         arguments:
+            - '@security.authorization_checker'
             - '@security.token_storage'
             - '@Claroline\MessageBundle\Manager\MessageManager'

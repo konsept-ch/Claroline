@@ -22,10 +22,8 @@ class GroupFinder extends AbstractFinder
         return Group::class;
     }
 
-    public function configureQueryBuilder(QueryBuilder $qb, array $searches = [], array $sortBy = null, array $options = ['count' => false, 'page' => 0, 'limit' => -1])
+    public function configureQueryBuilder(QueryBuilder $qb, array $searches = [], array $sortBy = null): QueryBuilder
     {
-        $qb->andWhere('obj.isReadOnly = false');
-
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
                 case 'organization':
@@ -60,5 +58,12 @@ class GroupFinder extends AbstractFinder
         }
 
         return $qb;
+    }
+
+    protected function getExtraFieldMapping(): array
+    {
+        return [
+            'meta.readOnly' => 'isReadOnly',
+        ];
     }
 }

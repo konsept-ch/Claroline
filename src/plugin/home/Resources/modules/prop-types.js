@@ -1,6 +1,6 @@
 import {PropTypes as T} from 'prop-types'
 
-import {Role} from '#/main/core/user/prop-types'
+import {Role} from '#/main/community/prop-types'
 
 const Tab = {
   propTypes: {
@@ -12,10 +12,7 @@ const Tab = {
     slug: T.string.isRequired,
     icon: T.string,
     class: T.string.isRequired,
-    poster: T.oneOfType([
-      T.string,
-      T.object
-    ]),
+    poster: T.string,
     position: T.number,
     display: T.shape({
       color: T.string,

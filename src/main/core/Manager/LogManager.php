@@ -19,7 +19,7 @@ use Claroline\CoreBundle\Library\Normalizer\DateNormalizer;
 use Claroline\CoreBundle\Library\Utilities\ClaroUtilities;
 use Claroline\CoreBundle\Repository\Log\LogRepository;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class LogManager
 {
@@ -181,123 +181,6 @@ class LogManager
         $this->dispatcher->dispatch('create_log_delegate_view', $event);
 
         return $event->getResponse();
-    }
-
-    /**
-     * Given a query params, it returns a paginated list of users for logs concerning them.
-     *
-     * @param array $finderParams query params (used to filter logs)
-     * @param int   $limit        number of items per page
-     * @param int   $page         index of page
-     * @param array $sortBy       how to sort data
-     *
-     * @return array (items => array of users, total => total number of users)
-     */
-    public function getUsersData(array $finderParams = [], $limit = 10, $page = 0, $sortBy = null)
-    {
-        $filters = FinderProvider::parseQueryParams($finderParams)['allFilters'];
-        $users = $this->logRepository->fetchUsersByActionsList($filters, false, $page, $limit, $sortBy);
-        $totalUsers = intval($this->logRepository->fetchUsersByActionsList($filters, true));
-
-        $data = [];
-        foreach ($users as $user) {
-            $id = $user['doerId'];
-            $data[] = [
-                'doer' => [
-                    'firstName' => $user['doerFirstName'],
-                    'lastName' => $user['doerLastName'],
-                ],
-                'link' => $this->ut->getBaseUrl().'api/logs/user-actions?id='.$id,
-                'chartData' => [
-                    ['xData' => '2019-11-11T00:00:00', 'yData' => 8],
-                    ['xData' => '2019-11-12T00:00:00', 'yData' => 4],
-                    ['xData' => '2019-11-13T00:00:00', 'yData' => 1],
-                ],
-                'actions' => intval($user['actions']),
-            ];
-        }
-
-        return [
-            'items' => $data,
-            'total' => $totalUsers,
-        ];
-    }
-
-    /**
-     * Given a user id and a list of filters,
-     * it returns a paginated list of his log per day.
-     *
-     * @param int $id     id of the user
-     *
-     * @return array paginated list of ["date" => xxx, "total" => xxx]
-     */
-    public function getUserActionsData(array $finderParams = [])
-    {
-        $queryParams = FinderProvider::parseQueryParams($finderParams);
-        $filters = $queryParams['allFilters'];
-        $page = $queryParams['page'];
-        $limit = $queryParams['limit'];
-        $sortBy = $queryParams['sortBy'];
-        $id = $filters['userId'];
-
-        $minDate = isset($filters['dateLog']) ? $filters['dateLog'] : null;
-        if (is_string($minDate)) {
-            $minDate = new \DateTime($minDate);
-        }
-        $maxDate = isset($filters['dateTo']) ? $filters['dateTo'] : null;
-        if (is_string($maxDate)) {
-            $maxDate = new \DateTime($maxDate);
-        }
-
-        $rawData = $this->logRepository->fetchUserActionsData($id, $filters, $sortBy);
-        $totalUsers = intval($this->logRepository->fetchUserActionsData($id, $filters, $sortBy, true));
-
-        // Format data
-        $userData = [];
-        foreach ($rawData as $row) {
-            $date = $row['date'];
-            $total = $row['total'];
-
-            if (!isset($userData['u'.$id])) {
-                $userData['u'.$id] = [
-                    'doer' => [
-                        'firstName' => $row['doerFirstName'],
-                        'lastName' => $row['doerLastName'],
-                    ],
-                    'link' => $this->ut->getBaseUrl().'api/logs/user-actions?id='.$id,
-                    'chartData' => [],
-                    'actions' => 0,
-                ];
-            }
-            $userData['u'.$id]['chartData'][] = ['date' => $date, 'total' => floatval($total)];
-            $userData['u'.$id]['actions'] += floatval($total);
-            $minDate = null === $minDate || $minDate > $date ? clone $date : $minDate;
-            $maxDate = null === $maxDate || $maxDate < $date ? clone $date : $maxDate;
-        }
-
-        $data = [];
-        foreach ($userData as $line) {
-            $line['chartData'] = $this->formatDataForChart($line['chartData'], clone $minDate, clone $maxDate);
-            $data[] = $line;
-        }
-
-        if (!empty($sortBy)) {
-            usort($data, function ($o1, $o2) use ($sortBy) {
-                $cmp = 0;
-                switch ($sortBy['property']) {
-                    case 'doer.name':
-                        $cmp = strcmp($o1['doer']['name'], $o2['doer']['name']);
-                        break;
-                    case 'actions':
-                        $cmp = $o1['actions'] - $o2['actions'];
-                        break;
-                }
-
-                return $sortBy['direction'] * $cmp;
-            });
-        }
-
-        return FinderProvider::formatPaginatedData($data, $totalUsers, $page, $limit, $filters, $sortBy);
     }
 
     /**

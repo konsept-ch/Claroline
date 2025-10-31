@@ -73,13 +73,6 @@ class Workspace implements IdentifiableInterface
     private $slug;
 
     /**
-     * @ORM\Column(type="string", nullable=true)
-     *
-     * @var string
-     */
-    private $lang = null;
-
-    /**
      * @ORM\Column(name="isModel", type="boolean")
      *
      * @var bool
@@ -184,6 +177,16 @@ class Workspace implements IdentifiableInterface
      * @ORM\Column(type="string", nullable=true)
      */
     private $contactEmail;
+
+    /**
+     * The conditions to get a success status for the workspace evaluation.
+     * Supported conditions : minimal score, min successful resources, max failed resources.
+     *
+     * @var array
+     *
+     * @ORM\Column(type="json", nullable=true)
+     */
+    private $successCondition = null;
 
     /**
      * @ORM\ManyToMany(
@@ -378,13 +381,13 @@ class Workspace implements IdentifiableInterface
 
     public function getDefaultRole(): ?Role
     {
-        if (!$this->defaultRole && !empty($this->roles)) {
+        if (!$this->defaultRole && 0 !== $this->roles->count()) {
             $collaborator = $this->getCollaboratorRole();
             if ($collaborator) {
                 return $collaborator;
             }
 
-            return $this->roles[0];
+            return $this->roles->first();
         }
 
         return $this->defaultRole;
@@ -398,16 +401,6 @@ class Workspace implements IdentifiableInterface
     public function getWorkspaceModel()
     {
         return $this->workspaceModel;
-    }
-
-    public function setLang($lang)
-    {
-        $this->lang = $lang;
-    }
-
-    public function getLang()
-    {
-        return $this->lang;
     }
 
     public function getShowProgression()
@@ -428,6 +421,16 @@ class Workspace implements IdentifiableInterface
     public function setContactEmail(?string $email = null)
     {
         $this->contactEmail = $email;
+    }
+
+    public function getSuccessCondition(): ?array
+    {
+        return $this->successCondition;
+    }
+
+    public function setSuccessCondition(?array $successCondition)
+    {
+        $this->successCondition = $successCondition;
     }
 
     /**

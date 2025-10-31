@@ -116,7 +116,7 @@ jobs:
         run: npm install
 
       - name: "Build JS files with Webpack"
-        run: npm run webpack
+        run: export NODE_OPTIONS=--openssl-legacy-provider && npm run webpack
 
       - name: "Setup Claroline platform"
         run: php bin/console claroline:install --env=test -vvv
@@ -176,7 +176,7 @@ jobs:
         run: npm install
 
       - name: "Build JS files with Webpack"
-        run: npm run webpack
+        run: export NODE_OPTIONS=--openssl-legacy-provider && npm run webpack
 
       - name: "Setup Claroline platform"
         run: php bin/console claroline:install --env=test -vvv

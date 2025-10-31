@@ -87,22 +87,22 @@ class QuotaController extends AbstractCrudController
         $this->workspaceManager = $workspaceManager;
     }
 
-    public function getName()
+    public function getName(): string
     {
         return 'cursus_quota';
     }
 
-    public function getClass()
+    public function getClass(): ?string
     {
         return Quota::class;
     }
 
-    public function getIgnore()
+    public function getIgnore(): array
     {
         return ['copyBulk', 'doc', 'exist'];
     }
 
-    protected function getDefaultHiddenFilters()
+    protected function getDefaultHiddenFilters(): array
     {
         $filters = [];
         if (!$this->authorization->isGranted('ROLE_ADMIN')) {

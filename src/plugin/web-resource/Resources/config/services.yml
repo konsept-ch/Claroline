@@ -1,8 +1,9 @@
 services:
     Claroline\WebResourceBundle\Manager\WebResourceManager:
         arguments:
+            - '%claroline.param.files_directory%'
+            - '%claroline.param.uploads_directory%'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
-            - '@service_container'
 
     Claroline\WebResourceBundle\Controller\API\WebResourceController:
         parent: Claroline\AppBundle\Controller\AbstractCrudController
@@ -24,6 +25,5 @@ services:
             - { name: kernel.event_listener, event: resource.claroline_web_resource.export, method: onExport }
             - { name: kernel.event_listener, event: resource.claroline_web_resource.import, method: onImport }
             - { name: kernel.event_listener, event: resource.claroline_web_resource.delete, method: onDelete }
-            - { name: kernel.event_listener, event: resource.claroline_web_resource.copy, method: onCopy }
             - { name: kernel.event_listener, event: download_claroline_web_resource, method: onDownload }
             - { name: kernel.event_listener, event: resource.claroline_web_resource.change_file, method: onFileChange }

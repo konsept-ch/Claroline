@@ -12,7 +12,6 @@
   "comment": "Comment",
   "configure": "Configure",
   "copy": "Copy",
-  "copy-model": "Copy as model",
   "correct": "Correct",
   "create": "Create",
   "create-account": "Create an account",
@@ -91,5 +90,6 @@
   "upload": "Upload",
   "view-as": "Show as",
   "show-terms-of-service": "Show terms of service",
-  "accept-terms-of-service": "Accept terms of service"
+  "accept-terms-of-service": "Accept terms of service",
+  "replace_image": "Replace image"
 }

@@ -1,7 +1,7 @@
 import {PropTypes as T} from 'prop-types'
 
 import {ResourceNode} from '#/main/core/resource/prop-types'
-import {User} from '#/main/core/user/prop-types'
+import {User} from '#/main/community/prop-types'
 
 const Workspace = {
   propTypes: {
@@ -9,9 +9,8 @@ const Workspace = {
     autoId: T.number,
     name: T.string,
     slug: T.string,
-    poster: T.shape({
-      url: T.string
-    }),
+    poster: T.string,
+    thumbnail: T.string,
     contactEmail: T.string,
     meta: T.shape({
       description: T.string,

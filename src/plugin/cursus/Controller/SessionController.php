@@ -81,22 +81,22 @@ class SessionController extends AbstractCrudController
         $this->pdfManager = $pdfManager;
     }
 
-    public function getName()
+    public function getName(): string
     {
         return 'cursus_session';
     }
 
-    public function getClass()
+    public function getClass(): string
     {
         return Session::class;
     }
 
-    public function getIgnore()
+    public function getIgnore(): array
     {
         return ['schema'];
     }
 
-    protected function getDefaultHiddenFilters()
+    protected function getDefaultHiddenFilters(): array
     {
         $filters = [];
         if (!$this->authorization->isGranted('ROLE_ADMIN')) {
@@ -256,7 +256,6 @@ class SessionController extends AbstractCrudController
         $sessionUsers = $this->decodeIdsString($request, SessionUser::class);
 
         foreach ($sessionUsers as $sessionUser) {
-            if ($this->om->getRepository(SessionCancellation::class)->findOneBy(['inscriptionUuid' => $sessionUser->getUuid()]) != null) continue;
             $cancellation = new SessionCancellation();
             $cancellation->setUser($sessionUser->getUser());
             $cancellation->setSession($sessionUser->getSession());

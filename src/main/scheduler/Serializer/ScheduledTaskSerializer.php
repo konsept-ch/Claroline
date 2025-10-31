@@ -5,7 +5,7 @@ namespace Claroline\SchedulerBundle\Serializer;
 use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\Serializer\SerializerTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
-use Claroline\CoreBundle\API\Serializer\User\UserSerializer;
+use Claroline\CommunityBundle\Serializer\UserSerializer;
 use Claroline\CoreBundle\API\Serializer\Workspace\WorkspaceSerializer;
 use Claroline\CoreBundle\Entity\Group;
 use Claroline\CoreBundle\Entity\User;
@@ -65,6 +65,7 @@ class ScheduledTaskSerializer
             'executionType' => $scheduledTask->getExecutionType(),
             'scheduledDate' => DateNormalizer::normalize($scheduledTask->getScheduledDate()),
             'executionDate' => DateNormalizer::normalize($scheduledTask->getExecutionDate()),
+            'executionInterval' => $scheduledTask->getExecutionInterval(),
             'endDate' => DateNormalizer::normalize($scheduledTask->getEndDate()),
             'status' => $scheduledTask->getStatus(),
             'parentId' => $scheduledTask->getParentId(),

@@ -6,19 +6,16 @@ const Step = {
     slug: T.string.isRequired,
     title: T.string,
     description: T.string,
-    poster: T.shape({
-      url: T.string
-    }),
+    poster: T.string,
     display: T.shape({
       numbering: T.string
     }).isRequired,
     primaryResource: T.shape({
-      autoId: T.number.isRequired,
+      id: T.string.isRequired,
       meta: T.shape({
         type: T.string.isRequired
       })
     }),
-    evaluated: T.bool,
     showResourceHeader: T.bool,
     secondaryResources: T.arrayOf(T.shape({
       // minimal resource

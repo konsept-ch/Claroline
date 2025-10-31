@@ -2,10 +2,3 @@ services:
     _defaults:
         autowire: false
         autoconfigure: false
-
-    Claroline\CursusBundle\Installation\Command\CleanWorkspaceCommand:
-        arguments:
-            - '@Claroline\AppBundle\Persistence\ObjectManager'
-            - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceManager'
-        tags:
-            - { name: 'console.command', command: 'claroline:clean:workspace' }

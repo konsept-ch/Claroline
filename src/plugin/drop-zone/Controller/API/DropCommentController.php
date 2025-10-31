@@ -20,18 +20,18 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class DropCommentController extends AbstractCrudController
 {
-    public function getName()
+    public function getName(): string
     {
         return 'dropcomment';
     }
 
-    public function getClass()
+    public function getClass(): string
     {
         return DropComment::class;
     }
 
-    public function getIgnore()
+    public function getIgnore(): array
     {
-        return ['exist', 'copyBulk', 'schema', 'find'];
+        return ['exist', 'copyBulk', 'find'];
     }
 }

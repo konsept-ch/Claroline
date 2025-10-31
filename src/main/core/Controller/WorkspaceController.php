@@ -40,7 +40,6 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * @Route("/workspaces", options={"expose" = true})
@@ -57,8 +56,6 @@ class WorkspaceController
     private $serializer;
     /** @var ToolManager */
     private $toolManager;
-    /** @var TranslatorInterface */
-    private $translator;
     /** @var WorkspaceManager */
     private $manager;
     /** @var WorkspaceRestrictionsManager */
@@ -74,7 +71,6 @@ class WorkspaceController
         TokenStorageInterface $tokenStorage,
         SerializerProvider $serializer,
         ToolManager $toolManager,
-        TranslatorInterface $translator,
         WorkspaceManager $manager,
         WorkspaceRestrictionsManager $restrictionsManager,
         WorkspaceEvaluationManager $evaluationManager,
@@ -85,7 +81,6 @@ class WorkspaceController
         $this->tokenStorage = $tokenStorage;
         $this->serializer = $serializer;
         $this->toolManager = $toolManager;
-        $this->translator = $translator;
         $this->manager = $manager;
         $this->restrictionsManager = $restrictionsManager;
         $this->evaluationManager = $evaluationManager;
@@ -96,7 +91,7 @@ class WorkspaceController
      * @Route("/{slug}", name="claro_workspace_open")
      * @EXT\ParamConverter("user", converter="current_user", options={"allowAnonymous"=true})
      */
-    public function openAction(string $slug, Request $request, ?User $user = null): JsonResponse
+    public function openAction(string $slug, ?User $user = null): JsonResponse
     {
         /** @var Workspace $workspace */
         $workspace = $this->om->getRepository(Workspace::class)->findOneBy(['slug' => $slug]);
@@ -105,8 +100,7 @@ class WorkspaceController
             throw new NotFoundHttpException('Workspace not found');
         }
 
-        // switch to the workspace locale if needed (this is broken in UI atm)
-        $this->forceWorkspaceLang($workspace, $request);
+        // this should not be done here
         $this->toolManager->addMissingWorkspaceTools($workspace);
 
         $isManager = $this->manager->isManager($workspace, $this->tokenStorage->getToken());
@@ -237,14 +231,5 @@ class WorkspaceController
         $this->restrictionsManager->unlock($workspace, json_decode($request->getContent(), true)['code']);
 
         return new JsonResponse(null, 204);
-    }
-
-    private function forceWorkspaceLang(Workspace $workspace, Request $request)
-    {
-        if ($workspace->getLang()) {
-            $request->setLocale($workspace->getLang());
-            //not sure if both lines are needed
-            $this->translator->setLocale($workspace->getLang());
-        }
     }
 }

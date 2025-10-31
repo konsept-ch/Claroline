@@ -14,7 +14,7 @@ namespace Claroline\CursusBundle\Serializer;
 use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\Serializer\SerializerTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
-use Claroline\CoreBundle\API\Serializer\User\OrganizationSerializer;
+use Claroline\CommunityBundle\Serializer\OrganizationSerializer;
 use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CursusBundle\Entity\Quota;
 use Claroline\CursusBundle\Entity\Registration\SessionUser;

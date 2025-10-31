@@ -12,7 +12,7 @@ import {CALLBACK_BUTTON} from '#/main/app/buttons'
 import classes from 'classnames'
 
 const ToolPage = props => {
-  let toolbar = 'edit rights'
+  let toolbar = 'edit'
   if (props.primaryAction) {
     toolbar = props.primaryAction + ' | ' + toolbar
   }
@@ -26,7 +26,7 @@ const ToolPage = props => {
     type: CALLBACK_BUTTON,
     icon: classes('fa fa-fw', {
       'fa-expand': !props.fullscreen,
-      'fa-compress': props.fullscreen
+      'fa-times': props.fullscreen
     }),
     label: trans(props.fullscreen ? 'fullscreen_off' : 'fullscreen_on'),
     callback: props.toggleFullscreen
@@ -38,7 +38,7 @@ const ToolPage = props => {
       title={trans(props.name, {}, 'tools')}
       showBreadcrumb={showToolBreadcrumb(props.currentContext.type, props.currentContext.data)}
       path={[].concat(getToolBreadcrumb(props.name, props.currentContext.type, props.currentContext.data), props.path)}
-      poster={get(props.toolData, 'poster.url')}
+      poster={get(props.toolData, 'poster')}
       icon={get(props.toolData, 'display.showIcon') ?
         <ToolIcon type={get(props.toolData, 'icon')} />
         :
@@ -76,9 +76,7 @@ ToolPage.propTypes = {
       showIcon: T.bool,
       fullscreen: T.bool
     }),
-    poster: T.shape({
-      url: T.string.isRequired
-    }),
+    poster: T.string,
     permissions: T.object.isRequired
   }),
   currentContext: T.shape({

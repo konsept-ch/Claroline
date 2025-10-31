@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace  Icap\NotificationBundle\Controller\APINew;
+namespace Icap\NotificationBundle\Controller\APINew;
 
 use Claroline\AppBundle\API\Crud;
 use Claroline\AppBundle\API\FinderProvider;

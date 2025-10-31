@@ -36,7 +36,7 @@ const CoursePage = (props) => {
     }, {
       name: 'export-pdf',
       type: URL_BUTTON,
-      icon: 'fa fa-fw fa-file-pdf-o',
+      icon: 'fa fa-fw fa-file-pdf',
       label: trans('export-pdf', {}, 'actions'),
       displayed: hasPermission('open', props.course),
       group: trans('transfer'),
@@ -49,7 +49,7 @@ const CoursePage = (props) => {
       path={props.path}
       title={props.course.name}
       subtitle={get(props.activeSession, 'name')}
-      poster={getInfo(props.course, props.activeSession, 'poster.url')}
+      poster={getInfo(props.course, props.activeSession, 'poster')}
       meta={{
         title: `${trans('trainings', {}, 'tools')} - ${props.course.name}`,
         description: props.course.description

@@ -18,6 +18,8 @@ services:
         parent: Claroline\AppBundle\Controller\AbstractSecurityController
         public: true
         arguments:
+            - '@Claroline\AppBundle\API\Crud'
+            - '@Claroline\AppBundle\API\SerializerProvider'
             - '@Claroline\CoreBundle\Manager\PluginManager'
 
     Claroline\CoreBundle\Controller\APINew\Planning\PlannedObjectController:
@@ -147,7 +149,6 @@ services:
             - '@Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler'
             - '@Claroline\AnalyticsBundle\Manager\AnalyticsManager'
             - '@Claroline\CoreBundle\Manager\VersionManager'
-            - '@Claroline\CoreBundle\Manager\FileManager'
             - '@Claroline\CoreBundle\API\Serializer\ParametersSerializer'
 
     Claroline\CoreBundle\Controller\APINew\SwaggerController:
@@ -163,12 +164,6 @@ services:
             - '@Claroline\AppBundle\API\SerializerProvider'
             - '@Claroline\CoreBundle\Manager\WidgetManager'
             - '@Claroline\CoreBundle\Manager\DataSourceManager'
-
-    Claroline\CoreBundle\Controller\APINew\Platform\ArchiveController:
-        parent: Claroline\AppBundle\Controller\AbstractSecurityController
-        public: true
-        arguments:
-            - '%claroline.param.archive_directory%'
 
     Claroline\CoreBundle\Controller\AdministrationController:
         arguments:
@@ -231,7 +226,6 @@ services:
             - '@security.token_storage'
             - '@Claroline\AppBundle\API\SerializerProvider'
             - '@claroline.manager.tool_manager'
-            - '@translator'
             - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceManager'
             - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceRestrictionsManager'
             - '@Claroline\EvaluationBundle\Manager\WorkspaceEvaluationManager'

@@ -14,12 +14,10 @@ namespace Claroline\CursusBundle\Serializer;
 use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\Serializer\SerializerTrait;
 use Claroline\AppBundle\Persistence\ObjectManager;
-use Claroline\CoreBundle\API\Serializer\File\PublicFileSerializer;
+use Claroline\CommunityBundle\Serializer\OrganizationSerializer;
+use Claroline\CommunityBundle\Serializer\UserSerializer;
 use Claroline\CoreBundle\API\Serializer\Resource\ResourceNodeSerializer;
-use Claroline\CoreBundle\API\Serializer\User\OrganizationSerializer;
-use Claroline\CoreBundle\API\Serializer\User\UserSerializer;
 use Claroline\CoreBundle\API\Serializer\Workspace\WorkspaceSerializer;
-use Claroline\CoreBundle\Entity\File\PublicFile;
 use Claroline\CoreBundle\Entity\Organization\Organization;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
 use Claroline\CoreBundle\Entity\User;
@@ -42,8 +40,6 @@ class CourseSerializer
     private $eventDispatcher;
     /** @var ObjectManager */
     private $om;
-    /** @var PublicFileSerializer */
-    private $fileSerializer;
     /** @var UserSerializer */
     private $userSerializer;
     /** @var OrganizationSerializer */
@@ -66,7 +62,6 @@ class CourseSerializer
         AuthorizationCheckerInterface $authorization,
         EventDispatcherInterface $eventDispatcher,
         ObjectManager $om,
-        PublicFileSerializer $fileSerializer,
         UserSerializer $userSerializer,
         OrganizationSerializer $orgaSerializer,
         WorkspaceSerializer $workspaceSerializer,
@@ -75,7 +70,6 @@ class CourseSerializer
         $this->authorization = $authorization;
         $this->eventDispatcher = $eventDispatcher;
         $this->om = $om;
-        $this->fileSerializer = $fileSerializer;
         $this->userSerializer = $userSerializer;
         $this->orgaSerializer = $orgaSerializer;
         $this->workspaceSerializer = $workspaceSerializer;
@@ -101,7 +95,7 @@ class CourseSerializer
             'slug' => $course->getSlug(),
             'description' => $course->getDescription(),
             'plainDescription' => $course->getPlainDescription(),
-            'thumbnail' => $this->serializeThumbnail($course),
+            'thumbnail' => $course->getThumbnail(),
             'permissions' => [
                 'open' => $this->authorization->isGranted('OPEN', $course),
                 'edit' => $this->authorization->isGranted('EDIT', $course),
@@ -116,7 +110,7 @@ class CourseSerializer
 
         if (!in_array(Options::SERIALIZE_MINIMAL, $options)) {
             $serialized = array_merge($serialized, [
-                'poster' => $this->serializePoster($course),
+                'poster' => $course->getPoster(),
                 'parent' => $course->getParent() ? $this->serialize($course->getParent(), [Options::SERIALIZE_MINIMAL]) : null,
                 'meta' => [
                     'creator' => $course->getCreator() ?
@@ -179,6 +173,8 @@ class CourseSerializer
         $this->sipe('name', 'setName', $data, $course);
         $this->sipe('description', 'setDescription', $data, $course);
         $this->sipe('plainDescription', 'setPlainDescription', $data, $course);
+        $this->sipe('poster', 'setPoster', $data, $course);
+        $this->sipe('thumbnail', 'setThumbnail', $data, $course);
 
         $this->sipe('meta.tutorRoleName', 'setTutorRoleName', $data, $course);
         $this->sipe('meta.learnerRoleName', 'setLearnerRoleName', $data, $course);
@@ -237,18 +233,13 @@ class CourseSerializer
             $course->setParent($parent);
         }
 
-        if (isset($data['poster'])) {
-            $course->setPoster($data['poster']['url'] ?? null);
-        }
-
-        if (isset($data['thumbnail'])) {
-            $course->setThumbnail($data['thumbnail']['url'] ?? null);
-        }
-
-        $workspace = null;
-        if (isset($data['workspace']) && isset($data['workspace']['id'])) {
-            /** @var Workspace $workspace */
-            $workspace = $this->workspaceRepo->findOneBy(['uuid' => $data['workspace']['id']]);
+        if (isset($data['workspace'])) {
+            $workspace = null;
+            if (isset($data['workspace']['id'])) {
+                /** @var Workspace $workspace */
+                $workspace = $this->workspaceRepo->findOneBy(['uuid' => $data['workspace']['id']]);
+            }
+            $course->setWorkspace($workspace);
         }
         $course->setWorkspace($workspace);
 
@@ -275,38 +266,6 @@ class CourseSerializer
         }
 
         return $course;
-    }
-
-    private function serializePoster(Course $course)
-    {
-        if (!empty($course->getPoster())) {
-            /** @var PublicFile $file */
-            $file = $this->om
-                ->getRepository(PublicFile::class)
-                ->findOneBy(['url' => $course->getPoster()]);
-
-            if ($file) {
-                return $this->fileSerializer->serialize($file);
-            }
-        }
-
-        return null;
-    }
-
-    private function serializeThumbnail(Course $course)
-    {
-        if (!empty($course->getThumbnail())) {
-            /** @var PublicFile $file */
-            $file = $this->om
-                ->getRepository(PublicFile::class)
-                ->findOneBy(['url' => $course->getThumbnail()]);
-
-            if ($file) {
-                return $this->fileSerializer->serialize($file);
-            }
-        }
-
-        return null;
     }
 
     /**
