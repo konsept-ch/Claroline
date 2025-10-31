@@ -17,6 +17,7 @@
   - `val-env` -> `c1f77a1ab1` (mirrors Jelastic VAL; direct update of protected `val` branch blocked)
   - `prod` -> `45db36fc73` (new remote branch)
   - `archive` -> `d231112573` (new remote branch)
+- Divergence snapshot: `val-env` is four commits ahead of `prod` (event filters/sorting work); `archive` also includes the infrastructure/doc/docker refresh applied for the archive release.
 - Tagged environments:
 
 | Environment | Branch source | Tag | Commit | Version (`VERSION.txt`) |
@@ -31,6 +32,7 @@
   - `val` -> `6b1754b96a`
   - `prod` -> `60d40ffc58`
   - `archive` -> `534fc06d9d`
+- Divergence snapshot: `prod` contains the large RTK/Saga rewrite not yet in `val`/`archive`; `val` alone adds downloadable content over the archive baseline.
 - Tagged environments:
 
 | Environment | Branch source | Tag | Commit | App version (`package.json`) |
@@ -45,6 +47,7 @@
   - `val` -> `e90e19999f`
   - `prod` -> `26cfa0dc67`
   - `archive` -> `78b549217c`
+- Divergence snapshot: `val` and `prod` each hold unique attestation/scheduling changes; `archive` remains on the older `78b549217c` state without either set of updates.
 - Tagged environments:
 
 | Environment | Branch source | Tag | Commit | App version (`package.json`) |
@@ -56,18 +59,16 @@
 Validation and archive now diverge for both Admin UI and Former22, matching the environment split baked into Jelastic.
 
 ## Next Steps
-- For each repository (`claro`, `adm`, `former`), identify the target commit on `main`, then fast-forward the environment branches in sequence so every line matches the bugfix baseline:
-  - `git checkout main && git pull`
-  - `git branch -f val <commit>`
-  - `git branch -f archive <commit>`
-  - `git branch -f prod <commit>`
-- Push each branch after the fast-forward (`git push origin <branch>`), retag if required, and for Claroline keep using `val-env` until the protected `val` branch can be updated.
+- Claroline: decide whether to fast-forward `prod` (and optionally `archive`) to `c1f77a1ab1` or to cherry-pick the four VAL commits back to `main` before cutting new branches.
+- Admin UI: pick between backporting the `prod` rewrite into `val`/`archive` or recutting those branches from `60d40ffc58` so validation covers the production build.
+- Former22: merge or cherry-pick between `e90e19999f` and `26cfa0dc67` to get a single release head, then fast-forward `archive` from that commit.
+- After the targets are chosen, fast-forward each environment branch (`git branch -f val|archive|prod <commit>`), push, and retag. Claroline continues to use `val-env` for the VAL deployment until `val` protection is updated.
 
 ## Unified Branch Strategy
 1. **Trunk:** `main` is the sole integration branch across Claroline, Admin UI and Former22. All feature work merges there through PRs.
 2. **Validation cut:** When code needs staging, create or fast-forward the `val` branch from `main` at the chosen commit (`git checkout main && git pull && git branch -f val HEAD`). Build and deploy the VAL environment from that branch and tag it (`component-val-x.y.z`). *(For Claroline use `val-env` until the protected `val` branch can be repointed.)*
-3. **Archive cut:** Once VAL is approved for archival usage, fast-forward `archive` from `val` and redeploy. Retag with the archive marker (`component-archive-x.y.z`).
-4. **Production cut:** Promote tested code to `prod` by fast-forwarding from the approved source (`val` or `archive`, depending on the release path) and tag it (`component-prod-x.y.z`). Production hotfixes travel `prod` -> `main` -> `val`/`archive` to keep branches aligned.
+3. **Archive cut:** When an archival deployment is required, fast-forward `archive` from `val` and redeploy. Retag with the archive marker (`component-archive-x.y.z`).
+4. **Production cut:** When production is ready, fast-forward `prod` directly from `val` (or the promotion commit agreed on) and tag it (`component-prod-x.y.z`). Production hotfixes travel `prod` -> `main` -> `val`/`archive` to keep branches aligned. Archive and production promotions are independent; take whichever path is relevant for the release.
 
 ## Tagging Convention
 - Format: `<component>-<environment>-<semantic version>`.
@@ -88,7 +89,7 @@ Validation and archive now diverge for both Admin UI and Former22, matching the 
 - Pick the release commit (usually `main` HEAD) and fast-forward the environment branch: `git branch -f val <commit>`.
 - Push branch updates (`git push origin val`) and create the tag: `git tag -a component-val-x.y.z <commit> -m "Component VAL x.y.z"`; push with `git push origin component-val-x.y.z`.
 - Deploy from the environment branch and record the tag in Jelastic.
-- Promote to ARCHIVE/PROD by repeating the fast-forward/tag steps in order (VAL -> ARCHIVE -> PROD).
+- Promote to ARCHIVE or PROD by repeating the fast-forward/tag steps off `val` as needed (no dependency between `archive` and `prod` cuts).
 - Update `Claroline/docs/cep-release-workflow.md` with the new tag names and deployment notes.
 
 ## Maintenance Notes
