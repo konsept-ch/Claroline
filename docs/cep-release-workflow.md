@@ -6,25 +6,25 @@
 
 | Component | VAL tag | PROD tag | ARCHIVE tag | Notes |
 |-----------|---------|----------|-------------|-------|
-| Claroline (`claro`) | `claro-val-1.1.6` | `claro-prod-1.1.4` | `claro-archive-2.0.6` | `val` branch protected upstream; `val-env` mirrors VAL deployment. |
+| Claroline (`claro`) | `claro-val-1.1.6` | `cep-1.1.6` | `cep-archive-0.0.1` | `val` branch protected upstream; `val-env` mirrors VAL deployment. |
 | Admin UI (`adm`)    | `adm-val-0.0.3`   | `adm-prod-1.2.3.1` | `adm-archive-0.0.2`   | Archive build predates VAL; both run 0.0.2 app version. |
-| Former22 (`former`) | `former-val-0.0.4`| `former-prod-1.4.6.2` | `former-archive-0.0.3` | PROD and VAL diverge from ARCHIVE as expected. |
+| Former22 (`former`) | `former-val-0.0.4`| `cep-2.0.0` | `archive-0.0.4` | PROD and VAL diverge from ARCHIVE as expected. |
 
 ### Claroline (`claro`)
 - Base branch `main` now tracks `origin/main` (`37fb9d536e`); upstream default is still `origin/val`.
 - Next step: flip the GitHub default branch to `main` and adjust branch protection so `val` (or the interim `val-env`) can be fast-forwarded per the release checklist.
 - Release branches aligned to the deployed snapshots:
   - `val-env` -> `c1f77a1ab1` (mirrors Jelastic VAL; direct update of protected `val` branch blocked)
-  - `prod` -> `45db36fc73` (new remote branch)
-  - `archive` -> `d231112573` (new remote branch)
-- Divergence snapshot: `val-env` is four commits ahead of `prod` (event filters/sorting work); `archive` also includes the infrastructure/doc/docker refresh applied for the archive release.
+  - `prod` -> `c1f77a1ab1` (fast-forwarded to `cep-1.1.6`)
+  - `archive` -> `b64a07c347` (tag `cep-archive-0.0.1`)
+- Divergence snapshot: `prod` now matches `val-env`; `archive` stays two commits ahead with the CEP archive packaging work (`b64a07c347`, `2ed08aef75`).
 - Tagged environments:
 
 | Environment | Branch source | Tag | Commit | Version (`VERSION.txt`) |
 |-------------|---------------|-----|--------|--------------------------|
 | Validation  | `val-env`     | `claro-val-1.1.6`      | `c1f77a1ab1` | 13.5.16 |
-| Production  | `prod`        | `claro-prod-1.1.4`     | `45db36fc73` | 13.5.16 |
-| Archive     | `archive`     | `claro-archive-2.0.6`  | `d231112573` | 13.5.16 (release `cep_claroline_val_archive_v2_0_6`) |
+| Production  | `prod`        | `cep-1.1.6`            | `c1f77a1ab1` | 13.5.16 |
+| Archive     | `archive`     | `cep-archive-0.0.1`    | `b64a07c347` | 13.5.16 (`ARCHIVE_MODE` via env) |
 
 ### Admin UI (`adm`)
 - Base branch `main` continues at `148bc2f`.
@@ -44,24 +44,24 @@
 ### Former22 (`former`)
 - Base branch `main` remains at `de81539`.
 - Release branches established for deployment parity:
-  - `val` -> `e90e19999f`
-  - `prod` -> `26cfa0dc67`
-  - `archive` -> `78b549217c`
-- Divergence snapshot: `val` and `prod` each hold unique attestation/scheduling changes; `archive` remains on the older `78b549217c` state without either set of updates.
+  - `val` -> `e90e19999f` (tag `former-val-0.0.4`)
+  - `prod` -> `09e4633f59` (tag `cep-2.0.0`)
+  - `archive` -> `e90e19999f` (tag `archive-0.0.4`)
+- Divergence snapshot: `val`/`archive` include the archive-specific `yearMinusOne` filtering and placeholder tweaks; `prod` sticks to the `cep-2.0.0` line that relies on `ARCHIVE_MODE` flags instead.
 - Tagged environments:
 
 | Environment | Branch source | Tag | Commit | App version (`package.json`) |
 |-------------|---------------|-----|--------|-------------------------------|
 | Validation  | `val`         | `former-val-0.0.4`     | `e90e19999f` | 0.0.3 |
-| Production  | `prod`        | `former-prod-1.4.6.2`  | `26cfa0dc67`| 1.0.0 |
-| Archive     | `archive`     | `former-archive-0.0.3` | `78b549217c`| 0.0.3 |
+| Production  | `prod`        | `cep-2.0.0`            | `09e4633f59`| 1.0.0 |
+| Archive     | `archive`     | `archive-0.0.4`        | `e90e19999f`| 0.0.3 |
 
 Validation and archive now diverge for both Admin UI and Former22, matching the environment split baked into Jelastic.
 
 ## Next Steps
-- Claroline: decide whether to fast-forward `prod` (and optionally `archive`) to `c1f77a1ab1` or to cherry-pick the four VAL commits back to `main` before cutting new branches.
+- Claroline: keep `prod` and `val-env` aligned at `c1f77a1ab1` (`cep-1.1.6`) and only advance `archive` when the `cep-archive-0.0.x` packaging is refreshed.
 - Admin UI: pick between backporting the `prod` rewrite into `val`/`archive` or recutting those branches from `60d40ffc58` so validation covers the production build.
-- Former22: merge or cherry-pick between `e90e19999f` and `26cfa0dc67` to get a single release head, then fast-forward `archive` from that commit.
+- Former22: reconcile the split histories by promoting the `cep-2.0.0` line (`09e4633f59`) into the shared branch structure, or scope the archive-only commits behind the environment flag before re-cutting VAL/ARCHIVE.
 - After the targets are chosen, fast-forward each environment branch (`git branch -f val|archive|prod <commit>`), push, and retag. Claroline continues to use `val-env` for the VAL deployment until `val` protection is updated.
 
 ## Unified Branch Strategy
