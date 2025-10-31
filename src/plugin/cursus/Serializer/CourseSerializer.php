@@ -233,20 +233,6 @@ class CourseSerializer
             $course->setParent($parent);
         }
 
-<<<<<<< HEAD
-        if (isset($data['poster'])) {
-            $course->setPoster($data['poster']['url'] ?? null);
-        }
-
-        if (isset($data['thumbnail'])) {
-            $course->setThumbnail($data['thumbnail']['url'] ?? null);
-        }
-
-        $workspace = null;
-        if (isset($data['workspace']) && isset($data['workspace']['id'])) {
-            /** @var Workspace $workspace */
-            $workspace = $this->workspaceRepo->findOneBy(['uuid' => $data['workspace']['id']]);
-=======
         if (isset($data['workspace'])) {
             $workspace = null;
             if (isset($data['workspace']['id'])) {
@@ -254,7 +240,6 @@ class CourseSerializer
                 $workspace = $this->workspaceRepo->findOneBy(['uuid' => $data['workspace']['id']]);
             }
             $course->setWorkspace($workspace);
->>>>>>> e0f40b2149c3359986ab2c7336be51c7b0bf7470
         }
         $course->setWorkspace($workspace);
 
