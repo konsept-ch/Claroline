@@ -10,6 +10,7 @@ const assetsFile = require('./webpack/plugins/assets-file')
 const hashedModuleIds = require('./webpack/plugins/hashed-module-ids')
 const vendorDistributionShortcut = require('./webpack/plugins/vendor-shortcut')
 const distributionShortcut = require('./webpack/plugins/distribution-shortcut')
+const TerserPlugin = require('terser-webpack-plugin')
 
 const babel = require('./webpack/rules/babel')
 
@@ -53,6 +54,12 @@ module.exports = {
     distributionShortcut()
   ],
   optimization: {
+    // limit terser to a single worker to avoid OOM on low-memory builds
+    minimizer: [
+      new TerserPlugin({
+        parallel: false
+      })
+    ],
     // bundle webpack runtime code into a single chunk file
     // it avoids having it embed in each generated chunk
     runtimeChunk: 'single',
