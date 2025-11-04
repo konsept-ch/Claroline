@@ -5,8 +5,8 @@ import classes from 'classnames'
 import {withModal} from '#/main/app/overlays/modal/withModal'
 import {Workspace as WorkspaceTypes} from '#/main/core/workspace/prop-types'
 
-import {tinymce} from '#/main/core/tinymce'
-import {config} from '#/main/core/tinymce/config'
+import {loadTinymce} from '#/main/core/tinymce'
+import {loadTinymceConfig} from '#/main/core/tinymce/config'
 
 import {getOffsets} from '#/main/core/scaffolding/text/selection'
 
@@ -18,24 +18,30 @@ class Editor extends Component {
     super(props)
 
     this.editor = null
+    this.tinymce = null
   }
 
   componentDidMount() {
-    config.then((loadedConfig) => {
-      tinymce.init(
-        Object.assign({}, loadedConfig, {
-          target: this.textarea,
-          //ui_container: `#${this.props.id}-container`,
+    Promise.all([loadTinymce(), loadTinymceConfig()])
+      .then(([tinymce, loadedConfig]) => {
+        this.tinymce = tinymce
 
-          // give access to the show modal action to tinymce plugins
-          // it's not really aesthetic but there is no other way
-          showModal: this.props.showModal,
-          // get the current workspace for the file upload and resource explorer plugins
-          workspace: this.props.workspace
-        })
-      ).then(() => {
-        this.editor = tinymce.get(this.props.id)
-        tinymce.setActive(this.editor)
+        return tinymce.init(
+          Object.assign({}, loadedConfig, {
+            target: this.textarea,
+            //ui_container: `#${this.props.id}-container`,
+
+            // give access to the show modal action to tinymce plugins
+            // it's not really aesthetic but there is no other way
+            showModal: this.props.showModal,
+            // get the current workspace for the file upload and resource explorer plugins
+            workspace: this.props.workspace
+          })
+        )
+      })
+      .then(() => {
+        this.editor = this.tinymce.get(this.props.id)
+        this.tinymce.setActive(this.editor)
 
         this.editor.on('mouseup', () => {
           this.getSelection()
@@ -54,7 +60,6 @@ class Editor extends Component {
           this.props.onClick(e.target)
         })
       })
-    })
   }
 
   componentDidUpdate(prevProps) {
@@ -74,6 +79,8 @@ class Editor extends Component {
       this.editor.destroy()
       this.editor = null
     }
+
+    this.tinymce = null
   }
 
   updateText() {

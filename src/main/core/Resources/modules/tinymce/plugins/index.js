@@ -1,38 +1,4 @@
-/**
- * Registers all plugins used by Claroline TinyMCE.
- */
-
-// standard plugins
-import 'tinymce/plugins/anchor'
-import 'tinymce/plugins/advlist'
-import 'tinymce/plugins/autolink'
-import 'tinymce/plugins/autoresize'
-import 'tinymce/plugins/charmap'
-import 'tinymce/plugins/code'
-import 'tinymce/plugins/contextmenu'
-import 'tinymce/plugins/fullscreen'
-import 'tinymce/plugins/image'
-import 'tinymce/plugins/insertdatetime'
-import 'tinymce/plugins/link'
-import 'tinymce/plugins/lists'
-import 'tinymce/plugins/media'
-import 'tinymce/plugins/paste'
-import 'tinymce/plugins/preview'
-import 'tinymce/plugins/searchreplace'
-import 'tinymce/plugins/table'
-import 'tinymce/plugins/textcolor'
-import 'tinymce/plugins/visualblocks'
-import 'tinymce/plugins/wordcount'
-
-// claroline
-import '#/main/core/tinymce/plugins/advanced-fullscreen'
-import '#/main/core/tinymce/plugins/advanced-toolbar'
-import '#/main/core/tinymce/plugins/codemirror'
-import '#/main/core/tinymce/plugins/file-upload'
-import '#/main/core/tinymce/plugins/mentions'
-import '#/main/core/tinymce/plugins/resource-picker'
-
-const plugins = [
+const pluginNames = [
   'advanced-fullscreen',
   'advanced-toolbar',
   'anchor',
@@ -61,6 +27,46 @@ const plugins = [
   'wordcount'
 ]
 
+const pluginLoaders = [
+  () => import(/* webpackChunkName: "tinymce-plugins" */ '#/main/core/tinymce/plugins/advanced-fullscreen'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ '#/main/core/tinymce/plugins/advanced-toolbar'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/anchor'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/autolink'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/autoresize'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/advlist'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/charmap'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/code'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ '#/main/core/tinymce/plugins/codemirror'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/contextmenu'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ '#/main/core/tinymce/plugins/file-upload'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/fullscreen'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/image'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/insertdatetime'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/link'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/lists'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/media'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ '#/main/core/tinymce/plugins/mentions'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/paste'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/preview'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ '#/main/core/tinymce/plugins/resource-picker'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/searchreplace'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/table'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/textcolor'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/visualblocks'),
+  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/wordcount')
+]
+
+let pluginsPromise = null
+
+function loadTinymcePlugins() {
+  if (!pluginsPromise) {
+    pluginsPromise = Promise.all(pluginLoaders.map(load => load())).then(() => pluginNames)
+  }
+
+  return pluginsPromise
+}
+
 export {
-  plugins
+  loadTinymcePlugins,
+  pluginNames
 }

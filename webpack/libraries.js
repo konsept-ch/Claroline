@@ -4,8 +4,7 @@ module.exports = {
     'invariant',
     'lodash',
     'moment',
-    'reselect',
-    'tinymce'
+    'reselect'
   ],
   'react_dll': [
     'react',

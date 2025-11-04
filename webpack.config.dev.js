@@ -5,6 +5,7 @@
 const entries = require('./webpack/entries')
 const config = require('./webpack/config')
 const paths = require('./webpack/paths')
+const webpack = require('webpack')
 
 const assetsFile = require('./webpack/plugins/assets-file')
 const hashedModuleIds = require('./webpack/plugins/hashed-module-ids')
@@ -20,6 +21,9 @@ const babel = require('./webpack/rules/babel')
 
 module.exports = {
   mode: 'development',
+  cache: {
+    type: 'filesystem'
+  },
   // configure webpack logs
   stats: {
     colors: true,
@@ -28,9 +32,14 @@ module.exports = {
   devServer: {
     hot: true,
     port: 8080,
-    contentBase: paths.output(),
+    static: {
+      directory: paths.output(),
+      publicPath: '/dist'
+    },
     // Write bundles to disk so Apache (8088) can serve /dist too
-    writeToDisk: true,
+    devMiddleware: {
+      writeToDisk: true
+    },
     headers: {
       'Access-Control-Allow-Origin': '*'
     }
@@ -60,6 +69,7 @@ module.exports = {
     hashedModuleIds(),
     vendorDistributionShortcut(),
     distributionShortcut(),
+    new webpack.ContextReplacementPlugin(/moment[\\/]locale$/, /de|en|es|fr|it|nl/),
 
     // dev tools
     hotModuleReplacement(),
@@ -71,6 +81,7 @@ module.exports = {
     // it avoids having it embed in each generated chunk
     runtimeChunk: 'single',
     splitChunks: {
+      maxInitialRequests: 25,
       // just use a more agnostic char for chunk names generation (default if ~)
       automaticNameDelimiter: '-',
       cacheGroups: {
@@ -81,7 +92,8 @@ module.exports = {
           chunks: 'all',
           minChunks: 4,
           priority: -10,
-          reuseExistingChunk: true
+          reuseExistingChunk: true,
+          maxSize: 250000
         },
         app: {
           name: 'app',

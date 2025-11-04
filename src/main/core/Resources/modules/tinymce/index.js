@@ -1,20 +1,28 @@
 /* global window */
 
-import {tinymce as originalTinymce} from 'tinymce/tinymce'
+let tinymcePromise = null
 
 /**
- * Get the current TinyMCE instance.
+ * Lazily load TinyMCE core and expose the shared instance.
  *
- * @returns {object}
+ * @returns {Promise<object>}
  */
-function getTinyMCE() {
-  // we reuse the instance from browser, because it contains injected plugins
-  return window.tinymce || originalTinymce
+function loadTinymce() {
+  if (!tinymcePromise) {
+    tinymcePromise = import(/* webpackChunkName: "tinymce-core" */ 'tinymce/tinymce').then((module) => {
+      const loadedTinymce = module?.tinymce || module?.default || module
+
+      if (!window.tinymce) {
+        window.tinymce = loadedTinymce
+      }
+
+      return window.tinymce
+    })
+  }
+
+  return tinymcePromise
 }
 
-// reexport tinymce object
-const tinymce = getTinyMCE()
-
 export {
-  tinymce
+  loadTinymce
 }

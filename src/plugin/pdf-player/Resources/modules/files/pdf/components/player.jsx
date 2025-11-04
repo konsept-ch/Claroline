@@ -1,12 +1,6 @@
 import React, {Component, Fragment} from 'react'
 import {PropTypes as T} from 'prop-types'
 
-// load from legacy otherwise webpack breaks
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf'
-import PDFJSWorker from 'pdfjs-dist/legacy/build/pdf.worker.entry'
-import {EventBus, PDFLinkService, PDFSinglePageViewer} from 'pdfjs-dist/legacy/web/pdf_viewer'
-pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJSWorker
-
 import {url} from '#/main/app/api'
 import {trans, transChoice} from '#/main/app/intl/translation'
 import {ContentLoader} from '#/main/app/content/components/loader'
@@ -14,6 +8,36 @@ import {Button} from '#/main/app/action/components/button'
 import {CALLBACK_BUTTON, URL_BUTTON} from '#/main/app/buttons'
 
 import {File as FileTypes} from '#/main/core/files/prop-types'
+
+let pdfDependenciesPromise = null
+
+function loadPdfDependencies() {
+  if (!pdfDependenciesPromise) {
+    pdfDependenciesPromise = Promise.all([
+      import(/* webpackChunkName: "pdfjs-viewer" */ 'pdfjs-dist/legacy/build/pdf'),
+      import(/* webpackChunkName: "pdfjs-viewer" */ 'pdfjs-dist/legacy/build/pdf.worker.entry'),
+      import(/* webpackChunkName: "pdfjs-viewer" */ 'pdfjs-dist/legacy/web/pdf_viewer')
+    ]).then(([pdfModule, workerModule, viewerModule]) => {
+      const pdfjsLib = pdfModule?.default || pdfModule
+      const workerSrc = workerModule?.default || workerModule
+      const viewerExports = viewerModule?.default || viewerModule
+      const {EventBus, PDFLinkService, PDFSinglePageViewer} = viewerExports
+
+      if (pdfjsLib?.GlobalWorkerOptions) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc
+      }
+
+      return {
+        pdfjsLib,
+        EventBus,
+        PDFLinkService,
+        PDFSinglePageViewer
+      }
+    })
+  }
+
+  return pdfDependenciesPromise
+}
 
 class PdfPlayer extends Component {
   constructor(props) {
@@ -29,48 +53,81 @@ class PdfPlayer extends Component {
     }
 
     this.resize = this.resize.bind(this)
+    this._isMounted = false
+    this.loadingTask = null
   }
 
   componentDidMount() {
+    this._isMounted = true
+
     const container = document.getElementById('pdf-' + this.props.file.id)
+    if (!container) {
+      return
+    }
 
-    const eventBus = new EventBus()
+    loadPdfDependencies().then((deps) => {
+      if (!this._isMounted) {
+        return
+      }
 
-    // enable hyperlinks within PDF files.
-    const pdfLinkService = new PDFLinkService({eventBus})
+      const {EventBus, PDFLinkService, PDFSinglePageViewer, pdfjsLib} = deps
 
-    // PDFViewer
-    const pdfSinglePageViewer = new PDFSinglePageViewer({
-      container,
-      eventBus,
-      linkService: pdfLinkService
-    })
-    pdfLinkService.setViewer(pdfSinglePageViewer)
+      const eventBus = new EventBus()
 
-    eventBus.on('pagesinit', () => {
-      this.resize(pdfSinglePageViewer)
-      this.renderPage(1)
-    })
+      // enable hyperlinks within PDF files.
+      const pdfLinkService = new PDFLinkService({eventBus})
 
-    eventBus.on('pagechanging', (event) => this.renderPage(event.pageNumber))
+      // PDFViewer
+      const pdfSinglePageViewer = new PDFSinglePageViewer({
+        container,
+        eventBus,
+        linkService: pdfLinkService
+      })
+      pdfLinkService.setViewer(pdfSinglePageViewer)
 
-    const loadingTask = pdfjsLib.getDocument({
-      url: this.props.file.url
-    })
+      eventBus.on('pagesinit', () => {
+        this.resize(pdfSinglePageViewer)
+        this.renderPage(1)
+      })
 
-    loadingTask.promise.then((pdf) => {
-      pdfSinglePageViewer.setDocument(pdf)
-      pdfLinkService.setDocument(pdf, null)
+      eventBus.on('pagechanging', (event) => this.renderPage(event.pageNumber))
 
-      this.setState({
-        loaded: true,
-        pdf: pdf,
-        viewer: pdfSinglePageViewer
+      this.loadingTask = pdfjsLib.getDocument({
+        url: this.props.file.url
+      })
+
+      this.loadingTask.promise.then((pdf) => {
+        if (!this._isMounted) {
+          return
+        }
+
+        pdfSinglePageViewer.setDocument(pdf)
+        pdfLinkService.setDocument(pdf, null)
+
+        this.setState({
+          loaded: true,
+          pdf: pdf,
+          viewer: pdfSinglePageViewer
+        })
       })
     })
   }
 
+  componentWillUnmount() {
+    this._isMounted = false
+
+    if (this.loadingTask && typeof this.loadingTask.destroy === 'function') {
+      this.loadingTask.destroy()
+    }
+
+    this.loadingTask = null
+  }
+
   resize(pdfViewer) {
+    if (!pdfViewer) {
+      return
+    }
+
     pdfViewer.currentScaleValue = this.state.scale / 100
 
     this.setState({
@@ -79,9 +136,9 @@ class PdfPlayer extends Component {
   }
 
   renderPage(pageNumber) {
-    this.setState({page: parseInt(pageNumber)})
+    this.setState({page: parseInt(pageNumber, 10)})
 
-    if (this.props.currentUser) {
+    if (this.props.currentUser && this.state.pdf) {
       this.props.updateProgression(this.props.file.id, pageNumber, this.state.pdf.numPages)
     }
   }
@@ -95,7 +152,9 @@ class PdfPlayer extends Component {
       pageNum = this.state.pdf.numPages
     }
 
-    pdfViewer.currentPageNumber = parseInt(pageNum)
+    if (pdfViewer) {
+      pdfViewer.currentPageNumber = parseInt(pageNum, 10)
+    }
   }
 
   zoom(requestScale) {
@@ -104,7 +163,7 @@ class PdfPlayer extends Component {
       scale = 1
     }
 
-    this.setState({scale: parseInt(scale)}, () => this.resize(this.state.viewer))
+    this.setState({scale: parseInt(scale, 10)}, () => this.resize(this.state.viewer))
   }
 
   render() {

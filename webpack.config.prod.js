@@ -5,6 +5,7 @@
 const entries = require('./webpack/entries')
 const config = require('./webpack/config')
 const paths = require('./webpack/paths')
+const webpack = require('webpack')
 
 const assetsFile = require('./webpack/plugins/assets-file')
 const hashedModuleIds = require('./webpack/plugins/hashed-module-ids')
@@ -16,12 +17,14 @@ const babel = require('./webpack/rules/babel')
 
 module.exports = {
   mode: 'production',
+  cache: {
+    type: 'filesystem'
+  },
   // configure webpack logs (show minimal info)
   stats: {
     colors: true,
     all: false,
     modules: true,
-    maxModules: 0,
     errors: true,
     warnings: false,
     moduleTrace: true,
@@ -51,19 +54,24 @@ module.exports = {
     assetsFile('webpack-prod.json'),
     hashedModuleIds(),
     vendorDistributionShortcut(),
-    distributionShortcut()
+    distributionShortcut(),
+    new webpack.ContextReplacementPlugin(/moment[\\/]locale$/, /de|en|es|fr|it|nl/)
   ],
   optimization: {
-    // limit terser to a single worker to avoid OOM on low-memory builds
+    moduleIds: 'deterministic',
     minimizer: [
       new TerserPlugin({
-        parallel: false
+        minify: TerserPlugin.esbuildMinify,
+        terserOptions: {
+          target: 'es2017'
+        }
       })
     ],
     // bundle webpack runtime code into a single chunk file
     // it avoids having it embed in each generated chunk
     runtimeChunk: 'single',
     splitChunks: {
+      maxInitialRequests: 25,
       // just use a more agnostic char for chunk names generation (default is ~)
       automaticNameDelimiter: '-',
       cacheGroups: {
@@ -74,7 +82,8 @@ module.exports = {
           chunks: 'all',
           minChunks: 4,
           priority: -10,
-          reuseExistingChunk: true
+          reuseExistingChunk: true,
+          maxSize: 250000
         },
         app: {
           name: 'app',

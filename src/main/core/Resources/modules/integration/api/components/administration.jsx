@@ -1,11 +1,12 @@
-import React from 'react'
+import React, {Suspense} from 'react'
 import {PropTypes as T} from 'prop-types'
-import SwaggerUI from 'swagger-ui-react'
 
 import {url} from '#/main/app/api/router'
 import {trans} from '#/main/app/intl/translation'
 import {LINK_BUTTON} from '#/main/app/buttons'
 import {ToolPage} from '#/main/core/tool/containers/page'
+
+const SwaggerUI = React.lazy(() => import(/* webpackChunkName: "swagger-ui" */ 'swagger-ui-react'))
 
 const ApiAdministration = (props) =>
   <ToolPage
@@ -17,9 +18,11 @@ const ApiAdministration = (props) =>
     subtitle={trans('api', {}, 'integration')}
     actions={[]}
   >
-    <SwaggerUI
-      url={url(['apiv2_swagger_get'])}
-    />
+    <Suspense fallback={<div>{trans('loading')}</div>}>
+      <SwaggerUI
+        url={url(['apiv2_swagger_get'])}
+      />
+    </Suspense>
   </ToolPage>
 
 ApiAdministration.propTypes = {

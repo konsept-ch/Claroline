@@ -1,4 +1,4 @@
-const webpack = require('webpack');
+const webpack = require('webpack')
 
 /**
  * This plugin will ensure all modules will keep the same name
@@ -7,4 +7,12 @@ const webpack = require('webpack');
  *
  * @see https://webpack.js.org/guides/caching/
  */
-module.exports = () => new webpack.HashedModuleIdsPlugin()
+const getHashedModuleIdsPlugin = () => {
+  if (webpack.ids && webpack.ids.HashedModuleIdsPlugin) {
+    return webpack.ids.HashedModuleIdsPlugin
+  }
+
+  return webpack.HashedModuleIdsPlugin
+}
+
+module.exports = () => new (getHashedModuleIdsPlugin())()
