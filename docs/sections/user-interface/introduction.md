@@ -43,6 +43,18 @@ This requires to run the dev server in command line :
 
     npm run webpack:dev
 
+#### Bundle hygiene
+
+When a refactor touches shared bundles, regenerate the production stats and inspect the diff:
+
+```
+npm run bundle:stats
+npm run bundle:analyze
+```
+
+The first command emits `var/webpack/stats.json`; the second produces an HTML report that can be opened locally.
+Before pushing changes, run `npm run bundle:check` to ensure the largest chunk still fits the tracked baseline.
+
 
 ## React integration
 

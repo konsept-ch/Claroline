@@ -115,8 +115,17 @@ jobs:
       - name: "Install JS dependencies with NPM"
         run: npm install
 
-      - name: "Build JS files with Webpack"
-        run: export NODE_OPTIONS=--openssl-legacy-provider && npm run webpack
+      - name: "Build JS bundle with regression guard"
+        run: npm run bundle:ci
+
+      - name: "Upload bundle analysis artifacts"
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: bundle-analysis
+          path: |
+            var/webpack/bundle-report.html
+            var/webpack/stats.json
 
       - name: "Setup Claroline platform"
         run: php bin/console claroline:install --env=test -vvv

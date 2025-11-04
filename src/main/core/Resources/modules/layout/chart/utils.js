@@ -1,4 +1,5 @@
-import {isEmpty, zipWith} from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import zipWith from 'lodash/zipWith'
 import {apiToDateObject, getApiFormat, isValidDate} from '#/main/app/intl/date'
 import {
   DATE_DATA_TYPE,

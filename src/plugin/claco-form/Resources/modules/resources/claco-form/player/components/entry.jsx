@@ -3,8 +3,8 @@ import {PropTypes as T} from 'prop-types'
 import {connect} from 'react-redux'
 import classes from 'classnames'
 
-// TODO : avoid hard dependency
-import html2pdf from 'html2pdf.js'
+// Lazy load heavy PDF dependencies on demand
+import {loadHtml2Pdf} from '#/main/app/dom/pdf'
 
 import {url} from '#/main/app/api'
 import {withRouter} from '#/main/app/router'
@@ -312,7 +312,10 @@ class EntryComponent extends Component {
                         canShare={this.canShare()}
 
                         changeOwner={(user) => this.props.changeEntryOwner(this.props.entry.id, user.id)}
-                        downloadPdf={() => this.props.downloadEntryPdf(this.props.entry.id).then(pdfContent => {
+                        downloadPdf={async () => {
+                          const pdfContent = await this.props.downloadEntryPdf(this.props.entry.id)
+                          const html2pdf = await loadHtml2Pdf()
+
                           html2pdf()
                             .set({
                               filename: pdfContent.name,
@@ -322,7 +325,7 @@ class EntryComponent extends Component {
                             })
                             .from(pdfContent.content, 'string')
                             .save()
-                        })}
+                        }}
                         share={(users) => this.props.shareEntry(this.props.entryId, users)}
                         delete={() => this.props.deleteEntry(this.props.entry).then(() => this.props.history.push(`${this.props.path}/entries`))}
                         toggleStatus={() => this.props.switchEntryStatus(this.props.entry.id)}

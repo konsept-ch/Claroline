@@ -5,8 +5,8 @@ import {trans} from '#/main/app/intl/translation'
 import {url} from '#/main/app/api'
 import {LINK_BUTTON, URL_BUTTON, CALLBACK_BUTTON} from '#/main/app/buttons'
 
-// TODO : avoid hard dependency
-import html2pdf from 'html2pdf.js'
+// Lazy load heavy PDF dependencies on demand
+import {loadHtml2Pdf} from '#/main/app/dom/pdf'
 
 import {ResourcePage} from '#/main/core/resource/containers/page'
 
@@ -36,7 +36,10 @@ const BlogResource = props =>
         label: trans('export-pdf', {}, 'actions'),
         displayed: props.canExport,
         group: trans('transfer'),
-        callback: () => props.downloadBlogPdf(props.blogId).then(pdfContent => {
+        callback: async () => {
+          const pdfContent = await props.downloadBlogPdf(props.blogId)
+          const html2pdf = await loadHtml2Pdf()
+
           html2pdf()
             .set({
               filename: pdfContent.name,
@@ -46,7 +49,7 @@ const BlogResource = props =>
             })
             .from(pdfContent.content, 'string')
             .save()
-        })
+        }
       }, {
         type: URL_BUTTON,
         icon: 'fa fa-fw fa-rss',

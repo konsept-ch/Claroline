@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {Suspense, lazy} from 'react'
 import {PropTypes as T} from 'prop-types'
 
 import {trans} from '#/main/app/intl/translation'
@@ -6,8 +6,18 @@ import {LINK_BUTTON} from '#/main/app/buttons'
 import {ResourcePage} from '#/main/core/resource/containers/page'
 
 import {PathOverview} from '#/plugin/path/resources/path/containers/overview'
-import {EditorMain} from '#/plugin/path/resources/path/editor/containers/main'
 import {PlayerMain} from '#/plugin/path/resources/path/player/containers/main'
+
+const PathEditor = lazy(() =>
+  import('#/plugin/path/resources/path/editor/containers/main')
+    .then((module) => ({default: module.EditorMain}))
+)
+
+const EditorMainRoute = (routeProps) => (
+  <Suspense fallback={null}>
+    <PathEditor {...routeProps} />
+  </Suspense>
+)
 
 const PathResource = props =>
   <ResourcePage
@@ -29,7 +39,7 @@ const PathResource = props =>
     routes={[
       {
         path: '/edit',
-        component: EditorMain,
+        component: EditorMainRoute,
         disabled: !props.editable
       }, {
         path: '/play',

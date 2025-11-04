@@ -1,6 +1,6 @@
 import invariant from 'invariant'
 
-import {loadTinymcePlugins} from '#/main/core/tinymce/plugins'
+import {loadTinymcePlugins, pluginNames as defaultPluginNames} from '#/main/core/tinymce/plugins'
 import {loadTinymceLanguage} from '#/main/core/tinymce/langs'
 import {loadTinymceTheme} from '#/main/core/tinymce/themes'
 
@@ -12,18 +12,114 @@ import {asset, param, theme} from '#/main/app/config'
 import {url as urlValidator} from '#/main/app/data/types/validators'
 import {getExternalPlugins} from '#/main/core/tinymce/plugins/external-plugins'
 
+const INSERT_BUTTON_ITEMS = 'resource-picker file-upload link media image | anchor charmap inserttable insertdatetime'
+const TOOLBAR_1 = 'advanced-toolbar | insert | undo redo | formatselect | bold italic underline | forecolor'
+const TOOLBAR_2 = 'alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat preview code'
+
+const TOOLBAR_PLUGIN_MAP = {
+  forecolor: ['textcolor'],
+  inserttable: ['table'],
+  bullist: ['lists', 'advlist'],
+  numlist: ['lists', 'advlist'],
+  indent: ['lists'],
+  outdent: ['lists'],
+  link: ['link', 'autolink']
+}
+
+const CONFIG_DEPENDENT_PLUGINS = ['autoresize', 'paste', 'codemirror']
+const INTERNAL_PLUGIN_FLAG_PATH = 'tinymce.internal_plugins'
+
 let configPromise = null
+
+function normalizePluginList(value) {
+  if (!value) {
+    return null
+  }
+
+  const sanitize = (list) => {
+    const normalized = list
+      .filter(item => typeof item === 'string')
+      .map(item => item.trim())
+      .filter(Boolean)
+
+    return normalized.length > 0 ? Array.from(new Set(normalized)) : null
+  }
+
+  if (Array.isArray(value)) {
+    return sanitize(value)
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+
+    if (!trimmed) {
+      return null
+    }
+
+    try {
+      const parsed = JSON.parse(trimmed)
+
+      if (Array.isArray(parsed)) {
+        return sanitize(parsed)
+      }
+    } catch (error) {
+      // ignore JSON parse errors and fallback to comma-separated values
+    }
+
+    return sanitize(trimmed.split(','))
+  }
+
+  return null
+}
+
+function deriveInternalPlugins() {
+  const configuredPlugins = normalizePluginList(param(INTERNAL_PLUGIN_FLAG_PATH))
+
+  if (configuredPlugins) {
+    return configuredPlugins
+  }
+
+  const tokens = new Set()
+  ;[TOOLBAR_1, TOOLBAR_2, INSERT_BUTTON_ITEMS].forEach(bar => {
+    if (!bar) {
+      return
+    }
+
+    bar.split(/\s+/)
+      .map(token => token.trim())
+      .filter(token => token && token !== '|')
+      .forEach(token => tokens.add(token))
+  })
+
+  const plugins = new Set(CONFIG_DEPENDENT_PLUGINS)
+
+  tokens.forEach(token => {
+    const mapped = TOOLBAR_PLUGIN_MAP[token]
+
+    if (mapped) {
+      mapped.forEach(name => plugins.add(name))
+    }
+
+    if (defaultPluginNames.indexOf(token) !== -1) {
+      plugins.add(token)
+    }
+  })
+
+  return Array.from(plugins)
+}
 
 function loadTinymceConfig() {
   if (!configPromise) {
     const currentLocale = locale()
+    const internalPlugins = deriveInternalPlugins()
 
     configPromise = Promise.all([
-      loadTinymcePlugins(),
+      loadTinymcePlugins(internalPlugins),
       getExternalPlugins(),
       loadTinymceTheme(),
       loadTinymceLanguage(currentLocale)
-    ]).then(([plugins, extPlugins]) => {
+    ]).then(([availablePlugins, extPlugins]) => {
+      const plugins = availablePlugins.concat(extPlugins)
       const extButtons = extPlugins.length > 0 ? ` | ${extPlugins.join(' ')}` : ''
 
       return {
@@ -49,7 +145,7 @@ function loadTinymceConfig() {
         resize: true,
 
         // enabled plugins
-        plugins: plugins.concat(extPlugins),
+        plugins,
 
         // plugin : autoresize
         autoresize_min_height: 160,
@@ -128,9 +224,9 @@ function loadTinymceConfig() {
         browser_spellcheck: true,
 
         // toolbars & buttons
-        insert_button_items: 'resource-picker file-upload link media image | anchor charmap inserttable insertdatetime',
-        toolbar1: 'advanced-toolbar | insert | undo redo | formatselect | bold italic underline | forecolor ', // TODO : find a way to restore fullscreen mode
-        toolbar2: 'alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat preview code' + extButtons
+        insert_button_items: INSERT_BUTTON_ITEMS,
+        toolbar1: TOOLBAR_1, // TODO : find a way to restore fullscreen mode
+        toolbar2: TOOLBAR_2 + extButtons
       }
     })
   }

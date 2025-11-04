@@ -1,72 +1,77 @@
-const pluginNames = [
-  'advanced-fullscreen',
-  'advanced-toolbar',
-  'anchor',
-  'autolink',
-  'autoresize',
-  'advlist',
-  'charmap',
-  'code',
-  'codemirror',
-  'contextmenu',
-  'file-upload',
-  'fullscreen',
-  'image',
-  'insertdatetime',
-  'link',
-  'lists',
-  'media',
-  'mentions',
-  'paste',
-  'preview',
-  'resource-picker',
-  'searchreplace',
-  'table',
-  'textcolor',
-  'visualblocks',
-  'wordcount'
-]
+const pluginRegistry = {
+  'advanced-fullscreen': () => import(/* webpackChunkName: "tinymce-plugin-advanced-fullscreen" */ '#/main/core/tinymce/plugins/advanced-fullscreen'),
+  'advanced-toolbar': () => import(/* webpackChunkName: "tinymce-plugin-advanced-toolbar" */ '#/main/core/tinymce/plugins/advanced-toolbar'),
+  anchor: () => import(/* webpackChunkName: "tinymce-plugin-anchor" */ 'tinymce/plugins/anchor'),
+  autolink: () => import(/* webpackChunkName: "tinymce-plugin-autolink" */ 'tinymce/plugins/autolink'),
+  autoresize: () => import(/* webpackChunkName: "tinymce-plugin-autoresize" */ 'tinymce/plugins/autoresize'),
+  advlist: () => import(/* webpackChunkName: "tinymce-plugin-advlist" */ 'tinymce/plugins/advlist'),
+  charmap: () => import(/* webpackChunkName: "tinymce-plugin-charmap" */ 'tinymce/plugins/charmap'),
+  code: () => import(/* webpackChunkName: "tinymce-plugin-code" */ 'tinymce/plugins/code'),
+  codemirror: () => import(/* webpackChunkName: "tinymce-plugin-codemirror" */ '#/main/core/tinymce/plugins/codemirror'),
+  contextmenu: () => import(/* webpackChunkName: "tinymce-plugin-contextmenu" */ 'tinymce/plugins/contextmenu'),
+  'file-upload': () => import(/* webpackChunkName: "tinymce-plugin-file-upload" */ '#/main/core/tinymce/plugins/file-upload'),
+  fullscreen: () => import(/* webpackChunkName: "tinymce-plugin-fullscreen" */ 'tinymce/plugins/fullscreen'),
+  image: () => import(/* webpackChunkName: "tinymce-plugin-image" */ 'tinymce/plugins/image'),
+  insertdatetime: () => import(/* webpackChunkName: "tinymce-plugin-insertdatetime" */ 'tinymce/plugins/insertdatetime'),
+  link: () => import(/* webpackChunkName: "tinymce-plugin-link" */ 'tinymce/plugins/link'),
+  lists: () => import(/* webpackChunkName: "tinymce-plugin-lists" */ 'tinymce/plugins/lists'),
+  media: () => import(/* webpackChunkName: "tinymce-plugin-media" */ 'tinymce/plugins/media'),
+  mentions: () => import(/* webpackChunkName: "tinymce-plugin-mentions" */ '#/main/core/tinymce/plugins/mentions'),
+  paste: () => import(/* webpackChunkName: "tinymce-plugin-paste" */ 'tinymce/plugins/paste'),
+  preview: () => import(/* webpackChunkName: "tinymce-plugin-preview" */ 'tinymce/plugins/preview'),
+  'resource-picker': () => import(/* webpackChunkName: "tinymce-plugin-resource-picker" */ '#/main/core/tinymce/plugins/resource-picker'),
+  searchreplace: () => import(/* webpackChunkName: "tinymce-plugin-searchreplace" */ 'tinymce/plugins/searchreplace'),
+  table: () => import(/* webpackChunkName: "tinymce-plugin-table" */ 'tinymce/plugins/table'),
+  textcolor: () => import(/* webpackChunkName: "tinymce-plugin-textcolor" */ 'tinymce/plugins/textcolor'),
+  visualblocks: () => import(/* webpackChunkName: "tinymce-plugin-visualblocks" */ 'tinymce/plugins/visualblocks'),
+  wordcount: () => import(/* webpackChunkName: "tinymce-plugin-wordcount" */ 'tinymce/plugins/wordcount')
+}
 
-const pluginLoaders = [
-  () => import(/* webpackChunkName: "tinymce-plugins" */ '#/main/core/tinymce/plugins/advanced-fullscreen'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ '#/main/core/tinymce/plugins/advanced-toolbar'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/anchor'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/autolink'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/autoresize'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/advlist'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/charmap'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/code'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ '#/main/core/tinymce/plugins/codemirror'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/contextmenu'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ '#/main/core/tinymce/plugins/file-upload'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/fullscreen'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/image'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/insertdatetime'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/link'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/lists'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/media'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ '#/main/core/tinymce/plugins/mentions'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/paste'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/preview'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ '#/main/core/tinymce/plugins/resource-picker'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/searchreplace'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/table'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/textcolor'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/visualblocks'),
-  () => import(/* webpackChunkName: "tinymce-plugins" */ 'tinymce/plugins/wordcount')
-]
+const pluginNames = Object.keys(pluginRegistry)
+const pluginCache = new Map()
 
-let pluginsPromise = null
+function importPlugin(name) {
+  const loader = pluginRegistry[name]
 
-function loadTinymcePlugins() {
-  if (!pluginsPromise) {
-    pluginsPromise = Promise.all(pluginLoaders.map(load => load())).then(() => pluginNames)
+  if (!loader) {
+    return Promise.resolve(null)
   }
 
-  return pluginsPromise
+  if (!pluginCache.has(name)) {
+    pluginCache.set(
+      name,
+      loader()
+        .then(() => name)
+        .catch(error => {
+          pluginCache.delete(name)
+          throw error
+        })
+    )
+  }
+
+  return pluginCache.get(name)
+}
+
+function loadTinymcePlugins(requested = pluginNames) {
+  const normalized = []
+
+  requested.forEach(name => {
+    if (name && normalized.indexOf(name) === -1) {
+      normalized.push(name)
+    }
+  })
+
+  const known = normalized.filter(name => pluginRegistry[name])
+
+  if (known.length === 0) {
+    return Promise.resolve(normalized)
+  }
+
+  return Promise.all(known.map(importPlugin)).then(() => normalized)
 }
 
 export {
   loadTinymcePlugins,
-  pluginNames
+  pluginNames,
+  pluginRegistry
 }

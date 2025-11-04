@@ -2,6 +2,7 @@ const fs = require('fs')
 const path = require('path')
 
 const ASSET_FILTER_FILENAME = '.claroline-assets.json'
+const ASSET_ALLOWLIST_ENV = 'CLAROLINE_ASSET_ALLOWLIST'
 const ADMIN_OVERRIDE_ENV = 'CLAROLINE_INCLUDE_ADMIN_ASSETS'
 
 /**
@@ -183,8 +184,8 @@ function loadAssetPreferences(rootDir) {
     }
   }
 
-  const enabled = parseNameList(config.enabled)
-  const disabled = parseNameList(config.disabled) || new Set()
+  const enabled = parseNameList(getAllowlistPreference(config))
+  const disabled = parseNameList(getBlocklistPreference(config)) || new Set()
   const adminOverrides = parseAdminOverrides(config.adminOnly)
 
   return {
@@ -196,16 +197,103 @@ function loadAssetPreferences(rootDir) {
 }
 
 function parseNameList(list) {
-  if (!Array.isArray(list)) {
+  if (!list) {
     return null
   }
 
-  const names = list
+  if (list instanceof Set) {
+    return list.size ? list : null
+  }
+
+  let values = list
+
+  if (typeof list === 'string') {
+    const trimmed = list.trim()
+
+    if (!trimmed) {
+      return null
+    }
+
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed)
+
+        if (Array.isArray(parsed)) {
+          values = parsed
+        } else {
+          values = trimmed.split(/[,;\s]+/)
+        }
+      } catch (err) {
+        values = trimmed.split(/[,;\s]+/)
+      }
+    } else {
+      values = trimmed.split(/[,;\s]+/)
+    }
+  }
+
+  if (!Array.isArray(values)) {
+    return null
+  }
+
+  const names = values
     .filter(value => typeof value === 'string')
     .map(value => value.trim())
     .filter(Boolean)
 
   return names.length > 0 ? new Set(names) : null
+}
+
+function getAllowlistPreference(config) {
+  const envValue = readEnvPreference(ASSET_ALLOWLIST_ENV)
+
+  if (envValue !== null) {
+    return envValue
+  }
+
+  return getFirstConfigValue(config, [
+    'allowlist',
+    'allowList',
+    'allow',
+    'enabled'
+  ])
+}
+
+function getBlocklistPreference(config) {
+  return getFirstConfigValue(config, [
+    'blocklist',
+    'blockList',
+    'block',
+    'denylist',
+    'denyList',
+    'disabled',
+    'exclude'
+  ])
+}
+
+function readEnvPreference(name) {
+  if (typeof process.env[name] !== 'string') {
+    return null
+  }
+
+  const trimmed = process.env[name].trim()
+
+  return trimmed.length ? trimmed : null
+}
+
+function getFirstConfigValue(config, keys) {
+  if (!config || typeof config !== 'object') {
+    return null
+  }
+
+  for (let i = 0; i < keys.length; i += 1) {
+    const key = keys[i]
+
+    if (Object.prototype.hasOwnProperty.call(config, key) && typeof config[key] !== 'undefined') {
+      return config[key]
+    }
+  }
+
+  return null
 }
 
 function parseAdminOverrides(overrides) {

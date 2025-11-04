@@ -1,7 +1,8 @@
 import React, {useEffect, useState} from 'react'
 import {PropTypes as T} from 'prop-types'
 import classes from 'classnames'
-import {get, isEmpty} from 'lodash'
+import get from 'lodash/get'
+import isEmpty from 'lodash/isEmpty'
 
 import {trans} from '#/main/app/intl/translation'
 import {Button} from '#/main/app/action/components/button'
