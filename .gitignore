@@ -12,6 +12,7 @@ public/css/*
 public/data
 public/dist
 public/js/*
+stats-full.json
 public/packages
 public/themes/*
 !public/themes/.gitkeep
