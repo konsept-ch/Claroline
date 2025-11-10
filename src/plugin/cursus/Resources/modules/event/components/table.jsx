@@ -31,7 +31,7 @@ const EventTable = (props) => {
 					{events.map(event => (
         				<tr key={event.id}>
         					<td>{event.name}</td>
-        					<td>{event.location.name}</td>
+        					<td>{event.location?.name || trans('event_location_undefined', {}, 'cursus')}</td>
         					<td>{displayDate(event.start, false, true)}</td>
         					<td>{displayDate(event.end, false, true)}</td>
         				</tr>
