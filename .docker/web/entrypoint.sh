@@ -17,7 +17,7 @@ composer bundles # we run it again to generate bundles.ini inside the volume
 composer delete-cache # fixes install/update errors
 
 echo "Cleaning up unused bundled themes for faster install/update..."
-rm -rf src/main/theme/Resources/themes/claroline-black src/main/theme/Resources/themes/claroline-mint src/main/theme/Resources/themes/claroline-ruby
+rm -rf src/main/theme/Resources/themes/claroline-*
 
 # Wait for MySQL to respond, depends on mysql-client
 echo "Waiting for $DB_HOST (prefer TLS; fallback to no TLS)..."
@@ -92,6 +92,10 @@ else
   touch files/installed
   echo "Claroline installed, created file ./files/installed for future runs of this container"
 fi
+
+# Always dump JS routing to a static file to speed up first page load
+echo "Dumping FOSJsRouting routes to public/js/fos_js_routes.js"
+php bin/console fos:js-routing:dump --format=js --target=public/js/fos_js_routes.js
 
 echo "Clean cache after setting correct permissions, fixes SAML issues"
 composer delete-cache # fixes SAML errors
