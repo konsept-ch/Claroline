@@ -82,15 +82,12 @@ done
 echo "MySQL is up"
 
 if [ -f files/installed ]; then
-  if [ "${SKIP_REBUILD:-0}" = "1" ]; then
-    echo "Claroline already installed. SKIP_REBUILD=1 => skipping claroline:update."
-  else
-    echo "Claroline is already installed, updating and rebuilding themes and translations..."
-    php bin/console claroline:update --env=dev -vvv
-  fi
+  echo "Claroline is already installed, updating and rebuilding themes and translations..."
+  php bin/console claroline:update -vvv
 else
   echo "Installing Claroline for the first time..."
-  php bin/console claroline:install --env=dev -vvv
+  chown -R www-data:www-data var files config public # set owner to avoid permission issues later on
+  php bin/console claroline:install -vvv
 
   if [[ -v PLATFORM_NAME ]]; then
     echo "Changing platform name to $PLATFORM_NAME";
