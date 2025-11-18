@@ -223,17 +223,17 @@ class LogManager
         foreach ($data as $value) {
             // Fill in with zeros from previous date till this date
             while (null !== $prevDate && $prevDate < $value['date']) {
-                $chartData["c${idx}"] = ['xData' => $prevDate->format('Y-m-d\TH:i:s'), 'yData' => 0];
+                $chartData["c{$idx}"] = ['xData' => $prevDate->format('Y-m-d\TH:i:s'), 'yData' => 0];
                 $prevDate->add(new \DateInterval('P1D'));
                 ++$idx;
             }
-            $chartData["c${idx}"] = ['xData' => $value['date']->format('Y-m-d\TH:i:s'), 'yData' => floatval($value['total'])];
+            $chartData["c{$idx}"] = ['xData' => $value['date']->format('Y-m-d\TH:i:s'), 'yData' => floatval($value['total'])];
             $prevDate = $value['date']->add(new \DateInterval('P1D'));
             ++$idx;
         }
         // Fill in with zeros till maxDate
         while (null !== $prevDate && null !== $maxDate && $maxDate >= $prevDate) {
-            $chartData["c${idx}"] = ['xData' => $prevDate->format('Y-m-d\TH:i:s'), 'yData' => 0];
+            $chartData["c{$idx}"] = ['xData' => $prevDate->format('Y-m-d\TH:i:s'), 'yData' => 0];
             $prevDate->add(new \DateInterval('P1D'));
             ++$idx;
         }

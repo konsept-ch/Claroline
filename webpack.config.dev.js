@@ -31,7 +31,8 @@ module.exports = {
     contentBase: paths.output(),
     headers: {
       'Access-Control-Allow-Origin': '*'
-    }
+    },
+    writeToDisk: true
   },
   output: {
     path: paths.output(),

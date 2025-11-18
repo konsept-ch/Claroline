@@ -21,12 +21,14 @@ class WebpackExtension extends AbstractExtension
     private $environment;
     private $projectDir;
     private $assetCache;
+    private $hotEnabled;
 
-    public function __construct(AssetExtension $extension, string $environment, string $projectDir)
+    public function __construct(AssetExtension $extension, string $environment, string $projectDir, ?bool $hotEnabled = null)
     {
         $this->assetExtension = $extension;
         $this->environment = $environment;
         $this->projectDir = $projectDir;
+        $this->hotEnabled = $this->resolveHotReloadFlag($hotEnabled);
     }
 
     public function getFunctions()
@@ -63,7 +65,7 @@ class WebpackExtension extends AbstractExtension
             throw new \Exception("Cannot find asset '{$assetName}' in webpack stats. Found:\n{$assetNames})");
         }
 
-        if ('dev' === $this->environment && $hot) {
+        if ('dev' === $this->environment && $hot && $this->hotEnabled) {
             // for dev serve fill from webpack-dev-server
             return 'http://localhost:8080/dist/'.$assets[$assetName]['js'];
         }
@@ -77,8 +79,8 @@ class WebpackExtension extends AbstractExtension
     private function getWebpackAssets()
     {
         if (!$this->assetCache) {
-            $assetFile = 'prod'; // for prod and test envs
-            if ('dev' === $this->environment) {
+            $assetFile = 'prod'; // default: reuse the production map
+            if ('dev' === $this->environment && $this->hotEnabled) {
                 $assetFile = 'dev';
             }
 
@@ -92,5 +94,16 @@ class WebpackExtension extends AbstractExtension
         }
 
         return $this->assetCache;
+    }
+
+    private function resolveHotReloadFlag(?bool $hotEnabled): bool
+    {
+        if (null !== $hotEnabled) {
+            return $hotEnabled;
+        }
+
+        $raw = $_SERVER['WEBPACK_DEV_SERVER'] ?? $_ENV['WEBPACK_DEV_SERVER'] ?? getenv('WEBPACK_DEV_SERVER');
+
+        return filter_var($raw, FILTER_VALIDATE_BOOLEAN);
     }
 }

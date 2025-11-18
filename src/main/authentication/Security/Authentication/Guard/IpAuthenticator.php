@@ -30,7 +30,7 @@ class IpAuthenticator extends AbstractGuardAuthenticator
      */
     public function supports(Request $request)
     {
-        return true;
+        return null !== $request->getClientIp();
     }
 
     /**

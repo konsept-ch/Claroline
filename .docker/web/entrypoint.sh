@@ -1,77 +1,174 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
-echo "Creating required directories in volumes"
-mkdir -p var/geoip
-mkdir -p files/config
-mkdir -p files/data
-mkdir -p files/templates
+APP_DIR="/var/www/html/claroline"
+APP_ENV="${APP_ENV:-prod}"
+DB_HOST="${DB_HOST:-claroline-db}"
+DB_PORT="${DB_PORT:-3306}"
+DB_NAME="${DB_NAME:-claroline}"
+DB_USER="${DB_USER:-claroline}"
+DB_PASSWORD="${DB_PASSWORD:-claroline}"
+DB_WAIT_TIMEOUT="${DB_WAIT_TIMEOUT:-120}"
+GEOIP_DB_PATH="${GEOIP_DB_PATH:-var/geoip/GeoLite2-City.mmdb}"
 
-echo "Copying initial config files to /config volume"
-cp -R ../initial/config ./
+cd "$APP_DIR"
 
-echo "Generating parameters.yml and bundles.ini"
-php bin/configure # we run it again to generate parameters.yml inside the volume
-composer bundles # we run it again to generate bundles.ini inside the volume
-composer delete-cache # fixes install/update errors
+export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=4096}"
 
-echo "Cleaning up unused bundled themes for faster install/update..."
-rm -rf src/main/theme/Resources/themes/claroline-black src/main/theme/Resources/themes/claroline-mint src/main/theme/Resources/themes/claroline-ruby
+log() {
+  echo "[$(date +'%H:%M:%S')] $*"
+}
 
-# Wait for MySQL to respond, depends on mysql-client
-echo "Waiting for $DB_HOST..."
-while ! mysqladmin ping -h "$DB_HOST" --silent; do
-  echo "MySQL is down"
-  sleep 1
-done
+is_enabled() {
+  case "${1:-0}" in
+    1|true|TRUE|on|ON|yes|YES) return 0 ;;
+    *) return 1 ;;
+  esac
+}
 
-echo "MySQL is up"
+ensure_directories() {
+  mkdir -p var/cache var/log var/sessions var/tmp var/geoip files/config files/data files/templates public/js
+}
 
-if [ -f files/installed ]; then
-  echo "Claroline is already installed, updating and rebuilding themes and translations..."
+sync_initial_config() {
+  if [ -d /var/www/html/initial/config ]; then
+    log "Syncing default config into mounted volume"
+    rsync -a --ignore-existing /var/www/html/initial/config/ ./config/
+  fi
+}
 
-  php bin/console claroline:update -vvv
-else
-  echo "Installing Claroline for the first time..."
-  chown -R www-data:www-data var files config # set owner to avoid permission issues later on
-  php bin/console claroline:install -vvv
+prepare_ssl() {
+  local server_name="${APP_URL:-claroline.local}"
+  server_name="${server_name#http://}"
+  server_name="${server_name#https://}"
+  server_name="${server_name%%/*}"
 
-  if [[ -v PLATFORM_NAME ]]; then
-    echo "Changing platform name to $PLATFORM_NAME";
-    sed -i "/name: claroline/c\name: $PLATFORM_NAME" files/config/platform_options.json
+  if [ -n "$server_name" ]; then
+    sed -i "s/claroline.local/$server_name/g" /etc/apache2/sites-available/claroline.conf /etc/apache2/sites-available/claroline-ssl.conf
+  fi
+}
+
+warm_up_configuration() {
+  log "Generating parameters.yml for the mounted config"
+  php bin/configure || php bin/configure --default
+
+  log "Ensuring bundles.ini exists"
+  composer bundles
+}
+
+refresh_geoip() {
+  if is_enabled "${GEOIP_DISABLE:-0}"; then
+    log "GEOIP_DISABLE=1, skipping GeoIP download"
+    return
   fi
 
-  if [[ -v PLATFORM_SUPPORT_EMAIL ]]; then
-    echo "Changing platform support email to $PLATFORM_SUPPORT_EMAIL";
-    sed -i "/support_email: null/c\support_email: $PLATFORM_SUPPORT_EMAIL" files/config/platform_options.json
-  fi
-
-  USERS=$(mysql $DB_NAME -u $DB_USER -p$DB_PASSWORD -h $DB_HOST -se "select count(*) from claro_user")
-
-  if [ "$USERS" == "1" ] && [ -v ADMIN_FIRSTNAME ] && [ -v ADMIN_LASTNAME ] && [ -v ADMIN_USERNAME ] && [ -v ADMIN_PASSWORD ]  && [ -v ADMIN_EMAIL ]; then
-    echo '*********************************************************************************************************************'
-    echo "Creating default non-admin user for production : $ADMIN_FIRSTNAME $ADMIN_LASTNAME $ADMIN_USERNAME $ADMIN_PASSWORD $ADMIN_EMAIL"
-    echo '*********************************************************************************************************************'
-
-    php bin/console claroline:user:create $ADMIN_FIRSTNAME $ADMIN_LASTNAME $ADMIN_USERNAME $ADMIN_PASSWORD $ADMIN_EMAIL
+  if [ ! -f "$GEOIP_DB_PATH" ] || find "$GEOIP_DB_PATH" -mtime +7 -print -quit | grep -q "."; then
+    log "Downloading GeoIP database (weekly refresh)"
+    composer setup-geoip || log "GeoIP download skipped (missing license key?)"
   else
-    echo 'Users already exist or no admin vars detected, Claroline installed without an admin account'
+    log "Reusing existing GeoIP database (fresh enough)"
+  fi
+}
+
+dump_js_routes() {
+  local routes_file="public/js/fos_js_routes.json"
+  if [ ! -f "$routes_file" ]; then
+    log "Dumping FOS JS routes"
+    php bin/console fos:js-routing:dump --format=json --target="$routes_file" --env="$APP_ENV" || log "Unable to dump FOS JS routes (command unavailable?)"
+  fi
+}
+
+wait_for_mysql() {
+  log "Waiting for MySQL at ${DB_HOST}:${DB_PORT}..."
+  local waited=0
+  while ! mysqladmin ping -h "$DB_HOST" -P "$DB_PORT" --protocol=TCP --silent >/dev/null 2>&1; do
+    sleep 2
+    waited=$((waited + 2))
+    if [ "$waited" -ge "$DB_WAIT_TIMEOUT" ]; then
+      log "MySQL did not respond after ${DB_WAIT_TIMEOUT}s"
+      exit 1
+    fi
+    log "Still waiting for MySQL..."
+  done
+  log "MySQL is up."
+}
+
+maybe_update_platform() {
+  if [ -n "${PLATFORM_NAME:-}" ]; then
+    log "Setting platform name to ${PLATFORM_NAME}"
+    sed -i "/name: claroline/c\\name: ${PLATFORM_NAME}" files/config/platform_options.json
   fi
 
-  echo "In order to create an admin user, run the following command inside the docker container (and replace the variables):"
-  echo "php bin/console claroline:user:create -a \$ADMIN_FIRSTNAME \$ADMIN_LASTNAME \$ADMIN_USERNAME \$ADMIN_PASSWORD \$ADMIN_EMAIL"
+  if [ -n "${PLATFORM_SUPPORT_EMAIL:-}" ]; then
+    log "Setting support email to ${PLATFORM_SUPPORT_EMAIL}"
+    sed -i "/support_email: null/c\\support_email: ${PLATFORM_SUPPORT_EMAIL}" files/config/platform_options.json
+  fi
+}
 
-  touch files/installed
-  echo "Claroline installed, created file ./files/installed for future runs of this container"
-fi
+maybe_create_admin() {
+  local admin_required_count=1
+  local mysql_cmd=(mysql -h "$DB_HOST" -P "$DB_PORT" --protocol=TCP --connect-timeout=5 -u "$DB_USER" "-p$DB_PASSWORD" "$DB_NAME" -N -e "SELECT COUNT(*) FROM claro_user")
+  local users
+  if users="$("${mysql_cmd[@]}" 2>/dev/null)"; then
+    if [ "$users" = "$admin_required_count" ] && \
+       [ -n "${ADMIN_FIRSTNAME:-}" ] && \
+       [ -n "${ADMIN_LASTNAME:-}" ] && \
+       [ -n "${ADMIN_USERNAME:-}" ] && \
+       [ -n "${ADMIN_PASSWORD:-}" ] && \
+       [ -n "${ADMIN_EMAIL:-}" ]; then
+      log "Creating default administrator ${ADMIN_USERNAME}"
+      php bin/console claroline:user:create -a "$ADMIN_FIRSTNAME" "$ADMIN_LASTNAME" "$ADMIN_USERNAME" "$ADMIN_PASSWORD" "$ADMIN_EMAIL"
+    else
+      log "Users already exist or admin env vars missing, skipping auto user creation"
+    fi
+  else
+    log "Unable to inspect users table, skipping admin creation"
+  fi
+}
 
-echo "Clean cache after setting correct permissions, fixes SAML issues"
-composer delete-cache # fixes SAML errors
+run_claroline_tasks() {
+  if [ -f files/installed ]; then
+    if is_enabled "${SKIP_REBUILD:-0}"; then
+      log "files/installed detected but SKIP_REBUILD=1 so claroline:update will be skipped"
+    else
+      log "Updating Claroline"
+      php bin/console claroline:update --env="$APP_ENV" -vvv
+    fi
+  else
+    log "Running initial Claroline installation"
+    chown -R www-data:www-data var files config
+    php bin/console claroline:install --env="$APP_ENV" -vvv
+    maybe_update_platform
+    maybe_create_admin
+    touch files/installed
+    log "Created files/installed to mark completed install"
+  fi
+}
 
-echo "Setting correct file permissions for PROD"
-chown -R www-data:www-data var files config
-chmod -R 750 var files config
-chmod -R 755 public
+finalize_permissions() {
+  log "Normalizing permissions for production"
+  chown -R www-data:www-data var files config
+  chmod -R 750 var files config
+  chmod -R 755 public
+}
 
+warn_if_dev_server() {
+  if is_enabled "${WEBPACK_DEV_SERVER:-0}"; then
+    log "WEBPACK_DEV_SERVER=1 requested but production images ship with pre-built assets; ignoring."
+  fi
+}
+
+ensure_directories
+sync_initial_config
+prepare_ssl
+warm_up_configuration
+refresh_geoip
+wait_for_mysql
+run_claroline_tasks
+dump_js_routes
+warn_if_dev_server
+finalize_permissions
+
+log "Starting Apache"
 exec "$@"

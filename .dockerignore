@@ -1,9 +1,12 @@
 .git
 node_modules
 vendor
-var
+var/cache
+var/log
+var/geoip
 files/geoip
-stats-full.json
 public/bundles
 public/data
 public/packages
+public/dist
+stats-full.json

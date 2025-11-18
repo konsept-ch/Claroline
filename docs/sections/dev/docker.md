@@ -47,7 +47,7 @@ When you modify PHP files, you'll need to manually refresh the page.
 While running the containers, open a new console in the project folder and run the following command (replace "yourthemename" with the name of your theme):
 
 ```sh
-docker exec -it claroline-web npx nodemon -e less --watch files/themes-src/yourthemename --exec 'php bin/console claroline:theme:build --theme=yourthemename'
+docker exec -it dgcs-claroline-web npx nodemon -e less --watch files/themes-src/yourthemename --exec 'php bin/console claroline:theme:build --theme=yourthemename'
 ```
 
 If you're working on one of the core themes (the ones included with Claroline), you can adapt this command by changing the folder to watch and by passing the theme's name.

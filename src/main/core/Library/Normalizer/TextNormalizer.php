@@ -211,7 +211,7 @@ class TextNormalizer
                 if ('' != $readMoreText && $lengthBeforeWithoutHtml > $nbCharacter) {
                     $text .= 'SuspensionPoint';
                     $pattern = '#((</[^>]*>[\n\t\r ]*)?(</[^>]*>[\n\t\r ]*)?(</[^>]*>[\n\t\r ]*)?(</[^>]*>[\n\t\r ]*)?(</[^>]*>)[\n\t\r ]*SuspensionPoint)#i';
-                    $text = preg_replace($pattern, $readMoreText.'${2}${3}${4}${5}${6}', $text);
+                    $text = preg_replace($pattern, $readMoreText.'$2$3$4$5$6', $text);
                 }
             }
         }
