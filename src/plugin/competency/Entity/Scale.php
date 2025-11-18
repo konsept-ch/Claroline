@@ -170,6 +170,7 @@ class Scale implements \JsonSerializable
         return $this->abilityCount;
     }
 
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return [

@@ -2,14 +2,79 @@
 
 set -e
 
+echo "Preparing writable directories and clearing cache"
+mkdir -p var files config var/geoip || true
+# Ensure Symfony cache tree exists to avoid warmup failures on some hosts
+mkdir -p var/cache/dev/doctrine/orm || true
+chmod -R 777 var files config || true
+composer delete-cache || true # proactively clear Symfony cache to avoid rmdir issues
+
 echo "Installing dependencies (or checking if correct ones are installed)"
-composer install # if composer.lock exists, this takes ~2 seconds (every subsequent run with no changes to deps)
+export COMPOSER_ALLOW_SUPERUSER=1
+# Ensure parameters are generated even when skipping composer scripts
+php bin/configure || true
+# Skip composer scripts to avoid unconditional geoip download; run what we need manually
+composer install --no-scripts
+# Rebuild bundles that are usually created by composer scripts
+composer bundles || true
+# Optimize Composer autoloader to reduce filesystem lookups in dev
+composer dump-autoload -o || true
+# Conditionally download/update GeoIP database (persisted via volume)
+GEOIP_DIR="var/geoip"
+GEOIP_DB="$GEOIP_DIR/GeoLite2-City.mmdb"
+GEOIP_LOCK="$GEOIP_DIR/.geoip.update.lock"
+
+# Helper: return 0 if db missing or older than 7 days
+needs_geoip_update() {
+  if [ ! -s "$GEOIP_DB" ]; then
+    return 0
+  fi
+  # Compare mtime with now-7days; use find to be POSIX-friendly
+  if find "$GEOIP_DIR" -maxdepth 1 -type f -name "$(basename "$GEOIP_DB")" -mtime -7 | grep -q .; then
+    return 1
+  fi
+  return 0
+}
+
+mkdir -p "$GEOIP_DIR" || true
+
+# Allow disabling GeoIP in dev via env toggle
+if [ "${GEOIP_DISABLE:-0}" = "1" ]; then
+  echo "GeoIP download disabled (GEOIP_DISABLE=1). Skipping."
+elif needs_geoip_update; then
+  (
+    # Use a subshell + flock if available; otherwise best-effort lock
+    if command -v flock >/dev/null 2>&1; then
+      exec 9>"$GEOIP_LOCK"
+      if flock -n 9; then
+        echo "GeoIP database missing or older than 7 days. Updating..."
+        php bin/console claroline:geoip:download || echo "GeoIP download skipped or failed (license key not set?)."
+        rm -f "$GEOIP_LOCK" || true
+      fi
+      exec 9>&-
+    else
+      if [ ! -f "$GEOIP_LOCK" ]; then
+        echo "GeoIP database missing or older than 7 days. Updating..."
+        touch "$GEOIP_LOCK"
+        php bin/console claroline:geoip:download || echo "GeoIP download skipped or failed (license key not set?)."
+        rm -f "$GEOIP_LOCK" || true
+      fi
+    fi
+  )
+else
+  echo "GeoIP database is fresh (<7 days). Skipping download."
+fi
+
 npm install --legacy-peer-deps # if package-lock.json exists, this takes ~3 seconds (every subsequent run with no changes to deps)
 # --legacy-peer-deps is needed until all dependencies are compatible with npm 7 (until npm install runs without error)
 
+# Always dump JS routing to a static file to speed up first page load
+echo "Dumping FOSJsRouting routes to public/js/fos_js_routes.js"
+php bin/console fos:js-routing:dump --format=js --target=public/js/fos_js_routes.js || true
+
 # Wait for MySQL to respond, depends on mysql-client
-echo "Waiting for $DB_HOST..."
-while ! mysqladmin ping -h "$DB_HOST" --silent; do
+echo "Waiting for $DB_HOST (no TLS in dev)..."
+while ! mysqladmin ping -h "$DB_HOST" --protocol=tcp --skip-ssl --connect-timeout=2 --silent; do
   echo "MySQL is down"
   sleep 1
 done
@@ -17,9 +82,12 @@ done
 echo "MySQL is up"
 
 if [ -f files/installed ]; then
-  echo "Claroline is already installed, updating and rebuilding themes and translations..."
-
-  php bin/console claroline:update --env=dev -vvv
+  if [ "${SKIP_REBUILD:-0}" = "1" ]; then
+    echo "Claroline already installed. SKIP_REBUILD=1 => skipping claroline:update."
+  else
+    echo "Claroline is already installed, updating and rebuilding themes and translations..."
+    php bin/console claroline:update --env=dev -vvv
+  fi
 else
   echo "Installing Claroline for the first time..."
   php bin/console claroline:install --env=dev -vvv
@@ -34,7 +102,7 @@ else
     sed -i "/support_email: null/c\support_email: $PLATFORM_SUPPORT_EMAIL" files/config/platform_options.json
   fi
 
-  USERS=$(mysql $DB_NAME -u $DB_USER -p$DB_PASSWORD -h $DB_HOST -se "select count(*) from claro_user")
+  USERS=$(mysql $DB_NAME -u $DB_USER -p$DB_PASSWORD -h $DB_HOST --protocol=tcp --skip-ssl -se "select count(*) from claro_user")
 
   if [ "$USERS" == "1" ] && [ -v ADMIN_FIRSTNAME ] && [ -v ADMIN_LASTNAME ] && [ -v ADMIN_USERNAME ] && [ -v ADMIN_PASSWORD ]  && [ -v ADMIN_EMAIL ]; then
     echo '*********************************************************************************************************************'
@@ -56,8 +124,24 @@ composer delete-cache # fixes SAML errors
 echo "Setting correct file permissions for DEV"
 chmod -R 777 var files config
 
-echo "webpack-dev-server starting as a background process..."
-nohup npm run webpack:dev -- --host=0.0.0.0 --disable-host-check &
+# Normalize SSL vhost file and ensure no duplicate Listen 443 (handles CRLF too)
+if [ -f /etc/apache2/sites-enabled/claroline-ssl.conf ]; then
+  sed -i 's/\r$//' /etc/apache2/sites-enabled/claroline-ssl.conf || true
+  sed -i '/^Listen[[:space:]]\+443[[:space:]]*$/d' /etc/apache2/sites-enabled/claroline-ssl.conf || true
+fi
+
+if [ "${SKIP_REBUILD:-0}" = "1" ]; then
+  echo "SKIP_REBUILD=1 => skipping frontend build."
+else
+  if [ "${WEBPACK_DEV_SERVER:-1}" = "1" ]; then
+    echo "webpack-dev-server starting as a background process..."
+    export NODE_OPTIONS="${NODE_OPTIONS:---max_old_space_size=4096}"
+    nohup npm run webpack:dev -- --host=0.0.0.0 --disable-host-check &
+  else
+    echo "Building assets once (no dev server)..."
+    npm run webpack
+  fi
+fi
 
 echo "Starting Apache2 in the foreground"
 exec "$@"

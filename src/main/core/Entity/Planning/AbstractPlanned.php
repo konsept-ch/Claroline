@@ -54,8 +54,11 @@ abstract class AbstractPlanned
      */
     public function __call(string $method, array $arguments = [])
     {
-        if (method_exists($this->plannedObject, $method)) {
-            return call_user_func_array([$this->plannedObject, $method], $arguments);
+        // Ensure the PlannedObject is initialized before proxying calls
+        $plannedObject = $this->getPlannedObject();
+
+        if (method_exists($plannedObject, $method)) {
+            return call_user_func_array([$plannedObject, $method], $arguments);
         }
 
         throw new \BadMethodCallException(sprintf('Undefined method "%s".', $method));
