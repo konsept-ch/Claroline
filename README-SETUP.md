@@ -81,6 +81,8 @@ Example:
 docker exec -it dgcs-claroline-web scripts/seed-dev.sh --courses=3 --sessions=2 --events=2 --reset
 ```
 
+Need demo sessions to appear immediately under a specific user (e.g. `root`)? Add `--enroll-user=root` and the script will register that account to every generated session so “Mes séances” lists aren’t empty.
+
 ## Troubleshooting
 
 - **Composer install keeps running** – blow away the `claroline_claroline_vendor` volume so dependencies can be reinstalled cleanly.

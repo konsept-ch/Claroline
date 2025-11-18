@@ -32,6 +32,7 @@ Claroline does not ship heavy fixtures by default, so two helper scripts were ad
    - `--sessions=2` – sessions per course (default: 2)
    - `--events=2` – events per session (default: 2)
    - `--prefix=DEMO` – code prefix used for generated entities
+   - `--enroll-user=root` – (optional) username that will be registered to every generated session
    - `--reset` – delete previous demo entities that match the prefix
    - `--env=dev` – Symfony environment (defaults to `APP_ENV`)
 2. `scripts/seed-dev.sh`: thin bash wrapper that forwards CLI args to the PHP script while preserving `APP_ENV`.

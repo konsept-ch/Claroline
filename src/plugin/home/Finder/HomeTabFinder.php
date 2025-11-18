@@ -24,6 +24,8 @@ class HomeTabFinder extends AbstractFinder
 
     public function configureQueryBuilder(QueryBuilder $qb, array $searches = [], array $sortBy = null): QueryBuilder
     {
+        $this->withEagerLoadedRelations($qb);
+
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
                 case 'context':
@@ -68,5 +70,31 @@ class HomeTabFinder extends AbstractFinder
         $qb->orderBy('obj.order', 'ASC');
 
         return $qb;
+    }
+
+    private function withEagerLoadedRelations(QueryBuilder $qb): void
+    {
+        $selectParts = $qb->getDQLPart('select');
+        if (!empty($selectParts)) {
+            foreach ($selectParts as $part) {
+                if (false !== stripos((string) $part, 'count(')) {
+                    return;
+                }
+            }
+        }
+
+        $qb
+            ->leftJoin('obj.children', 'children')
+            ->addSelect('children')
+            ->leftJoin('children.children', 'grandChildren')
+            ->addSelect('grandChildren')
+            ->leftJoin('obj.roles', 'roles')
+            ->addSelect('roles')
+            ->leftJoin('obj.parent', 'parent')
+            ->addSelect('parent')
+            ->leftJoin('obj.user', 'tabUser')
+            ->addSelect('tabUser')
+            ->leftJoin('obj.workspace', 'tabWorkspace')
+            ->addSelect('tabWorkspace');
     }
 }

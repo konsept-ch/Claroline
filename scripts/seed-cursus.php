@@ -3,8 +3,10 @@
 
 declare(strict_types=1);
 
+use Claroline\CoreBundle\Entity\User;
 use Claroline\CursusBundle\Entity\Course;
 use Claroline\CursusBundle\Entity\Event;
+use Claroline\CursusBundle\Entity\Registration\SessionUser;
 use Claroline\CursusBundle\Entity\Session;
 use Claroline\KernelBundle\Kernel;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,6 +24,7 @@ $definition = new InputDefinition([
     new InputOption('sessions', null, InputOption::VALUE_OPTIONAL, 'Sessions per course', 2),
     new InputOption('events', null, InputOption::VALUE_OPTIONAL, 'Events per session', 2),
     new InputOption('prefix', null, InputOption::VALUE_OPTIONAL, 'Code prefix used for generated entities', 'DEMO'),
+    new InputOption('enroll-user', null, InputOption::VALUE_OPTIONAL, 'Username to auto-enroll into generated sessions', null),
     new InputOption('reset', null, InputOption::VALUE_NONE, 'Erase existing demo entries before seeding'),
 ]);
 
@@ -35,6 +38,8 @@ $courses = max(1, (int) $input->getOption('courses'));
 $sessions = max(1, (int) $input->getOption('sessions'));
 $events = max(0, (int) $input->getOption('events'));
 $prefix = strtoupper((string) $input->getOption('prefix'));
+$enrollUsername = $input->getOption('enroll-user');
+$enrollUsername = is_string($enrollUsername) ? trim($enrollUsername) : null;
 $reset = (bool) $input->getOption('reset');
 
 $kernel = new Kernel($env, $debug);
@@ -59,6 +64,11 @@ try {
     }
 
     seedDemoData($em, $courses, $sessions, $events, $prefix, $io);
+
+    if (!empty($enrollUsername)) {
+        enrollUserInSessions($em, $prefix, $enrollUsername, $io);
+    }
+
     $io->success('Cursus demo data ready.');
 } catch (\Throwable $exception) {
     $io->error($exception->getMessage());
@@ -79,6 +89,7 @@ function purgeDemoData(EntityManagerInterface $em, string $prefix, SymfonyStyle 
             ->from($class, 'e')
             ->where('e.code LIKE :prefix')
             ->setParameter('prefix', $wildcard)
+            ->getQuery()
             ->getResult();
 
         if (empty($items)) {
@@ -165,4 +176,62 @@ function seedDemoData(
     }
 
     $em->flush();
+}
+
+function enrollUserInSessions(EntityManagerInterface $em, string $prefix, string $username, SymfonyStyle $io): void
+{
+    /** @var User|null $user */
+    $user = $em->getRepository(User::class)->findOneBy(['username' => $username]);
+
+    if (!$user) {
+        $io->warning(sprintf('Cannot enroll "%s": user not found.', $username));
+
+        return;
+    }
+
+    $sessions = $em->createQueryBuilder()
+        ->select('s')
+        ->from(Session::class, 's')
+        ->where('s.code LIKE :prefix')
+        ->setParameter('prefix', sprintf('%s-%%', $prefix))
+        ->orderBy('s.code', 'ASC')
+        ->getQuery()
+        ->getResult();
+
+    if (empty($sessions)) {
+        $io->warning(sprintf('No sessions found matching prefix "%s".', $prefix));
+
+        return;
+    }
+
+    $io->section(sprintf('Registering %s to %d sessions', $username, count($sessions)));
+
+    $sessionUserRepository = $em->getRepository(SessionUser::class);
+    $newRegistrations = 0;
+
+    foreach ($sessions as $session) {
+        if ($sessionUserRepository->findOneBy(['session' => $session, 'user' => $user])) {
+            $io->writeln(sprintf(' - %s already enrolled', $session->getCode()));
+
+            continue;
+        }
+
+        $sessionUser = new SessionUser();
+        $sessionUser->setSession($session);
+        $sessionUser->setUser($user);
+        $sessionUser->setStatus(SessionUser::STATUS_VALIDATED);
+        $sessionUser->setValidated(true);
+        $sessionUser->setConfirmed(true);
+        $sessionUser->setRemark('Auto-enrolled by scripts/seed-cursus.php');
+
+        $em->persist($sessionUser);
+        $io->writeln(sprintf(' - registered to %s', $session->getCode()));
+        ++$newRegistrations;
+    }
+
+    if ($newRegistrations > 0) {
+        $em->flush();
+    } else {
+        $io->text('No new registrations were required.');
+    }
 }

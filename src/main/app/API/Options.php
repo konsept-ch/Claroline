@@ -56,6 +56,8 @@ final class Options
     //for serialize, do we want to (de)serialize objects in subtrees ?
     const DEEP_SERIALIZE = 'deep_serialize';
     const DEEP_DESERIALIZE = 'deep_deserialize';
+    // skip eager serialization of nested entities (eg. home tab children)
+    const NO_CHILDREN = 'no_children';
 
     //for resource node
     const NO_RIGHTS = 'no_rights';

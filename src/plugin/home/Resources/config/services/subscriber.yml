@@ -1,15 +1,20 @@
 services:
-    _defaults:
-        tags: [kernel.event_subscriber]
-
     Claroline\HomeBundle\Subscriber\WorkspaceSubscriber:
+        tags: [kernel.event_subscriber]
         arguments:
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\AppBundle\API\Crud'
 
     Claroline\HomeBundle\Subscriber\Tool\HomeSubscriber:
+        tags: [kernel.event_subscriber]
         arguments:
             - '@security.token_storage'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
             - '@Claroline\AppBundle\API\Crud'
             - '@Claroline\HomeBundle\Manager\HomeManager'
+
+    Claroline\HomeBundle\Subscriber\HomeCacheInvalidationSubscriber:
+        arguments:
+            - '@Claroline\HomeBundle\Cache\HomeCache'
+        tags:
+            - { name: doctrine.event_subscriber }

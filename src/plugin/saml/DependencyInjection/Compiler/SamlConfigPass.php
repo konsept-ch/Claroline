@@ -78,6 +78,23 @@ class SamlConfigPass implements CompilerPassInterface
         // adds credentials from platform_options.json
         $entityId = $configHandler->getParameter('saml.entity_id');
         $credentials = $configHandler->getParameter('saml.credentials');
+
+        if (empty($credentials)) {
+            $projectDir = $container->getParameter('kernel.project_dir');
+            $defaultCertificate = $projectDir.'/src/plugin/saml/Resources/config/saml.crt';
+            $defaultKey = $projectDir.'/src/plugin/saml/Resources/config/saml.pem';
+
+            if (is_readable($defaultCertificate) && is_readable($defaultKey)) {
+                $credentials = [
+                    'dev-default' => [
+                        'certificate' => $defaultCertificate,
+                        'key' => $defaultKey,
+                        'password' => null,
+                    ],
+                ];
+            }
+        }
+
         if (!empty($credentials)) {
             foreach ($credentials as $id => $data) {
                 $definition = new Definition(

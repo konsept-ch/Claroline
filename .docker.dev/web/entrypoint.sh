@@ -119,7 +119,7 @@ maybe_create_admin() {
   local mysql_cmd=(mysql -h "$DB_HOST" -P "$DB_PORT" --protocol=TCP --connect-timeout=5 -u "$DB_USER" "-p$DB_PASSWORD" "$DB_NAME" -N -e "SELECT COUNT(*) FROM claro_user")
   local users
   if users="$("${mysql_cmd[@]}" 2>/dev/null)"; then
-    if [ "$users" = "$admin_required_count" ] && \
+    if [ "$users" -le "$admin_required_count" ] && \
        [ -n "${ADMIN_FIRSTNAME:-}" ] && \
        [ -n "${ADMIN_LASTNAME:-}" ] && \
        [ -n "${ADMIN_USERNAME:-}" ] && \
@@ -147,10 +147,11 @@ run_claroline_tasks() {
     log "Running initial Claroline installation"
     php bin/console claroline:install --env="$APP_ENV" -vvv
     maybe_update_platform
-    maybe_create_admin
     touch files/installed
     log "Created files/installed to mark completed install"
   fi
+
+  maybe_create_admin
 }
 
 disable_maintenance_mode() {

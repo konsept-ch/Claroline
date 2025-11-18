@@ -3,6 +3,7 @@
 namespace Claroline\HomeBundle\Manager;
 
 use Claroline\AppBundle\API\FinderProvider;
+use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
@@ -205,7 +206,7 @@ class HomeManager
 
     private function formatTab(HomeTab $tab, array $allChildren = [], array $options = []): array
     {
-        $serialized = $this->serializer->serialize($tab, $options);
+        $serialized = $this->serializer->serialize($tab, array_merge($options, [Options::NO_CHILDREN]));
         $children = [];
         if (!empty($allChildren[$tab->getUuid()])) {
             $children = array_map(function (HomeTab $child) use ($allChildren, $options) {

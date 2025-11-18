@@ -33,6 +33,12 @@ class HomeTabSerializer
     private $userSerializer;
     /** @var RoleSerializer */
     private $roleSerializer;
+    /**
+     * Cache for tab configuration entities indexed by class and tab identifier.
+     *
+     * @var array<string, array<string, ?AbstractTab>>
+     */
+    private $tabConfigurationCache = [];
 
     public function __construct(
         AuthorizationCheckerInterface $authorization,
@@ -98,17 +104,14 @@ class HomeTabSerializer
             'user' => $homeTab->getUser() ? $this->userSerializer->serialize($homeTab->getUser(), [Options::SERIALIZE_MINIMAL]) : null,
 
             // TODO : should no longer be exposed here (still required by update and ws import)
-            'children' => array_map(function (HomeTab $child) use ($options) {
+            'children' => in_array(Options::NO_CHILDREN, $options) ? [] : array_map(function (HomeTab $child) use ($options) {
                 return $this->serialize($child, $options);
             }, $homeTab->getChildren()->toArray()),
         ];
 
         // retrieves the custom configuration of the tab if any
         if (!in_array(Options::SERIALIZE_MINIMAL, $options) && $homeTab->getClass()) {
-            // loads configuration entity for the current instance
-            $typeParameters = $this->om
-                ->getRepository($homeTab->getClass())
-                ->findOneBy(['tab' => $homeTab]);
+            $typeParameters = $this->findTabConfiguration($homeTab);
 
             $parameters = [];
             if ($typeParameters && $this->serializer->has($typeParameters)) {
@@ -196,9 +199,7 @@ class HomeTabSerializer
             $parametersClass = $homeTab->getClass();
 
             // loads configuration entity for the current instance
-            $typeParameters = $this->om
-                ->getRepository($parametersClass)
-                ->findOneBy(['tab' => $homeTab]);
+            $typeParameters = $this->findTabConfiguration($homeTab, false);
 
             if (!$typeParameters || in_array(Options::REFRESH_UUID, $options)) {
                 // no existing parameters => initializes one
@@ -250,5 +251,110 @@ class HomeTabSerializer
         }
 
         return $homeTab;
+    }
+
+    private function findTabConfiguration(HomeTab $homeTab, bool $useCache = true): ?AbstractTab
+    {
+        $parametersClass = $homeTab->getClass();
+        if (!$parametersClass) {
+            return null;
+        }
+
+        $cacheKey = $this->getTabCacheKey($homeTab);
+        if ($useCache) {
+            $this->prefetchTabConfigurations($parametersClass);
+            if (array_key_exists($cacheKey, $this->tabConfigurationCache[$parametersClass])) {
+                return $this->tabConfigurationCache[$parametersClass][$cacheKey];
+            }
+        }
+
+        $typeParameters = $this->getManagedTabConfiguration($parametersClass, $homeTab);
+        if (!$typeParameters) {
+            $typeParameters = $this->om
+                ->getRepository($parametersClass)
+                ->findOneBy(['tab' => $homeTab]);
+        }
+
+        if ($useCache) {
+            $this->tabConfigurationCache[$parametersClass][$cacheKey] = $typeParameters;
+        }
+
+        return $typeParameters;
+    }
+
+    private function prefetchTabConfigurations(string $parametersClass): void
+    {
+        if (isset($this->tabConfigurationCache[$parametersClass])) {
+            return;
+        }
+
+        $tabs = $this->getTrackedHomeTabs();
+        if (empty($tabs)) {
+            $this->tabConfigurationCache[$parametersClass] = [];
+
+            return;
+        }
+
+        $configs = $this->om
+            ->getRepository($parametersClass)
+            ->findBy(['tab' => $tabs]);
+
+        $cache = [];
+        foreach ($tabs as $tab) {
+            $cache[$this->getTabCacheKey($tab)] = null;
+        }
+
+        foreach ($configs as $config) {
+            if (method_exists($config, 'getTab')) {
+                $cache[$this->getTabCacheKey($config->getTab())] = $config;
+            }
+        }
+
+        $this->tabConfigurationCache[$parametersClass] = $cache;
+    }
+
+    private function getTrackedHomeTabs(): array
+    {
+        if (!$this->om->hasUnitOfWork()) {
+            return [];
+        }
+
+        $identityMap = $this->om->getUnitOfWork()->getIdentityMap();
+        if (!isset($identityMap[HomeTab::class])) {
+            return [];
+        }
+
+        return array_values($identityMap[HomeTab::class]);
+    }
+
+    private function getManagedTabConfiguration(string $parametersClass, HomeTab $homeTab): ?AbstractTab
+    {
+        if (!$this->om->hasUnitOfWork()) {
+            return null;
+        }
+
+        $unitOfWork = $this->om->getUnitOfWork();
+        $identityMap = $unitOfWork->getIdentityMap();
+
+        if (!isset($identityMap[$parametersClass])) {
+            return null;
+        }
+
+        foreach ($identityMap[$parametersClass] as $managed) {
+            if (method_exists($managed, 'getTab') && $managed->getTab() === $homeTab) {
+                return $managed;
+            }
+        }
+
+        return null;
+    }
+
+    private function getTabCacheKey(HomeTab $homeTab): string
+    {
+        if ($homeTab->getId()) {
+            return (string) $homeTab->getId();
+        }
+
+        return spl_object_hash($homeTab);
     }
 }

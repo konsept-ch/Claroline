@@ -18,6 +18,7 @@ use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\Entity\Tool\OrderedTool;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Manager\LockManager;
+use Claroline\HomeBundle\Cache\HomeCache;
 use Claroline\HomeBundle\Entity\HomeTab;
 use Claroline\HomeBundle\Manager\HomeManager;
 use Claroline\HomeBundle\Serializer\HomeTabSerializer;
@@ -51,6 +52,8 @@ class HomeController
     private $lockManager;
     /** @var HomeManager */
     private $manager;
+    /** @var HomeCache */
+    private $homeCache;
 
     public function __construct(
         TokenStorageInterface $tokenStorage,
@@ -60,7 +63,8 @@ class HomeController
         Crud $crud,
         LockManager $lockManager,
         HomeTabSerializer $serializer,
-        HomeManager $manager
+        HomeManager $manager,
+        HomeCache $homeCache
     ) {
         $this->tokenStorage = $tokenStorage;
         $this->authorization = $authorization;
@@ -70,6 +74,7 @@ class HomeController
         $this->lockManager = $lockManager;
         $this->serializer = $serializer;
         $this->manager = $manager;
+        $this->homeCache = $homeCache;
     }
 
     /**
@@ -81,7 +86,15 @@ class HomeController
     {
         $isAdmin = $this->authorization->isGranted('ROLE_ADMIN') || $this->authorization->isGranted('ROLE_HOME_MANAGER');
 
-        return new JsonResponse([
+        $cacheKey = $this->getHomeCacheKey($isAdmin);
+        if ($cacheKey) {
+            $cached = $this->homeCache->get($cacheKey);
+            if (null !== $cached) {
+                return new JsonResponse($cached);
+            }
+        }
+
+        $payload = [
             'tabs' => $this->manager->getHomeTabs(),
             'data' => [
                 // mimic standard tool perms
@@ -91,7 +104,13 @@ class HomeController
                     'delete' => $isAdmin,
                 ],
             ],
-        ]);
+        ];
+
+        if ($cacheKey) {
+            $this->homeCache->save($cacheKey, $payload);
+        }
+
+        return new JsonResponse($payload);
     }
 
     /**
@@ -252,5 +271,37 @@ class HomeController
         if (!$homeTool || !$this->authorization->isGranted($perm, $homeTool)) {
             throw new AccessDeniedException();
         }
+    }
+
+    private function getHomeCacheKey(bool $isAdmin): string
+    {
+        $token = $this->tokenStorage->getToken();
+        if (!$token) {
+            return 'home|anonymous|'.($isAdmin ? 'admin' : 'user');
+        }
+
+        if (method_exists($token, 'getRoleNames')) {
+            $roles = $token->getRoleNames();
+        } else {
+            $roles = array_map(function ($role) {
+                if (is_string($role)) {
+                    return $role;
+                }
+
+                if (is_object($role) && method_exists($role, 'getRole')) {
+                    return $role->getRole();
+                }
+
+                return (string) $role;
+            }, $token->getRoles());
+        }
+
+        if (empty($roles)) {
+            $roles = ['anonymous'];
+        }
+
+        sort($roles);
+
+        return implode('|', $roles).'|'.($isAdmin ? 'admin' : 'user');
     }
 }

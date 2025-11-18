@@ -12,6 +12,7 @@ services:
             - '@Claroline\CoreBundle\Manager\LockManager'
             - '@Claroline\HomeBundle\Serializer\HomeTabSerializer'
             - '@Claroline\HomeBundle\Manager\HomeManager'
+            - '@Claroline\HomeBundle\Cache\HomeCache'
 
     Claroline\HomeBundle\Controller\HomeTabController:
         parent: Claroline\AppBundle\Controller\AbstractCrudController

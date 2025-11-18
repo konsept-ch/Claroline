@@ -1,0 +1,12 @@
+services:
+    claroline.home.cache_pool:
+        class: Symfony\Component\Cache\Adapter\FilesystemAdapter
+        public: false
+        arguments:
+            - 'claroline_home_tabs'
+            - 0
+            - '%kernel.cache_dir%/home_tabs'
+
+    Claroline\HomeBundle\Cache\HomeCache:
+        arguments:
+            - '@claroline.home.cache_pool'
