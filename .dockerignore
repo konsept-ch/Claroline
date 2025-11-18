@@ -1,1 +1,9 @@
 .git
+node_modules
+vendor
+var
+files/geoip
+stats-full.json
+public/bundles
+public/data
+public/packages
