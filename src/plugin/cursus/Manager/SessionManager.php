@@ -163,7 +163,6 @@ class SessionManager
                 'description' => $session->getDescription(),
             ],
             'restrictions' => [
-                'dates' => DateRangeNormalizer::normalize($session->getStartDate(), $session->getEndDate()),
                 'hidden' => $session->isHidden(),
             ],
         ]);
