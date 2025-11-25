@@ -13,7 +13,7 @@ import {Translator as BaseTranslator} from './translator'
  */
 function getTranslator() {
   // we reuse the instance from browser, because it already contains messages loaded from <script>
-  return window.Translator || BaseTranslator
+  return BaseTranslator
 }
 
 /**
