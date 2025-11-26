@@ -28,6 +28,9 @@ class EventFinder extends AbstractFinder
         $qb->join('obj.session', 's');
         $qb->join('s.course', 'c');
 
+        $qb->andWhere("year(po.startDate) ".(intval(getenv('ARCHIVE_MODE')) ? '<=' : '>')." :year");
+        $qb->setParameter('year', (int)(new \DateTimeImmutable())->format('Y') - 2);
+
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
                 case 'terminated':

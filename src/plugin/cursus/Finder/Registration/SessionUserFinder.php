@@ -33,6 +33,9 @@ class SessionUserFinder extends AbstractFinder
             $qb->andWhere('u.isRemoved = FALSE');
         }
 
+        $qb->andWhere("year(obj.date) ".(intval(getenv('ARCHIVE_MODE')) ? '<=' : '>')." :year");
+        $qb->setParameter('year', (int)(new \DateTimeImmutable())->format('Y') - 2);
+
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
                 case 'year':

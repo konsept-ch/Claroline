@@ -27,6 +27,9 @@ class SessionFinder extends AbstractFinder
     public function configureQueryBuilder(QueryBuilder $qb, array $searches = [], array $sortBy = null, array $options = ['count' => false, 'page' => 0, 'limit' => -1])
     {
         $qb->join('obj.course', 'c');
+        
+        $qb->andWhere("year(obj.startDate) ".(intval(getenv('ARCHIVE_MODE')) ? '<=' : '>')." :year");
+        $qb->setParameter('year', (int)(new \DateTimeImmutable())->format('Y') - 2);
 
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
