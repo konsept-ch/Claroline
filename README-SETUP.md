@@ -52,8 +52,8 @@ All knobs live in `docker-compose.dev.yml` so you can override them per user/mac
 | `APP_DEBUG` | `0` | Leave Symfony in prod-ish mode for faster boot, flip to `1` while debugging. |
 | `NODE_OPTIONS` | `--max-old-space-size=4096` | Prevent out-of-memory errors during webpack builds. |
 | `WEBPACK_DEV_SERVER` | `0` | When `1`, launches `webpack-dev-server` in watch mode; otherwise runs a single `npm run webpack`. |
-| `SKIP_REBUILD` | `0` | When `1`, skips `claroline:update` if `files/installed` already exists (useful for quick front-end tweaks). |
-| `GEOIP_DISABLE` | `0` | Disable GeoIP downloads entirely when the license key isn’t available. |
+| `SKIP_REBUILD` | `1` | When `1`, skips `claroline:update` if `files/installed` already exists (useful for quick front-end tweaks). |
+| `GEOIP_DISABLE` | `1` | Disable GeoIP downloads entirely when the license key isn’t available. |
 | `MAILER_DSN` | `smtp://mailhog:1025` | Routes every Symfony mailer call to Mailhog. |
 
 You can also inject `APP_URL`, `PLATFORM_NAME`, `PLATFORM_SUPPORT_EMAIL` and the `ADMIN_*` variables to pre-provision a super admin account during the first install.
@@ -67,6 +67,17 @@ You can also inject `APP_URL`, `PLATFORM_NAME`, `PLATFORM_SUPPORT_EMAIL` and the
 | Run a Symfony command | `docker exec -it dgcs-claroline-web php bin/console some:command` |
 | Rebuild assets without restarting | `docker exec -it dgcs-claroline-web npm run webpack` |
 | Seed demo cursus data | `docker exec -it dgcs-claroline-web scripts/seed-dev.sh --courses=2 --sessions=2 --events=2` |
+
+## Very slow page loads on Windows
+
+- Keep the repo under your WSL2 home (e.g. `/home/<you>/dgcs-Claroline`) so bind mounts stay fast; avoid `/mnt/c`.
+- Run with static bundles: leave `WEBPACK_DEV_SERVER=0` and `APP_DEBUG=0` to skip the Symfony debug toolbar and serve prebuilt assets from `/dist`.
+- Give Docker Desktop enough headroom: at least 4 vCPUs and 6–8 GB RAM for smooth installs and cache warmups.
+
+## Fast dev startup
+
+- Set `SKIP_REBUILD=1` to skip `claroline:update` when `files/installed` already exists; flip it back to `0` after schema/theme/translation changes.
+- Static assets path: with `WEBPACK_DEV_SERVER=0`, the entrypoint builds once and Apache serves `/dist`, which avoids webpack watch overhead on restarts. Turn HMR on only when you actively iterate on JS/CSS.
 
 ## Data seeding helpers
 

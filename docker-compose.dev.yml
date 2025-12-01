@@ -22,7 +22,7 @@ services:
       - APP_URL=claroline.example.com
       - ENV=DEV
       - APP_ENV=dev
-      - APP_DEBUG=1
+      - APP_DEBUG=0
       - NODE_ENV=development
       - NODE_OPTIONS=--max-old-space-size=4096
       - WEBPACK_DEV_SERVER=0
