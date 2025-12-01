@@ -1,34 +1,35 @@
-version: "3.7"
-
+version: "3.8"
 services:
   web:
-    container_name: dgcs-claroline-web
+    container_name: claroline-web
     build:
       context: .
       dockerfile: .docker.dev/web/Dockerfile
     ports:
       - "8088:80"
+      - "8080:8080"
       - "8443:443"
     volumes:
       - ./:/var/www/html/claroline
-      - claroline_vendor:/var/www/html/claroline/vendor
-      - claroline_cache:/var/www/html/claroline/var/cache
-      - claroline_log:/var/www/html/claroline/var/log
-      - claroline_geoip:/var/www/html/claroline/var/geoip
+      # Keep heavy/volatile dirs inside the Linux FS to avoid slow Windows bind-mount stats
+      - vendor:/var/www/html/claroline/vendor
+      - cache:/var/www/html/claroline/var/cache
+      - logs:/var/www/html/claroline/var/log
+      - geoip-data:/var/www/html/claroline/var/geoip
     depends_on:
       - db
       - mailhog
     environment:
-      - APP_URL=claroline.example.com
+      - APP_URL=http://localhost:8088
       - ENV=DEV
       - APP_ENV=dev
-      - APP_DEBUG=0
+      - APP_DEBUG=1
       - NODE_ENV=development
-      - NODE_OPTIONS=--max-old-space-size=4096
+      - NODE_OPTIONS=--max_old_space_size=4096
       - WEBPACK_DEV_SERVER=0
       - GEOIP_DISABLE=1
-      - SKIP_REBUILD=1
-      - DB_HOST=dgcs-claroline-db
+      - SKIP_REBUILD=0
+      - DB_HOST=db
       - DB_NAME=claroline
       - DB_USER=claroline
       - DB_PASSWORD=claroline
@@ -40,13 +41,9 @@ services:
       - ADMIN_EMAIL=claroline@example.com
       - PLATFORM_NAME=Claroline
       - PLATFORM_SUPPORT_EMAIL=claroline@example.com
-      - MAILER_DSN=smtp://mailhog:1025
-    networks:
-      claroline_network:
-        ipv4_address: 172.22.9.6
 
   db:
-    container_name: dgcs-claroline-db
+    container_name: claroline-db
     environment:
       MYSQL_ROOT_PASSWORD: claroline
       MYSQL_USER: claroline
@@ -59,27 +56,22 @@ services:
       - ../mysql:/var/lib/mysql
       - ./.docker.dev/mysql:/etc/mysql/conf.d
     networks:
-      claroline_network:
-        ipv4_address: 172.22.9.5
+      default:
+        aliases:
+          - dgcs-claroline-db
 
   mailhog:
-    container_name: dgcs-claroline-mailhog
-    image: mailhog/mailhog:v1.0.1
+    container_name: claroline-mailhog
+    image: mailhog/mailhog:latest
+    restart: unless-stopped
     ports:
-      - "1025:1025"
-      - "8025:8025"
+      - "8025:8025"  # Web UI
+      - "1025:1025"  # SMTP
     networks:
-      claroline_network:
-        ipv4_address: 172.22.9.7
-
-networks:
-  claroline_network:
-    ipam:
-      config:
-        - subnet: 172.22.9.0/24
+      - default
 
 volumes:
-  claroline_vendor:
-  claroline_cache:
-  claroline_log:
-  claroline_geoip:
+  geoip-data:
+  vendor:
+  cache:
+  logs:

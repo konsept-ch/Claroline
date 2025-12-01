@@ -65,7 +65,7 @@ RUN set -eux; \
         echo 'opcache.interned_strings_buffer=16'; \
         echo 'opcache.max_accelerated_files=20000'; \
         echo 'opcache.validate_timestamps=0'; \
-        echo 'opcache.revalidate_freq=0'; \
+        echo 'opcache.revalidate_freq=2'; \
         echo 'opcache.max_file_size=0'; \
     } > /usr/local/etc/php/conf.d/opcache-recommended.ini
 
