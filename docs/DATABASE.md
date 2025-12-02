@@ -6,7 +6,7 @@ This page complements `README-SETUP.md` with DB-focused instructions. Claroline 
 
 | Variable | Default value | Location |
 | -------- | ------------- | -------- |
-| `DB_HOST` | `dgcs-claroline-db` | `docker-compose.dev.yml` |
+| `DB_HOST` | `dgcs-claroline-db` | `docker-compose*.yml` |
 | `DB_PORT` | `3306` inside the container (`3307` exposed on the host) | Compose |
 | `DB_NAME` | `claroline` | Compose, `bin/configure` |
 | `DB_USER` | `claroline` | Compose |

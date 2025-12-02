@@ -21,15 +21,15 @@ services:
       - mailhog
     environment:
       - APP_URL=http://localhost:8088
-      - ENV=DEV
-      - APP_ENV=dev
-      - APP_DEBUG=1
+      - ENV=DEVPROD
+      - APP_ENV=prod
+      - APP_DEBUG=0
       - NODE_ENV=development
       - NODE_OPTIONS=--max_old_space_size=4096
       - WEBPACK_DEV_SERVER=0
       - GEOIP_DISABLE=1
-      - SKIP_REBUILD=0
-      - DB_HOST=db
+      - SKIP_REBUILD=1
+      - DB_HOST=dgcs-claroline-db
       - DB_NAME=claroline
       - DB_USER=claroline
       - DB_PASSWORD=claroline
