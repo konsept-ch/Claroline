@@ -33,14 +33,14 @@ class SessionUserFinder extends AbstractFinder
             $qb->andWhere('u.isRemoved = FALSE');
         }
 
-        $qb->andWhere("year(obj.date) ".(intval(getenv('ARCHIVE_MODE')) ? '<=' : '>')." :year");
-        $qb->setParameter('year', (int)(new \DateTimeImmutable())->format('Y') - 2);
+        $filteredByYear = false;
 
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
                 case 'year':
                     $qb->andWhere("year(s.startDate) = :{$filterName}");
                     $qb->setParameter($filterName, $filterValue);
+                    $filteredByYear = true;
                     break;
 
                 case 'status':
@@ -102,6 +102,11 @@ class SessionUserFinder extends AbstractFinder
                 default:
                     $this->setDefaults($qb, $filterName, $filterValue);
             }
+        }
+
+        if (!$filteredByYear) {
+            $qb->andWhere("year(s.startDate) ".(intval(getenv('ARCHIVE_MODE')) ? '<=' : '>')." :year");
+            $qb->setParameter('year', (int)(new \DateTimeImmutable())->format('Y') - 2);
         }
 
         return $qb;
