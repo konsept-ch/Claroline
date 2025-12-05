@@ -1,1 +1,8 @@
 .git
+node_modules
+vendor
+var
+files
+public/bundles
+public/packages
+public/data
