@@ -205,7 +205,7 @@ Troubleshooting Cheatsheet
 - ERR_EMPTY_RESPONSE on 8088:
   - Apache failed early (most likely SSL vhost). Rebuild and check for duplicate `Listen 443` lines.
 - Browser blank page:
-  - Assets not loading from the right origin. Ensure `APP_URL=http://localhost:8088` and use static assets.
+  - Assets not loading from the right origin. Ensure `APP_URL=http://localhost:8088` and use static assets (`WEBPACK_DEV_SERVER=0`).
   - Disable extensions / Brave Shields; hard reload with cache disabled.
 - DB wait loop:
   - Confirm `claroline-db` is up; avoid TLS in dev (`--skip-ssl`).
@@ -223,3 +223,18 @@ Stopping and Cleaning Up
 - Remove containers: `docker compose -f docker-compose.dev.yml down`
 - Remove containers and volumes (including MySQL data):
   - `docker compose -f docker-compose.dev.yml down -v`
+
+Fresh Start / Recovery (works on Windows)
+-----------------------------------------
+
+- Kill stale containers if names clash: `docker rm -f claroline-djes-web-1 claroline-djes-db-1 claroline-djes-mailhog-1`.
+- Clean local deps before the first build: remove `node_modules` and `vendor` in the repo root.
+- Start stack: `docker compose -f docker-compose.dev.yml up -d` (project name already `claroline-djes`).
+- Assets: `WEBPACK_DEV_SERVER` defaults to `0` in `docker-compose.dev.yml`, so no dev server. After a clean start, build once inside the web container:
+  - `docker compose -f docker-compose.dev.yml exec web bash -lc "cd /var/www/html/claroline && npm run webpack"`
+  - This writes hashed bundles to `public/dist` and updates `webpack-prod.json`; the app will serve `/dist/...` (no 8080).
+- If you ever want hot reload instead, set `WEBPACK_DEV_SERVER=1` on `web` and rebuild; the app will then point to `http://localhost:8080/dist/...`.
+- Cache/proxy errors (500 with missing `var/cache/dev/.../Proxies/*.php`): recreate dirs and perms in the container:
+  - `docker compose -f docker-compose.dev.yml exec web bash -lc "cd /var/www/html/claroline && mkdir -p var/cache/dev/doctrine/orm/Proxies var/cache/dev/profiler var/log && chmod -R 777 var/cache var/log files config"`
+- Database host mismatch errors (getaddrinfo for `claroline-db`): ensure you are using the dev compose file; `config/parameters.yml` expects `db` (set by compose).
+- Access the app at http://localhost:8088 and hard-refresh (Ctrl+F5) after asset rebuilds.
