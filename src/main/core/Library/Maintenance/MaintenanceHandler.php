@@ -17,6 +17,8 @@ class MaintenanceHandler
     {
         $file = self::getFlagPath();
 
+        self::ensureFlagDirectoryExists($file);
+
         if (!file_exists($file)) {
             touch($file);
         }
@@ -39,5 +41,14 @@ class MaintenanceHandler
     private static function getFlagPath()
     {
         return __DIR__.'/../../../../../files/config/.update';
+    }
+
+    private static function ensureFlagDirectoryExists($file)
+    {
+        $dir = dirname($file);
+
+        if (!is_dir($dir)) {
+            mkdir($dir, 0775, true);
+        }
     }
 }
