@@ -1,4 +1,4 @@
-name: claroline-djes
+name: claroline
 services:
   web:
     build:

@@ -1,3 +1,4 @@
 web_profiler:
-    toolbar: true
+    # Disable toolbar to avoid extra profiler storage during heavy requests (registration OOM)
+    toolbar: false
     intercept_redirects: false

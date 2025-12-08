@@ -143,6 +143,34 @@ Permissions & Cache
 - Clear cache if needed: `rm -rf var/cache/*` or `composer delete-cache`
   - Reference: `composer.json:scripts`
 
+Windows (Local, sans Docker)
+----------------------------
+
+> Konsign 000 | CEP Claroline | Local Windows Setup | 2 Decembre 2025 | Anthony | v1.0
+
+- Pre-requis: base MySQL vide + Symfony CLI disponible; se placer dans le dossier du projet Claroline.
+- Neutraliser le script `delete-cache` dans `composer.json` (mettre `"delete-cache": []`).
+- Installer les dependances PHP: `composer install`.
+- Configurer `config/parameters.yml` pour MySQL local: `database_version: 8.0`, `database_driver: pdo_mysql`, `database_host: 127.0.0.1`, `database_port: ~`, `database_name: claroline`, `database_user: root`, `database_password: ~`.
+- Installer les dependances JS: `npm install --legacy-peer-deps`.
+- Lancer l'installation: `php bin/console claroline:install`. Si des liens symboliques ne se creent pas, les faire en CMD Windows (admin):
+  - `mklink /D public\\data C:\\chemin\\vers\\files\\data`
+  - `mklink /D public\\packages C:\\chemin\\vers\\node_modules`
+- Adapter les scripts `package.json` pour Windows:
+  - `"webpack": "node_modules\\\\.bin\\\\webpack --config=webpack.config.prod.js --progress --bail"`
+  - `"webpack:dev": "node_modules\\\\.bin\\\\webpack-dev-server --config=webpack.config.dev.js --color"`
+- Purger le cache en supprimant le dossier `var/cache`.
+- Demarrer le build front: `npm run webpack:dev`.
+- Demarrer le serveur Symfony sur le port 80: `symfony server:start --port=80` (certains liens statiques supposent ce port).
+- Claroline est alors utilisable; vous pouvez ensuite importer un dump de base existant dans la base configuree.
+
+MySQL rapide (Windows local)
+----------------------------
+- Demarrer MySQL (service `MySQL80` ou autre) via `services.msc` ou `net start MySQL80`.
+- Ouvrir un shell MySQL: `mysql -u root -p`.
+- Creer la base vide si besoin: `CREATE DATABASE claroline CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`.
+- Si vous ne voulez pas utiliser `root`, creer un utilisateur et donnez-lui les droits sur la base: `CREATE USER 'claroline'@'localhost' IDENTIFIED BY 'motdepasse'; GRANT ALL PRIVILEGES ON claroline.* TO 'claroline'@'localhost'; FLUSH PRIVILEGES;`.
+
 Known Pitfalls
 --------------
 
