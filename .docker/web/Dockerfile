@@ -49,7 +49,8 @@ RUN a2dissite 000-default && a2dissite default-ssl && a2ensite claroline.conf
 COPY . /var/www/html/claroline
 WORKDIR /var/www/html/claroline
 
-RUN chown -R www-data:www-data var files config
+RUN mkdir -p var files \
+  && chown -R www-data:www-data var files config
 RUN chmod -R 750 var files config
 RUN chmod -R 755 public
 
