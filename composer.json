@@ -175,7 +175,9 @@
         "disable-maintenance": [
             "Claroline\\CoreBundle\\Library\\Maintenance\\MaintenanceHandler::disableMaintenance"
         ],
-        "delete-cache": [],
+        "delete-cache": [
+            "rm -rf ./var/cache/*"
+        ],
         "bundles": [
             "Claroline\\KernelBundle\\ScriptHandler::buildBundleFile"
         ],
