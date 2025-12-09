@@ -135,6 +135,15 @@ Updating an Existing Install
   - Reference: `.docker.dev/web/entrypoint.sh:1`
 - From source: `php bin/console claroline:update -vvv`
 
+Production Build/Upgrade Checklist
+----------------------------------
+
+- Dockerfile (prod) relies on `var/` and `files/` being present (not ignored). Keep `.dockerignore` minimal (only `.git`) and do not remove these folders from the build context, otherwise the `chown` step fails.
+- `bin/configure` defaults are the 1.2.0 values (`DB_USER=root`, empty `DB_PASSWORD`, `SECRET=change_me`). Always pass real DB credentials via env when building/deploying; don’t rely on defaults in prod.
+- Composer scripts: `delete-cache` runs `rm -rf ./var/cache/*` (restored). Ensure cache directory is writable in the image and at runtime.
+- Webpack scripts use `node_modules/.bin/...` (no `npx`) for consistent Linux builds in CI/GitHub Actions.
+- Tagging: when retagging a release (e.g., `djes_v1_2_1`), ensure the tag points to the commit containing these prod-safe configs before triggering CI.
+
 Permissions & Cache
 -------------------
 
