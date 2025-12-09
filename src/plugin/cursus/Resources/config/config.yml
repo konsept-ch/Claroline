@@ -17,6 +17,7 @@ plugin:
               - name: validate_pci
               - name: validate_registrations
               - name: validate_presences
+              - name: open_resources
 
     data_sources:
         - name: course_sessions

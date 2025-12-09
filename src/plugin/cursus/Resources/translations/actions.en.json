@@ -16,5 +16,6 @@
   "validate_emcc": "Validate EMCC",
   "validate_pci": "Validate PCI",
   "validate_registrations": "Validate registrations",
-  "validate_presences": "Validate presences"
+  "validate_presences": "Validate presences",
+  "open_resources": "See tutor resources"
 }

@@ -224,10 +224,6 @@ class CourseSerializer
             }
         }
 
-        if (array_key_exists('resource', $data)) {
-            $course->setResource(is_null($data['resource']) ? null : $this->resourceRepo->findOneBy(['uuid' => $data['resource']['id']]));
-        }
-
         if (isset($data['parent'])) {
             $parent = null;
             if (!empty($data['parent'])) {
