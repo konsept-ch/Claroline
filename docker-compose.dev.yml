@@ -1,11 +1,12 @@
+name: claroline
 services:
   web:
-    container_name: claroline-web
     build:
       context: .
       dockerfile: .docker.dev/web/Dockerfile
     ports:
       - "8088:80"
+      - "8443:443"
       - "8080:8080"
       - "8443:443"
     volumes:
@@ -27,8 +28,8 @@ services:
       - NODE_OPTIONS=--max_old_space_size=4096
       - WEBPACK_DEV_SERVER=0
       - GEOIP_DISABLE=1
-      - SKIP_REBUILD=1
-      - DB_HOST=claroline-db
+      - SKIP_REBUILD=0
+      - DB_HOST=db
       - DB_NAME=claroline
       - DB_USER=claroline
       - DB_PASSWORD=claroline
@@ -42,21 +43,25 @@ services:
       - PLATFORM_SUPPORT_EMAIL=claroline@example.com
 
   db:
-    container_name: claroline-db
     environment:
       MYSQL_ROOT_PASSWORD: claroline
       MYSQL_USER: claroline
       MYSQL_PASSWORD: claroline
       MYSQL_DATABASE: claroline
     image: mysql:8.0
+    command: >
+      --innodb-redo-log-capacity=1073741824
+      --innodb-log-buffer-size=268435456
+      --max_allowed_packet=512M
+      --net_read_timeout=600
+      --net_write_timeout=600
     ports:
       - "3307:3306"
     volumes:
-      - ../mysql:/var/lib/mysql
-      - ./.docker.dev/mysql:/etc/mysql/conf.d
+      - db-data:/var/lib/mysql
+      - ./.docker.dev/mysql:/etc/mysql/conf.d:ro
 
   mailhog:
-    container_name: claroline-mailhog
     image: mailhog/mailhog:latest
     restart: unless-stopped
     ports:
@@ -64,6 +69,7 @@ services:
       - "1025:1025"  # SMTP
 
 volumes:
+  db-data:
   geoip-data:
   vendor:
   cache:

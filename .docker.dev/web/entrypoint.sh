@@ -68,7 +68,6 @@ fi
 npm install --legacy-peer-deps # if package-lock.json exists, this takes ~3 seconds (every subsequent run with no changes to deps)
 # --legacy-peer-deps is needed until all dependencies are compatible with npm 7 (until npm install runs without error)
 
-# Always dump JS routing to a static file to speed up first page load
 echo "Dumping FOSJsRouting routes to public/js/fos_js_routes.js"
 php bin/console fos:js-routing:dump --format=js --target=public/js/fos_js_routes.js || true
 

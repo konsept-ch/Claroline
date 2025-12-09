@@ -63,11 +63,11 @@ class WebpackExtension extends AbstractExtension
             throw new \Exception("Cannot find asset '{$assetName}' in webpack stats. Found:\n{$assetNames})");
         }
 
-        // Only use webpack-dev-server in dev when explicitly enabled.
-        $devServerEnabled = getenv('WEBPACK_DEV_SERVER');
-        $useHot = ('dev' === $this->environment) && $hot && (false !== $devServerEnabled) && in_array(strtolower((string) $devServerEnabled), ['1', 'true', 'yes'], true);
-        if ($useHot) {
-            // for dev serve file from webpack-dev-server
+        // Honour WEBPACK_DEV_SERVER=0 to force static assets even in dev
+        $useDevServer = 'dev' === $this->environment && $hot && getenv('WEBPACK_DEV_SERVER') !== '0';
+
+        if ($useDevServer) {
+            // for dev serve fill from webpack-dev-server
             return 'http://localhost:8080/dist/'.$assets[$assetName]['js'];
         }
 
@@ -80,11 +80,10 @@ class WebpackExtension extends AbstractExtension
     private function getWebpackAssets()
     {
         if (!$this->assetCache) {
-            // In dev, prefer dev manifest only when dev-server is enabled.
-            $assetFile = 'prod'; // default for prod/test and for dev without dev-server
-            $devServerEnabled = getenv('WEBPACK_DEV_SERVER');
-            $useHot = ('dev' === $this->environment) && (false !== $devServerEnabled) && in_array(strtolower((string) $devServerEnabled), ['1', 'true', 'yes'], true);
-            if ($useHot) {
+            $assetFile = 'prod'; // for prod and test envs
+
+            // In dev, fall back to the dev manifest only when the dev server is enabled
+            if ('dev' === $this->environment && getenv('WEBPACK_DEV_SERVER') !== '0') {
                 $assetFile = 'dev';
             }
 

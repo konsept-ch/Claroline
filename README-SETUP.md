@@ -8,6 +8,8 @@ Quick Start
 
 - Docker (dev):
   - `docker compose -f docker-compose.dev.yml up --build`
+  - Compose project name is set to `claroline-djes` in `docker-compose.dev.yml`, so volumes/containers are isolated from other Claroline stacks by default.
+  - Uses PHP 8.2 in the container (composer.lock requires PHP >= 8.1)
   - App: `http://localhost:8088` (webpack dev server on `http://localhost:8080` if enabled)
   - Default dev admin (from compose env): `root / claroline`
   - To speed up Windows/dev and avoid hot reload complexity, we default to static assets (`WEBPACK_DEV_SERVER=0`).
@@ -44,11 +46,30 @@ Docker (Development)
   - Webpack dev-server: `8080 -> 8080` (optional)
   - MySQL: `3307 -> 3306`
   - Adjust mappings in `docker-compose.dev.yml`
-- Persistent MySQL data: `../mysql` relative to the repo root must be writable
+- MySQL config:
+  - Config file is bind-mounted read-only: `./.docker.dev/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro` (avoids “world-writable config ignored” warnings on Windows).
+  - MySQL is started with larger redo/log buffers for imports: `--innodb-redo-log-capacity=1073741824` and `--innodb-log-buffer-size=268435456` (set via the `command` in `docker-compose.dev.yml`).
+- Persistent MySQL data: named volume `db-data` (auto-prefixed by your Compose project name)
+- Before running (first time on a machine):
+  - Ensure no lingering Claroline containers from another project (`docker ps -a`); stop/remove if needed or use `--project-name` below.
+  - Remove host `node_modules` and `vendor` to avoid shipping them into the build context: `Remove-Item -Recurse -Force node_modules, vendor` (PowerShell).
 - Start stack:
   - `docker compose -f docker-compose.dev.yml up --build`
   - First boot installs dependencies, waits for DB, installs Claroline, then starts webpack dev server and Apache
-  
+  - Project name is already set to `claroline-djes` in the compose file to isolate container/volume names; override with `--project-name` if you need another name.
+
+Clean dev start recipe (Docker)
+-------------------------------
+
+- Clear local vendor/node modules (avoids huge contexts on Windows bind mounts):
+  - PowerShell: `Remove-Item -Recurse -Force node_modules, vendor` (run in repo root)
+- Run with a project name to avoid conflicts with other Claroline stacks:
+  - Default: project name is `claroline-djes` (set in compose). Containers and the DB volume are prefixed accordingly (no clashes).
+  - To use another name, pass `--project-name yourname` when running compose.
+- Browse: http://localhost:8088 (webpack dev server on http://localhost:8080 if enabled)
+- Stop: `docker compose -f docker-compose.dev.yml --project-name claroline-djes down`
+- Reset DB data: `docker volume rm claroline-djes_db-data` (or `docker compose ... down -v`)
+
 Fast dev startup (skip rebuild)
 -------------------------------
 
@@ -114,6 +135,15 @@ Updating an Existing Install
   - Reference: `.docker.dev/web/entrypoint.sh:1`
 - From source: `php bin/console claroline:update -vvv`
 
+Production Build/Upgrade Checklist
+----------------------------------
+
+- Dockerfile (prod) relies on `var/` and `files/` being present (not ignored). Keep `.dockerignore` minimal (only `.git`) and do not remove these folders from the build context, otherwise the `chown` step fails.
+- `bin/configure` defaults are the 1.2.0 values (`DB_USER=root`, empty `DB_PASSWORD`, `SECRET=change_me`). Always pass real DB credentials via env when building/deploying; don’t rely on defaults in prod.
+- Composer scripts: `delete-cache` runs `rm -rf ./var/cache/*` (restored). Ensure cache directory is writable in the image and at runtime.
+- Webpack scripts use `node_modules/.bin/...` (no `npx`) for consistent Linux builds in CI/GitHub Actions.
+- Tagging: when retagging a release (e.g., `djes_v1_2_1`), ensure the tag points to the commit containing these prod-safe configs before triggering CI.
+
 Permissions & Cache
 -------------------
 
@@ -121,6 +151,34 @@ Permissions & Cache
   - Dev container sets permissive rights automatically
 - Clear cache if needed: `rm -rf var/cache/*` or `composer delete-cache`
   - Reference: `composer.json:scripts`
+
+Windows (Local, sans Docker)
+----------------------------
+
+> Konsign 000 | CEP Claroline | Local Windows Setup | 2 Decembre 2025 | Anthony | v1.0
+
+- Pre-requis: base MySQL vide + Symfony CLI disponible; se placer dans le dossier du projet Claroline.
+- Neutraliser le script `delete-cache` dans `composer.json` (mettre `"delete-cache": []`).
+- Installer les dependances PHP: `composer install`.
+- Configurer `config/parameters.yml` pour MySQL local: `database_version: 8.0`, `database_driver: pdo_mysql`, `database_host: 127.0.0.1`, `database_port: ~`, `database_name: claroline`, `database_user: root`, `database_password: ~`.
+- Installer les dependances JS: `npm install --legacy-peer-deps`.
+- Lancer l'installation: `php bin/console claroline:install`. Si des liens symboliques ne se creent pas, les faire en CMD Windows (admin):
+  - `mklink /D public\\data C:\\chemin\\vers\\files\\data`
+  - `mklink /D public\\packages C:\\chemin\\vers\\node_modules`
+- Adapter les scripts `package.json` pour Windows:
+  - `"webpack": "node_modules\\\\.bin\\\\webpack --config=webpack.config.prod.js --progress --bail"`
+  - `"webpack:dev": "node_modules\\\\.bin\\\\webpack-dev-server --config=webpack.config.dev.js --color"`
+- Purger le cache en supprimant le dossier `var/cache`.
+- Demarrer le build front: `npm run webpack:dev`.
+- Demarrer le serveur Symfony sur le port 80: `symfony server:start --port=80` (certains liens statiques supposent ce port).
+- Claroline est alors utilisable; vous pouvez ensuite importer un dump de base existant dans la base configuree.
+
+MySQL rapide (Windows local)
+----------------------------
+- Demarrer MySQL (service `MySQL80` ou autre) via `services.msc` ou `net start MySQL80`.
+- Ouvrir un shell MySQL: `mysql -u root -p`.
+- Creer la base vide si besoin: `CREATE DATABASE claroline CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`.
+- Si vous ne voulez pas utiliser `root`, creer un utilisateur et donnez-lui les droits sur la base: `CREATE USER 'claroline'@'localhost' IDENTIFIED BY 'motdepasse'; GRANT ALL PRIVILEGES ON claroline.* TO 'claroline'@'localhost'; FLUSH PRIVILEGES;`.
 
 Known Pitfalls
 --------------
@@ -184,10 +242,14 @@ Troubleshooting Cheatsheet
 - ERR_EMPTY_RESPONSE on 8088:
   - Apache failed early (most likely SSL vhost). Rebuild and check for duplicate `Listen 443` lines.
 - Browser blank page:
-  - Assets not loading from the right origin. Ensure `APP_URL=http://localhost:8088` and use static assets.
+  - Assets not loading from the right origin. Ensure `APP_URL=http://localhost:8088` and use static assets (`WEBPACK_DEV_SERVER=0`).
   - Disable extensions / Brave Shields; hard reload with cache disabled.
 - DB wait loop:
   - Confirm `claroline-db` is up; avoid TLS in dev (`--skip-ssl`).
+- Import fails with redo log warnings:
+  - MySQL is already set to a 1GB redo log and larger log buffer; ensure the `db` service is using the current compose file, then restart it:
+    - `docker compose -f docker-compose.dev.yml down && docker compose -f docker-compose.dev.yml up -d db`
+  - If the warning persists, check that the read-only `my.cnf` mount is applied (Windows can make config files world-writable when not mounted `:ro`).
 - Build errors on public symlinks:
   - We ignore `public/data`, `public/packages`, `public/bundles` in `.dockerignore`.
 
@@ -198,3 +260,18 @@ Stopping and Cleaning Up
 - Remove containers: `docker compose -f docker-compose.dev.yml down`
 - Remove containers and volumes (including MySQL data):
   - `docker compose -f docker-compose.dev.yml down -v`
+
+Fresh Start / Recovery (works on Windows)
+-----------------------------------------
+
+- Kill stale containers if names clash: `docker rm -f claroline-djes-web-1 claroline-djes-db-1 claroline-djes-mailhog-1`.
+- Clean local deps before the first build: remove `node_modules` and `vendor` in the repo root.
+- Start stack: `docker compose -f docker-compose.dev.yml up -d` (project name already `claroline-djes`).
+- Assets: `WEBPACK_DEV_SERVER` defaults to `0` in `docker-compose.dev.yml`, so no dev server. After a clean start, build once inside the web container:
+  - `docker compose -f docker-compose.dev.yml exec web bash -lc "cd /var/www/html/claroline && npm run webpack"`
+  - This writes hashed bundles to `public/dist` and updates `webpack-prod.json`; the app will serve `/dist/...` (no 8080).
+- If you ever want hot reload instead, set `WEBPACK_DEV_SERVER=1` on `web` and rebuild; the app will then point to `http://localhost:8080/dist/...`.
+- Cache/proxy errors (500 with missing `var/cache/dev/.../Proxies/*.php`): recreate dirs and perms in the container:
+  - `docker compose -f docker-compose.dev.yml exec web bash -lc "cd /var/www/html/claroline && mkdir -p var/cache/dev/doctrine/orm/Proxies var/cache/dev/profiler var/log && chmod -R 777 var/cache var/log files config"`
+- Database host mismatch errors (getaddrinfo for `claroline-db`): ensure you are using the dev compose file; `config/parameters.yml` expects `db` (set by compose).
+- Access the app at http://localhost:8088 and hard-refresh (Ctrl+F5) after asset rebuilds.

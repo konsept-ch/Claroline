@@ -22,6 +22,12 @@ class FieldFacetValueRepository extends EntityRepository
      */
     public function findPlatformValuesByUser(User $user)
     {
+        // When the user is not yet persisted (no identifier), we cannot bind it in DQL.
+        // In that case just return an empty set instead of triggering Doctrine's exception.
+        if (null === $user->getId()) {
+            return [];
+        }
+
         return $this->_em
             ->createQuery('
                 SELECT fv
