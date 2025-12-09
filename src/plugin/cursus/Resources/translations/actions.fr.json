@@ -18,5 +18,6 @@
   "validate_emcc": "Validation EMCC",
   "validate_pci": "Validation PCI",
   "validate_registrations": "Valider inscriptions",
-  "validate_presences": "Valider liste de classe"
+  "validate_presences": "Valider liste de classe",
+  "open_resources": "Voir documents formateur"
 }

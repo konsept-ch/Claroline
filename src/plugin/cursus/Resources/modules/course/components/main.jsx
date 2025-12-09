@@ -36,6 +36,7 @@ const CourseMain = (props) =>
             isAdmin={props.isAdmin}
             canValidateRegistrations={props.canValidateRegistrations}
             canValidatePresences={props.canValidatePresences}
+            canOpenResources={props.canOpenResources}
           />
         )
       }, {
@@ -63,6 +64,7 @@ const CourseMain = (props) =>
             isAdmin={props.isAdmin}
             canValidateRegistrations={props.canValidateRegistrations}
             canValidatePresences={props.canValidatePresences}
+            canOpenResources={props.canOpenResources}
           />
         )
       }

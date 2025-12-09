@@ -6,7 +6,6 @@ import {trans} from '#/main/app/intl'
 import {Routes} from '#/main/app/router/components/routes'
 import {LINK_BUTTON} from '#/main/app/buttons'
 import {ContentTabs} from '#/main/app/content/components/tabs'
-import {ContentPlaceholder} from '#/main/app/content/components/placeholder'
 
 import {
   Course as CourseTypes,
@@ -20,7 +19,6 @@ import {CourseEvents} from '#/plugin/cursus/course/containers/events'
 import {CoursePendings} from '#/plugin/cursus/course/containers/pendings'
 import {CoursePresences} from '#/plugin/cursus/course/containers/presences'
 import {CourseTutors} from '#/plugin/cursus/course/containers/tutors'
-import {ResourceEmbedded} from '#/main/core/resource/containers/embedded'
 
 const CourseDetails = (props) =>
   <Fragment>
@@ -87,7 +85,7 @@ const CourseDetails = (props) =>
             icon: 'fa fa-fw fa-file',
             label: trans('tutor_resources', {}, 'cursus'),
             target: `${route(props.path, props.course, props.activeSession)}/resources`,
-            displayed: (props.canOpenResources || props.isAdmin) && !!props.activeSession,
+            displayed: props.canOpenResources && !!props.activeSession,
           }
         ]}
       />
@@ -184,29 +182,10 @@ const CourseDetails = (props) =>
           }
         }, {
           path: '/resources',
-          disabled: !props.activeSession || !(props.canOpenResources || props.isAdmin),
+          disabled: !props.activeSession || !props.canOpenResources,
           render() {
-            const resourceNode = get(props.course, 'resource')
-
-            if (!resourceNode) {
-              return (
-                <ContentPlaceholder
-                  icon="fa fa-fw fa-folder-open"
-                  title={trans('empty_value')}
-                  help={trans('not_found', {}, 'resource')}
-                />
-              )
-            }
-
             return (
-              <div className="panel panel-default">
-                <div className="panel-body">
-                  <ResourceEmbedded
-                    resourceNode={resourceNode}
-                    showHeader={true}
-                  />
-                </div>
-              </div>
+              <h1>Documents formateur</h1>
             )
           }
         }
@@ -217,7 +196,6 @@ const CourseDetails = (props) =>
 CourseDetails.propTypes = {
   path: T.string.isRequired,
   isAuthenticated: T.bool.isRequired,
-  isAdmin: T.bool.isRequired,
   canValidateRegistrations: T.bool.isRequired,
   canValidatePresences: T.bool.isRequired,
   course: T.shape(
