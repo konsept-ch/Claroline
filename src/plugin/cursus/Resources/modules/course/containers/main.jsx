@@ -17,7 +17,8 @@ const CourseMain = connect(
     courseRegistration: selectors.courseRegistration(state),
     availableSessions: selectors.availableSessions(state),
     canValidateRegistrations: hasPermission('validate_registrations', toolSelectors.toolData(state)),
-    canValidatePresences: hasPermission('validate_presences', toolSelectors.toolData(state))
+    canValidatePresences: hasPermission('validate_presences', toolSelectors.toolData(state)),
+    canOpenResources: hasPermission('open_resources', toolSelectors.toolData(state))
   }),
   (dispatch) => ({
     openSession(sessionId) {

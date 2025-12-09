@@ -4,6 +4,7 @@ services:
             - '@event_dispatcher'
             - '@security.token_storage'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\AppBundle\API\Crud'
         tags:
             - { name: kernel.event_listener, event: crud_pre_create_object_claroline_cursusbundle_entity_course, method: preCreate }
             - { name: kernel.event_listener, event: crud_post_create_object_claroline_cursusbundle_entity_course, method: postCreate }

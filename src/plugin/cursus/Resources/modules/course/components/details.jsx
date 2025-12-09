@@ -79,6 +79,13 @@ const CourseDetails = (props) =>
             label: trans('cancellations', {}, 'cursus'),
             target: `${route(props.path, props.course, props.activeSession)}/cancellations`,
             displayed: (props.canValidateRegistrations || props.canValidatePresences) && !!props.activeSession,
+          }, {
+            name: 'resources',
+            type: LINK_BUTTON,
+            icon: 'fa fa-fw fa-file',
+            label: trans('tutor_resources', {}, 'cursus'),
+            target: `${route(props.path, props.course, props.activeSession)}/resources`,
+            displayed: props.canOpenResources && !!props.activeSession,
           }
         ]}
       />
@@ -171,6 +178,14 @@ const CourseDetails = (props) =>
                 course={props.course}
                 activeSession={props.activeSession}
               />
+            )
+          }
+        }, {
+          path: '/resources',
+          disabled: !props.activeSession || !props.canOpenResources,
+          render() {
+            return (
+              <h1>Documents formateur</h1>
             )
           }
         }
