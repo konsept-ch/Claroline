@@ -22,7 +22,7 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
  */
 class ClientSerializer
 {
-    private const APP_VERSION = '1.2.1';
+    private const APP_VERSION = '1.2.3';
 
     /** @var string */
     private $env;

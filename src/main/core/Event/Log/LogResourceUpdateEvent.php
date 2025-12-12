@@ -44,6 +44,14 @@ class LogResourceUpdateEvent extends LogGenericEvent
             ];
         }
 
+        $workspace = $node->getWorkspace();
+        $workspaceData = [];
+        if (!empty($workspace)) {
+            $workspaceData = [
+                'name' => $workspace->getName(),
+            ];
+        }
+
         parent::__construct(
             $action,
             [
@@ -52,16 +60,14 @@ class LogResourceUpdateEvent extends LogGenericEvent
                     'path' => $node->getPathForDisplay(),
                     'changeSet' => $changeSet,
                 ],
-                'workspace' => [
-                    'name' => $node->getWorkspace()->getName(),
-                ],
+                'workspace' => $workspaceData,
                 'owner' => $owner,
             ],
             null,
             null,
             $node,
             null,
-            $node->getWorkspace(),
+            $workspace,
             $node->getCreator()
         );
     }

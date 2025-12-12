@@ -11,11 +11,14 @@
 
 namespace Claroline\CursusBundle\Crud;
 
+use Claroline\AppBundle\API\Crud;
 use Claroline\AppBundle\Event\Crud\CreateEvent;
 use Claroline\AppBundle\Event\Crud\DeleteEvent;
 use Claroline\AppBundle\Event\Crud\UpdateEvent;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\Entity\Organization\Organization;
+use Claroline\CoreBundle\Entity\Resource\Directory;
+use Claroline\CoreBundle\Entity\Resource\ResourceNode;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CursusBundle\Entity\Course;
 use Claroline\CursusBundle\Event\Log\LogCourseCreateEvent;
@@ -32,15 +35,19 @@ class CourseCrud
     private $eventDispatcher;
     /** @var ObjectManager */
     private $om;
+    /** @var Crud */
+    private $crud;
 
     public function __construct(
         EventDispatcherInterface $eventDispatcher,
         TokenStorageInterface $tokenStorage,
-        ObjectManager $om
+        ObjectManager $om,
+        Crud $crud
     ) {
         $this->eventDispatcher = $eventDispatcher;
         $this->tokenStorage = $tokenStorage;
         $this->om = $om;
+        $this->crud = $crud;
     }
 
     public function preCreate(CreateEvent $event)
@@ -66,6 +73,45 @@ class CourseCrud
                 }
             }
         }
+
+        $resourceNode = $this->crud->create(ResourceNode::class, [
+            'name' => $course->getName(),
+            'meta' => [
+                'published' => true,
+                'type' => 'directory',
+            ],
+            'rights' => [[
+                'permissions' => [
+                    'open' => true,
+                    'edit' => true,
+                    'delete' => false,
+                    'administrate' => true,
+                    'export' => false,
+                    'copy' => false
+                ],
+                'name' => 'ROLE_ADMIN',
+                'translationKey' => 'admin',
+            ], [
+                // allow authenticated users (incl. tutors) to browse the folder; edits stay restricted
+                'permissions' => [
+                    'open' => true,
+                    'edit' => false,
+                    'delete' => false,
+                    'administrate' => false,
+                    'export' => false,
+                    'copy' => false
+                ],
+                'name' => 'ROLE_USER',
+                'translationKey' => 'user',
+            ]],
+        ]);
+
+        $resource = $this->crud->create(Directory::class, []);
+        $resource->setResourceNode($resourceNode);
+        $course->setResource($resourceNode);
+
+        $this->om->persist($resourceNode);
+        $this->om->persist($resource);
 
         $course->setCreatedAt(new \DateTime());
         $course->setUpdatedAt(new \DateTime());
