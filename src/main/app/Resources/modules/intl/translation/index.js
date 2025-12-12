@@ -12,8 +12,33 @@ import {Translator as BaseTranslator} from './translator'
  * @returns {Translator}
  */
 function getTranslator() {
-  // we reuse the instance from browser, because it already contains messages loaded from <script>
-  return window.Translator || BaseTranslator
+  // Try to reuse the instance provided by the BazingaJsTranslationBundle script
+  // Some setups expose `window.Translator` as a constructor instead of an instance.
+  // In that case, instantiate it defensively to avoid `trans is not a function` at runtime.
+  const t = (typeof window !== 'undefined') ? window.Translator : undefined
+
+  if (t) {
+    // If it already looks like a usable instance
+    if (typeof t.trans === 'function') {
+      return t
+    }
+
+    // If it's a constructor with a proper prototype, instantiate it once
+    if (typeof t === 'function' && t.prototype && typeof t.prototype.trans === 'function') {
+      try {
+        const instance = new t()
+        if (typeof window !== 'undefined') {
+          window.Translator = instance
+        }
+        return instance
+      } catch (e) {
+        // fall back below
+      }
+    }
+  }
+
+  // Fallback to our local implementation (already populated by lazy JSON loads)
+  return BaseTranslator
 }
 
 /**

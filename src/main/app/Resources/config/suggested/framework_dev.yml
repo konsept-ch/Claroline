@@ -3,4 +3,5 @@ imports:
 
 framework:
     profiler:
-        only_exceptions: false
+        # Collect profiles only on exceptions to prevent memory exhaustion on heavy but successful requests
+        only_exceptions: true

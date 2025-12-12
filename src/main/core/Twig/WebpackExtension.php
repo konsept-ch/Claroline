@@ -63,7 +63,10 @@ class WebpackExtension extends AbstractExtension
             throw new \Exception("Cannot find asset '{$assetName}' in webpack stats. Found:\n{$assetNames})");
         }
 
-        if ('dev' === $this->environment && $hot) {
+        // Honour WEBPACK_DEV_SERVER=0 to force static assets even in dev
+        $useDevServer = 'dev' === $this->environment && $hot && getenv('WEBPACK_DEV_SERVER') !== '0';
+
+        if ($useDevServer) {
             // for dev serve fill from webpack-dev-server
             return 'http://localhost:8080/dist/'.$assets[$assetName]['js'];
         }
@@ -78,7 +81,9 @@ class WebpackExtension extends AbstractExtension
     {
         if (!$this->assetCache) {
             $assetFile = 'prod'; // for prod and test envs
-            if ('dev' === $this->environment) {
+
+            // In dev, fall back to the dev manifest only when the dev server is enabled
+            if ('dev' === $this->environment && getenv('WEBPACK_DEV_SERVER') !== '0') {
                 $assetFile = 'dev';
             }
 

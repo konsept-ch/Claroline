@@ -1,25 +1,35 @@
-version: "3.7"
-
+name: claroline
 services:
   web:
-    container_name: claroline-web
     build:
       context: .
       dockerfile: .docker.dev/web/Dockerfile
     ports:
-      - "80:80"
+      - "8088:80"
+      - "8443:443"
       - "8080:8080"
+      - "8443:443"
     volumes:
       - ./:/var/www/html/claroline
+      # Keep heavy/volatile dirs inside the Linux FS to avoid slow Windows bind-mount stats
+      - vendor:/var/www/html/claroline/vendor
+      - cache:/var/www/html/claroline/var/cache
+      - logs:/var/www/html/claroline/var/log
+      - geoip-data:/var/www/html/claroline/var/geoip
     depends_on:
       - db
+      - mailhog
     environment:
-      - APP_URL=claroline.example.com
+      - APP_URL=http://localhost:8088
       - ENV=DEV
       - APP_ENV=dev
-      - APP_DEBUG=1
+      - APP_DEBUG=0
       - NODE_ENV=development
-      - DB_HOST=claroline-db
+      - NODE_OPTIONS=--max_old_space_size=4096
+      - WEBPACK_DEV_SERVER=0
+      - GEOIP_DISABLE=1
+      - SKIP_REBUILD=0
+      - DB_HOST=db
       - DB_NAME=claroline
       - DB_USER=claroline
       - DB_PASSWORD=claroline
@@ -31,29 +41,36 @@ services:
       - ADMIN_EMAIL=claroline@example.com
       - PLATFORM_NAME=Claroline
       - PLATFORM_SUPPORT_EMAIL=claroline@example.com
-    networks:
-      claroline_network:
-        ipv4_address: 172.22.9.6
 
   db:
-    container_name: claroline-db
     environment:
       MYSQL_ROOT_PASSWORD: claroline
       MYSQL_USER: claroline
       MYSQL_PASSWORD: claroline
       MYSQL_DATABASE: claroline
     image: mysql:8.0
+    command: >
+      --innodb-redo-log-capacity=1073741824
+      --innodb-log-buffer-size=268435456
+      --max_allowed_packet=512M
+      --net_read_timeout=600
+      --net_write_timeout=600
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
-      - ../mysql:/var/lib/mysql
-      - ./.docker.dev/mysql:/etc/mysql/conf.d
-    networks:
-      claroline_network:
-        ipv4_address: 172.22.9.5
+      - db-data:/var/lib/mysql
+      - ./.docker.dev/mysql:/etc/mysql/conf.d:ro
 
-networks:
-  claroline_network:
-    ipam:
-      config:
-        - subnet: 172.22.9.0/24
+  mailhog:
+    image: mailhog/mailhog:latest
+    restart: unless-stopped
+    ports:
+      - "8025:8025"  # Web UI
+      - "1025:1025"  # SMTP
+
+volumes:
+  db-data:
+  geoip-data:
+  vendor:
+  cache:
+  logs:

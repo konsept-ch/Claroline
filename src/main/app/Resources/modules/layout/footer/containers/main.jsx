@@ -14,6 +14,7 @@ const FooterMain = withReducer(selectors.STORE_NAME, reducer)(
       content: selectors.content(state),
 
       // platform parameters
+      appVersion: configSelectors.param(state, 'appVersion'),
       version: configSelectors.param(state, 'version'),
       helpUrl: configSelectors.param(state, 'helpUrl'),
       locale: configSelectors.param(state, 'locale')

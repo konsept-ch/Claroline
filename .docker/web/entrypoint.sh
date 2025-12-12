@@ -20,18 +20,40 @@ echo "Cleaning up unused bundled themes for faster install/update..."
 rm -rf src/main/theme/Resources/themes/claroline-black src/main/theme/Resources/themes/claroline-mint src/main/theme/Resources/themes/claroline-ruby
 
 # Wait for MySQL to respond, depends on mysql-client
-echo "Waiting for $DB_HOST..."
-while ! mysqladmin ping -h "$DB_HOST" --silent; do
-  echo "MySQL is down"
-  sleep 1
-done
+echo "Waiting for $DB_HOST (prefer TLS; fallback to no TLS)..."
+ATTEMPTS=0
+MAX_TLS_TRIES=10
+TLS_OK=0
+if [ -f /var/lib/mysql/ca.pem ]; then
+  while ! mysqladmin ping -h "$DB_HOST" --protocol=tcp --ssl --ssl-ca=/var/lib/mysql/ca.pem --connect-timeout=2 --silent; do
+    echo "MySQL is down (TLS)"
+    ATTEMPTS=$((ATTEMPTS+1))
+    if [ $ATTEMPTS -ge $MAX_TLS_TRIES ]; then
+      echo "TLS attempts failed; falling back to non-TLS"
+      break
+    fi
+    sleep 1
+  done
+  if [ $ATTEMPTS -lt $MAX_TLS_TRIES ]; then
+    TLS_OK=1
+  fi
+fi
+if [ $TLS_OK -ne 1 ]; then
+  while ! mysqladmin ping -h "$DB_HOST" --protocol=tcp --skip-ssl --connect-timeout=2 --silent; do
+    echo "MySQL is down (no TLS)"
+    sleep 1
+  done
+fi
 
 echo "MySQL is up"
 
 if [ -f files/installed ]; then
-  echo "Claroline is already installed, updating and rebuilding themes and translations..."
-
-  php bin/console claroline:update -vvv
+  if [ -n "$SKIP_REBUILD" ] && [ "$SKIP_REBUILD" != "0" ]; then
+    echo "Claroline is already installed, skipping update/theme/translation rebuild (SKIP_REBUILD=$SKIP_REBUILD)"
+  else
+    echo "Claroline is already installed, updating and rebuilding themes and translations..."
+    php bin/console claroline:update -vvv
+  fi
 else
   echo "Installing Claroline for the first time..."
   chown -R www-data:www-data var files config # set owner to avoid permission issues later on
@@ -47,7 +69,12 @@ else
     sed -i "/support_email: null/c\support_email: $PLATFORM_SUPPORT_EMAIL" files/config/platform_options.json
   fi
 
-  USERS=$(mysql $DB_NAME -u $DB_USER -p$DB_PASSWORD -h $DB_HOST -se "select count(*) from claro_user")
+  if [ $TLS_OK -eq 1 ]; then
+    USERS=$(mysql $DB_NAME -u $DB_USER -p$DB_PASSWORD -h $DB_HOST --protocol=tcp --ssl --ssl-ca=/var/lib/mysql/ca.pem -se "select count(*) from claro_user" || true)
+  fi
+  if [ -z "$USERS" ]; then
+    USERS=$(mysql $DB_NAME -u $DB_USER -p$DB_PASSWORD -h $DB_HOST --protocol=tcp --skip-ssl -se "select count(*) from claro_user")
+  fi
 
   if [ "$USERS" == "1" ] && [ -v ADMIN_FIRSTNAME ] && [ -v ADMIN_LASTNAME ] && [ -v ADMIN_USERNAME ] && [ -v ADMIN_PASSWORD ]  && [ -v ADMIN_EMAIL ]; then
     echo '*********************************************************************************************************************'

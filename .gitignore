@@ -33,3 +33,4 @@ package-lock.json
 !/var/geoip/.gitkeep
 /vendor/
 ###< symfony/framework-bundle ###
+src/main/log/TestingLogs.txt

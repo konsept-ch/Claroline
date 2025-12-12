@@ -22,6 +22,8 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
  */
 class ClientSerializer
 {
+    private const APP_VERSION = '1.2.2';
+
     /** @var string */
     private $env;
 
@@ -104,6 +106,7 @@ class ClientSerializer
             'secondaryName' => $this->config->getParameter('secondary_name'),
             'description' => null, // the one for the current locale
             'version' => $this->versionManager->getCurrent(),
+            'appVersion' => self::APP_VERSION,
             'environment' => $this->env,
             'helpUrl' => $this->config->getParameter('help_url'),
             'selfRegistration' => $this->config->getParameter('registration.self') && !$this->userManager->hasReachedLimit(),

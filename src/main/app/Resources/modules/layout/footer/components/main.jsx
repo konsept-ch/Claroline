@@ -24,6 +24,9 @@ const FooterMain = (props) =>
         <span className="hidden-xs">Claroline Connect</span>
 
         <small>{props.version}</small>
+        {props.appVersion &&
+          <small className="app-footer-app-version">App v{props.appVersion}</small>
+        }
       </a>
 
       {props.display.termsOfService &&
@@ -60,6 +63,7 @@ const FooterMain = (props) =>
 
 FooterMain.propTypes = {
   version: T.string.isRequired,
+  appVersion: T.string,
   display: T.shape({
     locale: T.bool.isRequired,
     help: T.bool.isRequired,

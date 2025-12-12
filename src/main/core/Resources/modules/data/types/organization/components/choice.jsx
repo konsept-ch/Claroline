@@ -123,14 +123,9 @@ class OrganizationChoice extends Component {
         setErrors={() => null}
       >
         {!isEmpty(this.state.organizations) && !isEmpty(this.state.selected.filter(value => !isEmpty(value))) &&
-          <Fragment>
-            {trans('selected_organizations_hierarchy')}
-            <ol>
-              {getOrganizationsNames(this.state.organizations, this.state.selected).map(name =>
-                <li key={name}>{name}</li>
-              )}
-            </ol>
-          </Fragment>
+          <div>
+            {getOrganizationsNames(this.state.organizations, this.state.selected).join(' / ')}
+          </div>
         }
       </FormFieldset>
     )

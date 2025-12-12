@@ -132,8 +132,8 @@ class RefreshManager
             $this->filesystem->symlink($this->filesDataDir, $this->publicDataDir);
         } else {
             if (!is_link($this->publicDataDir)) {
-                //we could remove it manually but it might be risky
-                $this->output->writeln('Symlink from public/data to files/data could not be created, please remove your public/data folder manually', LogLevel::ERROR);
+                // we could remove it manually but it might be risky
+                $this->output->writeln('<error>Symlink from public/data to files/data could not be created, please remove your public/data folder manually</error>');
             } else {
                 $this->output->writeln('Public folder symlinks validated...');
             }

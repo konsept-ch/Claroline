@@ -27,8 +27,11 @@ export const reducer = combineReducers({
     data: {roles: [], code: null}
   }, {
     data: makeReducer({}, {
+      // Keep user input already typed while async registration data loads
       [REGISTRATION_DATA_LOAD]: (state, action) => ({
+        ...state,
         preferences: {
+          ...(state ? state.preferences : {}),
           locale: action.data.options.locale
         }
       }),

@@ -1,1 +1,7 @@
-.git
+node_modules
+vendor
+var/cache
+var/log
+public/data
+public/packages
+public/bundles
