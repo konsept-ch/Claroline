@@ -21,6 +21,7 @@ use Claroline\CoreBundle\Event\CatalogEvents\MessageEvents;
 use Claroline\CoreBundle\Event\SendMessageEvent;
 use Claroline\CoreBundle\Library\Normalizer\DateRangeNormalizer;
 use Claroline\CoreBundle\Library\RoutingHelper;
+use Claroline\CoreBundle\Manager\Template\UserPlaceholderMapper;
 use Claroline\CoreBundle\Manager\LocaleManager;
 use Claroline\CoreBundle\Manager\MailManager;
 use Claroline\CoreBundle\Manager\RoleManager;
@@ -35,6 +36,7 @@ use Claroline\CursusBundle\Event\Log\LogSessionGroupRegistrationEvent;
 use Claroline\CursusBundle\Event\Log\LogSessionGroupUnregistrationEvent;
 use Claroline\CursusBundle\Event\Log\LogSessionUserRegistrationEvent;
 use Claroline\CursusBundle\Event\Log\LogSessionUserUnregistrationEvent;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -63,12 +65,16 @@ class SessionManager
     private $workspaceManager;
     /** @var EventManager */
     private $sessionEventManager;
+    /** @var UserPlaceholderMapper */
+    private $userPlaceholderMapper;
     /** @var MailManager */
     private $mailManager;
     /** @var LocaleManager */
     private $localeManager;
     /** @var PdfManager */
     private $pdfManager;
+    /** @var TokenStorageInterface */
+    private $tokenStorage;
 
     private $sessionRepo;
     private $sessionUserRepo;
@@ -86,9 +92,11 @@ class SessionManager
         TemplateManager $templateManager,
         WorkspaceManager $workspaceManager,
         EventManager $sessionEventManager,
+        UserPlaceholderMapper $userPlaceholderMapper,
         MailManager $mailManager,
         LocaleManager $localeManager,
-        PdfManager $pdfManager
+        PdfManager $pdfManager,
+        TokenStorageInterface $tokenStorage
     ) {
         $this->eventDispatcher = $eventDispatcher;
         $this->translator = $translator;
@@ -101,9 +109,11 @@ class SessionManager
         $this->templateManager = $templateManager;
         $this->workspaceManager = $workspaceManager;
         $this->sessionEventManager = $sessionEventManager;
+        $this->userPlaceholderMapper = $userPlaceholderMapper;
         $this->mailManager = $mailManager;
         $this->localeManager = $localeManager;
         $this->pdfManager = $pdfManager;
+        $this->tokenStorage = $tokenStorage;
 
         $this->sessionRepo = $om->getRepository(Session::class);
         $this->sessionUserRepo = $om->getRepository(SessionUser::class);
@@ -729,13 +739,39 @@ class SessionManager
         usort($users, fn(SessionUser $a, SessionUser $b) => $a->getUser()->getLastName() === $b->getUser()->getLastName() ? 0 : (($a->getUser()->getLastName() < $b->getUser()->getLastName()) ? -1 : 1));
 
         $table = '<table style="border: 1px solid black; width: 100%; border-collapse: collapse;">';
+        $table .= '<thead>';
+        $table .= "<tr style='background: #f5f5f5;'>";
+        $table .= "<th style='border: 1px solid black; padding: 8px;'>Civilité / Grade</th>";
+        $table .= "<th style='border: 1px solid black; padding: 8px;'>Nom</th>";
+        $table .= "<th style='border: 1px solid black; padding: 8px;'>Prénom</th>";
+        $table .= "<th style='border: 1px solid black; padding: 8px;'>Fonction</th>";
+        $table .= "<th style='border: 1px solid black; padding: 8px;'>Partenaires / AVS</th>";
+        $table .= '</tr>';
+        $table .= '</thead>';
+        $table .= '<tbody>';
         foreach ($users as $user) {
+            $person = $user->getUser();
+
+            $placeholders = $this->userPlaceholderMapper->resolveByLabelDictionary($person, ['civility', 'function', 'partner']);
+            $avs = $this->userPlaceholderMapper->resolveByExactFieldLabel($person, [
+                'avs' => ['AVS', 'No AVS', 'Numéro AVS', 'Numéro AVS (PCi)']
+            ]);
+
+            $civility = $placeholders['civility'] ?? '';
+            $function = $placeholders['function'] ?? '';
+            $partner = $placeholders['partner'] ?? '';
+            $avsValue = $avs['avs'] ?? '';
+            $partnerAvs = trim($partner.(($partner && $avsValue) ? ' - ' : '').($avsValue ? 'AVS: '.$avsValue : ''));
+
             $table .= '<tr>';
-            $table .= "<td style='border: 1px solid black; width: 40%; padding: 10px;'>{$user->getUser()->getLastName()} {$user->getUser()->getFirstName()}</td>";
-            $table .= "<td style='border: 1px solid black; width: 40%; padding: 10px;'>{$user->getUser()->getMainOrganization()->getName()}</td>";
-            $table .= '<td style="border: 1px solid black; padding: 10px;">&nbsp;</td>';
+            $table .= "<td style='border: 1px solid black; padding: 8px;'>".htmlspecialchars($civility, ENT_QUOTES).'</td>';
+            $table .= "<td style='border: 1px solid black; padding: 8px;'>".htmlspecialchars($person->getLastName(), ENT_QUOTES).'</td>';
+            $table .= "<td style='border: 1px solid black; padding: 8px;'>".htmlspecialchars($person->getFirstName(), ENT_QUOTES).'</td>';
+            $table .= "<td style='border: 1px solid black; padding: 8px;'>".htmlspecialchars($function, ENT_QUOTES).'</td>';
+            $table .= "<td style='border: 1px solid black; padding: 8px;'>".htmlspecialchars($partnerAvs, ENT_QUOTES).'</td>';
             $table .= '</tr>';
         }
+        $table .= '</tbody>';
         $table .= '</table>';
 
         $placeholders = [

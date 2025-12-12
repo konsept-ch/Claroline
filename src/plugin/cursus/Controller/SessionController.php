@@ -681,7 +681,9 @@ class SessionController extends AbstractCrudController
 
         return new StreamedResponse(function () use ($session, $sessionUsers, $request) {
             echo $this->pdfManager->fromHtml(
-                $this->manager->download($session, $sessionUsers, $request->getLocale())
+                $this->manager->download($session, $sessionUsers, $request->getLocale()),
+                '@ClarolineApp/pdf.html.twig',
+                ['paper_orientation' => 'landscape']
             );
         }, 200, [
             'Content-Type' => 'application/pdf',
