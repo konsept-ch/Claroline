@@ -134,6 +134,9 @@ class CourseController extends AbstractCrudController
     {
         $this->checkPermission('OPEN', $course, [], true);
 
+        // Ensure the generated resource exists for older courses
+        $this->manager->ensureResource($course);
+
         $defaultSession = null;
 
         // search for sessions in which the current user is registered
