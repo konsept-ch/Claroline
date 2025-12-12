@@ -25,7 +25,7 @@ class PdfManager
         $this->platformManager = $platformManager;
     }
 
-    public function fromHtml(string $htmlContent, string $layout = '@ClarolineApp/pdf.html.twig'): ?string
+    public function fromHtml(string $htmlContent, string $layout = '@ClarolineApp/pdf.html.twig', array $options = []): ?string
     {
         $domPdf = new Dompdf([
             'isHtml5ParserEnabled' => true,
@@ -40,16 +40,20 @@ class PdfManager
             'content' => $htmlContent,
         ]));
 
+        $paperSize = $options['paper_size'] ?? 'A4';
+        $paperOrientation = $options['paper_orientation'] ?? 'portrait';
+        $domPdf->setPaper($paperSize, $paperOrientation);
+
         // Render the HTML as PDF
         $domPdf->render();
 
         return $domPdf->output();
     }
 
-    public function saveFromHtml(string $htmlContent, string $layout): ?string
+    public function saveFromHtml(string $htmlContent, string $layout, array $options = []): ?string
     {
         $filename = $this->tempFileManager->generate();
-        file_put_contents($filename, $this->fromHtml($htmlContent, $layout));
+        file_put_contents($filename, $this->fromHtml($htmlContent, $layout, $options));
         return $filename;
     }
 }
