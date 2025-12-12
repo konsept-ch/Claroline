@@ -11,8 +11,11 @@
 
 namespace Claroline\CursusBundle\Manager;
 
+use Claroline\AppBundle\API\Crud;
 use Claroline\AppBundle\Manager\PlatformManager;
 use Claroline\AppBundle\Persistence\ObjectManager;
+use Claroline\CoreBundle\Entity\Resource\Directory;
+use Claroline\CoreBundle\Entity\Resource\ResourceNode;
 use Claroline\CoreBundle\Manager\Template\TemplateManager;
 use Claroline\CursusBundle\Entity\Course;
 use Claroline\CursusBundle\Entity\Registration\AbstractRegistration;
@@ -30,6 +33,8 @@ class CourseManager
     private $translator;
     /** @var ObjectManager */
     private $om;
+    /** @var Crud */
+    private $crud;
     /** @var PlatformManager */
     private $platformManager;
     /** @var TemplateManager */
@@ -43,12 +48,14 @@ class CourseManager
         EventDispatcherInterface $eventDispatcher,
         TranslatorInterface $translator,
         ObjectManager $om,
+        Crud $crud,
         PlatformManager $platformManager,
         TemplateManager $templateManager,
         SessionManager $sessionManager
     ) {
         $this->eventDispatcher = $eventDispatcher;
         $this->om = $om;
+        $this->crud = $crud;
         $this->translator = $translator;
         $this->platformManager = $platformManager;
         $this->templateManager = $templateManager;
@@ -163,5 +170,63 @@ class CourseManager
                 $this->om->endFlushSuite();
             }
         }
+    }
+
+    /**
+     * Ensures the course has a linked directory resource node.
+     */
+    public function ensureResource(Course $course): ?ResourceNode
+    {
+        if ($course->getResource()) {
+            return $course->getResource();
+        }
+
+        $workspace = $course->getWorkspace();
+
+        $resourceNode = $this->crud->create(ResourceNode::class, [
+            'name' => $course->getName(),
+            'meta' => [
+                'published' => true,
+                'type' => 'directory',
+            ],
+            'rights' => [[
+                'permissions' => [
+                    'open' => true,
+                    'edit' => true,
+                    'delete' => false,
+                    'administrate' => true,
+                    'export' => false,
+                    'copy' => false
+                ],
+                'name' => 'ROLE_ADMIN',
+                'translationKey' => 'admin',
+            ], [
+                'permissions' => [
+                    'open' => true,
+                    'edit' => false,
+                    'delete' => false,
+                    'administrate' => false,
+                    'export' => false,
+                    'copy' => false
+                ],
+                'name' => 'ROLE_USER',
+                'translationKey' => 'user',
+            ]],
+        ]);
+
+        if ($workspace) {
+            $resourceNode->setWorkspace($workspace);
+        }
+
+        $resource = $this->crud->create(Directory::class, []);
+        $resource->setResourceNode($resourceNode);
+        $course->setResource($resourceNode);
+
+        $this->om->persist($resourceNode);
+        $this->om->persist($resource);
+        $this->om->persist($course);
+        $this->om->flush();
+
+        return $resourceNode;
     }
 }

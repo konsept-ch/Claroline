@@ -9,6 +9,7 @@ services:
             - '@event_dispatcher'
             - '@translator'
             - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\AppBundle\API\Crud'
             - '@Claroline\AppBundle\Manager\PlatformManager'
             - '@Claroline\CoreBundle\Manager\Template\TemplateManager'
             - '@Claroline\CursusBundle\Manager\SessionManager'

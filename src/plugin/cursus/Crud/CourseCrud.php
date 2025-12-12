@@ -77,7 +77,7 @@ class CourseCrud
         $resourceNode = $this->crud->create(ResourceNode::class, [
             'name' => $course->getName(),
             'meta' => [
-                'published' => false,
+                'published' => true,
                 'type' => 'directory',
             ],
             'rights' => [[
@@ -91,6 +91,18 @@ class CourseCrud
                 ],
                 'name' => 'ROLE_ADMIN',
                 'translationKey' => 'admin',
+            ], [
+                // allow authenticated users (incl. tutors) to browse the folder; edits stay restricted
+                'permissions' => [
+                    'open' => true,
+                    'edit' => false,
+                    'delete' => false,
+                    'administrate' => false,
+                    'export' => false,
+                    'copy' => false
+                ],
+                'name' => 'ROLE_USER',
+                'translationKey' => 'user',
             ]],
         ]);
 

@@ -168,7 +168,9 @@ class DirectoryListener
         /** @var ResourceNode $resourceNode */
         $resourceNode = $this->crud->create(ResourceNode::class, $nodeData, $options);
         $resourceNode->setParent($parent);
-        $resourceNode->setWorkspace($parent->getWorkspace());
+        if ($parent->getWorkspace()) {
+            $resourceNode->setWorkspace($parent->getWorkspace());
+        }
 
         // initialize custom resource Entity
         $resourceClass = $resourceNode->getResourceType()->getClass();

@@ -106,6 +106,11 @@ class WorkspaceEvaluationSubscriber implements EventSubscriberInterface
         $workspace = $resourceNode->getWorkspace();
         $user = $resourceUserEvaluation->getUser();
 
+        // Some resources (eg. standalone course directories) are not tied to a workspace.
+        if (!$workspace) {
+            return;
+        }
+
         $this->manager->computeEvaluation($workspace, $user, $resourceUserEvaluation);
     }
 }
