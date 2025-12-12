@@ -39,7 +39,9 @@
 
         {# Styles from plateform configuration #}
         {% for file in stylesheets %}
-            <link rel="stylesheet" type="text/css" href="{{ asset(file) }}" />
+            {% if file is not empty %}
+                <link rel="stylesheet" type="text/css" href="{{ asset(file) }}" />
+            {% endif %}
         {% endfor %}
     </head>
 
@@ -84,7 +86,9 @@
 
         {# JS from plateform configuration #}
         {% for file in javascripts %}
-            <script src="{{ asset(file) }}"></script>
+            {% if file is not empty %}
+                <script src="{{ asset(file) }}"></script>
+            {% endif %}
         {% endfor %}
     </body>
 </html>
