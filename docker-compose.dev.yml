@@ -8,7 +8,6 @@ services:
       - "8088:80"
       - "8443:443"
       - "8080:8080"
-      - "8443:443"
     volumes:
       - ./:/var/www/html/claroline
       # Keep heavy/volatile dirs inside the Linux FS to avoid slow Windows bind-mount stats
