@@ -2,8 +2,19 @@ import {createSelector} from 'reselect'
 import get from 'lodash/get'
 import isEmpty from 'lodash/isEmpty'
 
-// retrieves a form instance in the store
-const form = (state, formName) => get(state, formName)
+// default form shape to avoid undefined access before reducer mount
+const DEFAULT_FORM_STATE = {
+  new: false,
+  mode: undefined,
+  validating: false,
+  pendingChanges: false,
+  errors: {},
+  data: {},
+  originalData: {}
+}
+
+// retrieves a form instance in the store, falling back to a safe default
+const form = (state, formName) => get(state, formName, DEFAULT_FORM_STATE)
 
 const isNew = (formState) => formState.new
 const mode = (formState) => formState.mode

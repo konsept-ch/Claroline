@@ -97,8 +97,15 @@ echo "Clean cache after setting correct permissions, fixes SAML issues"
 composer delete-cache # fixes SAML errors
 
 echo "Setting correct file permissions for PROD"
-chown -R www-data:www-data var files config
-chmod -R 750 var files config
+chown -R www-data:www-data var files config public/js
+chmod -R 750 var files config public/js
 chmod -R 755 public
+
+# Ensure JS routing file exists (mounted volumes can override the one built in image)
+if [ ! -f public/js/fos_js_routes.js ]; then
+  echo "fos_js_routes.js missing; generating..."
+  php bin/console fos:js-routing:dump --target=public/js/fos_js_routes.js --env=prod || true
+  chown www-data:www-data public/js/fos_js_routes.js || true
+fi
 
 exec "$@"

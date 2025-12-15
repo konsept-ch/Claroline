@@ -2,7 +2,8 @@ import {createSelector} from 'reselect'
 
 const STORE_NAME = 'favouriteMenu'
 
-const store = (state) => state[STORE_NAME]
+// Guard to avoid crashing before the reducer is injected
+const store = (state) => state[STORE_NAME] || {loaded: false, results: []}
 
 const loaded = createSelector(
   [store],
