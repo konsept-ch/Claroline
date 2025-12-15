@@ -4,11 +4,8 @@
  */
 
 import {registry} from '#/main/app/buttons/registry'
-
-// gets the button component
+import {MENU_BUTTON} from '#/main/app/buttons/constants'
 import {MenuButton} from '#/main/app/buttons/menu/components/button'
-
-const MENU_BUTTON = 'menu'
 
 // make the button available for use
 registry.add(MENU_BUTTON, MenuButton)

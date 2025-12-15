@@ -29,19 +29,21 @@ class ResourceMain extends Component {
   }
 
   componentDidMount() {
-    if (!this.props.loaded) {
-      this.props.open(this.props.resourceSlug, this.props.embedded, this.loadApp)
-    } else {
-      this.loadApp(this.props.resourceType)
+    if (this.props.resourceSlug) {
+      if (!this.props.loaded) {
+        this.props.open(this.props.resourceSlug, this.props.embedded, this.loadApp)
+      } else {
+        this.loadApp(this.props.resourceType)
+      }
     }
   }
 
   componentDidUpdate(prevProps) {
-    if (!this.props.notFound && this.props.resourceSlug !== prevProps.resourceSlug) {
+    if (this.props.resourceSlug && !this.props.notFound && this.props.resourceSlug !== prevProps.resourceSlug) {
       this.props.close(prevProps.resourceSlug, prevProps.embedded)
     }
 
-    if (!this.props.loaded && this.props.loaded !== prevProps.loaded) {
+    if (this.props.resourceSlug && !this.props.loaded && this.props.loaded !== prevProps.loaded) {
       this.props.open(this.props.resourceSlug, this.props.embedded, this.loadApp)
     }
   }
@@ -52,7 +54,7 @@ class ResourceMain extends Component {
       this.pending = null
     }
 
-    if (!this.props.notFound) {
+    if (this.props.resourceSlug && !this.props.notFound) {
       this.props.close(this.props.resourceSlug, this.props.embedded)
     }
   }
@@ -90,6 +92,16 @@ class ResourceMain extends Component {
   }
 
   render() {
+    if (!this.props.resourceSlug) {
+      return (
+        <ContentNotFound
+          size="lg"
+          title={trans('not_found', {}, 'resource')}
+          description={trans('not_found_desc', {}, 'resource')}
+        />
+      )
+    }
+
     if (this.props.notFound) {
       return (
         <ContentNotFound
@@ -152,7 +164,7 @@ class ResourceMain extends Component {
 
 ResourceMain.propTypes = {
   path: T.string.isRequired,
-  resourceSlug: T.string.isRequired,
+  resourceSlug: T.string,
   resourceType: T.string,
 
   embedded: T.bool.isRequired,
@@ -160,6 +172,10 @@ ResourceMain.propTypes = {
   notFound: T.bool.isRequired,
   open: T.func.isRequired,
   close: T.func.isRequired
+}
+
+ResourceMain.defaultProps = {
+  resourceSlug: null
 }
 
 export {

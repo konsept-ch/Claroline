@@ -5,31 +5,31 @@ const STORE_NAME = 'trainingCatalog'
 const LIST_NAME = STORE_NAME + '.courses'
 const FORM_NAME = STORE_NAME + '.courseForm'
 
-const catalog = (state) => state[STORE_NAME]
+const catalog = (state) => state[STORE_NAME] || {}
 
 const course = createSelector(
   [catalog],
-  (catalog) => catalog.course
+  (catalog) => catalog.course || null
 )
 
 const sessionRegistrations = createSelector(
   [catalog],
-  (catalog) => catalog.courseRegistrations
+  (catalog) => catalog.courseRegistrations || {users: [], groups: [], pending: []}
 )
 
 const availableSessions = createSelector(
   [catalog],
-  (catalog) => catalog.courseAvailableSessions
+  (catalog) => catalog.courseAvailableSessions || []
 )
 
 const defaultSession = createSelector(
   [catalog],
-  (catalog) => catalog.courseDefaultSession
+  (catalog) => catalog.courseDefaultSession || null
 )
 
 const activeSession = createSelector(
   [catalog],
-  (catalog) => catalog.courseActiveSession
+  (catalog) => catalog.courseActiveSession || null
 )
 
 const activeSessionRegistration = createSelector(

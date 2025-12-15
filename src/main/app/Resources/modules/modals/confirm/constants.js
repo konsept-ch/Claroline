@@ -1,0 +1,5 @@
+const MODAL_CONFIRM = 'MODAL_CONFIRM'
+
+export {
+  MODAL_CONFIRM
+}

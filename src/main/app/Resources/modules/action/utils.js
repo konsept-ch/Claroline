@@ -4,8 +4,8 @@ import uniqWith from 'lodash/uniqWith'
 
 import {trans} from '#/main/app/intl/translation'
 import {toKey} from '#/main/core/scaffolding/text'
-import {MENU_BUTTON, MODAL_BUTTON} from '#/main/app/buttons'
-import {MODAL_CONFIRM} from '#/main/app/modals/confirm'
+import {MENU_BUTTON, MODAL_BUTTON} from '#/main/app/buttons/constants'
+import {MODAL_CONFIRM} from '#/main/app/modals/confirm/constants'
 
 const GROUP_SEPARATOR  = '|'
 const ACTION_SEPARATOR = ' '

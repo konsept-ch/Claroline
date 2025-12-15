@@ -86,7 +86,8 @@ class ResourceEmbedded extends Component {
       resource: {
         embedded: true,
         showHeader: this.props.showHeader,
-        lifecycle: this.props.lifecycle
+        lifecycle: this.props.lifecycle,
+        slug: this.props.resourceNode.slug
       }
     }, true, `/desktop/resources/${this.props.resourceNode.slug}`)
   }

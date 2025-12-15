@@ -5,16 +5,16 @@ import {selectors as configSelectors} from '#/main/app/config/store'
 
 const STORE_NAME = 'desktop'
 
-const store = (state) => state[STORE_NAME]
+const store = (state) => state[STORE_NAME] || {}
 
 const loaded = createSelector(
   [store],
-  (store) => store.loaded
+  (store) => !!store.loaded
 )
 
 const tools = createSelector(
   [store],
-  (store) => store.tools
+  (store) => store.tools || []
 )
 
 const defaultOpening = (state) => {

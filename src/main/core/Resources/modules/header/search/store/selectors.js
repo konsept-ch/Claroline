@@ -3,21 +3,21 @@ import isEmpty from 'lodash/isEmpty'
 
 const STORE_NAME = 'search'
 
-const store = (state) => state[STORE_NAME]
+const store = (state) => state[STORE_NAME] || {}
 
 const search = createSelector(
   [store],
-  (store) => store.search
+  (store) => store.search || ''
 )
 
 const fetching = createSelector(
   [store],
-  (store) => store.fetching
+  (store) => !!store.fetching
 )
 
 const results = createSelector(
   [store],
-  (store) => store.results
+  (store) => store.results || {}
 )
 
 const empty = createSelector(

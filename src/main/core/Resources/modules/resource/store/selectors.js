@@ -7,11 +7,11 @@ import {constants as baseConstants} from '#/main/core/constants'
 
 const STORE_NAME = 'resource'
 
-const store = (state) => state[STORE_NAME]
+const store = (state) => state[STORE_NAME] || {}
 
 const slug = createSelector(
   [store],
-  (store) => store.slug
+  (store) => store.slug || null
 )
 
 const resourceNode = createSelector(
@@ -24,12 +24,12 @@ const id = createSelector(
   (resourceNode) => resourceNode.id
 )
 
-const basePath = toolSelectors.path
+const basePath = (state) => toolSelectors.path(state) || ''
 
 const path = createSelector(
   [basePath, resourceNode],
   (basePath, resourceNode) => {
-    return basePath + '/' + (resourceNode.meta ? resourceNode.slug: null)
+    return basePath && resourceNode.meta ? (basePath + '/' + resourceNode.slug) : ''
   }
 )
 
@@ -49,12 +49,12 @@ const managed = createSelector(
 
 const loaded = createSelector(
   [store],
-  (store) => store.loaded
+  (store) => !!store.loaded
 )
 
 const notFound = createSelector(
   [store],
-  (store) => store.notFound
+  (store) => !!store.notFound
 )
 
 // lifecycle selectors

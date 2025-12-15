@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useContext, useEffect} from 'react'
 import {ReactReduxContext} from 'react-redux'
 
 /**
@@ -11,19 +11,19 @@ import {ReactReduxContext} from 'react-redux'
  */
 function withReducer(key, reducer) {
   return function appendReducers(WrappedComponent) {
-    const WithReducer = (props) => (
-      <ReactReduxContext.Consumer>
-        {({ store }) => {
-          // this will mount the requested reducer into the current redux store
-          store.injectReducer(key, reducer)
+    const WithReducer = (props) => {
+      const {store} = useContext(ReactReduxContext)
 
-          // just render the original component and forward its props
-          return (
-            <WrappedComponent {...props} />
-          )
-        }}
-      </ReactReduxContext.Consumer>
-    )
+      useEffect(() => {
+        // mount the requested reducer into the current redux store
+        store.injectReducer(key, reducer)
+      }, [store])
+
+      // just render the original component and forward its props
+      return (
+        <WrappedComponent {...props} />
+      )
+    }
 
     WithReducer.displayName = `WithReducer(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`
 

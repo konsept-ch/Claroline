@@ -4,11 +4,8 @@
  */
 
 import {registry} from '#/main/app/modals/registry'
-
-// gets the modal component
+import {MODAL_CONFIRM} from '#/main/app/modals/confirm/constants'
 import {ConfirmModal} from '#/main/app/modals/confirm/components/modal'
-
-const MODAL_CONFIRM = 'MODAL_CONFIRM'
 
 // make the modal available for use
 registry.add(MODAL_CONFIRM, ConfirmModal)

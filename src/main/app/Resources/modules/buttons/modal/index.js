@@ -4,11 +4,8 @@
  */
 
 import {registry} from '#/main/app/buttons/registry'
-
-// gets the button component
+import {MODAL_BUTTON} from '#/main/app/buttons/constants'
 import {ModalButton} from '#/main/app/buttons/modal/containers/button'
-
-const MODAL_BUTTON = 'modal'
 
 // make the button available for use
 registry.add(MODAL_BUTTON, ModalButton)

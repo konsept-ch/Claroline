@@ -2,9 +2,9 @@ import get from 'lodash/get'
 import isArray from 'lodash/isArray'
 
 // retrieves a search instance in the store
-const search = (state, searchName) => get(state, searchName)
+const search = (state, searchName) => get(state, searchName) || []
 
-const filters = (searchState) => searchState
+const filters = (searchState) => searchState || []
 
 const queryString = (searchState) => {
   const queryParams = []

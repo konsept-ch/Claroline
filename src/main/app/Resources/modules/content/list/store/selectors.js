@@ -1,21 +1,22 @@
 import get from 'lodash/get'
 import {createSelector} from 'reselect'
 
+import {constants as paginationConst} from '#/main/app/content/pagination/constants'
 import {selectors as paginationSelectors} from '#/main/app/content/pagination/store/selectors'
 import {selectors as searchSelectors} from '#/main/app/content/search/store/selectors'
 
 // retrieves a list instance in the store
-const list = (state, listName) => get(state, listName)
+const list = (state, listName) => get(state, listName) || {}
 
 // access list data
-const loaded       = (listState) => listState.loaded
-const invalidated  = (listState) => listState.invalidated
-const data         = (listState) => listState.data
-const totalResults = (listState) => listState.totalResults
+const loaded       = (listState) => !!listState.loaded
+const invalidated  = (listState) => !!listState.invalidated
+const data         = (listState) => listState.data || []
+const totalResults = (listState) => listState.totalResults || 0
 const selected     = (listState) => listState.selected || []
 const sortBy       = (listState) => listState.sortBy || {}
 
-const pagination   = (listState) => listState.pagination
+const pagination   = (listState) => listState.pagination || {page: 0, pageSize: paginationConst.DEFAULT_PAGE_SIZE}
 const pageSize     = (listState) => paginationSelectors.pageSize(pagination(listState)) // for retro-compatibility
 const currentPage  = (listState) => paginationSelectors.currentPage(pagination(listState)) // for retro-compatibility
 
