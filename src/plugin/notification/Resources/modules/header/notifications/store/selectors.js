@@ -2,7 +2,8 @@ import {createSelector} from 'reselect'
 
 const STORE_NAME = 'notificationsMenu'
 
-const store = (state) => state[STORE_NAME]
+// Guard for missing/injected reducer so selectors don't crash before mount
+const store = (state) => state[STORE_NAME] || {count: 0, loaded: false, results: []}
 
 const count = createSelector(
   [store],

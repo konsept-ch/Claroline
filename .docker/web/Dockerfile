@@ -1,4 +1,4 @@
-FROM php:8.2-apache-bullseye
+FROM php:8.0-apache
 
 LABEL maintainer="Donovan Tengblad"
 

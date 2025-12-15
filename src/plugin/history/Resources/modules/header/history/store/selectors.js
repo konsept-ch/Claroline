@@ -2,7 +2,8 @@ import {createSelector} from 'reselect'
 
 const STORE_NAME = 'historyMenu'
 
-const store = (state) => state[STORE_NAME]
+// The reducer is injected dynamically; guard for cases where the slice is not mounted yet
+const store = (state) => state[STORE_NAME] || {loaded: false, results: {}}
 
 const loaded = createSelector(
   [store],
