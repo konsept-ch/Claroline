@@ -91,13 +91,26 @@ services:
   - Platform branding: `PLATFORM_NAME`, `PLATFORM_SUPPORT_EMAIL`
   - Optional admin auto-creation (dev only): set `ADMIN_*` variables (compose defines `root/claroline` by default)
   - Reference: `docker-compose.dev.yml:1`, `.docker.dev/web/entrypoint.sh:1`
-  - App URL used by the frontend: set `APP_URL=http://localhost:8088` (already configured)
+ - App URL used by the frontend: set `APP_URL=http://localhost:8088` (already configured)
 
 From Source (Without Docker)
 ----------------------------
 
 1) Install dependencies
 - `composer install` (use `--no-dev --optimize-autoloader` for prod)
+  - Windows + antivirus HTTPS inspection (e.g., Avast/Zscaler) can break Composer TLS with `curl error 60`. Fix once:
+    - Download CA bundle: `Invoke-WebRequest https://curl.se/ca/cacert.pem -OutFile C:\tools\php81\cacert.pem`
+    - In `C:\tools\php81\php.ini` set `curl.cainfo` and `openssl.cafile` to that path.
+    - Append the proxy/AV root cert to the bundle (PowerShell):
+      ```powershell
+      $req=[Net.HttpWebRequest]::Create("https://repo.packagist.org")
+      try { $resp=$req.GetResponse(); $resp.Close() } catch {}
+      $chain=New-Object Security.Cryptography.X509Certificates.X509Chain
+      $null=$chain.Build($req.ServicePoint.Certificate)
+      $root=$chain.ChainElements[-1].Certificate
+      $pem=[Convert]::ToBase64String($root.Export([Security.Cryptography.X509Certificates.X509ContentType]::Cert)) -split '(.{1,64})' | ? {$_}
+      @('-----BEGIN CERTIFICATE-----') + $pem + '-----END CERTIFICATE-----' | Add-Content C:\tools\php81\cacert.pem -Encoding ascii
+      ```
 - `npm install` (or `npm install --legacy-peer-deps` with npm 7+)
 
 2) Configure application
@@ -196,6 +209,9 @@ Known Pitfalls
   - Prefer serving static assets: set `WEBPACK_DEV_SERVER=0` (default here).
   - Keep the repo under WSL2 home for faster bind-mounts.
   - Increase Docker resources (4 CPU, 6–8 GB RAM).
+- LightSaml 500 "There are no own credentials":
+  - The SAML plugin now falls back to a bundled self-signed cert/key when none are configured.
+  - If you override `files/config/platform_options.json` and clear `saml.credentials`, keep at least one entry or drop the override so the default kicks in.
 
 GeoIP Database (faster, persistent)
 -----------------------------------

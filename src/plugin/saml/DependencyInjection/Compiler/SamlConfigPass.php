@@ -78,6 +78,20 @@ class SamlConfigPass implements CompilerPassInterface
         // adds credentials from platform_options.json
         $entityId = $configHandler->getParameter('saml.entity_id');
         $credentials = $configHandler->getParameter('saml.credentials');
+
+        // LightSaml fails with "There are no own credentials" if none are defined.
+        // Provide a bundled self-signed pair as a safe default for local/dev installs.
+        if (empty($credentials)) {
+            $projectDir = $container->getParameter('kernel.project_dir');
+            $credentials = [
+                [
+                    'certificate' => $projectDir.'/src/plugin/saml/Resources/config/saml.crt',
+                    'key' => $projectDir.'/src/plugin/saml/Resources/config/saml.pem',
+                    'password' => null,
+                ],
+            ];
+        }
+
         if (!empty($credentials)) {
             foreach ($credentials as $id => $data) {
                 $definition = new Definition(
