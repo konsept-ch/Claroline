@@ -119,7 +119,9 @@ class EventPresenceController
 
         return new StreamedResponse(function () use ($event, $request, $filled) {
             echo $this->pdfManager->fromHtml(
-                $this->manager->download($event, $this->eventManager->getRegisteredUsers($event), $request->getLocale(), (bool) $filled)
+                $this->manager->download($event, $this->eventManager->getRegisteredUsers($event), $request->getLocale(), (bool) $filled),
+                '@ClarolineApp/pdf.html.twig',
+                ['paper_orientation' => 'landscape']
             );
         }, 200, [
             'Content-Type' => 'application/pdf',
