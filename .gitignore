@@ -34,3 +34,4 @@ package-lock.json
 /vendor/
 ###< symfony/framework-bundle ###
 src/main/log/TestingLogs.txt
+stats-full.json
