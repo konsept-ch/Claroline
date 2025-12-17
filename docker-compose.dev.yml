@@ -1,8 +1,5 @@
-version: "3.7"
-
 services:
   web:
-    container_name: claroline-web
     build:
       context: .
       dockerfile: .docker.dev/web/Dockerfile
@@ -11,15 +8,24 @@ services:
       - "8080:8080"
     volumes:
       - ./:/var/www/html/claroline
+      # Keep heavy/volatile dirs inside Docker volumes to avoid Windows symlink/reparse issues and improve performance
+      - vendor:/var/www/html/claroline/vendor
+      - node_modules:/var/www/html/claroline/node_modules
+      - public-bundles:/var/www/html/claroline/public/bundles
+      - public-packages:/var/www/html/claroline/public/packages
+      - public-data:/var/www/html/claroline/public/data
+      - cache:/var/www/html/claroline/var/cache
+      - logs:/var/www/html/claroline/var/log
     depends_on:
       - db
+      - mailhog
     environment:
-      - APP_URL=claroline.example.com
+      - APP_URL=http://localhost
       - ENV=DEV
       - APP_ENV=dev
       - APP_DEBUG=1
       - NODE_ENV=development
-      - DB_HOST=claroline-db
+      - DB_HOST=db
       - DB_NAME=claroline
       - DB_USER=claroline
       - DB_PASSWORD=claroline
@@ -31,12 +37,8 @@ services:
       - ADMIN_EMAIL=claroline@example.com
       - PLATFORM_NAME=Claroline
       - PLATFORM_SUPPORT_EMAIL=claroline@example.com
-    networks:
-      claroline_network:
-        ipv4_address: 172.22.9.6
 
   db:
-    container_name: claroline-db
     environment:
       MYSQL_ROOT_PASSWORD: claroline
       MYSQL_USER: claroline
@@ -44,16 +46,24 @@ services:
       MYSQL_DATABASE: claroline
     image: mysql:8.0
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
-      - ../mysql:/var/lib/mysql
-      - ./.docker.dev/mysql:/etc/mysql/conf.d
-    networks:
-      claroline_network:
-        ipv4_address: 172.22.9.5
+      - db-data:/var/lib/mysql
+      - ./.docker.dev/mysql:/etc/mysql/conf.d:ro
 
-networks:
-  claroline_network:
-    ipam:
-      config:
-        - subnet: 172.22.9.0/24
+  mailhog:
+    image: mailhog/mailhog:latest
+    restart: unless-stopped
+    ports:
+      - "8025:8025" # Web UI
+      - "1025:1025" # SMTP
+
+volumes:
+  db-data:
+  vendor:
+  node_modules:
+  public-bundles:
+  public-packages:
+  public-data:
+  cache:
+  logs:

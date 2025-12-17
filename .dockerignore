@@ -1,1 +1,5 @@
 .git
+vendor
+node_modules
+var
+stats-full.json
