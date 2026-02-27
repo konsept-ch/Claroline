@@ -7,6 +7,11 @@ use Symfony\Component\HttpFoundation\Request;
 
 require dirname(__DIR__).'/config/bootstrap.php';
 
+// Local/dev safeguard: Claroline can exceed 128M on some requests.
+if ((int) ini_get('memory_limit') > 0) {
+    ini_set('memory_limit', '512M');
+}
+
 if ($_SERVER['APP_DEBUG']) {
     umask(0000);
 
