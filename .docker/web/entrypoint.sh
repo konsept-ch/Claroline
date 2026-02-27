@@ -2,11 +2,79 @@
 
 set -e
 
+ensure_symlink() {
+  local source="$1"
+  local link="$2"
+
+  if [ -L "$link" ]; then
+    # Keep valid symlinks. Broken ones are recreated.
+    if [ -e "$link" ]; then
+      return 0
+    fi
+    rm -f "$link"
+  fi
+
+  if [ -e "$link" ]; then
+    local backup="${link}.bak.$(date +%s)"
+    echo "Path $link exists but is not a symlink. Moving it to $backup"
+    mv "$link" "$backup"
+  fi
+
+  ln -s "$source" "$link"
+  echo "Symlink created: $link -> $source"
+}
+
+validate_webpack_assets() {
+  php -r '
+    $manifest = "webpack-prod.json";
+    if (!file_exists($manifest)) {
+      fwrite(STDERR, "Missing webpack manifest: $manifest\n");
+      exit(1);
+    }
+
+    $assets = json_decode(file_get_contents($manifest), true);
+    if (!is_array($assets)) {
+      fwrite(STDERR, "Invalid webpack manifest JSON: $manifest\n");
+      exit(1);
+    }
+
+    $missing = [];
+    $seen = [];
+    foreach ($assets as $entry) {
+      if (!is_array($entry) || !isset($entry["js"])) {
+        continue;
+      }
+
+      $files = is_array($entry["js"]) ? $entry["js"] : [$entry["js"]];
+      foreach ($files as $file) {
+        if (!is_string($file) || $file === "") {
+          continue;
+        }
+
+        $path = "public/dist/".$file;
+        if (!isset($seen[$path]) && !is_file($path)) {
+          $missing[] = $path;
+        }
+        $seen[$path] = true;
+      }
+    }
+
+    if (!empty($missing)) {
+      fwrite(STDERR, "Missing webpack assets:\n - ".implode("\n - ", $missing)."\n");
+      exit(1);
+    }
+  '
+}
+
 echo "Creating required directories in volumes"
 mkdir -p var/geoip
 mkdir -p files/config
 mkdir -p files/data
 mkdir -p files/templates
+
+echo "Ensuring public symlinks are valid"
+ensure_symlink "$(pwd)/files/data" "$(pwd)/public/data"
+ensure_symlink "$(pwd)/node_modules" "$(pwd)/public/packages"
 
 echo "Copying initial config files to /config volume"
 cp -R ../initial/config ./
@@ -68,6 +136,13 @@ fi
 
 echo "Clean cache after setting correct permissions, fixes SAML issues"
 composer delete-cache # fixes SAML errors
+
+echo "Validating webpack assets in public/dist"
+if ! validate_webpack_assets; then
+  echo "Webpack assets are missing/inconsistent, rebuilding..."
+  npm run webpack
+  validate_webpack_assets
+fi
 
 echo "Setting correct file permissions for PROD"
 chown -R www-data:www-data var files config
