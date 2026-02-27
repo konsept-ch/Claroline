@@ -22,6 +22,7 @@ const UserTab = connect(
         'lastName',
         'username',
         'email',
+        'phone',
         'administrativeCode',
         'meta.lastActivity',
         'roles'

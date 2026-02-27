@@ -1,6 +1,7 @@
 {
   "The user id": "L'id de l'utilisateur (uuid/id)",
   "The user email address": "L'adresse email de l'utilisateur",
+  "The user phone number": "Le numero de telephone de l'utilisateur",
   "The user first name": "Le prénom de l'utilisateur",
   "The user last name": "Le nom de famille de l'utilisateur",
   "The user username": "L'identifiant de l'utilisateur",

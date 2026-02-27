@@ -56,6 +56,10 @@ class ListManagersExporter extends AbstractListExporter
                     'type' => 'string',
                     'description' => $this->translator->trans('The user email address', [], 'schema'),
                 ], [
+                    'name' => 'phone',
+                    'type' => 'string',
+                    'description' => $this->translator->trans('The user phone number', [], 'schema'),
+                ], [
                     'name' => 'username',
                     'type' => 'string',
                     'description' => $this->translator->trans('The user username', [], 'schema'),

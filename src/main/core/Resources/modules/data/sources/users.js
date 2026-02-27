@@ -35,6 +35,10 @@ export default {
         label: trans('email'),
         displayed: true
       }, {
+        name: 'phone',
+        type: 'string',
+        label: trans('phone')
+      }, {
         name: 'administrativeCode',
         type: 'string',
         label: trans('code')
