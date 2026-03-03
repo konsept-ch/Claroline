@@ -55,7 +55,8 @@ RUN chmod -R 755 public
 
 RUN chmod 644 ./.docker/mysql
 
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+RUN composer bundles --no-interaction
 RUN rm ./config/parameters.yml
 
 RUN npm install --legacy-peer-deps
