@@ -137,8 +137,9 @@ class AnalyticsManager
 
         // get values for user administrated organizations
         $organizations = [];
-        $user = $this->tokenStorage->getToken()->getUser();
-        if (!$user->hasRole('ROLE_ADMIN')) {
+        $token = $this->tokenStorage->getToken();
+        $user = $token ? $token->getUser() : null;
+        if ($user instanceof User && !$user->hasRole('ROLE_ADMIN')) {
             $organizations = $user->getAdministratedOrganizations()->toArray();
         }
 

@@ -3,6 +3,32 @@ Claroline — Local Setup & Requirements
 
 This document summarizes installation requirements and setup paths found in this repository, for both Docker and from-source workflows.
 
+
+
+Windows (Local, sans Docker)
+----------------------------
+
+> Konsign 000 | CEP Claroline | Local Windows Setup | 2 Decembre 2025 | Anthony | v1.0
+
+- Pre-requis: base MySQL vide + Symfony CLI disponible; se placer dans le dossier du projet Claroline.
+- Neutraliser le script `delete-cache` dans `composer.json` (mettre `"delete-cache": []`).
+- Installer les dependances PHP: `composer install`.
+- Configurer `config/parameters.yml` pour MySQL local: `database_version: 8.0`, `database_driver: pdo_mysql`, `database_host: 127.0.0.1`, `database_port: ~`, `database_name: claroline`, `database_user: root`, `database_password: ~`.
+- Installer les dependances JS: `npm install --legacy-peer-deps`.
+- Lancer l'installation: `php bin/console claroline:install`. Si des liens symboliques ne se creent pas, les faire en CMD Windows (admin):
+  - `mklink /D public\\data C:\\chemin\\vers\\files\\data`
+  - `mklink /D public\\packages C:\\chemin\\vers\\node_modules`
+- Adapter les scripts `package.json` pour Windows:
+  - `"webpack": "node_modules\\\\.bin\\\\webpack --config=webpack.config.prod.js --progress --bail"`
+  - `"webpack:dev": "node_modules\\\\.bin\\\\webpack-dev-server --config=webpack.config.dev.js --color"`
+- Purger le cache en supprimant le dossier `var/cache`.
+
+- Demarrer le build front: `npm run webpack:dev`.
+- Demarrer le serveur Symfony sur le port 80: `symfony server:start --port=80` (certains liens statiques supposent ce port).
+
+- Claroline est alors utilisable; vous pouvez ensuite importer un dump de base existant dans la base configuree.
+
+
 Quick Start
 -----------
 
@@ -22,6 +48,31 @@ Quick Start
   - `php bin/configure` then `npm run webpack`
   - Install DB schema/data: `php bin/console claroline:install -vvv`
   - Serve: `php -S 127.0.0.1:8000 -t public`
+
+DJES Branch & Release Model
+---------------------------
+
+- Branches:
+  - `main` is the default branch (integration baseline)
+  - `dev` is the active development branch
+  - `prod` is the production branch
+- Baseline:
+  - `djes_v1_2_3_final` is the reference commit currently in production
+  - `main`, `dev`, and `prod` are aligned on this baseline initially
+- Production release tags:
+  - Use: `claroline-djes-vX.Y.Z-rc.N` (example: `claroline-djes-v1.2.4-rc.1`)
+  - No `val` branch/stage is required for DJES
+- Recommended release flow:
+  - `git checkout dev`
+  - implement and validate changes
+  - `git checkout prod`
+  - `git merge --ff-only dev`
+  - `git tag claroline-djes-vX.Y.Z-rc.N`
+  - `git push origin prod`
+  - `git push origin claroline-djes-vX.Y.Z-rc.N`
+- CI/CD:
+  - The workflow `.github/workflows/djes-prod-tag.yml` publishes the Docker image when a tag matching `claroline-djes-v*.*.*-rc.*` is pushed.
+  - Safety check: the tagged commit must belong to `origin/prod`.
 
 System Requirements (From Source)
 ---------------------------------
@@ -152,26 +203,6 @@ Permissions & Cache
 - Clear cache if needed: `rm -rf var/cache/*` or `composer delete-cache`
   - Reference: `composer.json:scripts`
 
-Windows (Local, sans Docker)
-----------------------------
-
-> Konsign 000 | CEP Claroline | Local Windows Setup | 2 Decembre 2025 | Anthony | v1.0
-
-- Pre-requis: base MySQL vide + Symfony CLI disponible; se placer dans le dossier du projet Claroline.
-- Neutraliser le script `delete-cache` dans `composer.json` (mettre `"delete-cache": []`).
-- Installer les dependances PHP: `composer install`.
-- Configurer `config/parameters.yml` pour MySQL local: `database_version: 8.0`, `database_driver: pdo_mysql`, `database_host: 127.0.0.1`, `database_port: ~`, `database_name: claroline`, `database_user: root`, `database_password: ~`.
-- Installer les dependances JS: `npm install --legacy-peer-deps`.
-- Lancer l'installation: `php bin/console claroline:install`. Si des liens symboliques ne se creent pas, les faire en CMD Windows (admin):
-  - `mklink /D public\\data C:\\chemin\\vers\\files\\data`
-  - `mklink /D public\\packages C:\\chemin\\vers\\node_modules`
-- Adapter les scripts `package.json` pour Windows:
-  - `"webpack": "node_modules\\\\.bin\\\\webpack --config=webpack.config.prod.js --progress --bail"`
-  - `"webpack:dev": "node_modules\\\\.bin\\\\webpack-dev-server --config=webpack.config.dev.js --color"`
-- Purger le cache en supprimant le dossier `var/cache`.
-- Demarrer le build front: `npm run webpack:dev`.
-- Demarrer le serveur Symfony sur le port 80: `symfony server:start --port=80` (certains liens statiques supposent ce port).
-- Claroline est alors utilisable; vous pouvez ensuite importer un dump de base existant dans la base configuree.
 
 MySQL rapide (Windows local)
 ----------------------------
