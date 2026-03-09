@@ -39,7 +39,9 @@ const EventCard = props =>
           <span className="fa fa-map-marker-alt me-2" aria-hidden={true} />
           {props.data.location ?
             (getAddressString(get(props.data, 'location.address'), true) || get(props.data, 'location.name')) :
-            trans('online_session', {}, 'cursus')
+            (get(props.data, 'locationUrl') ?
+              trans('online_session', {}, 'cursus') :
+              trans('event_location_undefined', {}, 'cursus'))
           }
         </div>
       </div>

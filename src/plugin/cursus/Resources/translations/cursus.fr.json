@@ -77,6 +77,7 @@
     "max_participants": "Max. participants",
     "no_available_session": "Aucune session n'est disponible pour cette formation pour le moment.",
     "online_session": "Session en ligne",
+    "event_location_undefined": "Lieu non renseigné",
     "self_registration_training_help": "Les utilisateurs pourront s'inscrire eux-même à la formation.",
     "self_unregistration_training_help": "Les utilisateurs pourront se désinscrire eux-même de la formation.",
     "simple_registration": "Les utilisateurs peuvent s'inscrire et accéder directement à la formation",

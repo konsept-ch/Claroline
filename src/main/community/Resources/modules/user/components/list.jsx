@@ -76,6 +76,11 @@ const UserList = (props) => {
           displayable: true,
           filterable: false
         }, {
+          name: 'phone',
+          type: 'string',
+          label: trans('phone'),
+          filterable: false
+        }, {
           name: 'administrativeCode',
           type: 'string',
           label: trans('code'),

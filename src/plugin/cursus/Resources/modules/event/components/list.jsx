@@ -8,6 +8,7 @@ import {selectors as securitySelectors} from '#/main/app/security'
 import {trans} from '#/main/app/intl/translation'
 import {ListData} from '#/main/app/content/list/containers/data'
 import {actions as listActions} from '#/main/app/content/list/store'
+import {getAddressString} from '#/main/app/data/types/address/utils'
 
 import {EventCard} from '#/plugin/cursus/event/components/card'
 import {EventStatus} from '#/plugin/cursus/components/event-status'
@@ -84,9 +85,18 @@ const EventList = (props) => {
           type: 'location',
           alias: 'plannedObject.location',
           label: trans('location'),
-          placeholder: trans('online_session', {}, 'cursus'),
           displayed: true,
-          options: {multiple: false}
+          options: {multiple: false},
+          render: (row) => {
+            const locationLabel = getAddressString(get(row, 'location.address'), true) || get(row, 'location.name')
+            if (locationLabel) {
+              return locationLabel
+            }
+
+            return get(row, 'locationUrl') ?
+              trans('online_session', {}, 'cursus') :
+              trans('event_location_undefined', {}, 'cursus')
+          }
         }, {
           name: 'tutors',
           type: 'user',

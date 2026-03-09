@@ -69,6 +69,7 @@
     "no_available_session": "Er zijn momenteel geen beschikbare sessies",
     "no_available_session_help": "Kom later terug of schrijf je in op de wachtlijst",
     "online_session": "Online sessie",
+    "event_location_undefined": "Locatie niet ingevuld",
     "self_registration_training_help": "Gebruikers kunnen zichzelf inschrijven voor de training.",
     "self_unregistration_training_help": "Gebruikers kunnen zichzelf uitschrijven van de training.",
     "simple_registration": "Gebruikers kunnen zich inschrijven en direct toegang krijgen tot de training",
