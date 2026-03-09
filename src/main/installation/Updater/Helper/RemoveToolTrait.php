@@ -18,6 +18,9 @@ trait RemoveToolTrait
             throw new \RuntimeException(sprintf('RemoveToolTrait requires the Connection (@%s to be injected in your service.', Connection::class));
         }
 
+        // Avoid flushing unrelated transient entities collected earlier in the update lifecycle.
+        $this->om->clear();
+
         $tool = $this->om->getRepository(Tool::class)->findOneBy([
             'name' => $toolName,
         ]);

@@ -17,9 +17,11 @@ final class Version20241129000000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('
-            ALTER TABLE claro_cursusbundle_course CHANGE session_duration session_duration DOUBLE PRECISION DEFAULT 1 NOT NULL
-        ');
+        if ($this->checkColumnExists('claro_cursusbundle_course', 'session_duration', $this->connection)) {
+            $this->addSql('
+                ALTER TABLE claro_cursusbundle_course CHANGE session_duration session_duration DOUBLE PRECISION DEFAULT 1 NOT NULL
+            ');
+        }
         $this->addSql('
             ALTER TABLE claro_cursusbundle_presence_status 
             DROP FOREIGN KEY FK_DFE5E1FE349A94C7

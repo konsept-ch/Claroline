@@ -38,7 +38,8 @@ class PlatformManager
             if ($this->config->getParameter('internet.domain_name')) {
                 $url .= $this->config->getParameter('internet.domain_name');
             } elseif ($request) {
-                $url .= $request->getHost();
+                // keep non-standard ports (eg. 127.0.0.1:8000) for local/dev runs
+                $url .= $request->getHttpHost();
             }
 
             // add the path if any

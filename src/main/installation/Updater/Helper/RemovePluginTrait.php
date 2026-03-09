@@ -13,6 +13,9 @@ trait RemovePluginTrait
             throw new \RuntimeException(sprintf('RemovePluginTrait requires the ObjectManager (@%s to be injected in your service.', ObjectManager::class));
         }
 
+        // Avoid flushing unrelated transient entities collected earlier in the update lifecycle.
+        $this->om->clear();
+
         $plugin = $this->om->getRepository(Plugin::class)->findOneBy([
             'vendorName' => $vendorName,
             'bundleName' => $bundleName,
