@@ -31,6 +31,7 @@ class SessionUserFinder extends AbstractFinder
     {
         $userJoin = false;
         $sessionJoin = false;
+        $filteredByYear = false;
 
         if (!array_key_exists('user', $searches)) {
             $qb->join('obj.user', 'u');
@@ -57,6 +58,16 @@ class SessionUserFinder extends AbstractFinder
                     }
                     $qb->andWhere("s.uuid = :{$filterName}");
                     $qb->setParameter($filterName, $filterValue);
+                    break;
+
+                case 'year':
+                    if (!$sessionJoin) {
+                        $qb->join('obj.session', 's');
+                        $sessionJoin = true;
+                    }
+                    $qb->andWhere('YEAR(s.startDate) = :year');
+                    $qb->setParameter('year', (int) $filterValue);
+                    $filteredByYear = true;
                     break;
 
                 case 'user':
@@ -119,6 +130,14 @@ class SessionUserFinder extends AbstractFinder
 
                 $this->addSort(FieldFacetFilter::class, $qb, 'obj', $sortByUuid, $sortByDirection);
             }
+        }
+
+        if (!$filteredByYear) {
+            if (!$sessionJoin) {
+                $qb->join('obj.session', 's');
+            }
+            $qb->andWhere('YEAR(s.startDate) '.(intval(getenv('ARCHIVE_MODE')) ? '<=' : '>').' :archiveYear');
+            $qb->setParameter('archiveYear', (int) (new \DateTimeImmutable())->format('Y') - 2);
         }
 
         return $qb;

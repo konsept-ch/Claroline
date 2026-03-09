@@ -33,9 +33,16 @@ class SessionFinder extends AbstractFinder
     {
         $qb->join('obj.course', 'c');
         $qb->andWhere('c.archived = 0');
+        $filteredByYear = false;
 
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
+                case 'year':
+                    $qb->andWhere('YEAR(obj.startDate) = :year');
+                    $qb->setParameter('year', (int) $filterValue);
+                    $filteredByYear = true;
+                    break;
+
                 case 'organizations':
                     $qb->join('c.organizations', 'o');
                     $qb->andWhere("o.uuid IN (:{$filterName})");
@@ -133,6 +140,11 @@ class SessionFinder extends AbstractFinder
                 default:
                     $this->setDefaults($qb, $filterName, $filterValue);
             }
+        }
+
+        if (!$filteredByYear) {
+            $qb->andWhere('YEAR(obj.startDate) '.(intval(getenv('ARCHIVE_MODE')) ? '<=' : '>').' :archiveYear');
+            $qb->setParameter('archiveYear', (int) (new \DateTimeImmutable())->format('Y') - 2);
         }
 
         return $qb;

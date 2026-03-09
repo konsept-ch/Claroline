@@ -33,9 +33,16 @@ class EventFinder extends AbstractFinder
         $qb->join('obj.session', 's');
         $qb->join('s.course', 'c');
         $qb->andWhere('c.archived = 0');
+        $filteredByYear = false;
 
         foreach ($searches as $filterName => $filterValue) {
             switch ($filterName) {
+                case 'year':
+                    $qb->andWhere('YEAR(po.startDate) = :year');
+                    $qb->setParameter('year', (int) $filterValue);
+                    $filteredByYear = true;
+                    break;
+
                 case 'terminated':
                     if ($filterValue) {
                         $qb->andWhere('po.endDate < :endDate');
@@ -123,6 +130,11 @@ class EventFinder extends AbstractFinder
                 default:
                     $this->setDefaults($qb, $filterName, $filterValue);
             }
+        }
+
+        if (!$filteredByYear) {
+            $qb->andWhere('YEAR(po.startDate) '.(intval(getenv('ARCHIVE_MODE')) ? '<=' : '>').' :archiveYear');
+            $qb->setParameter('archiveYear', (int) (new \DateTimeImmutable())->format('Y') - 2);
         }
 
         if (!is_null($sortBy) && isset($sortBy['property']) && isset($sortBy['direction'])) {
