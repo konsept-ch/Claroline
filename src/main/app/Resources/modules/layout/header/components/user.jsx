@@ -104,7 +104,7 @@ const UserMenu = props =>
               className="list-group-item"
               icon="fa fa-fw fa-graduation-cap"
               label={trans('my_courses', {}, 'cursus')}
-              target="/home/mes-formations"
+              target="/desktop/trainings/registered"
               onClick={props.closeMenu}
             />
             <Button

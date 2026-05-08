@@ -4,6 +4,10 @@ config/.update
 config/parameters.yml
 coverage
 files/*
+.local-backups/
+files.local-backup-*/
+claroline-files-*.tar.gz
+*.backup-*
 node_modules
 npm-debug.log
 theme-assets.json

@@ -95,7 +95,7 @@ class TreeDataItem extends Component {
     super(props)
 
     this.state = {
-      expanded: false
+      expanded: !!props.defaultExpanded
     }
   }
 
@@ -134,6 +134,7 @@ class TreeDataItem extends Component {
                 actions={this.props.actions}
                 primaryAction={this.props.primaryAction}
                 selected={this.props.selected}
+                defaultExpanded={this.props.defaultExpanded}
                 onSelect={this.props.onSelect}
                 card={this.props.card}
               />
@@ -147,6 +148,7 @@ class TreeDataItem extends Component {
 
 TreeDataItem.propTypes = {
   expanded: T.bool,
+  defaultExpanded: T.bool,
   selected: T.array,
   data: T.shape({
     id: T.oneOfType([T.string, T.number]).isRequired,
@@ -187,11 +189,13 @@ class TreeData extends Component {
       })
     }
 
-    const flatTree = flattenTree(this.props.data)
+    const data = this.props.data || []
+    const flatTree = flattenTree(data)
 
     return (
       <div className="data-list">
         <ListHeader
+          id={this.props.id}
           disabled={0 === this.props.totalResults}
           filters={filtersTool}
         />
@@ -239,20 +243,22 @@ class TreeData extends Component {
             }
 
             <ul className="data-tree-content">
-              {this.props.data.map((row) =>
-                <TreeDataItem
-                  key={`tree-item-${row.id}`}
-                  data={row}
-                  actions={this.props.actions}
-                  primaryAction={this.props.primaryAction}
-                  selected={this.props.selection ? this.props.selection.current : []}
-                  onSelect={
-                    this.props.selection ? () => {
-                      this.props.selection.toggle(row, !isRowSelected(row, this.props.selection ? this.props.selection.current : []))
-                    } : undefined
-                  }
-                  card={this.props.card}
-                />
+            {data.map((row) =>
+              <TreeDataItem
+                key={`tree-item-${row.id}`}
+                data={row}
+                actions={this.props.actions}
+                primaryAction={this.props.primaryAction}
+                selected={this.props.selection ? this.props.selection.current : []}
+                defaultExpanded={this.props.defaultExpanded}
+                onSelect={
+                  this.props.selection ? (selectedRow) => {
+                    const rowToToggle = selectedRow || row
+                    this.props.selection.toggle(rowToToggle, !isRowSelected(rowToToggle, this.props.selection ? this.props.selection.current : []))
+                  } : undefined
+                }
+                card={this.props.card}
+              />
               )}
             </ul>
           </div>
@@ -323,7 +329,12 @@ TreeData.propTypes = {
    *
    * It's required to enable cards based display modes.
    */
-  card: T.func.isRequired
+  card: T.func.isRequired,
+
+  /**
+   * Expands tree nodes by default.
+   */
+  defaultExpanded: T.bool
 }
 
 export {

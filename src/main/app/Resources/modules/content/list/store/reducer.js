@@ -13,6 +13,7 @@ import {
   LIST_RESET_SELECT,
   LIST_TOGGLE_SELECT,
   LIST_TOGGLE_SELECT_ALL,
+  LIST_SET_SELECT,
   LIST_DATA_INVALIDATE,
   LIST_DATA_LOAD,
   LIST_DATA_DELETE
@@ -28,6 +29,20 @@ const defaultState = {
     direction: 0
   },
   selected: []
+}
+
+const collectTreeIds = (rows = []) => {
+  const ids = []
+
+  rows.forEach((row) => {
+    ids.push(row.id)
+
+    if (row.children && 0 < row.children.length) {
+      ids.push(...collectTreeIds(row.children))
+    }
+  })
+
+  return ids
 }
 
 /**
@@ -89,20 +104,28 @@ const selectedReducer = makeInstanceReducer(defaultState.selected, {
 
   [LIST_TOGGLE_SELECT]: (state, action) => {
     const selected = state.slice(0)
+    const rowIds = collectTreeIds([action.row])
+    const shouldSelect = undefined !== action.selected ? action.selected : -1 === state.indexOf(action.row.id)
 
-    const itemPos = state.indexOf(action.row.id)
-    if (-1 === itemPos) {
-      // Item not selected
-      selected.push(action.row.id)
+    if (shouldSelect) {
+      rowIds.forEach((rowId) => {
+        if (-1 === selected.indexOf(rowId)) {
+          selected.push(rowId)
+        }
+      })
     } else {
-      // Item selected
-      selected.splice(itemPos, 1)
+      rowIds.forEach((rowId) => {
+        const itemPos = selected.indexOf(rowId)
+        if (-1 !== itemPos) {
+          selected.splice(itemPos, 1)
+        }
+      })
     }
 
     return selected
   },
 
-  [LIST_DATA_LOAD]: (state, action) => intersection(state, action.data.map(item => item.id)),
+  [LIST_DATA_LOAD]: (state, action) => intersection(state, collectTreeIds(action.data)),
 
   [LIST_DATA_DELETE]: (state, action) => {
     const items = cloneDeep(state)
@@ -116,8 +139,10 @@ const selectedReducer = makeInstanceReducer(defaultState.selected, {
   },
 
   [LIST_TOGGLE_SELECT_ALL]: (state, action) => {
-    return 0 < state.length ? [] : [].concat(state, action.rows.map(row => row.id))
-  }
+    return 0 < state.length ? [] : [].concat(state, collectTreeIds(action.rows))
+  },
+
+  [LIST_SET_SELECT]: (state, action) => [].concat(action.rows.map(row => row.id))
 })
 
 const baseReducer = {

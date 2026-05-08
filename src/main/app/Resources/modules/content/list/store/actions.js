@@ -31,10 +31,12 @@ actions.updateSort = makeInstanceActionCreator(LIST_SORT_UPDATE, 'property', 'di
 export const LIST_RESET_SELECT      = 'LIST_RESET_SELECT'
 export const LIST_TOGGLE_SELECT     = 'LIST_TOGGLE_SELECT'
 export const LIST_TOGGLE_SELECT_ALL = 'LIST_TOGGLE_SELECT_ALL'
+export const LIST_SET_SELECT        = 'LIST_SET_SELECT'
 
 actions.resetSelect     = makeInstanceActionCreator(LIST_RESET_SELECT)
 actions.toggleSelect    = makeInstanceActionCreator(LIST_TOGGLE_SELECT, 'row', 'selected')
 actions.toggleSelectAll = makeInstanceActionCreator(LIST_TOGGLE_SELECT_ALL, 'rows')
+actions.setSelect       = makeInstanceActionCreator(LIST_SET_SELECT, 'rows')
 
 
 // data loading

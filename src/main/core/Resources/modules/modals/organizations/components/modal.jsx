@@ -5,7 +5,7 @@ import omit from 'lodash/omit'
 import {trans} from '#/main/app/intl/translation'
 import {Button} from '#/main/app/action/components/button'
 import {Modal} from '#/main/app/overlays/modal/components/modal'
-import {ListData} from '#/main/app/content/list/containers/data'
+import {TreeData} from '#/main/app/content/tree/containers/data'
 
 import {selectors} from '#/main/core/modals/organizations/store'
 import {OrganizationList} from '#/main/core/administration/community/organization/components/organization-list'
@@ -16,13 +16,13 @@ const OrganizationsModal = props => {
 
   return (
     <Modal
-      {...omit(props, 'selected', 'selectAction', 'reset')}
+      {...omit(props, 'selected', 'selectAction', 'reset', 'initialSelection', 'data', 'selectedIds', 'initSelection')}
       icon="fa fa-fw fa-building"
       className="data-picker-modal"
       bsSize="lg"
       onExiting={props.reset}
     >
-      <ListData
+      <TreeData
         name={selectors.STORE_NAME}
         fetch={{
           url: props.url,
@@ -30,6 +30,7 @@ const OrganizationsModal = props => {
         }}
         definition={OrganizationList.definition}
         card={OrganizationList.card}
+        defaultExpanded={true}
       />
 
       <Button
@@ -56,7 +57,7 @@ OrganizationsModal.propTypes = {
 }
 
 OrganizationsModal.defaultProps = {
-  url: ['apiv2_organization_list'],
+  url: ['apiv2_organization_list_recursive'],
   title: trans('organizations')
 }
 

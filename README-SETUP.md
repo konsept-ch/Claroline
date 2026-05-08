@@ -18,6 +18,9 @@ Windows (Local, sans Docker)
 - Lancer l'installation: `php bin/console claroline:install`. Si des liens symboliques ne se creent pas, les faire en CMD Windows (admin):
   - `mklink /D public\\data C:\\chemin\\vers\\files\\data`
   - `mklink /D public\\packages C:\\chemin\\vers\\node_modules`
+- Recompiler le theme custom `dgjes` avant de tester l'interface: `php bin/console claroline:theme:build --theme=dgjes --no-cache`
+  - La source du theme est dans `files/themes-src/dgjes`
+  - Sans ce build, `public/themes/dgjes` manque et l'UI tombe sur un rendu incomplet ou des 404 d'assets
 - Adapter les scripts `package.json` pour Windows:
   - `"webpack": "node_modules\\\\.bin\\\\webpack --config=webpack.config.prod.js --progress --bail"`
   - `"webpack:dev": "node_modules\\\\.bin\\\\webpack-dev-server --config=webpack.config.dev.js --color"`
@@ -53,26 +56,28 @@ DJES Branch & Release Model
 ---------------------------
 
 - Branches:
-  - `main` is the default branch (integration baseline)
-  - `dev` is the active development branch
-  - `prod` is the production branch
+  - `main` is the default branch (fork baseline)
+  - `djes/dev` is the active DJES development branch
+  - `djes/prod` is the DJES production branch
+  - `djes-root` is a legacy backup branch (old `djes` flat name)
 - Baseline:
   - `djes_v1_2_3_final` is the reference commit currently in production
-  - `main`, `dev`, and `prod` are aligned on this baseline initially
+  - DJES release work starts from the baseline and evolves on `djes/dev` / `djes/prod`
 - Production release tags:
   - Use: `claroline-djes-vX.Y.Z-rc.N` (example: `claroline-djes-v1.2.4-rc.1`)
   - No `val` branch/stage is required for DJES
 - Recommended release flow:
-  - `git checkout dev`
+  - `git checkout djes/dev`
   - implement and validate changes
-  - `git checkout prod`
-  - `git merge --ff-only dev`
+  - `git checkout djes/prod`
+  - `git merge --ff-only djes/dev`
   - `git tag claroline-djes-vX.Y.Z-rc.N`
-  - `git push origin prod`
+  - `git push origin djes/prod`
   - `git push origin claroline-djes-vX.Y.Z-rc.N`
 - CI/CD:
-  - The workflow `.github/workflows/djes-prod-tag.yml` publishes the Docker image when a tag matching `claroline-djes-v*.*.*-rc.*` is pushed.
-  - Safety check: the tagged commit must belong to `origin/prod`.
+  - DJES uses the existing GitHub Release process (same principle as CEP).
+  - Creating a release from a pushed tag triggers the publish workflow (`.github/workflows/docker-publish.yml`).
+  - The temporary workflow `.github/workflows/djes-prod-tag.yml` was removed.
 
 System Requirements (From Source)
 ---------------------------------
@@ -306,3 +311,16 @@ Fresh Start / Recovery (works on Windows)
   - `docker compose -f docker-compose.dev.yml exec web bash -lc "cd /var/www/html/claroline && mkdir -p var/cache/dev/doctrine/orm/Proxies var/cache/dev/profiler var/log && chmod -R 777 var/cache var/log files config"`
 - Database host mismatch errors (getaddrinfo for `claroline-db`): ensure you are using the dev compose file; `config/parameters.yml` expects `db` (set by compose).
 - Access the app at http://localhost:8088 and hard-refresh (Ctrl+F5) after asset rebuilds.
+
+
+
+
+Windows (Local, sans Docker)
+----------------------------
+- `composer install`.
+- `php bin/console cache:clear`. or `php -d memory_limit=512M bin/console cache:clear --env=prod`
+- `npm install --legacy-peer-deps`.
+- cmd claroline `symfony server:start --port=80`.
+-  `npm run webpack:dev`.
+- http://localhost:8080  -->listing server webpack
+- http://localhost  --> claroline

@@ -1,0 +1,368 @@
+{
+    "admin": {
+        "default_tool": "home",
+        "menu": null
+    },
+    "authentication": {
+        "help": null,
+        "changePassword": true,
+        "internalAccount": true,
+        "showClientIp": false,
+        "redirect_after_login_option": "URL",
+        "redirect_after_login_url": "https:\/\/www.sscm-formation.ch\/#\/home\/accueil",
+        "direct_third_party": false
+    },
+    "auto_enable_notifications": {
+        "resource-create": [
+            "visible"
+        ],
+        "resource-publish": [
+            "visible"
+        ],
+        "role-change_right": [
+            "visible"
+        ],
+        "role-subscribe": [
+            "visible"
+        ],
+        "badge-award": [
+            "visible"
+        ],
+        "resource-text": [
+            "visible"
+        ],
+        "forum": [
+            "visible"
+        ],
+        "portfolio": [
+            "visible"
+        ],
+        "icap_blog": [
+            "visible"
+        ],
+        "icap_dropzone": [
+            "visible"
+        ],
+        "icap_socialmedia": [
+            "visible"
+        ],
+        "icap_wiki": [
+            "visible"
+        ],
+        "innova_path": [
+            "visible"
+        ],
+        "icap_lesson": [
+            "visible"
+        ]
+    },
+    "badges": {
+        "enable_default": true
+    },
+    "bbb": {
+        "allow_records": false,
+        "max_meetings": 0,
+        "max_meeting_participants": 0,
+        "max_participants": 0,
+        "servers": []
+    },
+    "changelogMessage": {
+        "enabled": false,
+        "duration": "P7D",
+        "roles": [
+            "ROLE_ADMIN"
+        ]
+    },
+    "community": {
+        "username": false
+    },
+    "country": "-",
+    "database_restoration": {
+        "auto_validate_email": false,
+        "auto_enable_email_redirect": true
+    },
+    "desktop": {
+        "default_tool": "home",
+        "show_progression": false,
+        "menu": "open"
+    },
+    "display": {
+        "logo": "data\/aaaaaaaaaaaaaaaaaaaa\/8ad53328-97c3-4bef-96e6-fbc1eefa3644.png",
+        "theme": "dgjes",
+        "resource_icon_set": "claroline",
+        "name": "SSCM Formation",
+        "secondary_name": "Nos formations au profit des acteurs de la protection de la population",
+        "name_active": true,
+        "breadcrumb": true
+    },
+    "external_authentication": {
+        "dropbox": {
+            "client_id": null,
+            "client_secret": null,
+            "client_active": false,
+            "client_force_reauthenticate": false
+        },
+        "facebook": {
+            "client_id": null,
+            "client_secret": null,
+            "client_active": false,
+            "client_force_reauthenticate": false
+        },
+        "twitter": {
+            "client_id": null,
+            "client_secret": null,
+            "client_active": false,
+            "client_force_reauthenticate": false
+        },
+        "github": {
+            "client_id": null,
+            "client_secret": null,
+            "client_active": false,
+            "client_force_reauthenticate": false
+        },
+        "google": {
+            "client_id": null,
+            "client_secret": null,
+            "client_active": false,
+            "client_force_reauthenticate": false
+        },
+        "linkedin": {
+            "client_id": null,
+            "client_secret": null,
+            "client_active": false,
+            "client_force_reauthenticate": false
+        },
+        "windows_live": {
+            "client_id": null,
+            "client_secret": null,
+            "client_active": false,
+            "client_force_reauthenticate": false
+        },
+        "office_365": {
+            "client_id": null,
+            "client_secret": null,
+            "client_active": false,
+            "client_force_reauthenticate": false
+        },
+        "generic": {
+            "client_id": null,
+            "client_secret": null,
+            "client_active": false,
+            "client_force_reauthenticate": false
+        }
+    },
+    "footer": {
+        "content": "<p>&nbsp;<\/p>\n<table style=\"height: 23px; width: 100.119%; border-collapse: collapse; border-color: Transparent;\" border=\"0\">\n<tbody>\n<tr style=\"height: 23px;\">\n<td style=\"width: 25%; height: 23px;\">\n<p style=\"text-align: center;\">D&eacute;partement de la jeunesse, de l'environnement et de la s&eacute;curit&eacute;<\/p>\n<p style=\"text-align: center;\"><strong>SERVICE DE LA S&Eacute;CURIT&Eacute; CIVILE ET MILITAIRE<\/strong><\/p>\n<p style=\"text-align: center;\">En Crausaz 11 - 1124&nbsp; Gollion<\/p>\n<p style=\"text-align: center;\">T +41 (0)21 316 51 00<br \/><a>info.sscm@vd.ch<\/a><\/p>\n<\/td>\n<td style=\"width: 25%; height: 23px;\" colspan=\"2\">\n<p style=\"text-align: center;\"><strong>&nbsp;<\/strong><\/p>\n<p style=\"text-align: center;\"><strong>&nbsp;<\/strong><\/p>\n<p style=\"text-align: center;\"><strong>Protection civile vaudoise<br \/><\/strong><\/p>\n<p style=\"text-align: center;\">En Crausaz 11 - 1124&nbsp; Gollion<\/p>\n<p style=\"text-align: center;\"><span class=\"orange\">T +41 (0)21 338 86 00 <br \/><\/span><\/p>\n<p style=\"text-align: center;\"><span class=\"orange\"><a href=\"mailto:info.pci@vd.ch\">info.pci@vd.ch<\/a><br \/><\/span><\/p>\n<p style=\"text-align: center;\"><strong>&nbsp;<\/strong><\/p>\n<p style=\"text-align: center;\">&nbsp;<\/p>\n<\/td>\n<td style=\"width: 25%; height: 23px; text-align: center;\">\n<p style=\"text-align: center;\"><strong>&nbsp;<\/strong><\/p>\n<p style=\"text-align: center;\"><strong>Protection de la population<\/strong><\/p>\n<p style=\"text-align: center;\"><strong>Etat-Major Cantonal de Conduite (EMCC)<br \/><\/strong><\/p>\n<p style=\"text-align: center;\">Av. du Grey 111 - Case postale - 1001 Lausanne<\/p>\n<p style=\"text-align: center;\">T +41 (0)21 316 51 00<\/p>\n<a href=\"mailto:emcc.formation@vd.ch\">emcc.formation@vd.ch<\/a><\/td>\n<\/tr>\n<\/tbody>\n<\/table>",
+        "show_locale": true,
+        "show_help": true,
+        "show_terms_of_service": true
+    },
+    "geoip": {
+        "maxmind_license_key": null
+    },
+    "header": {
+        "search": {
+            "order": 0,
+            "user": true,
+            "workspace": true,
+            "resource": true
+        },
+        "history": {
+            "order": 1
+        },
+        "favourites": {
+            "order": 2
+        },
+        "notifications": {
+            "order": 3
+        },
+        "authentication": {
+            "order": 4
+        },
+        "messages": {
+            "order": 5
+        }
+    },
+    "header_search": {
+        "user": true,
+        "workspace": true,
+        "resource": true
+    },
+    "help": {
+        "url": "https:\/\/support.claroline.com\/#\/desktop\/workspaces\/open\/doc\/home\/accueil-de-la-documentation",
+        "support_email": "emcc.formation@vd.ch",
+        "show": true
+    },
+    "home": {
+        "show_sub_menu": true,
+        "type": "tool",
+        "data": null,
+        "menu": "close"
+    },
+    "internet": {
+        "domain_name": null,
+        "platform_url": null,
+        "google_meta_tag": null
+    },
+    "is_cron_configured": true,
+    "is_notification_active": true,
+    "javascripts": [
+        null
+    ],
+    "job_queue": {
+        "enabled": false
+    },
+    "locales": {
+        "default": "fr",
+        "available": [
+            "fr",
+            "fr",
+            "en",
+            "de",
+            "it"
+        ]
+    },
+    "logs": {
+        "enabled": true
+    },
+    "mailer": {
+        "enabled": true,
+        "transport": "smtp",
+        "host": "mail.infomaniak.com",
+        "port": "465",
+        "encryption": "ssl",
+        "username": "noreply@sscm-formations.ch",
+        "password": "49tkAk%si68901k*w#63!T%D",
+        "api_key": null,
+        "tag": null,
+        "from": "SSCM Formation <noreply@sscm-formations.ch>"
+    },
+    "maintenance": {
+        "enable": false,
+        "message": null
+    },
+    "meta": {
+        "created": "2021-03-09T12:25:28",
+        "updated": "2025-12-16T15:59:30"
+    },
+    "notifications_refresh_delay": 0,
+    "pricing": {
+        "enabled": true,
+        "currency": "chf"
+    },
+    "privacy": {
+        "countryStorage": "CH",
+        "dpo": {
+            "name": null,
+            "email": null,
+            "address": {
+                "street1": null,
+                "street2": null,
+                "postalCode": null,
+                "city": null,
+                "state": null,
+                "country": null
+            }
+        }
+    },
+    "profile": {
+        "roles_confidential": [],
+        "roles_locked": [],
+        "roles_edition": [
+            "ROLE_USER"
+        ],
+        "show_email": [
+            "ROLE_USER"
+        ]
+    },
+    "quotas": {
+        "enabled": false
+    },
+    "registration": {
+        "self": true,
+        "default_role": "ROLE_USER",
+        "validation": 2,
+        "auto_logging": false,
+        "allow_workspace": false,
+        "organization_selection": "none",
+        "username_regex": "\/^[a-zA-Z0-9@\\-_\\.]*$\/",
+        "force_organization_creation": false,
+        "selfUnregistration": true
+    },
+    "restrictions": {
+        "users": false,
+        "storage": false,
+        "used_storage": null,
+        "max_users": null,
+        "max_storage_size": null,
+        "max_storage_reached": false
+    },
+    "saml": {
+        "active": false,
+        "entity_id": "https:\/\/www.sscm-formation.ch\/",
+        "reactivate_on_login": true,
+        "credentials": [
+            {
+                "certificate": "\/var\/www\/html\/claroline\/files\/certificates\/saml.crt",
+                "key": "\/var\/www\/html\/claroline\/files\/certificates\/saml.pem",
+                "password": null
+            }
+        ],
+        "idp": {
+            "IDP_mail_validation.portail.vd.ch": {
+                "metadata": "https:\/\/validation.portail.vd.ch\/sso\/saml2\/jsp\/exportmetadata.jsp?entityid=IDP_mail_validation.portail.vd.ch&realm=\/internet",
+                "label": "de l\u2019\u00c9tat de Vaud (via IAM)",
+                "active": true,
+                "organization": "56014d29-79df-46d4-b073-2edda57236c9",
+                "groups": [
+                    "8959b21e-9210-45ce-acb1-b57b016da3ae"
+                ],
+                "mapping": {
+                    "email": "iam-email",
+                    "firstName": "iam-firstname",
+                    "lastName": "iam-lastname"
+                }
+            }
+        },
+        "logout": true
+    },
+    "search": {
+        "limit": 10,
+        "items": {
+            "user": false,
+            "workspace": false,
+            "resource": false,
+            "training": true
+        }
+    },
+    "security": {
+        "account_duration": null
+    },
+    "server": {
+        "tmp_dir": "\/tmp"
+    },
+    "session": {
+        "storage_type": "file",
+        "redis_host": "localhost",
+        "redis_port": "6379",
+        "redis_password": ""
+    },
+    "show_about_button": true,
+    "ssl": {
+        "enabled": true,
+        "version": 3
+    },
+    "stylesheets": [],
+    "text": {
+        "enable_opengraph": true
+    },
+    "tos": {
+        "enabled": false
+    },
+    "workspace": {
+        "default_tag": null,
+        "max_storage_size": "1 TB",
+        "max_upload_resources": 10000,
+        "max_workspace_users": 10000
+    }
+}

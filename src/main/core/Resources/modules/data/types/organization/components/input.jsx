@@ -23,6 +23,7 @@ const OrganizationButton = props =>
     modal={[MODAL_ORGANIZATIONS, {
       url: [props.url],
       title: props.title,
+      initialSelection: props.value ? [props.value] : [],
       selectAction: (selected) => ({
         type: CALLBACK_BUTTON,
         callback: () => props.onChange(selected[0])
@@ -36,7 +37,8 @@ OrganizationButton.propTypes = {
   onChange: T.func.isRequired,
   size: T.string,
   disabled: T.bool,
-  url: T.string
+  url: T.string,
+  initialSelection: T.array
 }
 
 OrganizationButton.defaultProps = {
@@ -76,6 +78,7 @@ const OrganizationInput = props => {
           disabled={props.disabled}
           size={props.size}
           onChange={props.onChange}
+          initialSelection={props.value ? [props.value] : []}
           url={props.url}
         />
       </Fragment>
@@ -93,6 +96,7 @@ const OrganizationInput = props => {
         disabled={props.disabled}
         size={props.size}
         onChange={props.onChange}
+        initialSelection={[]}
         url={props.url}
       />
     </ContentPlaceholder>

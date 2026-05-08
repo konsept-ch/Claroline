@@ -22,6 +22,7 @@ const OrganizationsButton = props =>
     disabled={props.disabled}
     modal={[MODAL_ORGANIZATIONS, {
       title: props.title,
+      initialSelection: props.initialSelection,
       selectAction: (selected) => ({
         type: CALLBACK_BUTTON,
         label: trans('select', {}, 'actions'),
@@ -35,7 +36,8 @@ OrganizationsButton.propTypes = {
   title: T.string,
   disabled: T.bool,
   onChange: T.func.isRequired,
-  size: T.string
+  size: T.string,
+  initialSelection: T.array
 }
 
 const OrganizationsInput = props => {
@@ -43,11 +45,11 @@ const OrganizationsInput = props => {
     return(
       <Fragment>
         {props.value.map(organization =>
-          <OrganizationCard
-            key={`organization-card-${organization.id}`}
-            data={organization}
-            size="xs"
-            actions={[
+        <OrganizationCard
+          key={`organization-card-${organization.id}`}
+          data={organization}
+          size="xs"
+          actions={[
               {
                 name: 'delete',
                 type: CALLBACK_BUTTON,
@@ -56,7 +58,7 @@ const OrganizationsInput = props => {
                 dangerous: true,
                 disabled: props.disabled,
                 callback: () => {
-                  const newValue = props.value
+                  const newValue = props.value.slice(0)
                   const index = newValue.findIndex(g => g.id === organization.id)
 
                   if (-1 < index) {
@@ -73,16 +75,9 @@ const OrganizationsInput = props => {
           {...props.picker}
           disabled={props.disabled}
           size={props.size}
+          initialSelection={props.value}
           onChange={(selected) => {
-            const newValue = props.value
-            selected.forEach(organization => {
-              const index = newValue.findIndex(g => g.id === organization.id)
-
-              if (-1 === index) {
-                newValue.push(organization)
-              }
-            })
-            props.onChange(newValue)
+            props.onChange(selected.slice(0))
           }}
         />
       </Fragment>
@@ -99,6 +94,7 @@ const OrganizationsInput = props => {
         {...props.picker}
         size={props.size}
         disabled={props.disabled}
+        initialSelection={[]}
         onChange={props.onChange}
       />
     </ContentPlaceholder>
