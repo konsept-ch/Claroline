@@ -194,7 +194,7 @@ Updating an Existing Install
 Production Build/Upgrade Checklist
 ----------------------------------
 
-- Dockerfile (prod) relies on `var/` and `files/` being present (not ignored). Keep `.dockerignore` minimal (only `.git`) and do not remove these folders from the build context, otherwise the `chown` step fails.
+- Dockerfile (prod) creates the expected `var/`, `files/`, and `config/` directories before applying permissions. Keep `.dockerignore` minimal (only `.git`) so the app source stays in the build context.
 - `bin/configure` defaults are the 1.2.0 values (`DB_USER=root`, empty `DB_PASSWORD`, `SECRET=change_me`). Always pass real DB credentials via env when building/deploying; don’t rely on defaults in prod.
 - Composer scripts: `delete-cache` runs `rm -rf ./var/cache/*` (restored). Ensure cache directory is writable in the image and at runtime.
 - Webpack scripts use `node_modules/.bin/...` (no `npx`) for consistent Linux builds in CI/GitHub Actions.
