@@ -61,17 +61,17 @@ const CourseDetails = (props) =>
             target: `${route(props.path, props.course, props.activeSession)}/tutors`,
             displayed: props.canValidateRegistrations && !!props.activeSession
           }, {
-            name: 'pendings',
+            name: 'subscriptions',
             type: LINK_BUTTON,
             icon: 'fa fa-fw fa-hourglass-half',
-            label: trans('pendings', {}, 'cursus'),
+            label: trans('subscriptions', {}, 'cursus'),
             displayed: props.canValidateRegistrations && !!props.activeSession,
-            target: `${route(props.path, props.course, props.activeSession)}/pendings`
+            target: `${route(props.path, props.course, props.activeSession)}/subscriptions`
           }, {
             name: 'presences',
             type: LINK_BUTTON,
             icon: 'fa fa-fw fa-users',
-            label: trans('presences_validation', {}, 'cursus'),
+            label: trans('presences', {}, 'cursus'),
             target: `${route(props.path, props.course, props.activeSession)}/presences`,
             displayed: (props.canValidateRegistrations || props.canValidatePresences) && !!props.activeSession,
           }, {
@@ -140,6 +140,18 @@ const CourseDetails = (props) =>
           render() {
             return (
               <CourseTutors
+                path={props.path}
+                course={props.course}
+                activeSession={props.activeSession}
+              />
+            )
+          }
+        }, {
+          path: '/subscriptions',
+          disabled: !props.activeSession || !(props.canValidateRegistrations || props.canValidatePresences),
+          render() {
+            return (
+              <CoursePendings
                 path={props.path}
                 course={props.course}
                 activeSession={props.activeSession}

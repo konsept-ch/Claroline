@@ -2,6 +2,7 @@ import React, {Fragment} from 'react'
 import {PropTypes as T} from 'prop-types'
 import classes from 'classnames'
 
+import {url} from '#/main/app/api'
 import {trans} from '#/main/app/intl/translation'
 import {LINK_BUTTON, CALLBACK_BUTTON, MODAL_BUTTON} from '#/main/app/buttons'
 import {Button} from '#/main/app/action/components/button'
@@ -21,7 +22,9 @@ const CoursePendings = (props) =>
     <ListData
       name={selectors.STORE_NAME+'.sessionUsers'}
       fetch={{
-        url: ['apiv2_cursus_session_list_users', {type: constants.LEARNER_TYPE, id: props.activeSession.id}],
+        url: url(['apiv2_cursus_session_list_pending', {id: props.activeSession.id}], {
+          allRegistrations: true
+        }),
         autoload: true
       }}
       delete={{
@@ -55,6 +58,21 @@ const CoursePendings = (props) =>
           options: {time: true},
           displayed: true
         }, {
+          name: 'state',
+          type: 'choice',
+          label: trans('registration_status', {}, 'cursus'),
+          displayed: true,
+          sortable: false,
+          filterable: true,
+          options: {
+            choices: constants.REGISTRATION_STATES
+          },
+          render: (row) => (
+            <span className={classes('label', `label-${constants.REGISTRATION_STATE_COLORS[row.state]}`)}>
+              {constants.REGISTRATION_STATES[row.state]}
+            </span>
+          )
+        }, {
           name: 'userDisabled',
           label: trans('user_disabled'),
           type: 'boolean',
@@ -73,16 +91,18 @@ const CoursePendings = (props) =>
           type: CALLBACK_BUTTON,
           icon: 'fa fa-fw fa-check',
           label: trans('validate_registration', {}, 'actions'),
-          callback: () => props.validatePending(props.activeSession.id, rows),
+          callback: () => props.validatePending(props.activeSession.id, rows.filter(row => 0 === row.state)),
           disabled: isFull(props.activeSession),
+          displayed: -1 !== rows.findIndex(row => 0 === row.state),
           group: trans('management')
         }, {
           name: 'refuse',
           type: CALLBACK_BUTTON,
           icon: 'fa fa-fw fa-times',
           label: trans('refuse_registration', {}, 'actions'),
-          callback: () => props.refusePending(props.activeSession.id, rows),
+          callback: () => props.refusePending(props.activeSession.id, rows.filter(row => 0 === row.state)),
           disabled: isFull(props.activeSession),
+          displayed: -1 !== rows.findIndex(row => 0 === row.state),
           group: trans('management')
         }
       ]}

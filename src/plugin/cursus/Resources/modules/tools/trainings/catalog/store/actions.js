@@ -16,6 +16,18 @@ export const actions = {}
 actions.loadCourse = makeActionCreator(LOAD_COURSE, 'course', 'defaultSession', 'availableSessions', 'registrations')
 actions.loadSession = makeActionCreator(LOAD_COURSE_SESSION, 'session')
 
+function invalidateSessionLists(dispatch, sessionId) {
+  dispatch(listActions.invalidateData(selectors.STORE_NAME+'.sessionUsers'))
+  dispatch(listActions.invalidateData(selectors.STORE_NAME+'.sessionPending'))
+  dispatch(listActions.invalidateData(selectors.STORE_NAME+'.sessionGroups'))
+  dispatch(listActions.invalidateData(selectors.STORE_NAME+'.sessionTutors'))
+  dispatch(listActions.invalidateData(selectors.STORE_NAME+'.sessionCancellation'))
+
+  if (sessionId) {
+    dispatch(actions.openSession(sessionId, true))
+  }
+}
+
 actions.open = (courseSlug, force = false) => (dispatch, getState) => {
   const currentCourse = selectors.course(getState())
   if (force || isEmpty(currentCourse) || currentCourse.slug !== courseSlug) {
@@ -100,7 +112,6 @@ actions.movePending = (courseId, sessionUsers) => ({
     },
     success: (data, dispatch) => {
       dispatch(listActions.invalidateData(selectors.STORE_NAME+'.coursePending'))
-      // TODO : do something better (I need it to recompute session available space)
       dispatch(actions.openSession(sessionUsers[0].session.id, true))
     }
   }
@@ -115,8 +126,7 @@ actions.addUsers = (sessionId, users, type) => ({
       method: 'PATCH'
     },
     success: (data, dispatch) => {
-      // TODO : do something better (I need it to recompute session available space)
-      dispatch(actions.openSession(sessionId, true))
+      invalidateSessionLists(dispatch, sessionId)
     }
   }
 })
@@ -142,8 +152,7 @@ actions.moveUsers = (sessionId, targetId, sessionUsers, type) => ({
       })
     },
     success: (data, dispatch) => {
-      // TODO : do something better (I need it to recompute session available space)
-      dispatch(actions.openSession(sessionId, true))
+      invalidateSessionLists(dispatch, sessionId)
     }
   }
 })
@@ -155,8 +164,7 @@ actions.addGroups = (sessionId, groups, type) => ({
       method: 'PATCH'
     },
     success: (data, dispatch) => {
-      // TODO : do something better (I need it to recompute session available space)
-      dispatch(actions.openSession(sessionId, true))
+      invalidateSessionLists(dispatch, sessionId)
     }
   }
 })
@@ -182,8 +190,7 @@ actions.moveGroups = (sessionId, targetId, sessionGroups, type) => ({
       })
     },
     success: (data, dispatch) => {
-      // TODO : do something better (I need it to recompute session available space)
-      dispatch(actions.openSession(sessionId, true))
+      invalidateSessionLists(dispatch, sessionId)
     }
   }
 })
@@ -195,8 +202,7 @@ actions.addPending = (sessionId, users) => ({
       method: 'PATCH'
     },
     success: (data, dispatch) => {
-      // TODO : do something better (I need it to recompute session available space)
-      dispatch(actions.openSession(sessionId, true))
+      invalidateSessionLists(dispatch, sessionId)
     }
   }
 })
@@ -208,8 +214,7 @@ actions.confirmPending = (sessionId, users) => ({
       method: 'PUT'
     },
     success: (data, dispatch) => {
-      // TODO : do something better (I need it to recompute session available space)
-      dispatch(actions.openSession(sessionId, true))
+      invalidateSessionLists(dispatch, sessionId)
     }
   }
 })
@@ -221,8 +226,7 @@ actions.validatePending = (sessionId, users) => ({
       method: 'PUT'
     },
     success: (data, dispatch) => {
-      // TODO : do something better (I need it to recompute session available space)
-      dispatch(actions.openSession(sessionId, true))
+      invalidateSessionLists(dispatch, sessionId)
     }
   }
 })
@@ -234,8 +238,7 @@ actions.refusePending = (sessionId, users) => ({
       method: 'PUT'
     },
     success: (data, dispatch) => {
-      // TODO : do something better (I need it to recompute session available space)
-      dispatch(actions.openSession(sessionId, true))
+      invalidateSessionLists(dispatch, sessionId)
     }
   }
 })
@@ -247,8 +250,7 @@ actions.validateParticipation = (sessionId, users) => ({
       method: 'PUT'
     },
     success: (data, dispatch) => {
-      // TODO : do something better (I need it to recompute session available space)
-      dispatch(actions.openSession(sessionId, true))
+      invalidateSessionLists(dispatch, sessionId)
     }
   }
 })
@@ -261,6 +263,12 @@ actions.register = (course, sessionId = null) => ({
     request: {
       method: 'PUT'
     },
-    success: (response, dispatch) => dispatch(actions.open(course.slug, true))
+    success: (response, dispatch) => {
+      dispatch(actions.open(course.slug, true))
+
+      if (sessionId) {
+        dispatch(actions.openSession(sessionId, true))
+      }
+    }
   }
 })

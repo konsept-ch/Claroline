@@ -61,15 +61,34 @@ const CoursePresences = (props) =>
           sortable: false,
           filterable: true
       }, {
-        name: 'status',
+        name: 'state',
         type: 'choice',
-        label: trans('status'),
+        label: trans('presences', {}, 'cursus'),
         displayed: true,
         sortable: false,
-        filterable: false,
+        filterable: true,
+        options: {
+          choices: {
+            [constants.REGISTRATION_STATE_VALIDATED]: trans('registration_pending', {}, 'cursus'),
+            [constants.REGISTRATION_STATE_PARTICIPATED]: trans('registration_participated', {}, 'cursus')
+          }
+        },
         render: (row) => (
-          <span className={classes('label', `label-${constants.REGISTRATION_STATE_COLORS[row.state]}`)}>
-            {constants.REGISTRATION_STATES[row.state]}
+          <span
+            className={classes('label')}
+            style={{
+              display: 'inline-block',
+              padding: '4px 10px',
+              borderRadius: 999,
+              fontWeight: 600,
+              backgroundColor: constants.REGISTRATION_STATE_VALIDATED === row.state ? '#b7791f' : '#166534',
+              color: '#fff'
+            }}
+          >
+            {constants.REGISTRATION_STATE_VALIDATED === row.state ?
+              trans('registration_pending', {}, 'cursus') :
+              trans('registration_participated', {}, 'cursus')
+            }
           </span>
         )
         }
@@ -78,7 +97,7 @@ const CoursePresences = (props) =>
         type: LINK_BUTTON,
         target: route(row.user)
       })}
-      actions={(row) => [
+      actions={(rows) => [
         {
           name: 'participation',
           type: CALLBACK_BUTTON,

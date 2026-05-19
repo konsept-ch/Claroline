@@ -213,12 +213,12 @@ const CourseParticipants = (props) =>
               path: '/groups'
             }, {
               icon: 'fa fa-fw fa-hourglass-half',
-              title: trans('registrations_to_valide', {}, 'cursus'),
-              path: '/pending',
+              title: trans('subscriptions', {}, 'cursus'),
+              path: '/subscriptions',
               displayed: hasPermission('register', props.activeSession)
             }, {
               icon: 'fa fa-fw fa-hourglass-half',
-              title: trans('presences_validation', {}, 'cursus'),
+              title: trans('presences', {}, 'cursus'),
               path: '/presences',
               displayed: hasPermission('register', props.activeSession)
             }, {
@@ -283,7 +283,7 @@ const CourseParticipants = (props) =>
                         {trans('registration_user_confirmation_pending_help', {}, 'cursus')}
                         <br/>
                         {trans('registration_user_confirmation_manager_help', {}, 'cursus')}
-                        (<LinkButton target={props.path+'/'+props.course.slug+(props.activeSession ? '/'+props.activeSession.id : '')+'/participants/pending'}>{trans('show_pending_list', {}, 'cursus')}</LinkButton>)
+                        (<LinkButton target={props.path+'/'+props.course.slug+(props.activeSession ? '/'+props.activeSession.id : '')+'/participants/subscriptions'}>{trans('subscriptions', {}, 'cursus')}</LinkButton>)
                       </AlertBlock>
                     }
 
@@ -320,7 +320,7 @@ const CourseParticipants = (props) =>
                 return Groups
               }
             }, {
-              path: '/pending',
+              path: '/subscriptions',
               disabled: !hasPermission('register', props.activeSession),
               render() {
                 const Pending = (

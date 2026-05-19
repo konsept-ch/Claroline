@@ -38,11 +38,11 @@ function canSelfRegister(course, session, registered = false) {
 }
 
 const CurrentRegistration = (props) => {
-  let registrationTitle = trans('session_registration_pending', {}, 'cursus')
+  let registrationTitle = 'session_registration_pending'
   if (constants.TEACHER_TYPE === props.registration.type) {
-    registrationTitle = trans('session_registration_tutor', {}, 'cursus')
+    registrationTitle = 'session_registration_tutor'
   } else if (isFullyRegistered(props.registration)) {
-    registrationTitle = trans('session_registration', {}, 'cursus')
+    registrationTitle = 'session_registration'
   }
 
   return (

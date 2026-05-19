@@ -193,8 +193,8 @@ class SessionController extends AbstractCrudController
         $params['hiddenFilters']['type'] = $type;
         $params['hiddenFilters']['state'] = [SessionUser::STATE_VALIDATED, SessionUser::STATE_PARTICIPATED];
 
-        // only list participants of the same organization
-        if (SessionUser::LEARNER === $type && !$this->authorization->isGranted('ROLE_ADMIN')) {
+        // only restrict to the same organization for non-managers
+        if (SessionUser::LEARNER === $type && !$this->authorization->isGranted('ROLE_ADMIN') && !$this->authorization->isGranted('REGISTER', $session)) {
             /** @var User $user */
             $user = $this->tokenStorage->getToken()->getUser();
             $organizations = null;
@@ -343,10 +343,21 @@ class SessionController extends AbstractCrudController
             $params['hiddenFilters'] = [];
         }
         $params['hiddenFilters']['session'] = $session->getUuid();
-        $params['hiddenFilters']['pending'] = true;
 
-        // only list participants of the same organization
-        if (!$this->authorization->isGranted('ROLE_ADMIN')) {
+        if ($request->query->getBoolean('allRegistrations')) {
+            $params['hiddenFilters']['state'] = [
+                SessionUser::STATE_PENDING,
+                SessionUser::STATE_VALIDATED,
+                SessionUser::STATE_REFUSED,
+                SessionUser::STATE_CANCELLED,
+                SessionUser::STATE_PARTICIPATED,
+            ];
+        } else {
+            $params['hiddenFilters']['pending'] = true;
+        }
+
+        // only restrict to the same organization for non-managers
+        if (!$this->authorization->isGranted('ROLE_ADMIN') && !$this->authorization->isGranted('REGISTER', $session)) {
             /** @var User $user */
             $user = $this->tokenStorage->getToken()->getUser();
 
@@ -482,6 +493,16 @@ class SessionController extends AbstractCrudController
 
         if (new DateTime() > $session->getStartDate()) {
             throw new AccessDeniedException();
+        }
+
+        $sessionUser = $this->om->getRepository(SessionUser::class)->findOneBy([
+            'session' => $session,
+            'user' => $user,
+            'type' => AbstractRegistration::LEARNER,
+        ]);
+
+        if ($sessionUser) {
+            return new JsonResponse($this->serializer->serialize($sessionUser));
         }
 
         $sessionUsers = $this->manager->addUsers($session, [$user], AbstractRegistration::LEARNER);

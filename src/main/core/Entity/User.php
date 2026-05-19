@@ -873,7 +873,7 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
 
         if ($includeGroups) {
             foreach ($this->groups as $group) {
-                array_merge($organizations, $group->getOrganizations()->toArray());
+                $organizations = array_merge($organizations, $group->getOrganizations()->toArray());
             }
         }
 

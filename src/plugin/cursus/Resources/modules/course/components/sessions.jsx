@@ -18,10 +18,24 @@ import {selectors} from '#/plugin/cursus/tools/trainings/catalog/store/selectors
 import {getInfo, isRegistered, isFull} from '#/plugin/cursus/utils'
 import {MODAL_COURSE_REGISTRATION} from '#/plugin/cursus/course/modals/registration'
 
+function hasRegistration(session, registrations) {
+  let registration = null
+
+  if (registrations.users) {
+    registration = registrations.users.find(registration => session.id === registration.session.id)
+  }
+
+  if (!registration && registrations.groups) {
+    registration = registrations.groups.find(registration => session.id === registration.session.id)
+  }
+
+  return !isEmpty(registration)
+}
+
 function canSelfRegister(course, session, registrations) {
   return getInfo(course, session, 'registration.selfRegistration')
     && !getInfo(course, session, 'registration.autoRegistration')
-    && !isRegistered(session, registrations)
+    && !hasRegistration(session, registrations)
     && (getInfo(course, session, 'registration.pendingRegistrations') || !isFull(session))
     && get(session, 'restrictions.dates[0]') >= now(false)
 }

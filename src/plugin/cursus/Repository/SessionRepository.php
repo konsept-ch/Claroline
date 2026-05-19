@@ -77,6 +77,7 @@ class SessionRepository extends EntityRepository
                 INNER JOIN su.user u
                 WHERE su.type = :registrationType
                   AND su.session = :session
+                  AND su.state < 2
                   AND (su.confirmed = 0 OR su.state = 0)
                   AND u.isRemoved = 0
             ')
