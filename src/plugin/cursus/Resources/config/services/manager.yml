@@ -13,6 +13,7 @@ services:
             - '@Claroline\AppBundle\Manager\PlatformManager'
             - '@Claroline\CoreBundle\Manager\Template\TemplateManager'
             - '@Claroline\CursusBundle\Manager\SessionManager'
+            - '@Claroline\CoreBundle\Manager\ResourceManager'
 
     Claroline\CursusBundle\Manager\SessionManager:
         arguments:

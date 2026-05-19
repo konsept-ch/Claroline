@@ -17,6 +17,7 @@ use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\Entity\Resource\Directory;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
 use Claroline\CoreBundle\Manager\Template\TemplateManager;
+use Claroline\CoreBundle\Manager\ResourceManager;
 use Claroline\CursusBundle\Entity\Course;
 use Claroline\CursusBundle\Entity\Registration\AbstractRegistration;
 use Claroline\CursusBundle\Entity\Registration\CourseUser;
@@ -41,6 +42,8 @@ class CourseManager
     private $templateManager;
     /** @var SessionManager */
     private $sessionManager;
+    /** @var ResourceManager */
+    private $resourceManager;
 
     private $courseUserRepo;
 
@@ -51,7 +54,8 @@ class CourseManager
         Crud $crud,
         PlatformManager $platformManager,
         TemplateManager $templateManager,
-        SessionManager $sessionManager
+        SessionManager $sessionManager,
+        ResourceManager $resourceManager
     ) {
         $this->eventDispatcher = $eventDispatcher;
         $this->om = $om;
@@ -60,6 +64,7 @@ class CourseManager
         $this->platformManager = $platformManager;
         $this->templateManager = $templateManager;
         $this->sessionManager = $sessionManager;
+        $this->resourceManager = $resourceManager;
 
         $this->courseUserRepo = $this->om->getRepository(CourseUser::class);
     }
@@ -178,7 +183,14 @@ class CourseManager
     public function ensureResource(Course $course): ?ResourceNode
     {
         if ($course->getResource()) {
-            return $course->getResource();
+            $resourceNode = $course->getResource();
+            $workspace = $course->getWorkspace();
+
+            if ($workspace && (!$resourceNode->getWorkspace() || $resourceNode->getWorkspace()->getId() !== $workspace->getId())) {
+                $this->resourceManager->syncWorkspace($resourceNode, $workspace);
+            }
+
+            return $resourceNode;
         }
 
         $workspace = $course->getWorkspace();

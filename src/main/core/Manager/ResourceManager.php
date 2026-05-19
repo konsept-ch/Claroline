@@ -217,6 +217,19 @@ class ResourceManager implements LoggerAwareInterface
     }
 
     /**
+     * Forces a resource tree to belong to a workspace.
+     *
+     * This is used to repair legacy trees that were created without a workspace
+     * and therefore disappear from list queries that require one.
+     */
+    public function syncWorkspace(ResourceNode $node, Workspace $workspace): void
+    {
+        $this->om->startFlushSuite();
+        $this->syncWorkspaceTree($node, $workspace);
+        $this->om->endFlushSuite();
+    }
+
+    /**
      * Returns an archive with the required content.
      *
      * @param ResourceNode[] $elements - the nodes being exported
@@ -506,7 +519,6 @@ class ResourceManager implements LoggerAwareInterface
 
     private function updateWorkspace(ResourceNode $node, Workspace $workspace)
     {
-        $this->om->startFlushSuite();
         $node->setWorkspace($workspace);
         $this->om->persist($node);
 
@@ -520,7 +532,22 @@ class ResourceManager implements LoggerAwareInterface
                 $this->om->persist($child);
             }
         }
-        $this->om->endFlushSuite();
+    }
+
+    private function syncWorkspaceTree(ResourceNode $node, Workspace $workspace): void
+    {
+        $node->setWorkspace($workspace);
+        $this->om->persist($node);
+
+        if (!empty($node->getChildren())) {
+            // recursively load all children
+            $children = $this->resourceNodeRepo->getChildren($node);
+
+            /** @var ResourceNode $child */
+            foreach ($children as $child) {
+                $this->syncWorkspaceTree($child, $workspace);
+            }
+        }
     }
 
     private function setActive(ResourceNode $node)

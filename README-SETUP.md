@@ -324,3 +324,5 @@ Windows (Local, sans Docker)
 -  `npm run webpack:dev`.
 - http://localhost:8080  -->listing server webpack
 - http://localhost  --> claroline
+- docker run -d --name mailhog -p 1025:1025 -p 8025:8025 mailhog/mailhog --> mailer creation
+

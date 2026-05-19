@@ -29,3 +29,36 @@ Facts Confirmed
   - Guard fix for anonymous token handling was added in:
     - `src/plugin/analytics/Manager/AnalyticsManager.php`
 
+Observed Production Topology
+----------------------------
+
+- There are at least two Claroline-facing public domains in production:
+  - `https://www.sscm-formation.ch/`
+  - `https://espaces.sscm-formation.ch/`
+- The `espaces` instance is configured as a Claroline app with:
+  - `serverUrl = https://espaces.sscm-formation.ch`
+  - platform name `SSCM Formation`
+  - theme `dgjes`
+- The login redirect configured on the `espaces` instance points back to:
+  - `https://www.sscm-formation.ch/#/home/accueil`
+- The repo-level Docker/compose files model a single Claroline stack with one app service and one MySQL service per deployment; they do not encode the relationship between `www` and `espaces`.
+
+What This Suggests
+------------------
+
+- The two domains are most likely two front doors for the same Claroline product line, not a single built-in Claroline "workspace" feature.
+- `espaces` may be:
+  - a separate Claroline deployment using the same brand/data model, or
+  - a portal-style deployment that redirects users back to the main site after authentication.
+- The repository does not currently document whether the two instances share:
+  - the same database,
+  - a replicated database,
+  - or only the same code/base image.
+
+Open Questions
+--------------
+
+- Is `espaces.sscm-formation.ch` reading from the same MySQL instance as `www.sscm-formation.ch`?
+- Is the redirect from `espaces` to `www` intentional for all users, or only after login/registration?
+- Is there an infra diagram, runbook, or host configuration that defines the relationship between the two vhosts?
+- If not, this should be added to the operations documentation before changing application code.
