@@ -12,6 +12,7 @@
 namespace Claroline\CoreBundle\Repository\Resource;
 
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
+use Claroline\CoreBundle\Security\PlatformRoles;
 use Doctrine\ORM\EntityRepository;
 
 class ResourceRightsRepository extends EntityRepository
@@ -26,8 +27,10 @@ class ResourceRightsRepository extends EntityRepository
      */
     public function findMaximumRights(array $roles, ResourceNode $resource)
     {
-        //add the role anonymous for everyone !
-        if (!in_array('ROLE_ANONYMOUS', $roles)) {
+        // Anonymous visitors normally inherit public rights.
+        // A scoped workspace-code token carries ROLE_WORKSPACE_ACCESS instead,
+        // and must not be widened to all ROLE_ANONYMOUS rights.
+        if (!in_array(PlatformRoles::WORKSPACE_ACCESS, $roles, true) && !in_array('ROLE_ANONYMOUS', $roles, true)) {
             $roles[] = 'ROLE_ANONYMOUS';
         }
 

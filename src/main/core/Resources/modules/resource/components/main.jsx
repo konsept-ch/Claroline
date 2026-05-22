@@ -22,7 +22,8 @@ class ResourceMain extends Component {
       type: null,
       component: null,
       store: null,
-      styles: []
+      styles: [],
+      reducerReady: false
     }
 
     this.loadApp = this.loadApp.bind(this)
@@ -43,6 +44,13 @@ class ResourceMain extends Component {
 
     if (!this.props.loaded && this.props.loaded !== prevProps.loaded) {
       this.props.open(this.props.resourceSlug, this.props.embedded, this.loadApp)
+    }
+
+    if (this.state.type && this.state.store && !this.state.reducerReady) {
+      this.context.store.injectReducer(this.state.type, this.state.store)
+      this.setState({
+        reducerReady: true
+      })
     }
   }
 
@@ -111,41 +119,29 @@ class ResourceMain extends Component {
       )
     }
 
+    if (!this.props.loaded || !this.state.reducerReady) {
+      return (
+        <ContentLoader
+          size="lg"
+          description={trans('loading', {}, 'resource')}
+        />
+      )
+    }
+
     return (
-      <ReactReduxContext.Consumer>
-        {({ store }) => {
-          // this will mount the requested reducer into the current redux store
-          if (this.state.type && this.state.store) {
-            store.injectReducer(this.state.type, this.state.store)
-          }
+      <Fragment>
+        {this.state.component && createElement(this.state.component, {
+          path: this.props.path
+        })}
 
-          // just render the original component and forward its props
-          if (!this.props.loaded) {
-            return (
-              <ContentLoader
-                size="lg"
-                description={trans('loading', {}, 'resource')}
-              />
-            )
-          }
-
-          return (
-            <Fragment>
-              {this.state.component && createElement(this.state.component, {
-                path: this.props.path
-              })}
-
-              {0 !== this.state.styles.length &&
-                <Helmet>
-                  {this.state.styles.map(style =>
-                    <link key={style} rel="stylesheet" type="text/css" href={theme(style)} />
-                  )}
-                </Helmet>
-              }
-            </Fragment>
-          )
-        }}
-      </ReactReduxContext.Consumer>
+        {0 !== this.state.styles.length &&
+          <Helmet>
+            {this.state.styles.map(style =>
+              <link key={style} rel="stylesheet" type="text/css" href={theme(style)} />
+            )}
+          </Helmet>
+        }
+      </Fragment>
     )
   }
 }
@@ -161,6 +157,8 @@ ResourceMain.propTypes = {
   open: T.func.isRequired,
   close: T.func.isRequired
 }
+
+ResourceMain.contextType = ReactReduxContext
 
 export {
   ResourceMain

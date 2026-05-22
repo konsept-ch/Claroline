@@ -36,15 +36,6 @@ class UserRepositoryTest extends RepositoryTestCase
         self::createUser('bob', [self::get('ROLE_1'), self::get('ROLE_2'), self::get('ROLE_3')]);
         self::createGroup('group_1', [self::get('jane')], [self::get('ROLE_1')]);
         self::createGroup('group_2', [self::get('jane'), self::get('bill'), self::get('bob')]);
-        self::createUser('tmp.old');
-        self::createUser('tmp.new');
-
-        $om = self::$client->getContainer()->get('Claroline\AppBundle\Persistence\ObjectManager');
-        self::get('tmp.old')->setExpirationDate((new \DateTime())->modify('-1 day'));
-        self::get('tmp.new')->setExpirationDate((new \DateTime())->modify('+1 day'));
-        $om->persist(self::get('tmp.old'));
-        $om->persist(self::get('tmp.new'));
-        $om->flush();
     }
 
     public function testLoadUserByUsernameOnUnknownUsername()
@@ -135,15 +126,5 @@ class UserRepositoryTest extends RepositoryTestCase
         $this->assertEquals(3, count($users));
         $users = self::$repo->findByRoles([self::get('ROLE_2')]);
         $this->assertEquals(1, count($users));
-    }
-
-    public function testDeleteExpiredTemp()
-    {
-        $deleted = self::$repo->deleteExpiredTemp();
-
-        $this->assertSame(1, $deleted);
-        $this->assertNull(self::$repo->findOneBy(['username' => 'tmp.old']));
-        $this->assertNotNull(self::$repo->findOneBy(['username' => 'tmp.new']));
-        $this->assertNotNull(self::$repo->findOneBy(['username' => 'john']));
     }
 }

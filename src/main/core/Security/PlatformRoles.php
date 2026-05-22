@@ -17,6 +17,7 @@ class PlatformRoles
     const WS_CREATOR = 'ROLE_WS_CREATOR';
     const ADMIN = 'ROLE_ADMIN';
     const ANONYMOUS = 'ROLE_ANONYMOUS';
+    const WORKSPACE_ACCESS = 'ROLE_WORKSPACE_ACCESS';
 
     private static $roles = [
         self::USER,

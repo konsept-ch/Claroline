@@ -162,6 +162,16 @@ services:
         tags:
             - { name: kernel.event_listener, event: kernel.request, method: onViewAs, priority: 2 }
 
+    Claroline\CoreBundle\Listener\WorkspaceAnonymousAccessListener:
+        arguments:
+            - '@security.authorization_checker'
+            - '@security.token_storage'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\AuthenticationBundle\Security\Authentication\Authenticator'
+            - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceRestrictionsManager'
+        tags:
+            - { name: kernel.event_listener, event: kernel.request, method: onKernelRequest, priority: 1 }
+
     Claroline\CoreBundle\Listener\PlatformListener:
         arguments:
             - '@security.token_storage'
