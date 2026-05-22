@@ -41,6 +41,15 @@ class Persister
     {
         $roleUser = $this->om->getRepository(Role::class)->findOneByName('ROLE_USER');
 
+        if (!$roleUser) {
+            $roleUser = new Role();
+            $roleUser->setName('ROLE_USER');
+            $roleUser->setTranslationKey('ROLE_USER');
+            $roleUser->setType(Role::PLATFORM_ROLE);
+            $this->om->persist($roleUser);
+            $this->om->flush();
+        }
+
         $user = new User();
         $user->setFirstName($username);
         $user->setLastName($username);

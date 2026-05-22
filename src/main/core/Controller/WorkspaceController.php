@@ -11,10 +11,12 @@
 
 namespace Claroline\CoreBundle\Controller;
 
+use Claroline\AppBundle\API\Crud;
 use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\AppBundle\Event\StrictDispatcher;
 use Claroline\AppBundle\Persistence\ObjectManager;
+use Claroline\AuthenticationBundle\Security\Authentication\Authenticator;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
 use Claroline\CoreBundle\Entity\Role;
 use Claroline\CoreBundle\Entity\Tool\AbstractTool;
@@ -31,7 +33,9 @@ use Claroline\CoreBundle\Event\Workspace\OpenWorkspaceEvent;
 use Claroline\CoreBundle\Manager\Tool\ToolManager;
 use Claroline\CoreBundle\Manager\Workspace\WorkspaceManager;
 use Claroline\CoreBundle\Manager\Workspace\WorkspaceRestrictionsManager;
+use Claroline\CoreBundle\Security\PlatformRoles;
 use Claroline\EvaluationBundle\Manager\WorkspaceEvaluationManager;
+use DateTime;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -67,6 +71,10 @@ class WorkspaceController
     private $evaluationManager;
     /** @var StrictDispatcher */
     private $strictDispatcher;
+    /** @var Crud */
+    private $crud;
+    /** @var Authenticator */
+    private $authenticator;
 
     public function __construct(
         AuthorizationCheckerInterface $authorization,
@@ -78,7 +86,9 @@ class WorkspaceController
         WorkspaceManager $manager,
         WorkspaceRestrictionsManager $restrictionsManager,
         WorkspaceEvaluationManager $evaluationManager,
-        StrictDispatcher $strictDispatcher
+        StrictDispatcher $strictDispatcher,
+        Crud $crud,
+        Authenticator $authenticator
     ) {
         $this->authorization = $authorization;
         $this->om = $om;
@@ -90,6 +100,8 @@ class WorkspaceController
         $this->restrictionsManager = $restrictionsManager;
         $this->evaluationManager = $evaluationManager;
         $this->strictDispatcher = $strictDispatcher;
+        $this->crud = $crud;
+        $this->authenticator = $authenticator;
     }
 
     /**
@@ -112,6 +124,38 @@ class WorkspaceController
         $isManager = $this->manager->isManager($workspace, $this->tokenStorage->getToken());
         $accessErrors = $this->restrictionsManager->getErrors($workspace, $user);
         if (empty($accessErrors) || $isManager) {
+            $this->om->getRepository(User::class)->deleteExpiredTemp();
+
+            if (!$user) {
+                $name = uniqid('tmp.');
+                $user = $this->crud->create(User::class, [
+                    'username' => $name,
+                    'firstName' => $name,
+                    'lastName' => $name,
+                    'email' => $name.'@tmp.tmp',
+                    'plainPassword' => uniqid(),
+                    'meta' => [
+                        'mailValidated' => true,
+                    ],
+                    'restrictions' => [
+                        'disabled' => false,
+                    ],
+                ], [Crud::THROW_EXCEPTION, Crud::NO_PERMISSIONS, Options::NO_EMAIL, Options::NO_PERSONAL_WORKSPACE]);
+
+                $user->setExpirationDate((new DateTime())->modify('+1 month'));
+
+                if ($workspace->getDefaultRole() && !$user->hasRole($workspace->getDefaultRole()->getName())) {
+                    $this->crud->patch($user, 'role', Crud::COLLECTION_ADD, [$workspace->getDefaultRole()], [Crud::NO_PERMISSIONS]);
+                }
+
+                $tokenRoles = array_values(array_unique(array_merge($user->getRoleNames(), [PlatformRoles::USER, PlatformRoles::ANONYMOUS])));
+                $this->authenticator->createToken($user, $tokenRoles);
+            }
+
+            $currentToken = $this->tokenStorage->getToken();
+            $isManager = $this->manager->isManager($workspace, $currentToken);
+            $accessErrors = $this->restrictionsManager->getErrors($workspace, $user);
+
             $this->strictDispatcher->dispatch(
                 WorkspaceEvents::OPEN,
                 OpenWorkspaceEvent::class,
@@ -136,11 +180,11 @@ class WorkspaceController
             return new JsonResponse([
                 'workspace' => $this->serializer->serialize($workspace),
                 'managed' => $isManager,
-                'impersonated' => $this->manager->isImpersonated($this->tokenStorage->getToken()),
+                'impersonated' => $this->manager->isImpersonated($currentToken),
                 // the list of current workspace roles the user owns
                 'roles' => array_map(function (Role $role) {
                     return $this->serializer->serialize($role, [Options::SERIALIZE_MINIMAL]);
-                }, $this->manager->getTokenRoles($this->tokenStorage->getToken(), $workspace)),
+                }, $this->manager->getTokenRoles($currentToken, $workspace)),
                 // append access restrictions to the loaded data if any
                 // to let the manager knows that other users can not enter the workspace
                 'accessErrors' => $accessErrors,
