@@ -276,8 +276,10 @@ class ResourceNode
     protected $comments;
 
     /**
-     * @Gedmo\Slug(fields={"name"})
+     * @Gedmo\Slug(fields={"name"}, unique=true)
      * @ORM\Column(length=128, unique=true)
+     *
+     * The slug must stay globally unique because claro_resource_node.slug has a unique index.
      *
      * @var string
      */

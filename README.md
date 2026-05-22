@@ -34,12 +34,13 @@ If you discover a security vulnerability within Claroline Connect, please follow
 
 
 
-Windows (Local, sans Docker)
+Windows (Local, sans Docker, "theme": "cep",)
 ----------------------------
 - `composer install`.
 - `php bin/console cache:clear`.
 - `npm install --legacy-peer-deps`.
 - cmd claroline `symfony server:start --port=80`.
 -  `npm run webpack:dev`.
-- http://localhost:8080
+- http://localhost:8080  -->listing server webpack
+- http://localhost  --> claroline
 
