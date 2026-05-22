@@ -148,7 +148,7 @@ class WorkspaceController
                     $this->crud->patch($user, 'role', Crud::COLLECTION_ADD, [$workspace->getDefaultRole()], [Crud::NO_PERMISSIONS]);
                 }
 
-                $tokenRoles = array_values(array_unique(array_merge($user->getRoleNames(), [PlatformRoles::USER, PlatformRoles::ANONYMOUS])));
+                $tokenRoles = array_values(array_unique(array_merge($user->getRoles(), [PlatformRoles::USER, PlatformRoles::ANONYMOUS])));
                 $this->authenticator->createToken($user, $tokenRoles);
             }
 
