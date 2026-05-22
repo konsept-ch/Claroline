@@ -20,7 +20,7 @@ Le client demande un acces a un parcours via un code, sans login, pour des perso
 4. `WorkspaceManager::hasAccess()` s'appuie sur les roles presents dans le token. Si le token n'a pas de role, l'acces echoue.
 5. `WorkspaceRepository::checkAccess()` valide les droits de consultation sur les outils du workspace, pas seulement l'existence d'un code.
 
-Conclusion technique: pour qu'un visiteur sans compte entre sans login, il faut plus qu'un code. Il faut aussi une configuration de droits adaptee pour le role anonyme, ou un mecanisme equivalent qui simule un utilisateur temporaire.
+Conclusion technique: pour qu'un visiteur sans compte entre sans login, il faut plus qu'un code. Il faut une autorisation limitee au workspace, pas un role global qui ouvre toute l'application.
 
 ## Ce que le client semble confondre
 Le mot "public" semble etre utilise dans deux sens differents:
@@ -33,13 +33,13 @@ Si le workspace reste personnel, on est dans un modele pense pour un compte prop
 Un commit d'Anthony (`7588a6e978`, "implement temp user for public workspace") a bien introduit une logique de user temporaire pour workspace public. Mais ce commit n'est actuellement present sur aucune branche locale/verifiable de cette base. Autrement dit, ce comportement a existe dans l'historique, mais il n'est pas dans l'etat courant du code.
 
 ## Hypothese la plus probable
-Le besoin client est reel, mais la formulation est probablement incomplete:
-- soit le client veut un vrai acces anonyme par code, avec droits anonymes sur un workspace non personnel
-- soit il attend encore une logique de user temporaire qui n'est plus presente dans la version actuelle
+Le besoin client est reel, mais la formulation est incomplete:
+- soit le client veut un vrai acces anonyme par code, mais limite au parcours concerne
+- soit il attend encore une logique de permission isolee au workspace qui n'est plus presente dans la version actuelle
 
 ## Test de validation recommande
 Tester un workspace non personnel, avec:
-- droits accordes au role anonyme sur au moins un outil d'entree
+- droits accordes au role de workspace prevu pour le parcours
 - code d'acces active
 - ouverture en navigation privee, sans session ni compte
 
@@ -50,18 +50,51 @@ Le client ne semble pas seulement "mal comprendre". Il y a aussi un ecart techni
 - ce que Claroline appelle "public"/"anonyme"
 - et un acces "sans login, uniquement avec code"
 
-Sur cette version, le code d'acces seul ne garantit pas l'entree. Le workspace ne doit pas etre seulement rendu public: il doit aussi etre configure pour un acces anonyme ou pour un user temporaire, selon le comportement voulu.
+Sur cette version, le code d'acces seul ne garantit pas l'entree. Le workspace doit recevoir une autorisation specifique et isolee, pas un role public global.
 
 ## Solution retenue
-La solution retenue est de remettre la logique de user temporaire pour l'ouverture d'un workspace accessible sans compte.
+La solution retenue est d'utiliser un code de deverrouillage en session, puis de reconstruire un token anonyme scope au workspace seulement quand la requete vise ce workspace.
 
-Principe:
-- si le visiteur n'est pas authentifie, on cree un user temporaire `tmp.*`
-- on lui attribue les roles necessaires a l'ouverture, dont `ROLE_USER` et `ROLE_ANONYMOUS`
-- on garde le role par defaut du workspace si celui-ci est defini
-- on purge les users temporaires expires avant l'ouverture
+Principe cible:
+- le visiteur reste non connecte
+- quand le code du workspace est valide, la session marque ce workspace comme deverrouille
+- sur les routes du workspace et de ses ressources, un listener reconstruit un token anonyme qui porte uniquement:
+  - un marqueur technique `ROLE_WORKSPACE_ACCESS`
+  - le role de workspace qui porte les droits du parcours vise
+- `ROLE_ANONYMOUS` ne doit pas etre ajoute dans ce flux, sinon on retombe sur les droits publics globaux de l'application
 
-Validation:
-- un test de repository couvre la suppression des users temporaires expires
-- la configuration PHPUnit de test a ete corrigee pour utiliser les parametres `test_database_*`
-- le persister de test cree automatiquement `ROLE_USER` s'il manque, pour que les fixtures fonctionnent correctement
+Pourquoi c'est plus juste:
+- le visiteur reste anonyme, donc il ne devient pas un compte utilisateur
+- le token ne contient pas `ROLE_ANONYMOUS`, donc il ne gagne pas les acces publics globaux de l'application
+- l'acces est limite aux droits explicitement accordes au role du workspace concerne
+
+Effet attendu:
+- l'utilisateur peut entrer dans le workspace vise apres saisie du code
+- il n'a pas besoin de login interactif
+- il ne voit pas les autres zones publiques qui reposent sur `ROLE_ANONYMOUS`
+
+Validation attendue:
+- test manuel sur le workspace cible en navigation privee
+- verification que la page ne bascule plus vers la modale de login apres saisie du code
+- verification que les routes ou ressources hors workspace ne deviennent pas visibles
+
+## Etat implemente
+- `WorkspaceController::unlockAction()` ne cree plus de compte temporaire et ne modifie plus la session de login.
+- `WorkspaceAnonymousAccessListener` rehydrate un token anonyme scope au workspace quand la requete vise un workspace ou une ressource de ce workspace deja deverrouille.
+- `ToolRightsRepository` et `ResourceRightsRepository` n'ajoutent plus automatiquement `ROLE_ANONYMOUS` quand le token porte le marqueur `ROLE_WORKSPACE_ACCESS`.
+- `WorkspaceController::openAction()` et `ResourceController::openAction()` s'appuient donc sur un token anonyme limite au parcours, pas sur un role public global.
+
+## Solution plus precise a mettre en place
+Pour que le besoin reste strictement "un parcours, un code, sans login", il faut:
+1. utiliser un role de workspace dedie aux droits du parcours,
+2. donner les droits de consultation de ce parcours a ce role uniquement,
+3. conserver la validation par session du code pour ce workspace uniquement,
+4. reconstruire le token anonyme uniquement sur les routes du workspace ou de ses ressources,
+5. neutraliser l'ajout automatique de `ROLE_ANONYMOUS` dans les repositories de droits quand le marqueur `ROLE_WORKSPACE_ACCESS` est present.
+
+Ce que cela evite:
+- aucune elevation vers un compte utilisateur global
+- aucun acces large a des zones publiques annexes de l'application
+- aucun couplage avec les droits globaux de `ROLE_ANONYMOUS`
+
+En pratique, l'autorisation doit se faire dans le controleur/manager de workspace via le role de workspace cible, pas via le role public global.

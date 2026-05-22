@@ -13,6 +13,7 @@ namespace Claroline\CoreBundle\Repository\Resource;
 
 use Claroline\CoreBundle\Entity\Resource\ResourceRights;
 use Claroline\CoreBundle\Library\Testing\RepositoryTestCase;
+use Claroline\CoreBundle\Security\PlatformRoles;
 
 class ResourceRightsRepositoryTest extends RepositoryTestCase
 {
@@ -24,6 +25,7 @@ class ResourceRightsRepositoryTest extends RepositoryTestCase
         self::$repo = self::getRepository(ResourceRights::class);
 
         self::createWorkspace('ws_1');
+        self::createRole('ROLE_ANONYMOUS');
         self::createRole('ROLE_ADMIN');
         self::createRole('ROLE_1', self::get('ws_1'));
         self::createRole('ROLE_2', self::get('ws_1'));
@@ -31,9 +33,11 @@ class ResourceRightsRepositoryTest extends RepositoryTestCase
         self::createResourceType('t_dir', 'Directory');
         self::createDirectory('dir_1', self::get('t_dir'), self::get('john'), self::get('ws_1'));
         self::createDirectory('dir_2', self::get('t_dir'), self::get('john'), self::get('ws_1'), self::get('dir_1'));
+        self::createDirectory('dir_3', self::get('t_dir'), self::get('john'), self::get('ws_1'));
         self::createResourceRights(self::get('ROLE_1'), self::get('dir_1'), 3);
         self::createResourceRights(self::get('ROLE_1'), self::get('dir_2'), 1);
         self::createResourceRights(self::get('ROLE_2'), self::get('dir_1'), 33, [self::get('t_dir')]);
+        self::createResourceRights(self::get('ROLE_ANONYMOUS'), self::get('dir_3'), 7);
     }
 
     public function testFindMaximumRights()
@@ -45,6 +49,16 @@ class ResourceRightsRepositoryTest extends RepositoryTestCase
         $this->assertTrue(0 !== (32 & $mask));
         $this->assertTrue(0 !== (1 & $mask));
         $this->assertTrue(0 !== (2 & $mask));
+    }
+
+    public function testFindMaximumRightsDoesNotWidenScopedWorkspaceAnonymousAccess()
+    {
+        $mask = self::$repo->findMaximumRights(
+            [PlatformRoles::WORKSPACE_ACCESS, 'ROLE_1'],
+            self::get('dir_3')->getResourceNode()
+        );
+
+        $this->assertSame(0, $mask);
     }
 
     public function testFindCreationRights()

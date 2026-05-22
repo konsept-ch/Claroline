@@ -115,9 +115,9 @@ class Authenticator
         return $this->authenticationHandler->onAuthenticationSuccess($request, $token);
     }
 
-    public function createAnonymousToken()
+    public function createAnonymousToken(array $roles = [PlatformRoles::ANONYMOUS])
     {
-        $token = new AnonymousToken($this->secret, 'anon.', [PlatformRoles::ANONYMOUS]);
+        $token = new AnonymousToken($this->secret, 'anon.', $roles);
         $this->tokenStorage->setToken($token);
 
         return $token;

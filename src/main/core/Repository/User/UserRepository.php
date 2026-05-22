@@ -96,18 +96,6 @@ class UserRepository extends ServiceEntityRepository implements UserProviderInte
         $em->flush();
     }
 
-    public function deleteExpiredTemp(): int
-    {
-        return $this->_em->createQuery('
-            DELETE FROM Claroline\CoreBundle\Entity\User u
-            WHERE u.expirationDate < :date
-              AND u.username LIKE :tmp
-        ')
-            ->setParameter('date', new \DateTime())
-            ->setParameter('tmp', 'tmp.%')
-            ->execute();
-    }
-
     /**
      * {@inheritdoc}
      */
