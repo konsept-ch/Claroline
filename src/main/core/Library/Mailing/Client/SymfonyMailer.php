@@ -43,5 +43,7 @@ class SymfonyMailer implements MailClientInterface
         }
 
         $this->mailer->send($email);
+
+        return true;
     }
 }
