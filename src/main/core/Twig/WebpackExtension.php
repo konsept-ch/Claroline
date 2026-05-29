@@ -63,8 +63,9 @@ class WebpackExtension extends AbstractExtension
             throw new \Exception("Cannot find asset '{$assetName}' in webpack stats. Found:\n{$assetNames})");
         }
 
-        // Honour WEBPACK_DEV_SERVER=0 to force static assets even in dev
-        $useDevServer = 'dev' === $this->environment && $hot && getenv('WEBPACK_DEV_SERVER') !== '0';
+        // Honour WEBPACK_DEV_SERVER=0 to force static assets even in dev.
+        // Symfony loads .env values into $_SERVER / $_ENV, but not always into getenv().
+        $useDevServer = 'dev' === $this->environment && $hot && $this->isWebpackDevServerEnabled();
 
         if ($useDevServer) {
             // for dev serve fill from webpack-dev-server
@@ -83,7 +84,7 @@ class WebpackExtension extends AbstractExtension
             $assetFile = 'prod'; // for prod and test envs
 
             // In dev, fall back to the dev manifest only when the dev server is enabled
-            if ('dev' === $this->environment && getenv('WEBPACK_DEV_SERVER') !== '0') {
+            if ('dev' === $this->environment && $this->isWebpackDevServerEnabled()) {
                 $assetFile = 'dev';
             }
 
@@ -97,5 +98,41 @@ class WebpackExtension extends AbstractExtension
         }
 
         return $this->assetCache;
+    }
+
+    private function isWebpackDevServerEnabled(): bool
+    {
+        $value = $this->readEnvValue('WEBPACK_DEV_SERVER');
+
+        if (null === $value) {
+            $value = $_SERVER['WEBPACK_DEV_SERVER'] ?? $_ENV['WEBPACK_DEV_SERVER'] ?? null;
+        }
+
+        return in_array((string) $value, ['1', 'true', 'yes', 'on'], true);
+    }
+
+    private function readEnvValue(string $name): ?string
+    {
+        foreach (['.env.local', '.env'] as $filename) {
+            $path = sprintf('%s/%s', $this->projectDir, $filename);
+
+            if (!is_file($path)) {
+                continue;
+            }
+
+            foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+                $line = trim($line);
+
+                if ('' === $line || str_starts_with($line, '#')) {
+                    continue;
+                }
+
+                if (str_starts_with($line, $name.'=')) {
+                    return trim(substr($line, \strlen($name) + 1), "\"'");
+                }
+            }
+        }
+
+        return null;
     }
 }

@@ -7,10 +7,18 @@ import {render, unmountComponentAtNode} from 'react-dom'
 import {asset, env} from '#/main/app/config'
 
 /* eslint-disable no-undef, no-unused-vars, no-global-assign */
-if ('development' === env()) {
-  __webpack_public_path__ = 'http://localhost:8080/dist/'
+const staticPublicPath = asset('dist/')
+const currentScript = document.currentScript
+
+if ('development' === env() && currentScript && currentScript.src) {
+  const scriptOrigin = new URL(currentScript.src, window.location.href).origin
+  const staticOrigin = new URL(staticPublicPath, window.location.href).origin
+
+  __webpack_public_path__ = scriptOrigin !== staticOrigin
+    ? `${scriptOrigin}/dist/`
+    : staticPublicPath
 } else {
-  __webpack_public_path__ = asset('dist/')
+  __webpack_public_path__ = staticPublicPath
 }
 /* eslint-enable no-undef, no-unused-vars, no-global-assign */
 

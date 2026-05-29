@@ -13,7 +13,9 @@ import {Translator as BaseTranslator} from './translator'
  */
 function getTranslator() {
   // we reuse the instance from browser, because it already contains messages loaded from <script>
-  return window.Translator || BaseTranslator
+  return window.Translator && typeof window.Translator.trans === 'function'
+    ? window.Translator
+    : BaseTranslator
 }
 
 /**

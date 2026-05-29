@@ -38,7 +38,7 @@
         {{ injectedStylesheets | raw }}
 
         {# Styles from plateform configuration #}
-        {% for file in stylesheets %}
+        {% for file in stylesheets if file is not empty %}
             <link rel="stylesheet" type="text/css" href="{{ asset(file) }}" />
         {% endfor %}
     </head>
@@ -75,7 +75,7 @@
         <script src="{{ hotAsset('claroline-distribution-main-app-polyfills') }}"></script>
         {# Router #}
         <script src="{{ asset('bundles/fosjsrouting/js/router.js') }}"></script>
-        <script src="{{ path('fos_js_routing_js', {"callback": "fos.Router.setData"}) }}"></script>
+        <script src="{{ asset('js/fos_js_routes.js') }}"></script>
         {# Main Claroline UI app #}
         <script src="{{ hotAsset('claroline-distribution-main-app-layout') }}"></script>
 
@@ -83,7 +83,7 @@
         {{ injectedJavascripts | raw }}
 
         {# JS from plateform configuration #}
-        {% for file in javascripts %}
+        {% for file in javascripts if file is not empty %}
             <script src="{{ asset(file) }}"></script>
         {% endfor %}
     </body>
