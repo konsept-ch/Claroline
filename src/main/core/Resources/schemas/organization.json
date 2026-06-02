@@ -20,6 +20,24 @@
       "type": ["null", "string"],
       "description": "The organization email"
     },
+    "parent": {
+      "type": ["null", "object"],
+      "description": "The parent organization",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The parent organization id"
+        },
+        "code": {
+          "type": "string",
+          "description": "The parent organization code"
+        },
+        "name": {
+          "type": "string",
+          "description": "The parent organization name"
+        }
+      }
+    },
     "meta": {
       "type": "object",
       "properties": {

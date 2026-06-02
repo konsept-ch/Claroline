@@ -363,6 +363,60 @@ class ObjectManager extends ObjectManagerDecorator implements LoggerAwareInterfa
             }
         }
 
+        // When importing, the parent object may already be persisted in the current unit of work
+        // but not flushed yet. Try to resolve it from managed/scheduled entities as a fallback.
+        if (empty($object) && !empty($identifiers) && $this->hasUnitOfWork()) {
+            $object = $this->findInUnitOfWork($class, $data, $identifiers);
+        }
+
         return $object;
+    }
+
+    private function findInUnitOfWork(string $class, array $data, array $identifiers = [])
+    {
+        $unitOfWork = $this->getUnitOfWork();
+        $candidates = $unitOfWork->getScheduledEntityInsertions();
+
+        foreach ($unitOfWork->getIdentityMap() ?: [] as $entities) {
+            foreach ($entities as $entity) {
+                $candidates[] = $entity;
+            }
+        }
+
+        foreach ($candidates as $candidate) {
+            if (!is_object($candidate) || !($candidate instanceof $class)) {
+                continue;
+            }
+
+            foreach (array_keys($data) as $property) {
+                if (!in_array($property, $identifiers)) {
+                    continue;
+                }
+
+                if ($this->matchesProperty($candidate, $property, $data[$property])) {
+                    return $candidate;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function matchesProperty(object $object, string $property, $expected): bool
+    {
+        $camelized = str_replace(' ', '', ucwords(str_replace(['.', '_'], ' ', $property)));
+        $getters = ['get'.$camelized, 'is'.$camelized];
+
+        foreach ($getters as $getter) {
+            if (method_exists($object, $getter)) {
+                return (string) $object->{$getter}() === (string) $expected;
+            }
+        }
+
+        if (property_exists($object, $property)) {
+            return (string) $object->{$property} === (string) $expected;
+        }
+
+        return false;
     }
 }

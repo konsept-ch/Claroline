@@ -107,9 +107,7 @@ class OrganizationSerializer
             if (empty($data['parent'])) {
                 $organization->setParent(null);
             } else {
-                $parent = $this->om->getRepository(Organization::class)->findOneBy([
-                    'uuid' => $data['parent']['id'],
-                ]);
+                $parent = $this->om->getObject($data['parent'], Organization::class, ['id', 'code', 'name']);
                 $organization->setParent($parent);
             }
         }

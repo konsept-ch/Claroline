@@ -181,6 +181,9 @@
         "bundles": [
             "Claroline\\KernelBundle\\ScriptHandler::buildBundleFile"
         ],
+        "dump-js-routing": [
+            "php bin/console fos:js-routing:dump --format=js --target=public/js/fos_js_routes.js"
+        ],
         "setup-geoip": [
             "php bin/console claroline:geoip:download"
         ],
@@ -189,6 +192,7 @@
         ],
         "post-install-cmd": [
             "composer bundles",
+            "composer dump-js-routing",
             "composer setup-geoip"
         ],
         "pre-update-cmd": [
@@ -198,6 +202,7 @@
         ],
         "post-update-cmd": [
             "composer bundles",
+            "composer dump-js-routing",
             "composer setup-geoip",
             "composer disable-maintenance",
             "composer delete-cache"
