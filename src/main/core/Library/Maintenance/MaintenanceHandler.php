@@ -18,6 +18,11 @@ class MaintenanceHandler
         $file = self::getFlagPath();
 
         if (!file_exists($file)) {
+            $directory = dirname($file);
+            if (!is_dir($directory)) {
+                mkdir($directory, 0775, true);
+            }
+
             touch($file);
         }
     }
