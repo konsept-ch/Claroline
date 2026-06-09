@@ -185,8 +185,6 @@ class Organization
      * @ORM\OneToMany(
      *     targetEntity="Claroline\CoreBundle\Entity\Organization\UserOrganizationReference",
      *     mappedBy="organization",
-     *     cascade={"persist", "remove"},
-     *     orphanRemoval=true
      * )
      * @ORM\JoinColumn(name="organization_id", nullable=false)
      *

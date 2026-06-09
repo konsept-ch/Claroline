@@ -2,6 +2,7 @@
 
 namespace Claroline\CoreBundle\Tests\NewAPI;
 
+use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\API\SchemaProvider;
 use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\AppBundle\API\ValidatorProvider;
@@ -80,6 +81,105 @@ class SerializerProviderTest extends TransactionalTestCase
                 $this->assertTrue(0 === count($errors));
             }
         }
+    }
+
+    public function testUserRegistrationPayloadWithMainOrganization(): void
+    {
+        $data = [
+            'preferences' => [
+                'locale' => 'fr',
+            ],
+            'lastName' => 'Test',
+            'firstName' => 'Debug',
+            'email' => 'debug.repro@example.com',
+            'plainPassword' => 'Debug123!',
+            'phone' => '079 123 45 67',
+            'profile' => [
+                '8e478bb6-4796-4700-b9c6-968636fe94c7' => 'Monsieur',
+                '79a0a4f9-1b7b-4ca2-8e09-f3b10c011df2' => 'Compte professionnel',
+                '3b9164ac-4ba7-417b-b585-321631199c6a' => ['Cadre de direction'],
+                '2f0cf951-d30f-4555-adba-ce0ac0ed25ca' => [
+                    'id' => '346e0f18-5fed-4d2e-8228-ddd36edb8caf',
+                    'name' => 'ACI - Administration cantonale des impôts (hors OID)',
+                    'code' => 'VD-DGF-ACI',
+                    'email' => null,
+                    'type' => 'internal',
+                    'meta' => ['default' => false, 'position' => null],
+                    'restrictions' => ['public' => false, 'users' => -1],
+                    'parent' => [
+                        'id' => '0d3b362b-f4c0-4970-9981-98675ab9703f',
+                        'name' => 'DGF - Direction générale de la fiscalité',
+                        'code' => 'VD-DGF',
+                        'meta' => ['default' => false],
+                    ],
+                    'locations' => [],
+                    'children' => [],
+                ],
+                'b5c3ea76-60a1-4f5d-a852-bbdada6c540b' => '1990-01-01T00:00:00',
+            ],
+            'mainOrganization' => [
+                'id' => '346e0f18-5fed-4d2e-8228-ddd36edb8caf',
+                'name' => 'ACI - Administration cantonale des impôts (hors OID)',
+                'code' => 'VD-DGF-ACI',
+            ],
+        ];
+
+        $errors = $this->validator->validate(
+            \Claroline\CoreBundle\Entity\User::class,
+            $data,
+            ValidatorProvider::CREATE,
+            true,
+            [Options::REGISTRATION, Options::ADD_NOTIFICATIONS, Options::WORKSPACE_VALIDATE_ROLES, Options::VALIDATE_FACET]
+        );
+
+        $this->assertSame([], $errors);
+    }
+
+    public function testUserRegistrationPayloadWithProfileOrganizationOnly(): void
+    {
+        $data = [
+            'preferences' => [
+                'locale' => 'fr',
+            ],
+            'lastName' => 'Test',
+            'firstName' => 'Debug',
+            'email' => 'debug.repro.profile@example.com',
+            'plainPassword' => 'Debug123!',
+            'phone' => '079 123 45 67',
+            'profile' => [
+                '8e478bb6-4796-4700-b9c6-968636fe94c7' => 'Monsieur',
+                '79a0a4f9-1b7b-4ca2-8e09-f3b10c011df2' => 'Compte professionnel',
+                '3b9164ac-4ba7-417b-b585-321631199c6a' => ['Cadre de direction'],
+                '2f0cf951-d30f-4555-adba-ce0ac0ed25ca' => [
+                    'id' => '346e0f18-5fed-4d2e-8228-ddd36edb8caf',
+                    'name' => 'ACI - Administration cantonale des impÃ´ts (hors OID)',
+                    'code' => 'VD-DGF-ACI',
+                    'email' => null,
+                    'type' => 'internal',
+                    'meta' => ['default' => false, 'position' => null],
+                    'restrictions' => ['public' => false, 'users' => -1],
+                    'parent' => [
+                        'id' => '0d3b362b-f4c0-4970-9981-98675ab9703f',
+                        'name' => 'DGF - Direction gÃ©nÃ©rale de la fiscalitÃ©',
+                        'code' => 'VD-DGF',
+                        'meta' => ['default' => false],
+                    ],
+                    'locations' => [],
+                    'children' => [],
+                ],
+                'b5c3ea76-60a1-4f5d-a852-bbdada6c540b' => '1990-01-01T00:00:00',
+            ],
+        ];
+
+        $errors = $this->validator->validate(
+            \Claroline\CoreBundle\Entity\User::class,
+            $data,
+            ValidatorProvider::CREATE,
+            true,
+            [Options::REGISTRATION, Options::ADD_NOTIFICATIONS, Options::WORKSPACE_VALIDATE_ROLES, Options::VALIDATE_FACET]
+        );
+
+        $this->assertSame([], $errors);
     }
 
     /**

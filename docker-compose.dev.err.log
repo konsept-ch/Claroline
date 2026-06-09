@@ -1,0 +1,15 @@
+ claroline-web  Built
+ Network claroline_default  Creating
+ Network claroline_default  Created
+ Container claroline-mailhog-1  Creating
+ Container claroline-db-1  Creating
+ Container claroline-mailhog-1  Created
+ Container claroline-db-1  Created
+ Container claroline-web-1  Creating
+ Container claroline-web-1  Created
+ Container claroline-mailhog-1  Starting
+ Container claroline-db-1  Starting
+ Container claroline-mailhog-1  Started
+ Container claroline-db-1  Started
+ Container claroline-web-1  Starting
+ Container claroline-web-1  Started

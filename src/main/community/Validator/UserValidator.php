@@ -139,16 +139,19 @@ class UserValidator implements ValidatorInterface
 
             foreach ($required as $field) {
                 if ($this->facetManager->isFieldDisplayed($field, $allFields, $data)) {
-                    if (!ArrayUtils::has($data, 'profile.'.$field['id'])) {
-                        $errors[] = [
-                            'path' => 'profile/'.$field['id'],
-                            'message' => 'The field '.$field['label'].' is required',
-                        ];
-                    }
-
                     if ('organization' === $field['type']) {
-                        /** @var Organization */
-                        $organization = $this->om->getRepository(Organization::class)->findOneBy(['code' => $data['mainOrganization']['code']]);
+                        $organizationData = $this->getOrganizationData($data, $field);
+                        $organizationCode = $organizationData['code'] ?? null;
+                        if (empty($organizationCode)) {
+                            $errors[] = [
+                                'path' => 'profile/'.$field['id'],
+                                'message' => 'The field '.$field['label'].' is required',
+                            ];
+
+                            continue;
+                        }
+
+                        $organization = $this->om->getRepository(Organization::class)->findOneBy(['code' => $organizationCode]);
 
                         if (null == $organization || count($organization->getChildren()) > 0) {
                             $errors[] = [
@@ -156,6 +159,15 @@ class UserValidator implements ValidatorInterface
                                 'message' => 'You must select the deepest organization level - main organization cannot have children',
                             ];
                         }
+
+                        continue;
+                    }
+
+                    if (!ArrayUtils::has($data, 'profile.'.$field['id'])) {
+                        $errors[] = [
+                            'path' => 'profile/'.$field['id'],
+                            'message' => 'The field '.$field['label'].' is required',
+                        ];
                     }
                 }
             }
@@ -269,8 +281,9 @@ class UserValidator implements ValidatorInterface
             $userOrganizations = $this->om->getRepository(Organization::class)->findByMember($userData['id']);
         }
 
-        if (isset($userData['mainOrganization'])) {
-            $mainOrganization = $this->om->getObject($userData['mainOrganization'], Organization::class, ['id', 'code', 'name', 'email']);
+        $mainOrganizationData = $this->getOrganizationData($userData, null);
+        if (!empty($mainOrganizationData)) {
+            $mainOrganization = $this->om->getObject($mainOrganizationData, Organization::class, ['id', 'uuid', 'code', 'name', 'email']);
             if (!empty($mainOrganization)) {
                 $userOrganizations[] = $mainOrganization;
             }
@@ -291,5 +304,23 @@ class UserValidator implements ValidatorInterface
         }
 
         return false;
+    }
+
+    /**
+     * Returns organization data from the top-level payload or from the flattened
+     * profile facet payload when the selected organization comes from a facet.
+     */
+    private function getOrganizationData(array $data, ?array $field): array
+    {
+        $organizationData = ArrayUtils::get($data, 'mainOrganization');
+        if (empty($organizationData) && !empty($field)) {
+            $organizationData = ArrayUtils::get($data, 'profile.'.$field['id']);
+        }
+
+        if (is_object($organizationData)) {
+            $organizationData = get_object_vars($organizationData);
+        }
+
+        return is_array($organizationData) ? $organizationData : [];
     }
 }

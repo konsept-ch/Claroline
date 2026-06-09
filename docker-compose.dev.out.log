@@ -1,0 +1,178 @@
+#1 [internal] load local bake definitions
+#1 reading from stdin 548B 0.1s done
+#1 DONE 0.1s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 2.14kB 0.0s done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/php:8.1-apache
+#3 DONE 0.9s
+
+#4 [internal] load metadata for docker.io/library/composer:2.3
+#4 DONE 0.9s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 91B done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 DONE 0.0s
+
+#7 [stage-0  1/23] FROM docker.io/library/php:8.1-apache@sha256:72f0c0134922985022d55a39b0390d35dc7a10e961aa6c44fa35b4c3102f4268
+#7 resolve docker.io/library/php:8.1-apache@sha256:72f0c0134922985022d55a39b0390d35dc7a10e961aa6c44fa35b4c3102f4268 0.0s done
+#7 DONE 0.1s
+
+#8 FROM docker.io/library/composer:2.3@sha256:43c0750c8ecd260b10e4511ccb943c97fb3660cf0ed9d10a1cc7e4174ba67a9a
+#8 resolve docker.io/library/composer:2.3@sha256:43c0750c8ecd260b10e4511ccb943c97fb3660cf0ed9d10a1cc7e4174ba67a9a
+#8 resolve docker.io/library/composer:2.3@sha256:43c0750c8ecd260b10e4511ccb943c97fb3660cf0ed9d10a1cc7e4174ba67a9a 0.1s done
+#8 DONE 0.1s
+
+#9 [stage-0  3/23] RUN curl -sL https://deb.nodesource.com/setup_16.x | bash
+#9 CACHED
+
+#10 [stage-0  4/23] RUN apt-get update && apt-get install -y   git   mariadb-client   wget   unzip   zip   libxml2-dev   libmcrypt-dev   libcurl4-gnutls-dev   xz-utils   xfonts-75dpi   libldap2-dev   libpng-dev   libjpeg-dev   zlib1g-dev   libicu-dev   libzip-dev   libonig-dev   g++   ssl-cert   curl   nodejs  && rm -rf /var/lib/apt/lists/*
+#10 CACHED
+
+#11 [stage-0  7/23] RUN docker-php-ext-install intl
+#11 CACHED
+
+#12 [stage-0  8/23] COPY --from=composer:2.3 /usr/bin/composer /usr/local/bin/composer
+#12 CACHED
+
+#13 [stage-0  2/23] RUN a2enmod rewrite expires ssl headers
+#13 CACHED
+
+#14 [stage-0  6/23] RUN docker-php-ext-configure intl
+#14 CACHED
+
+#15 [stage-0  5/23] RUN docker-php-ext-install -j$(nproc) xml mysqli curl zip mbstring gettext pdo_mysql gd exif mbstring
+#15 CACHED
+
+#16 [stage-0  9/23] RUN pecl install apcu-beta   && echo extension=apcu.so > /usr/local/etc/php/conf.d/apcu.ini
+#16 CACHED
+
+#6 [internal] load build context
+#6 transferring context: 61.98MB 4.6s
+#6 transferring context: 74.64MB 9.7s
+#6 transferring context: 75.27MB 9.9s done
+#6 DONE 10.1s
+
+#17 [stage-0 10/23] COPY ./.docker.dev/web/config/php.ini /usr/local/etc/php/
+#17 DONE 3.1s
+
+#18 [stage-0 11/23] COPY ./.docker.dev/web/files/apache2/claroline.conf /etc/apache2/sites-available/
+#18 DONE 0.3s
+
+#19 [stage-0 12/23] COPY ./.docker.dev/web/files/apache2/claroline-ssl.conf /etc/apache2/sites-available/
+#19 DONE 0.2s
+
+#20 [stage-0 13/23] RUN a2dissite 000-default && a2dissite default-ssl && a2ensite claroline.conf
+#20 3.053 Site 000-default disabled.
+#20 3.053 To activate the new configuration, you need to run:
+#20 3.053   service apache2 reload
+#20 3.097 Site default-ssl already disabled
+#20 3.135 Enabling site claroline.
+#20 3.146 To activate the new configuration, you need to run:
+#20 3.146   service apache2 reload
+#20 DONE 3.3s
+
+#21 [stage-0 14/23] COPY . /var/www/html/claroline
+#21 DONE 11.3s
+
+#22 [stage-0 15/23] WORKDIR /var/www/html/claroline
+#22 DONE 0.5s
+
+#23 [stage-0 16/23] RUN chmod 644 ./.docker/mysql
+#23 DONE 0.7s
+
+#24 [stage-0 17/23] RUN wget https://cs.symfony.com/download/php-cs-fixer-v2.phar -O /php-cs-fixer
+#24 0.692 --2026-06-08 12:52:18--  https://cs.symfony.com/download/php-cs-fixer-v2.phar
+#24 0.709 Resolving cs.symfony.com (cs.symfony.com)... 185.199.108.153, 185.199.109.153, 185.199.110.153, ...
+#24 1.045 Connecting to cs.symfony.com (cs.symfony.com)|185.199.108.153|:443... connected.
+#24 1.082 HTTP request sent, awaiting response... 200 OK
+#24 1.281 Length: 2230465 (2.1M) [application/octet-stream]
+#24 1.281 Saving to: '/php-cs-fixer'
+#24 1.281 
+#24 1.281      0K .......... .......... .......... .......... ..........  2% 5.79M 0s
+#24 1.290     50K .......... .......... .......... .......... ..........  4% 7.32M 0s
+#24 1.296    100K .......... .......... .......... .......... ..........  6% 15.7M 0s
+#24 1.299    150K .......... .......... .......... .......... ..........  9% 20.8M 0s
+#24 1.302    200K .......... .......... .......... .......... .......... 11% 13.6M 0s
+#24 1.305    250K .......... .......... .......... .......... .......... 13% 24.1M 0s
+#24 1.307    300K .......... .......... .......... .......... .......... 16% 20.6M 0s
+#24 1.310    350K .......... .......... .......... .......... .......... 18% 17.7M 0s
+#24 1.312    400K .......... .......... .......... .......... .......... 20% 20.1M 0s
+#24 1.315    450K .......... .......... .......... .......... .......... 22% 35.2M 0s
+#24 1.316    500K .......... .......... .......... .......... .......... 25% 21.3M 0s
+#24 1.318    550K .......... .......... .......... .......... .......... 27% 27.8M 0s
+#24 1.321    600K .......... .......... .......... .......... .......... 29% 12.8M 0s
+#24 1.324    650K .......... .......... .......... .......... .......... 32% 18.7M 0s
+#24 1.327    700K .......... .......... .......... .......... .......... 34% 22.2M 0s
+#24 1.329    750K .......... .......... .......... .......... .......... 36% 21.7M 0s
+#24 1.331    800K .......... .......... .......... .......... .......... 39% 24.6M 0s
+#24 1.333    850K .......... .......... .......... .......... .......... 41% 24.0M 0s
+#24 1.335    900K .......... .......... .......... .......... .......... 43% 18.1M 0s
+#24 1.338    950K .......... .......... .......... .......... .......... 45% 20.9M 0s
+#24 1.341   1000K .......... .......... .......... .......... .......... 48% 13.2M 0s
+#24 1.344   1050K .......... .......... .......... .......... .......... 50% 29.4M 0s
+#24 1.346   1100K .......... .......... .......... .......... .......... 52% 32.0M 0s
+#24 1.347   1150K .......... .......... .......... .......... .......... 55% 36.4M 0s
+#24 1.348   1200K .......... .......... .......... .......... .......... 57% 21.4M 0s
+#24 1.351   1250K .......... .......... .......... .......... .......... 59% 22.9M 0s
+#24 1.353   1300K .......... .......... .......... .......... .......... 61% 21.2M 0s
+#24 1.356   1350K .......... .......... .......... .......... .......... 64% 17.6M 0s
+#24 1.358   1400K .......... .......... .......... .......... .......... 66% 22.7M 0s
+#24 1.360   1450K .......... .......... .......... .......... .......... 68% 24.7M 0s
+#24 1.362   1500K .......... .......... .......... .......... .......... 71% 29.1M 0s
+#24 1.364   1550K .......... .......... .......... .......... .......... 73% 32.1M 0s
+#24 1.365   1600K .......... .......... .......... .......... .......... 75% 22.7M 0s
+#24 1.367   1650K .......... .......... .......... .......... .......... 78% 22.0M 0s
+#24 1.370   1700K .......... .......... .......... .......... .......... 80% 25.2M 0s
+#24 1.372   1750K .......... .......... .......... .......... .......... 82% 19.2M 0s
+#24 1.374   1800K .......... .......... .......... .......... .......... 84% 28.7M 0s
+#24 1.376   1850K .......... .......... .......... .......... .......... 87% 25.9M 0s
+#24 1.378   1900K .......... .......... .......... .......... .......... 89% 19.6M 0s
+#24 1.380   1950K .......... .......... .......... .......... .......... 91% 27.4M 0s
+#24 1.382   2000K .......... .......... .......... .......... .......... 94% 22.1M 0s
+#24 1.384   2050K .......... .......... .......... .......... .......... 96% 16.9M 0s
+#24 1.387   2100K .......... .......... .......... .......... .......... 98% 19.2M 0s
+#24 1.390   2150K .......... .......... ........                        100% 38.6M=0.1s
+#24 1.391 
+#24 1.391 2026-06-08 12:52:19 (19.5 MB/s) - '/php-cs-fixer' saved [2230465/2230465]
+#24 1.391 
+#24 DONE 1.4s
+
+#25 [stage-0 18/23] RUN echo "diffs=$(git diff --name-only) && php /php-cs-fixer fix --dry-run --diff --config=.php_cs $diffs && /var/www/html/claroline/node_modules/.bin/eslint --ext js --ext jsx $diffs" > /usr/local/bin/check-code
+#25 DONE 0.5s
+
+#26 [stage-0 19/23] RUN echo "diffs=$(git diff --name-only) && php /php-cs-fixer fix --diff --config=.php_cs $diffs && /var/www/html/claroline/node_modules/.bin/eslint --fix --ext js --ext jsx $diffs" > /usr/local/bin/fix-code
+#26 DONE 0.4s
+
+#27 [stage-0 20/23] RUN chmod +x /usr/local/bin/check-code
+#27 DONE 0.5s
+
+#28 [stage-0 21/23] RUN chmod +x /usr/local/bin/fix-code
+#28 DONE 0.4s
+
+#29 [stage-0 22/23] COPY ./.docker.dev/web/entrypoint.sh /entrypoint.sh
+#29 DONE 0.2s
+
+#30 [stage-0 23/23] RUN chmod +x /entrypoint.sh
+#30 DONE 0.3s
+
+#31 exporting to image
+#31 exporting layers
+#31 exporting layers 19.8s done
+#31 exporting manifest sha256:88a38c1c76540ca4e68438e3da9b2d991223b911d884f362c69f8f42c6d7bb6e 0.0s done
+#31 exporting config sha256:18f7f0381d830b5acbe6e00c7463385a4abcbab49576d796c8e335dbbefceebb 0.0s done
+#31 exporting attestation manifest sha256:2a742f435c7c7830711de9431dfe6fcc4c380e95be6ae2939ee6f5c3da400ce4 0.0s done
+#31 exporting manifest list sha256:a6b96490c96c2c2f1bfbba947c220b10a4c3d1078f986c433ae228e221a60ba6
+#31 exporting manifest list sha256:a6b96490c96c2c2f1bfbba947c220b10a4c3d1078f986c433ae228e221a60ba6 0.0s done
+#31 naming to docker.io/library/claroline-web:latest done
+#31 unpacking to docker.io/library/claroline-web:latest
+#31 unpacking to docker.io/library/claroline-web:latest 20.4s done
+#31 DONE 40.5s
+
+#32 resolving provenance for metadata file
+#32 DONE 0.1s

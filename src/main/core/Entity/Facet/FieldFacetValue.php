@@ -25,8 +25,7 @@ class FieldFacetValue extends AbstractFacetValue
      * This should be done in another entity. This is not used by claco-form.
      *
      * @ORM\ManyToOne(
-     *     targetEntity="Claroline\CoreBundle\Entity\User",
-     *     cascade={"persist"}
+     *     targetEntity="Claroline\CoreBundle\Entity\User"
      * )
      * @ORM\JoinColumn(onDelete="CASCADE", nullable=true)
      *
@@ -36,8 +35,7 @@ class FieldFacetValue extends AbstractFacetValue
 
     /**
      * @ORM\ManyToOne(
-     *     targetEntity="Claroline\CoreBundle\Entity\Facet\FieldFacet",
-     *     cascade={"persist"}
+     *     targetEntity="Claroline\CoreBundle\Entity\Facet\FieldFacet"
      * )
      * @ORM\JoinColumn(onDelete="CASCADE", nullable=false)
      *

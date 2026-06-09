@@ -122,13 +122,18 @@ class ValidatorProvider
 
     private function toObject(array $data): \stdClass
     {
-        $data = json_decode(json_encode($data));
-
-        if ([] === $data) {
-            $data = new \StdClass();
+        $json = json_encode($data, JSON_INVALID_UTF8_SUBSTITUTE);
+        if (false === $json) {
+            return new \StdClass();
         }
 
-        return $data;
+        $decoded = json_decode($json);
+
+        if (!is_object($decoded)) {
+            return new \StdClass();
+        }
+
+        return $decoded;
     }
 
     private function validateUnique(array $uniqueFields, array $data, $mode, $class)

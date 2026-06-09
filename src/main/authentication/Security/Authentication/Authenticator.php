@@ -112,7 +112,9 @@ class Authenticator
         $token = $this->createToken($user);
 
         // manually call authentication success listener
-        return $this->authenticationHandler->onAuthenticationSuccess($request, $token);
+        $response = $this->authenticationHandler->onAuthenticationSuccess($request, $token);
+
+        return $response;
     }
 
     public function createAnonymousToken()

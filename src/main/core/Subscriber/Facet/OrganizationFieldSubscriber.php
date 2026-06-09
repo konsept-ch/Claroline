@@ -60,12 +60,18 @@ class OrganizationFieldSubscriber implements EventSubscriberInterface
     public function setValue(SetFacetValueEvent $event)
     {
         $organizationData = $event->getValue();
+        if (is_object($organizationData)) {
+            $organizationData = get_object_vars($organizationData);
+        }
+
         if (!empty($organizationData) && !empty($organizationData['id'])) {
             // only store the id in DB
             $event->setFormattedValue($organizationData['id']);
 
-            // For profile only, register user to the selected organization to give him proper rights
-            if ($event->getObject() instanceof User) {
+            // For persisted users, register them to the selected organization to give proper rights.
+            // New registrations attach the organization later in the registration controller
+            // to avoid creating a large cyclic object graph during the initial flush.
+            if ($event->getObject() instanceof User && null !== $event->getObject()->getId()) {
                 $organization = $this->om->getRepository(Organization::class)->findOneBy(['uuid' => $organizationData['id']]);
                 if ($organization) {
                     $event->getObject()->addOrganization($organization);

@@ -94,9 +94,26 @@ class RegistrationController
         $organization = null;
         $autoOrganization = 'create' === $this->config->getParameter('registration.organization_selection');
         // step one: creation the organization if it's here. If it exists, we fetch it.
-        if ($autoOrganization) {
-            // try to find orga first
-            if (isset($data['mainOrganization'])) {
+        if (isset($data['mainOrganization'])) {
+            if ($autoOrganization) {
+                // try to find orga first
+                if (isset($data['mainOrganization']['vat']) && null !== $data['mainOrganization']['vat']) {
+                    $organization = $organizationRepository
+                        ->findOneBy(['vat' => $data['mainOrganization']['vat']]);
+                } else {
+                    $organization = $organizationRepository
+                        ->findOneBy(['code' => $data['mainOrganization']['code']]);
+                }
+
+                if (!$organization) {
+                    $organization = $this->crud->create(Organization::class, $data['mainOrganization']);
+                }
+
+                // error handling
+                if (is_array($organization)) {
+                    return new JsonResponse($organization, 422);
+                }
+            } else {
                 if (isset($data['mainOrganization']['vat']) && null !== $data['mainOrganization']['vat']) {
                     $organization = $organizationRepository
                         ->findOneBy(['vat' => $data['mainOrganization']['vat']]);
@@ -105,15 +122,6 @@ class RegistrationController
                         ->findOneBy(['code' => $data['mainOrganization']['code']]);
                 }
             }
-
-            if (!$organization && isset($data['mainOrganization'])) {
-                $organization = $this->crud->create(Organization::class, $data['mainOrganization']);
-            }
-
-            // error handling
-            if (is_array($organization)) {
-                return new JsonResponse($organization, 422);
-            }
         }
 
         /** @var array|User $user */
@@ -121,6 +129,7 @@ class RegistrationController
             //maybe move these options in an other class
             Options::REGISTRATION,
             Options::ADD_NOTIFICATIONS,
+            Options::NO_PERSONAL_WORKSPACE,
             Options::WORKSPACE_VALIDATE_ROLES,
             Options::VALIDATE_FACET,
         ]);
@@ -130,14 +139,28 @@ class RegistrationController
             return new JsonResponse($user, 422);
         }
 
-        if ($organization) {
+        if ($organization && $autoOrganization) {
             $this->crud->replace($user, 'mainOrganization', $organization);
         }
 
         $selfLog = $this->config->getParameter('registration.auto_logging');
         $validation = $this->config->getParameter('registration.validation');
         // auto log user if option is set and account doesn't need to be validated
-        if ($selfLog && PlatformDefaults::REGISTRATION_MAIL_VALIDATION_FULL !== $validation) {
+        $hasOrganizationSelection = isset($data['mainOrganization']);
+        if (!$hasOrganizationSelection && isset($data['profile']) && is_array($data['profile'])) {
+            foreach ($data['profile'] as $profileFieldValue) {
+                if (is_object($profileFieldValue)) {
+                    $profileFieldValue = get_object_vars($profileFieldValue);
+                }
+
+                if (is_array($profileFieldValue) && isset($profileFieldValue['id'], $profileFieldValue['code'])) {
+                    $hasOrganizationSelection = true;
+                    break;
+                }
+            }
+        }
+
+        if ($selfLog && PlatformDefaults::REGISTRATION_MAIL_VALIDATION_FULL !== $validation && !$hasOrganizationSelection) {
             return $this->authenticator->login($user, $request);
         }
 

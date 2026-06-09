@@ -104,7 +104,8 @@ echo "Clean cache after setting correct permissions, fixes SAML issues"
 composer delete-cache # fixes SAML errors
 
 echo "Setting correct file permissions for DEV"
-chmod -R 777 var files config
+chmod -R 777 var config
+chmod 777 files
 
 echo "webpack-dev-server starting as a background process..."
 nohup npm run webpack:dev -- --host=0.0.0.0 --disable-host-check &
