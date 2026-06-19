@@ -71,7 +71,7 @@ const CourseDetails = (props) =>
             name: 'presences',
             type: LINK_BUTTON,
             icon: 'fa fa-fw fa-users',
-            label: trans('presences', {}, 'cursus'),
+            label: trans('presences_validation', {}, 'cursus'),
             target: `${route(props.path, props.course, props.activeSession)}/presences`,
             displayed: (props.canValidateRegistrations || props.canValidatePresences) && !!props.activeSession,
           }, {

@@ -83,6 +83,18 @@ const reducer = combineReducers({
       [LOAD_COURSE_SESSION]: () => true
     })
   }),
+  sessionRegistrations: makeListReducer(selectors.STORE_NAME+'.sessionRegistrations', {}, {
+    invalidated: makeReducer(false, {
+      [LOAD_COURSE]: () => true,
+      [LOAD_COURSE_SESSION]: () => true
+    })
+  }),
+  sessionPresences: makeListReducer(selectors.STORE_NAME+'.sessionPresences', {}, {
+    invalidated: makeReducer(false, {
+      [LOAD_COURSE]: () => true,
+      [LOAD_COURSE_SESSION]: () => true
+    })
+  }),
   sessionCancellation: makeListReducer(selectors.STORE_NAME+'.sessionCancellation', {}, {
     invalidated: makeReducer(false, {
       [LOAD_COURSE]: () => true,

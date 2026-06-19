@@ -100,6 +100,14 @@ class SessionUserFinder extends AbstractFinder
                     }
                     break;
 
+                case 'validated':
+                    if ($filterValue) {
+                        $qb->andWhere('(obj.state = 1 OR obj.state = 4)');
+                    } else {
+                        $qb->andWhere('(obj.state <> 4 AND obj.state <> 1)');
+                    }
+                    break;
+
                 case 'cancelled':
                     $qb->andWhere("obj.state = 3");
                     $qb->andWhere('u.isRemoved = FALSE');

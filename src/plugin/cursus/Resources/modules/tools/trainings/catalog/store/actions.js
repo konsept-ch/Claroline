@@ -19,6 +19,8 @@ actions.loadSession = makeActionCreator(LOAD_COURSE_SESSION, 'session')
 function invalidateSessionLists(dispatch, sessionId) {
   dispatch(listActions.invalidateData(selectors.STORE_NAME+'.sessionUsers'))
   dispatch(listActions.invalidateData(selectors.STORE_NAME+'.sessionPending'))
+  dispatch(listActions.invalidateData(selectors.STORE_NAME+'.sessionRegistrations'))
+  dispatch(listActions.invalidateData(selectors.STORE_NAME+'.sessionPresences'))
   dispatch(listActions.invalidateData(selectors.STORE_NAME+'.sessionGroups'))
   dispatch(listActions.invalidateData(selectors.STORE_NAME+'.sessionTutors'))
   dispatch(listActions.invalidateData(selectors.STORE_NAME+'.sessionCancellation'))

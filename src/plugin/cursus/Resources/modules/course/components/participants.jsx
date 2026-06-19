@@ -218,7 +218,7 @@ const CourseParticipants = (props) =>
               displayed: hasPermission('register', props.activeSession)
             }, {
               icon: 'fa fa-fw fa-hourglass-half',
-              title: trans('presences', {}, 'cursus'),
+              title: trans('presences_validation', {}, 'cursus'),
               path: '/presences',
               displayed: hasPermission('register', props.activeSession)
             }, {

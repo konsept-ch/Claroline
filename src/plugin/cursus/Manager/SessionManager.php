@@ -712,25 +712,31 @@ class SessionManager
             'course_end' => $sessionUser->getSession()->getEndDate()->format('d.m.Y'),
             'user_first_name' => $sessionUser->getUser()->getFirstName(),
             'user_last_name' => $sessionUser->getUser()->getLastName(),
-            'today' => (new \DateTime())->format('d.m.Y')
+            'today' => (new \DateTime())->format('d.m.Y'),
         ];
 
-        //$this->pdfManager->fromHtml($this->templateManager->getTemplate('training_attestation', $placeholders, $locale), '@ClarolineCursus/template/training_attestation.pdf.twig');
-        //return $this->templateManager->getTemplate('training_attestation', $placeholders, $locale);
+        try {
+            $filename = $this->pdfManager->saveFromHtml(
+                $this->templateManager->getTemplate('training_attestation', $placeholders, $locale),
+                '@ClarolineCursus/template/training_attestation.pdf.twig'
+            );
 
-        $filename = $this->pdfManager->saveFromHtml($this->templateManager->getTemplate('training_attestation', $placeholders, $locale), '@ClarolineCursus/template/training_attestation.pdf.twig');
+            $subject = $this->templateManager->getTemplate('training_session_participated', $placeholders, $locale, 'title');
+            $body = $this->templateManager->getTemplate('training_session_participated', $placeholders, $locale);
 
-        $subject = $this->templateManager->getTemplate('training_session_participated', $placeholders, $locale, 'title');
-        $body = $this->templateManager->getTemplate('training_session_participated', $placeholders, $locale);
-        $this->mailManager->send($subject, $body, [$sessionUser->getUser()], null, [
-            'attachments' => [
-                [
-                    'name' => 'test.pdf',
-                    'type' => 'application/pdf',
-                    'url' => $filename
-                ]
-            ]
-        ], true);
+            $this->mailManager->send($subject, $body, [$sessionUser->getUser()], null, [
+                'attachments' => [
+                    [
+                        'name' => 'attestation.pdf',
+                        'type' => 'application/pdf',
+                        'url' => $filename,
+                    ],
+                ],
+            ], true);
+        } catch (\Throwable $e) {
+            // Validation must not fail because attestation generation or mail sending failed.
+            // The attendance state is already persisted by the controller before this call.
+        }
     }
 
     public function download(Session $session, array $users, string $locale): string

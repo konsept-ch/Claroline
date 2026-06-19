@@ -96,7 +96,7 @@ class SessionRepository extends EntityRepository
                 INNER JOIN su.user u
                 WHERE su.type = :registrationType
                   AND su.session = :session
-                  AND (su.confirmed = 1 AND su.state = 1)
+                  AND (su.state = 1 OR su.state = 4)
                   AND u.isRemoved = 0
             ')
             ->setParameters([
