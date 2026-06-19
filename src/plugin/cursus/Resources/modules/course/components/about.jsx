@@ -51,7 +51,7 @@ const CurrentRegistration = (props) => {
       type={isFullyRegistered(props.registration) ? 'success' : 'warning'}
       title={trans(registrationTitle, {}, 'cursus')}
     >
-      {props.sessionFull &&
+      {props.sessionFull && !isFullyRegistered(props.registration) &&
         <div>{trans('session_registration_full_help', {}, 'cursus')}</div>
       }
 
