@@ -34,7 +34,7 @@ abstract class AbstractUserSerializer
         return [
             'id' => $userRegistration->getUuid(),
             'type' => $userRegistration->getType(),
-            'validated' => $userRegistration->isValidated(),
+            'validated' => $userRegistration->isValidated() || $userRegistration->getState() === AbstractUserRegistration::STATE_PARTICIPATED,
             'confirmed' => $userRegistration->isConfirmed(),
             'date' => DateNormalizer::normalize($userRegistration->getDate()),
             'user' => $this->userSerializer->serialize($userRegistration->getUser(), [Options::SERIALIZE_MINIMAL]),

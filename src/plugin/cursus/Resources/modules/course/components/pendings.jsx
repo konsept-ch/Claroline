@@ -1,115 +1,53 @@
 import React, {Fragment} from 'react'
 import {PropTypes as T} from 'prop-types'
-import classes from 'classnames'
 
 import {url} from '#/main/app/api'
 import {trans} from '#/main/app/intl/translation'
-import {LINK_BUTTON, CALLBACK_BUTTON, MODAL_BUTTON} from '#/main/app/buttons'
-import {Button} from '#/main/app/action/components/button'
-import {ListData} from '#/main/app/content/list/containers/data'
-import {constants as listConst} from '#/main/app/content/list/constants'
-import {route} from '#/main/core/user/routing'
-import {UserCard} from '#/main/core/user/components/card'
-import {MODAL_USERS} from '#/main/core/modals/users'
+import {CALLBACK_BUTTON} from '#/main/app/buttons'
 
 import {constants} from '#/plugin/cursus/constants'
-import {isFull} from '#/plugin/cursus/utils'
 import {Course as CourseTypes, Session as SessionTypes} from '#/plugin/cursus/prop-types'
 import {selectors} from '#/plugin/cursus/tools/trainings/catalog/store/selectors'
+import {SessionUsers} from '#/plugin/cursus/session/components/users'
 
 const CoursePendings = (props) =>
   <Fragment>
-    <ListData
-      name={selectors.STORE_NAME+'.sessionUsers'}
-      fetch={{
-        url: url(['apiv2_cursus_session_list_pending', {id: props.activeSession.id}], {
-          allRegistrations: true
-        }),
-        autoload: true
-      }}
-      delete={{
-        url: ['apiv2_cursus_session_remove_users', {type: constants.LEARNER_TYPE, id: props.activeSession.id}],
-        label: trans('cancel', {}, 'actions')
-      }}
-      definition={[
-        {
-          name: 'user',
-          type: 'user',
-          label: trans('user'),
-          displayed: true
-        }, {
-          name: 'organization',
-          type: 'string',
-          label: trans('organization'),
-          displayed: true,
-          sortable: false,
-          filterable: false
-        }, {
-          name: 'user.email',
-          type: 'email',
-          label: trans('email'),
-          displayed: true,
-          sortable: false,
-          filterable: false
-        }, {
-          name: 'date',
-          type: 'date',
-          label: trans('registration_date', {}, 'cursus'),
-          options: {time: true},
-          displayed: true
-        }, {
-          name: 'state',
-          type: 'choice',
-          label: trans('registration_status', {}, 'cursus'),
-          displayed: true,
-          sortable: false,
-          filterable: true,
-          options: {
-            choices: constants.REGISTRATION_STATES
-          },
-          render: (row) => (
-            <span className={classes('label', `label-${constants.REGISTRATION_STATE_COLORS[row.state]}`)}>
-              {constants.REGISTRATION_STATES[row.state]}
-            </span>
-          )
-        }, {
-          name: 'userDisabled',
-          label: trans('user_disabled'),
-          type: 'boolean',
-          displayable: false,
-          sortable: false,
-          filterable: true
-        }
-      ]}
-      primaryAction={(row) => ({
-        type: LINK_BUTTON,
-        target: route(row.user)
+    <SessionUsers
+      session={props.activeSession}
+      name={selectors.STORE_NAME + '.sessionPending'}
+      url={url(['apiv2_cursus_session_list_pending', {id: props.activeSession.id}], {
+        allRegistrations: true
       })}
+      unregisterUrl={['apiv2_cursus_session_remove_users', {type: constants.LEARNER_TYPE, id: props.activeSession.id}]}
+      statusField="validated"
+      statusLabel={trans('registration_status', {}, 'cursus')}
+      statusChoices={{
+        false: trans('registration_pending', {}, 'cursus'),
+        true: trans('registration_validated', {}, 'cursus')
+      }}
+      statusColors={{
+        false: 'warning',
+        true: 'success'
+      }}
       actions={(rows) => [
         {
           name: 'validate',
           type: CALLBACK_BUTTON,
           icon: 'fa fa-fw fa-check',
           label: trans('validate_registration', {}, 'actions'),
-          callback: () => props.validatePending(props.activeSession.id, rows.filter(row => 0 === row.state)),
-          disabled: isFull(props.activeSession),
-          displayed: -1 !== rows.findIndex(row => 0 === row.state),
+          callback: () => props.validatePending(props.activeSession.id, rows.filter(row => !row.validated)),
+          displayed: -1 !== rows.findIndex(row => !row.validated),
           group: trans('management')
         }, {
           name: 'refuse',
           type: CALLBACK_BUTTON,
           icon: 'fa fa-fw fa-times',
           label: trans('refuse_registration', {}, 'actions'),
-          callback: () => props.refusePending(props.activeSession.id, rows.filter(row => 0 === row.state)),
-          disabled: isFull(props.activeSession),
-          displayed: -1 !== rows.findIndex(row => 0 === row.state),
+          callback: () => props.refusePending(props.activeSession.id, rows.filter(row => !row.validated)),
+          displayed: -1 !== rows.findIndex(row => !row.validated),
           group: trans('management')
         }
       ]}
-      card={(cardProps) => <UserCard {...cardProps} data={cardProps.data.user} />}
-      display={{
-        current: listConst.DISPLAY_TABLE
-      }}
     />
   </Fragment>
 

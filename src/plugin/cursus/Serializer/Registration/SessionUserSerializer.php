@@ -54,6 +54,8 @@ class SessionUserSerializer extends AbstractUserSerializer
             'session' => $this->sessionSerializer->serialize($sessionUser->getSession(), [Options::SERIALIZE_MINIMAL]),
             'organization' => $sessionUser->getUser()->getMainOrganization()->getName(),
             'state' => $sessionUser->getState(),
+            // Dedicated alias for the presences tab to avoid any confusion with generic state fields.
+            'presenceState' => $sessionUser->getState(),
             'status' => $sessionUser->getStatus(),
             'remark' => $sessionUser->getRemark(),
         ]);

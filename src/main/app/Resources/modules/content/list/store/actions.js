@@ -55,7 +55,16 @@ actions.fetchData = (listName, target, invalidate = false) => (dispatch, getStat
   return dispatch({
     [API_REQUEST]: {
       silent: true,
-      url: url(target) + selectors.queryString(listState),
+      url: (() => {
+        const baseUrl = url(target)
+        const listQuery = selectors.queryString(listState)
+
+        if (!listQuery) {
+          return baseUrl
+        }
+
+        return baseUrl + (baseUrl.includes('?') ? '&' : '?') + listQuery.slice(1)
+      })(),
       success: (response, dispatch) => {
         if (selectors.currentPage(listState) !== response.page) {
           // we reset current page because if we request a non existing page,

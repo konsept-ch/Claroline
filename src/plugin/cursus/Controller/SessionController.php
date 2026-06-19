@@ -191,7 +191,11 @@ class SessionController extends AbstractCrudController
         }
         $params['hiddenFilters']['session'] = $session->getUuid();
         $params['hiddenFilters']['type'] = $type;
-        $params['hiddenFilters']['state'] = [SessionUser::STATE_VALIDATED, SessionUser::STATE_PARTICIPATED];
+        $params['hiddenFilters']['state'] = [
+            SessionUser::STATE_PENDING,
+            SessionUser::STATE_VALIDATED,
+            SessionUser::STATE_PARTICIPATED
+        ];
 
         // only restrict to the same organization for non-managers
         if (SessionUser::LEARNER === $type && !$this->authorization->isGranted('ROLE_ADMIN') && !$this->authorization->isGranted('REGISTER', $session)) {
@@ -345,15 +349,19 @@ class SessionController extends AbstractCrudController
         $params['hiddenFilters']['session'] = $session->getUuid();
 
         if ($request->query->getBoolean('allRegistrations')) {
-            $params['hiddenFilters']['state'] = [
-                SessionUser::STATE_PENDING,
-                SessionUser::STATE_VALIDATED,
-                SessionUser::STATE_REFUSED,
-                SessionUser::STATE_CANCELLED,
-                SessionUser::STATE_PARTICIPATED,
-            ];
+            if (!isset($params['hiddenFilters']['state'])) {
+                $params['hiddenFilters']['state'] = [
+                    SessionUser::STATE_PENDING,
+                    SessionUser::STATE_VALIDATED,
+                    SessionUser::STATE_REFUSED,
+                    SessionUser::STATE_CANCELLED,
+                    SessionUser::STATE_PARTICIPATED,
+                ];
+            }
         } else {
-            $params['hiddenFilters']['pending'] = true;
+            if (!isset($params['hiddenFilters']['state'])) {
+                $params['hiddenFilters']['pending'] = true;
+            }
         }
 
         // only restrict to the same organization for non-managers
@@ -458,16 +466,30 @@ class SessionController extends AbstractCrudController
         $this->checkPermission('REGISTER', $session, [], true);
 
         $sessionUsers = $this->decodeIdsString($request, SessionUser::class);
-        $updated = [];
+        $updatedIds = [];
 
         $this->om->startFlushSuite();
         foreach ($sessionUsers as $sessionUser) {
-            if ($sessionUser->getState() != SessionUser::STATE_VALIDATED) continue;
-            $sessionUser->setState(SessionUser::STATE_PARTICIPATED);
-            $this->om->persist($sessionUser);
-            $updated[] = $sessionUser;
+            $updatedIds[] = $sessionUser->getUuid();
+        }
+
+        if (!empty($updatedIds)) {
+            $this->om->createQueryBuilder()
+                ->update(SessionUser::class, 'su')
+                ->set('su.state', ':state')
+                ->where('su.uuid IN (:ids)')
+                ->setParameter('state', SessionUser::STATE_PARTICIPATED)
+                ->setParameter('ids', $updatedIds)
+                ->getQuery()
+                ->execute();
         }
         $this->om->endFlushSuite();
+
+        $this->om->clear();
+
+        $updated = $this->om->getRepository(SessionUser::class)->findBy([
+            'uuid' => $updatedIds
+        ]);
 
         foreach ($updated as $sessionUser) {
             $this->manager->sendAttestation($sessionUser, $request->getLocale());
@@ -475,7 +497,7 @@ class SessionController extends AbstractCrudController
 
         return new JsonResponse(array_map(function (SessionUser $sessionUser) {
             return $this->serializer->serialize($sessionUser);
-        }, $sessionUsers));
+        }, $updated));
     }
 
     /**
