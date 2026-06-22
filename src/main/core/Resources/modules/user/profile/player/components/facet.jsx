@@ -11,8 +11,18 @@ import {DetailsData} from '#/main/app/content/details/containers/data'
 import {ProfileFacet as ProfileFacetTypes} from '#/main/core/user/profile/prop-types'
 import {selectors} from '#/main/core/user/profile/store/selectors'
 import {getDetailsDefaultSection, formatDetailsSections} from '#/main/core/user/profile/utils'
+import {ProfileTrainingsMain} from '#/plugin/cursus/profile/trainings'
 
 const ProfileFacetComponent = props => {
+  if ('trainings' === get(props.facet, 'id') || 'cursus_trainings' === get(props.facet, 'meta.custom')) {
+    return (
+      <ProfileTrainingsMain
+        path={props.path}
+        user={props.user}
+      />
+    )
+  }
+
   // todo : create a selector instead
   let sections = []
   if (props.facet) {
@@ -35,6 +45,7 @@ const ProfileFacetComponent = props => {
 }
 
 ProfileFacetComponent.propTypes = {
+  path: T.string.isRequired,
   currentUser: T.object,
   user: T.object.isRequired,
   facet: T.shape(

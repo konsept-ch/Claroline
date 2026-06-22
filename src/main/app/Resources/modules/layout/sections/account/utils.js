@@ -6,7 +6,7 @@ function getSections() {
   
   return Promise.all(
     // boot actions applications
-    ['profile', 'badges'].map(action => sections[action]())
+    ['profile', 'badges'].filter(action => sections[action]).map(action => sections[action]())
   ).then(loadedSections => loadedSections
     .map(sectionModule => sectionModule.default)
   )

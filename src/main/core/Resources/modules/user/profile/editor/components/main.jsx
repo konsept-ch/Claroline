@@ -47,7 +47,7 @@ ProfileEditComponent.defaultProps = {
 const ProfileEdit = connect(
   (state) => ({
     user: detailsSelectors.data(detailsSelectors.form(state, selectors.FORM_NAME)),
-    facets: selectors.facets(state)
+    facets: selectors.facets(state).filter(facet => !facet.meta || 'cursus_trainings' !== facet.meta.custom)
   }),
   (dispatch) => ({
     openFacet(id) {

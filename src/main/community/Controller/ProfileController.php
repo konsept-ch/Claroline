@@ -53,7 +53,6 @@ class ProfileController
     private $parametersSerializer;
     /** @var ProfileSerializer */
     private $profileSerializer;
-
     public function __construct(
         AuthorizationCheckerInterface $authorization,
         ObjectManager $om,
@@ -182,8 +181,23 @@ class ProfileController
     {
         $this->checkPermission('OPEN', $user, [], true);
 
+        $facets = $this->profileSerializer->serialize();
+        $facets[] = [
+            'id' => 'trainings',
+            'title' => 'Mes formations',
+            'position' => count($facets),
+            'display' => [
+                'creation' => false,
+            ],
+            'meta' => [
+                'main' => false,
+                'custom' => 'cursus_trainings',
+            ],
+            'sections' => [],
+        ];
+
         return new JsonResponse([
-            'facets' => $this->profileSerializer->serialize(),
+            'facets' => $facets,
             'parameters' => $this->parametersSerializer->serialize()['profile'],
             'user' => $this->serializer->serialize($user, [Options::SERIALIZE_FACET]),
         ]);
