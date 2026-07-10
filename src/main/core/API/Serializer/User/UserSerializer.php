@@ -371,7 +371,7 @@ class UserSerializer
             $this->deserializeRestrictions($data['restrictions'], $user);
         }
 
-        if (isset($data['mainOrganization']) && !in_array(Options::REGISTRATION, $options)) {
+        if (isset($data['mainOrganization'])) {
             if (is_object($data['mainOrganization'])) {
                 $data['mainOrganization'] = get_object_vars($data['mainOrganization']);
             }

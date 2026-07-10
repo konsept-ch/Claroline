@@ -185,6 +185,7 @@ class Organization
      * @ORM\OneToMany(
      *     targetEntity="Claroline\CoreBundle\Entity\Organization\UserOrganizationReference",
      *     mappedBy="organization",
+     *     fetch="EXTRA_LAZY",
      * )
      * @ORM\JoinColumn(name="organization_id", nullable=false)
      *

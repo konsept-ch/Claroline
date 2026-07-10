@@ -4,7 +4,6 @@ namespace Claroline\CoreBundle\Library\Mailing\Client;
 
 use Claroline\CoreBundle\Library\Configuration\PlatformConfigurationHandler;
 use Claroline\CoreBundle\Library\Mailing\Message;
-use Postal\Client;
 use Postal\SendMessage;
 
 class PostalMailer implements MailClientInterface
@@ -24,15 +23,15 @@ class PostalMailer implements MailClientInterface
 
     public function send(Message $message)
     {
-        $client = new Client(
-            $this->ch->getParameter('mailer_host'),
-            $this->ch->getParameter('mailer_api_key')
-        );
+        $sendMessage = $this->createSendMessage();
+        foreach ($message->getAttribute('bcc') as $bcc) {
+            $sendMessage->bcc($bcc);
+        }
 
-        // Create a new message
-        $sendMessage = new SendMessage($client);
-        $sendMessage->bcc($message->getAttribute('bcc'));
-        $sendMessage->to($message->getAttribute('to'));
+        foreach ($message->getAttribute('to') as $recipient) {
+            $sendMessage->to($recipient);
+        }
+
         $sendMessage->from($message->getAttribute('from'));
 
         $tag = $this->ch->getParameter('mailer_tag');
@@ -52,5 +51,15 @@ class PostalMailer implements MailClientInterface
         }
 
         return $sendMessage->send();
+    }
+
+    protected function createSendMessage()
+    {
+        $client = new PostalRequestClient(
+            $this->ch->getParameter('mailer_host'),
+            $this->ch->getParameter('mailer_api_key')
+        );
+
+        return new SendMessage($client);
     }
 }

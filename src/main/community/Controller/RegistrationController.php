@@ -139,10 +139,6 @@ class RegistrationController
             return new JsonResponse($user, 422);
         }
 
-        if ($organization && $autoOrganization) {
-            $this->crud->replace($user, 'mainOrganization', $organization);
-        }
-
         $selfLog = $this->config->getParameter('registration.auto_logging');
         $validation = $this->config->getParameter('registration.validation');
         // auto log user if option is set and account doesn't need to be validated

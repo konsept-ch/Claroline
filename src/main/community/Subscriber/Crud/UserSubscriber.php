@@ -80,6 +80,7 @@ class UserSubscriber implements EventSubscriberInterface
     {
         return [
             Crud::getEventName('create', 'pre', User::class) => 'preCreate',
+            Crud::getEventName('create', 'post', User::class) => 'postCreate',
             Crud::getEventName('update', 'pre', User::class) => 'preUpdate',
             Crud::getEventName('update', 'post', User::class) => 'postUpdate',
             Crud::getEventName('patch', 'pre', User::class) => 'prePatch',
@@ -129,17 +130,14 @@ class UserSubscriber implements EventSubscriberInterface
             ArrayUtils::get($data, 'meta.mailValidated', $this->config->getParameter('auto_validate_email'))
         );
 
-        if ($this->mailManager->isMailerAvailable() && !in_array(Options::NO_EMAIL, $options)) {
-            // send a validation by hash
+        if (!in_array(Options::NO_EMAIL, $options)) {
+            // Prepare the activation state before the user is flushed. The mail itself
+            // is sent in postCreate, once the user and its token are durable.
             $mailValidation = $this->config->getParameter('registration.validation');
             if (PlatformDefaults::REGISTRATION_MAIL_VALIDATION_FULL === $mailValidation) {
                 $password = sha1(rand(1000, 10000).$user->getUsername().$user->getSalt());
                 $user->setResetPasswordHash($password);
                 $user->setIsEnabled(false);
-                $this->mailManager->sendEnableAccountMessage($user);
-            } elseif (PlatformDefaults::REGISTRATION_MAIL_VALIDATION_PARTIAL === $mailValidation) {
-                // don't change anything
-                $this->mailManager->sendCreationMessage($user);
             }
         }
 
@@ -162,6 +160,24 @@ class UserSubscriber implements EventSubscriberInterface
         }
 
         $this->om->endFlushSuite();
+    }
+
+    public function postCreate(CreateEvent $event)
+    {
+        /** @var User $user */
+        $user = $event->getObject();
+        $options = $event->getOptions();
+
+        if (!$this->mailManager->isMailerAvailable() || in_array(Options::NO_EMAIL, $options)) {
+            return;
+        }
+
+        $mailValidation = $this->config->getParameter('registration.validation');
+        if (PlatformDefaults::REGISTRATION_MAIL_VALIDATION_FULL === $mailValidation) {
+            $this->mailManager->sendEnableAccountMessage($user);
+        } elseif (PlatformDefaults::REGISTRATION_MAIL_VALIDATION_PARTIAL === $mailValidation) {
+            $this->mailManager->sendCreationMessage($user);
+        }
     }
 
     public function preUpdate(UpdateEvent $event)
