@@ -1,5 +1,10 @@
 import {registry} from '#/main/app/plugins/registry'
 
+// Register cursus modals so they are available to the global modal registry.
+import '#/plugin/cursus/modals/courses'
+import '#/plugin/cursus/modals/sessions'
+import '#/plugin/cursus/modals/duplicate'
+
 registry.add('ClarolineCursusBundle', {
   /**
    * Provides tab types for Home tools.

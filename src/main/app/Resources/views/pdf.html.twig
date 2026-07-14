@@ -7,8 +7,11 @@
         {# This is required in order to DOMPDF manage correctly relative path (mostly for tinyMce contents) #}
         <base href="{{ baseUrl ~ '/' }}" />
 
-        {# We will need to load a specific stylesheets for pdfs later #}
-        <link rel="stylesheet" type="text/css" href="{{ absolute_url(themeAsset('bootstrap.css')) }}" />
+        {#
+            Keep PDF styles self-contained. Loading Bootstrap imports Font
+            Awesome webfonts, which Dompdf may fail to cache on Windows and
+            turns the PDF response into a 500 error.
+        #}
     </head>
 
     <body>

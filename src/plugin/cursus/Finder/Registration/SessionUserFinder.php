@@ -102,9 +102,9 @@ class SessionUserFinder extends AbstractFinder
 
                 case 'validated':
                     if ($filterValue) {
-                        $qb->andWhere('(obj.state = 1 OR obj.state = 4)');
+                        $qb->andWhere('(obj.state = 1 OR obj.state = 4 OR obj.state = 5 OR obj.state = 6)');
                     } else {
-                        $qb->andWhere('(obj.state <> 4 AND obj.state <> 1)');
+                        $qb->andWhere('(obj.state <> 4 AND obj.state <> 1 AND obj.state <> 5 AND obj.state <> 6)');
                     }
                     break;
 

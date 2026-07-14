@@ -16,6 +16,7 @@ use Claroline\AppBundle\Manager\PdfManager;
 use Claroline\AppBundle\Manager\PlatformManager;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\Entity\Role;
+use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\CoreBundle\Event\CatalogEvents\MessageEvents;
 use Claroline\CoreBundle\Event\SendMessageEvent;
@@ -27,6 +28,7 @@ use Claroline\CoreBundle\Manager\MailManager;
 use Claroline\CoreBundle\Manager\RoleManager;
 use Claroline\CoreBundle\Manager\Template\TemplateManager;
 use Claroline\CoreBundle\Manager\Workspace\WorkspaceManager;
+use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
 use Claroline\CursusBundle\Entity\Course;
 use Claroline\CursusBundle\Entity\Registration\AbstractRegistration;
 use Claroline\CursusBundle\Entity\Registration\SessionGroup;
@@ -120,6 +122,17 @@ class SessionManager
         $this->sessionGroupRepo = $om->getRepository(SessionGroup::class);
     }
 
+    public function generateUniqueSessionCode(string $name): string
+    {
+        $baseCode = TextNormalizer::toKey($name, 128);
+
+        if ('' === $baseCode) {
+            $baseCode = 'session';
+        }
+
+        return $this->sessionRepo->getUniqueCode($baseCode);
+    }
+
     public function setDefaultSession(Course $course, Session $session = null)
     {
         /** @var Session[] $defaultSessions */
@@ -202,13 +215,23 @@ class SessionManager
         $this->om->startFlushSuite();
 
         foreach ($users as $user) {
-            //dd($this->sessionUserRepo->countValid($session, $user, $type));
-            if ($this->sessionUserRepo->countValid($session, $user, $type) > 0) continue;
+            $sessionUser = $this->sessionUserRepo->findOneBy([
+                'session' => $session,
+                'user' => $user,
+                'type' => $type,
+            ]);
 
-            $sessionUser = new SessionUser();
-            $sessionUser->setSession($session);
-            $sessionUser->setUser($user);
-            $sessionUser->setType($type);
+            if ($sessionUser && !in_array($sessionUser->getState(), [SessionUser::STATE_REFUSED, SessionUser::STATE_CANCELLED], true)) {
+                continue;
+            }
+
+            if (empty($sessionUser)) {
+                $sessionUser = new SessionUser();
+                $sessionUser->setSession($session);
+                $sessionUser->setUser($user);
+                $sessionUser->setType($type);
+            }
+
             $sessionUser->setDate($registrationDate);
 
             if (AbstractRegistration::TUTOR === $type) {
@@ -220,6 +243,8 @@ class SessionManager
                 $sessionUser->setState(!$session->getRegistrationValidation() || $validated ? SessionUser::STATE_VALIDATED : SessionUser::STATE_PENDING);
                 $sessionUser->setConfirmed(!$session->getUserValidation());
             }
+
+            $sessionUser->setStatus(SessionUser::STATUS_PENDING);
 
             // grant workspace role if registration is fully validated
             $role = AbstractRegistration::TUTOR === $type ? $session->getTutorRole() : $session->getLearnerRole();
@@ -251,12 +276,18 @@ class SessionManager
 
         $this->checkUsersRegistration($session, $results);
 
-        // TODO : what to do with this if he goes in pending state ?
-
-        if ($session->getRegistrationMail()) {
-            $this->sendSessionInvitation($session, array_map(function (SessionUser $sessionUser) {
+        if (AbstractRegistration::LEARNER === $type) {
+            $users = array_map(function (SessionUser $sessionUser) {
                 return $sessionUser->getUser();
-            }, $results), AbstractRegistration::LEARNER === $type, $type);
+            }, $results);
+
+            if ($session->getUserValidation()) {
+                $this->sendSessionInvitation($session, $users, true, $type);
+            }
+
+            if ($session->getRegistrationMail()) {
+                $this->sendSessionInvitation($session, $users, false, $type);
+            }
         }
 
         // registers users to linked trainings
@@ -335,6 +366,12 @@ class SessionManager
 
         $this->om->endFlushSuite();
 
+        if (!empty($sessionUsers)) {
+            $this->sendSessionValidation($session, array_map(function (SessionUser $sessionUser) {
+                return $sessionUser->getUser();
+            }, $sessionUsers));
+        }
+
         return $sessionUsers;
     }
 
@@ -355,6 +392,35 @@ class SessionManager
         $this->checkUsersRegistration($session, $sessionUsers);
 
         $this->om->endFlushSuite();
+
+        if (!empty($sessionUsers)) {
+            $this->sendSessionValidation($session, array_map(function (SessionUser $sessionUser) {
+                return $sessionUser->getUser();
+            }, $sessionUsers));
+        }
+
+        return $sessionUsers;
+    }
+
+    /**
+     * @param SessionUser[] $sessionUsers
+     */
+    public function refuseUsers(Session $session, array $sessionUsers = []): array
+    {
+        $this->om->startFlushSuite();
+
+        foreach ($sessionUsers as $sessionUser) {
+            $sessionUser->setState(SessionUser::STATE_REFUSED);
+            $this->om->persist($sessionUser);
+        }
+
+        $this->om->endFlushSuite();
+
+        if (!empty($sessionUsers)) {
+            $this->sendSessionRefusal($session, array_map(function (SessionUser $sessionUser) {
+                return $sessionUser->getUser();
+            }, $sessionUsers));
+        }
 
         return $sessionUsers;
     }
@@ -421,8 +487,14 @@ class SessionManager
             }
         }
 
-        if ($session->getRegistrationMail()) {
-            $this->sendSessionInvitation($session, $users, false);
+        if (AbstractRegistration::LEARNER === $type) {
+            if ($session->getUserValidation()) {
+                $this->sendSessionInvitation($session, $users, true, $type);
+            }
+
+            if ($session->getRegistrationMail()) {
+                $this->sendSessionInvitation($session, $users, false, $type);
+            }
         }
 
         $this->om->endFlushSuite();
@@ -481,8 +553,24 @@ class SessionManager
         if (empty($roleName)) {
             if ('manager' === $type) {
                 $role = $this->roleManager->getManagerRole($workspace);
+
+                if (is_null($role)) {
+                    $role = $this->roleManager->createWorkspaceRole(
+                        'ROLE_WS_MANAGER_'.$workspace->getUuid(),
+                        'manager',
+                        $workspace
+                    );
+                }
             } else {
                 $role = $this->roleManager->getCollaboratorRole($workspace);
+
+                if (is_null($role)) {
+                    $role = $this->roleManager->createWorkspaceRole(
+                        'ROLE_WS_COLLABORATOR_'.$workspace->getUuid(),
+                        'collaborator',
+                        $workspace
+                    );
+                }
             }
         } else {
             $roles = $this->roleManager->getRolesByWorkspaceCodeAndTranslationKey(
@@ -536,7 +624,7 @@ class SessionManager
             'session' => $session,
             'type' => AbstractRegistration::LEARNER,
             'confirmed' => true,
-            'state' => SessionUser::STATUS_VALIDATED,
+            'state' => [SessionUser::STATE_VALIDATED, SessionUser::STATE_ABSENT_JUSTIFIED],
         ]);
         /** @var SessionGroup[] $sessionGroups */
         $sessionGroups = $this->sessionGroupRepo->findBy([
@@ -628,6 +716,115 @@ class SessionManager
                 $session->getCreator()
             ), MessageEvents::MESSAGE_SENDING);
         }
+    }
+
+    /**
+     * Sends a mail when a learner registration is validated.
+     *
+     * @param User[] $users
+     */
+    public function sendSessionValidation(Session $session, array $users): void
+    {
+        $course = $session->getCourse();
+        $location = $session->getLocation();
+
+        $basicPlaceholders = [
+            'session_name' => $session->getName(),
+            'session_start' => $session->getStartDate()->format('d/m/Y'),
+            'session_end' => $session->getEndDate()->format('d/m/Y'),
+            'remark' => '',
+        ];
+
+        foreach ($users as $user) {
+            $locale = $user->getLocale();
+            $placeholders = array_merge($basicPlaceholders, [
+                'user_first_name' => $user->getFirstName(),
+                'user_last_name' => $user->getLastName(),
+            ]);
+
+            $title = $this->templateManager->getTemplate('training_quota_status_validated', $placeholders, $locale, 'title');
+            $content = $this->templateManager->getTemplate('training_quota_status_validated', $placeholders, $locale);
+
+            $this->mailManager->send($title, $content, [$user], null, [], true);
+        }
+    }
+
+    /**
+     * Sends a mail when a learner registration is refused.
+     *
+     * @param User[] $users
+     */
+    public function sendSessionRefusal(Session $session, array $users): void
+    {
+        $course = $session->getCourse();
+        $location = $session->getLocation();
+
+        $basicPlaceholders = [
+            'course_name' => $course->getName(),
+            'course_code' => $course->getCode(),
+            'course_description' => $course->getDescription(),
+            'session_name' => $session->getName(),
+            'session_description' => $session->getDescription(),
+            'session_start' => $session->getStartDate()->format('d/m/Y'),
+            'session_end' => $session->getEndDate()->format('d/m/Y'),
+            'session_location_description' => $location ? $location->getDescription() : '',
+        ];
+
+        foreach ($users as $user) {
+            $locale = $user->getLocale();
+            $placeholders = array_merge($basicPlaceholders, [
+                'first_name' => $user->getFirstName(),
+                'last_name' => $user->getLastName(),
+                'username' => $user->getUsername(),
+            ]);
+
+            $title = $this->templateManager->getTemplate('training_session_refused', $placeholders, $locale, 'title');
+            $content = $this->templateManager->getTemplate('training_session_refused', $placeholders, $locale);
+
+            if ('' === trim($title)) {
+                $title = $this->translator->trans('registration-decline', [], 'notification');
+            }
+
+            if ('' === trim($content)) {
+                $content = $this->buildSessionRefusalFallbackContent($session, $user, $locale);
+            }
+
+            $this->mailManager->send($title, $content, [$user], null, [], true);
+        }
+    }
+
+    private function buildSessionRefusalFallbackContent(Session $session, User $user, string $locale): string
+    {
+        $courseName = htmlspecialchars($session->getCourse()->getName(), ENT_QUOTES, 'UTF-8');
+        $sessionName = htmlspecialchars($session->getName(), ENT_QUOTES, 'UTF-8');
+        $sessionStart = htmlspecialchars($session->getStartDate()->format('d/m/Y'), ENT_QUOTES, 'UTF-8');
+        $sessionEnd = htmlspecialchars($session->getEndDate()->format('d/m/Y'), ENT_QUOTES, 'UTF-8');
+        $fullName = htmlspecialchars(trim($user->getFirstName().' '.$user->getLastName()), ENT_QUOTES, 'UTF-8');
+        $location = $session->getLocation() ? trim($session->getLocation()->getDescription()) : '';
+        $locationLabel = 0 === strpos(strtolower($locale), 'fr') ? 'Lieu' : 'Location';
+        $locationLine = '' !== $location ? '<p>'.$locationLabel.': '.htmlspecialchars($location, ENT_QUOTES, 'UTF-8').'</p>' : '';
+
+        if (0 === strpos(strtolower($locale), 'fr')) {
+            return sprintf(
+                '<p>Bonjour %s,</p><p>Votre inscription à la session "%s" a été refusée.</p><p>Formation: %s</p><p>Période: %s -> %s</p>%s',
+                $fullName,
+                $sessionName,
+                $courseName,
+                $sessionStart,
+                $sessionEnd,
+                $locationLine
+            );
+        }
+
+        return sprintf(
+            '<p>Hello %s,</p><p>Your registration for session "%s" has been refused.</p><p>Training: %s</p><p>Period: %s -> %s</p>%s',
+            $fullName,
+            $sessionName,
+            $courseName,
+            $sessionStart,
+            $sessionEnd,
+            $locationLine
+        );
     }
 
     /**

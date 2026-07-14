@@ -21,6 +21,24 @@ function getPresenceDisplay(row, session) {
   const sessionEnded = !!get(session, 'restrictions.dates[1]') && get(session, 'restrictions.dates[1]') < now(false)
   const state = Number(row.presenceState ?? row.state)
 
+  if (constants.REGISTRATION_STATE_ABSENT === state) {
+    return {
+      label: trans('participation_absent', {}, 'cursus'),
+      color: 'danger'
+    }
+  }
+
+  if (constants.REGISTRATION_STATE_ABSENT_JUSTIFIED === state) {
+    return {
+      label: 'Excus\u00e9',
+      color: 'custom',
+      style: {
+        backgroundColor: '#7c3aed',
+        color: '#fff'
+      }
+    }
+  }
+
   if (constants.REGISTRATION_STATE_PARTICIPATED === state) {
     return {
       label: trans('participation_participated', {}, 'cursus'),
@@ -36,8 +54,8 @@ function getPresenceDisplay(row, session) {
   }
 
   return {
-    label: trans('participation_waiting', {}, 'cursus'),
-    color: 'warning'
+    label: '-',
+    color: 'default'
   }
 }
 
@@ -100,14 +118,16 @@ const CoursePresences = (props) =>
           options: {
             choices: {
               [constants.REGISTRATION_STATE_VALIDATED]: trans('participation_waiting', {}, 'cursus'),
-              [constants.REGISTRATION_STATE_PARTICIPATED]: trans('participation_participated', {}, 'cursus')
+              [constants.REGISTRATION_STATE_PARTICIPATED]: trans('participation_participated', {}, 'cursus'),
+              [constants.REGISTRATION_STATE_ABSENT]: trans('participation_absent', {}, 'cursus'),
+              [constants.REGISTRATION_STATE_ABSENT_JUSTIFIED]: 'Excus\u00e9'
             }
           },
           render: (row) => {
             const presence = getPresenceDisplay(row, props.activeSession)
 
             return (
-              <span className={classes('label', `label-${presence.color}`)}>
+              <span className={classes('label', presence.color !== 'custom' && `label-${presence.color}`)} style={presence.style}>
                 {presence.label}
               </span>
             )
@@ -125,6 +145,18 @@ const CoursePresences = (props) =>
           icon: 'fa fa-fw fa-check',
           label: trans('validate_participation', {}, 'actions'),
           callback: () => props.validateParticipation(props.activeSession.id, rows)
+        }, {
+          name: 'absence',
+          type: CALLBACK_BUTTON,
+          icon: 'fa fa-fw fa-times',
+          label: trans('participation_absent', {}, 'cursus'),
+          callback: () => props.validateAbsence(props.activeSession.id, rows)
+        }, {
+          name: 'excuse',
+          type: CALLBACK_BUTTON,
+          icon: 'fa fa-fw fa-sticky-note',
+          label: 'Excus\u00e9',
+          callback: () => props.validateExcuse(props.activeSession.id, rows)
         }
       ]}
       card={(cardProps) => <UserCard {...cardProps} data={cardProps.data.user} />}
@@ -158,7 +190,9 @@ CoursePresences.propTypes = {
     SessionTypes.propTypes
   ),
   addUsers: T.func.isRequired,
-  validateParticipation: T.func.isRequired
+  validateParticipation: T.func.isRequired,
+  validateAbsence: T.func.isRequired,
+  validateExcuse: T.func.isRequired
 }
 
 export {

@@ -15,6 +15,8 @@ abstract class AbstractUserRegistration extends AbstractRegistration
     const STATE_REFUSED = 2;
     const STATE_CANCELLED = 3;
     const STATE_PARTICIPATED = 4;
+    const STATE_ABSENT = 5;
+    const STATE_ABSENT_JUSTIFIED = 6;
 
     /**
      * The registration request has been confirmed by the user.
@@ -64,7 +66,7 @@ abstract class AbstractUserRegistration extends AbstractRegistration
 
     public function isValidated(): bool
     {
-        return $this->state == self::STATE_VALIDATED;
+        return \in_array($this->state, [self::STATE_VALIDATED, self::STATE_PARTICIPATED, self::STATE_ABSENT, self::STATE_ABSENT_JUSTIFIED], true);
     }
 
     public function isCancelled(): bool

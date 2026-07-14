@@ -50,7 +50,7 @@ const CourseMain = (props) =>
           />
         )
       }, {
-        path: '/:id',
+        path: '/:id([0-9a-fA-F-]{36})',
         onEnter: (params = {}) => props.openSession(params.id),
         render: () => (
           <CourseDetails

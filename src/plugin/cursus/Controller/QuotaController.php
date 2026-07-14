@@ -156,7 +156,12 @@ class QuotaController extends AbstractCrudController
 
         /** @var SessionUserRepository */
         $repo = $this->om->getRepository(SessionUser::class);
-        $sessionUsers = $repo->findByOrganization($quota->getOrganization(), $year);
+        $sessionUsers = array_values(array_filter(
+            $repo->findByOrganization($quota->getOrganization(), $year),
+            static function (SessionUser $subscription) {
+                return SessionUser::STATE_CANCELLED !== $subscription->getState();
+            }
+        ));
         $statistics = [
             'total' => count($sessionUsers),
             'pending' => array_reduce($sessionUsers, function ($accum, $subscription) {
@@ -204,6 +209,14 @@ class QuotaController extends AbstractCrudController
         $filters['organization'] = $quota->getOrganization();
         $filters['type'] = AbstractRegistration::LEARNER;
         $filters['year'] = $year;
+        $filters['state'] = [
+            SessionUser::STATE_PENDING,
+            SessionUser::STATE_VALIDATED,
+            SessionUser::STATE_REFUSED,
+            SessionUser::STATE_PARTICIPATED,
+            SessionUser::STATE_ABSENT,
+            SessionUser::STATE_ABSENT_JUSTIFIED,
+        ];
 
         if (!$quota->getQuotaByYear($year)->enabled) {
             $filters['ignored_status'] = SessionUser::STATUS_MANAGED;
@@ -275,6 +288,14 @@ class QuotaController extends AbstractCrudController
             'organization' => $organization,
             'type' => AbstractRegistration::LEARNER,
             'year' => $year,
+            'state' => [
+                SessionUser::STATE_PENDING,
+                SessionUser::STATE_VALIDATED,
+                SessionUser::STATE_REFUSED,
+                SessionUser::STATE_PARTICIPATED,
+                SessionUser::STATE_ABSENT,
+                SessionUser::STATE_ABSENT_JUSTIFIED,
+            ],
         ];
 
         if (!$quota->getQuotaByYear($year)->enabled) {

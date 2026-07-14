@@ -130,6 +130,34 @@ plugin:
               - registration_confirmation_url
               - session_location_description
 
+        - name: training_session_validated
+          type: email
+          placeholders:
+              - course_name
+              - course_code
+              - course_description
+              - session_url
+              - session_name
+              - session_description
+              - session_start
+              - session_end
+              - session_location_description
+
+        - name: training_session_refused
+          type: email
+          placeholders:
+              - course_name
+              - course_code
+              - course_description
+              - session_name
+              - session_description
+              - session_start
+              - session_end
+              - first_name
+              - last_name
+              - username
+              - session_location_description
+
         - name: training_session_participated
           type: email
           placeholders:

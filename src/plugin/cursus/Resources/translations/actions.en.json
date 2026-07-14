@@ -13,6 +13,8 @@
   "validate_subscriptions": "Validate subscription",
   "move-pending": "Move on pending list",
   "validate_participation": "Validate participation",
+  "mark_absent": "Mark absent",
+  "mark_excused": "Mark excused",
   "validate_emcc": "Validate EMCC",
   "validate_pci": "Validate PCI",
   "validate_registrations": "Validate registrations",

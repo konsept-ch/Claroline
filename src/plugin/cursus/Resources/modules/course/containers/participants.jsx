@@ -43,6 +43,9 @@ const CourseParticipants = connect(
     validateParticipation(sessionId, users) {
       dispatch(actions.validateParticipation(sessionId, users))
     },
+    validateAbsence(sessionId, users) {
+      dispatch(actions.validateAbsence(sessionId, users))
+    },
   })
 )(CourseParticipantsComponent)
 

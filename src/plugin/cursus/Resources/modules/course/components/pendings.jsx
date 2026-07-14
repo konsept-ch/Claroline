@@ -16,19 +16,16 @@ const CoursePendings = (props) =>
       session={props.activeSession}
       name={selectors.STORE_NAME + '.sessionPending'}
       url={url(['apiv2_cursus_session_list_pending', {id: props.activeSession.id}], {
-        allRegistrations: true
+        allRegistrations: true,
+        hiddenFilters: {
+          type: constants.LEARNER_TYPE
+        }
       })}
       unregisterUrl={['apiv2_cursus_session_remove_users', {type: constants.LEARNER_TYPE, id: props.activeSession.id}]}
-      statusField="validated"
+      statusField="state"
       statusLabel={trans('registration_status', {}, 'cursus')}
-      statusChoices={{
-        false: trans('registration_pending', {}, 'cursus'),
-        true: trans('registration_validated', {}, 'cursus')
-      }}
-      statusColors={{
-        false: 'warning',
-        true: 'success'
-      }}
+      statusChoices={constants.REGISTRATION_STATES}
+      statusColors={constants.REGISTRATION_STATE_COLORS}
       actions={(rows) => [
         {
           name: 'validate',

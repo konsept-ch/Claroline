@@ -68,7 +68,12 @@ class QuotaSerializer
         ];
 
         if (isset($options['year'])) {
-            $sessionUsers = $this->om->getRepository(SessionUser::class)->findByOrganization($quota->getOrganization(), $options['year']);
+            $sessionUsers = array_values(array_filter(
+                $this->om->getRepository(SessionUser::class)->findByOrganization($quota->getOrganization(), $options['year']),
+                static function (SessionUser $subscription) {
+                    return SessionUser::STATE_CANCELLED !== $subscription->getState();
+                }
+            ));
             $serialized['pending'] = array_reduce($sessionUsers, fn ($accum, $subscription) => $accum + (SessionUser::STATUS_PENDING == $subscription->getStatus() ? 1 : 0), 0);
         }
 

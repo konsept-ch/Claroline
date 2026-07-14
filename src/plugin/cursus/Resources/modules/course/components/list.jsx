@@ -4,12 +4,13 @@ import {PropTypes as T} from 'prop-types'
 import {trans} from '#/main/app/intl/translation'
 import {param} from '#/main/app/config'
 import {hasPermission} from '#/main/app/security'
-import {LINK_BUTTON, URL_BUTTON} from '#/main/app/buttons'
+import {LINK_BUTTON, MODAL_BUTTON, URL_BUTTON} from '#/main/app/buttons'
 import {ListData} from '#/main/app/content/list/containers/data'
 import {constants as listConst} from '#/main/app/content/list/constants'
 
 import {route} from '#/plugin/cursus/routing'
 import {CourseCard} from '#/plugin/cursus/course/components/card'
+import {MODAL_DUPLICATE_COURSE} from '#/plugin/cursus/modals/duplicate'
 
 const CourseList = (props) =>
   <ListData
@@ -82,6 +83,17 @@ const CourseList = (props) =>
         target: route(props.path, rows[0]) + '/edit',
         displayed: hasPermission('edit', rows[0]),
         group: trans('management'),
+        scope: ['object']
+      }, {
+        name: 'duplicate',
+        type: MODAL_BUTTON,
+        icon: 'fa fa-fw fa-clone',
+        label: trans('duplicate', {}, 'actions'),
+        displayed: hasPermission('edit', rows[0]),
+        group: trans('management'),
+        modal: [MODAL_DUPLICATE_COURSE, {
+          course: rows[0]
+        }],
         scope: ['object']
       }, {
         name: 'export-pdf',

@@ -48,7 +48,7 @@ class EventCrud
                 'session' => $trainingEvent->getSession(),
                 'type' => AbstractRegistration::LEARNER,
                 'confirmed' => true,
-                'state' => SessionUser::STATE_VALIDATED,
+                'state' => [SessionUser::STATE_VALIDATED, SessionUser::STATE_ABSENT_JUSTIFIED],
             ]);
 
             if (!empty($sessionLearners)) {
@@ -61,7 +61,7 @@ class EventCrud
                 'session' => $trainingEvent->getSession(),
                 'type' => AbstractRegistration::TUTOR,
                 'confirmed' => true,
-                'state' => SessionUser::STATE_VALIDATED,
+                'state' => [SessionUser::STATE_VALIDATED, SessionUser::STATE_ABSENT_JUSTIFIED],
             ]);
 
             if (!empty($sessionTutors)) {

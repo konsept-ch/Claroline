@@ -23,11 +23,6 @@ const SessionForm = (props) =>
             label: trans('name'),
             required: true
           }, {
-            name: 'code',
-            type: 'string',
-            label: trans('code'),
-            required: true
-          }, {
             name: 'restrictions.dates',
             type: 'date-range',
             label: trans('access_dates'),

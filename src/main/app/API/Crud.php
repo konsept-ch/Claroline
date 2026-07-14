@@ -181,15 +181,32 @@ class Crud
             $this->checkPermission('CREATE', $object, [], true);
         }
 
-        if ($this->dispatch('create', 'pre', [$object, $options, $data])) {
-            $this->om->persist($object);
-            if (!in_array(Options::FORCE_FLUSH, $options)) {
-                $this->om->flush();
-            } else {
-                $this->om->forceFlush();
+        $transactional = $this->om->supportsTransactions();
+        if ($transactional) {
+            $this->om->beginTransaction();
+        }
+
+        try {
+            if ($this->dispatch('create', 'pre', [$object, $options, $data])) {
+                $this->om->persist($object);
+                if (!in_array(Options::FORCE_FLUSH, $options)) {
+                    $this->om->flush();
+                } else {
+                    $this->om->forceFlush();
+                }
+
+                $this->dispatch('create', 'post', [$object, $options, $data]);
             }
 
-            $this->dispatch('create', 'post', [$object, $options, $data]);
+            if ($transactional) {
+                $this->om->commit();
+            }
+        } catch (\Throwable $e) {
+            if ($transactional) {
+                $this->om->rollBack();
+            }
+
+            throw $e;
         }
 
         return $object;

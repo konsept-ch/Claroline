@@ -63,13 +63,17 @@ const REGISTRATION_STATE_VALIDATED = 1
 const REGISTRATION_STATE_REFUSED = 2
 const REGISTRATION_STATE_CANCELLED = 3
 const REGISTRATION_STATE_PARTICIPATED = 4
+const REGISTRATION_STATE_ABSENT = 5
+const REGISTRATION_STATE_ABSENT_JUSTIFIED = 6
 
 const REGISTRATION_STATES = {
   [REGISTRATION_STATE_PENDING]: trans('registration_pending', {}, 'cursus'),
   [REGISTRATION_STATE_VALIDATED]: trans('registration_validated', {}, 'cursus'),
   [REGISTRATION_STATE_REFUSED]: trans('registration_refused', {}, 'cursus'),
   [REGISTRATION_STATE_CANCELLED]: trans('registration_cancelled', {}, 'cursus'),
-  [REGISTRATION_STATE_PARTICIPATED]: trans('registration_participated', {}, 'cursus')
+  [REGISTRATION_STATE_PARTICIPATED]: trans('registration_participated', {}, 'cursus'),
+  [REGISTRATION_STATE_ABSENT]: trans('registration_absent', {}, 'cursus'),
+  [REGISTRATION_STATE_ABSENT_JUSTIFIED]: trans('registration_excused', {}, 'cursus')
 }
 
 const REGISTRATION_STATE_COLORS = {
@@ -77,7 +81,9 @@ const REGISTRATION_STATE_COLORS = {
   [REGISTRATION_STATE_VALIDATED]: 'info',
   [REGISTRATION_STATE_REFUSED]: 'danger',
   [REGISTRATION_STATE_CANCELLED]: 'warning',
-  [REGISTRATION_STATE_PARTICIPATED]: 'success'
+  [REGISTRATION_STATE_PARTICIPATED]: 'success',
+  [REGISTRATION_STATE_ABSENT]: 'danger',
+  [REGISTRATION_STATE_ABSENT_JUSTIFIED]: 'warning'
 }
 
 const LEARNER_TYPE = 'learner'
@@ -102,6 +108,8 @@ export const constants = {
   REGISTRATION_STATE_REFUSED,
   REGISTRATION_STATE_CANCELLED,
   REGISTRATION_STATE_PARTICIPATED,
+  REGISTRATION_STATE_ABSENT,
+  REGISTRATION_STATE_ABSENT_JUSTIFIED,
   REGISTRATION_STATES,
   REGISTRATION_STATE_COLORS
 }

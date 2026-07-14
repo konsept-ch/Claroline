@@ -4,6 +4,8 @@ import invariant from 'invariant'
 import isEmpty from 'lodash/isEmpty'
 import isString from 'lodash/isString'
 
+import {param} from '#/main/app/config'
+
 /**
  * Generates URL based on symfony exposed route.
  * If a string url is passed argument, it will just return it.
@@ -21,7 +23,18 @@ function getUrl(target) {
     return target
   }
 
-  return Routing.generate(target[0], target[1] ? target[1] : {}, !!target[2])
+  const routePath = Routing.generate(target[0], target[1] ? target[1] : {}, false)
+
+  if (!target[2]) {
+    return routePath
+  }
+
+  const serverUrl = param('serverUrl')
+  if (serverUrl) {
+    return `${serverUrl}${routePath}`
+  }
+
+  return Routing.generate(target[0], target[1] ? target[1] : {}, true)
 }
 
 /**

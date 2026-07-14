@@ -62,7 +62,7 @@ class SessionUserRepository extends EntityRepository
                 WHERE su.user = :user
                 AND su.session = :session
                 AND su.type = :type
-                AND su.state IN (0,1,4)
+                AND su.state IN (0,1,4,5,6)
             ')
             ->setParameters([
                 'user' => $user,

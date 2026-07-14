@@ -146,7 +146,7 @@ const SessionList = (props) =>
           name: 'export-presence',
           type: URL_BUTTON,
           icon: 'fa fa-fw fa-file-pdf-o',
-          label: trans('export-presences-empty', {}, 'cursus'),
+          label: trans('export-presences-filled', {}, 'cursus'),
           displayed: hasPermission('open', rows[0]),
           group: trans('transfer'),
           target: ['apiv2_cursus_session_presence_download', {id: rows[0].id}],

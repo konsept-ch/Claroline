@@ -18,6 +18,43 @@ use Doctrine\ORM\EntityRepository;
 
 class SessionRepository extends EntityRepository
 {
+    public function getUniqueCode(string $code): string
+    {
+        $existingCodes = $this->findSessionCodesWithPrefix($code);
+        if (empty($existingCodes)) {
+            return $code;
+        }
+
+        $existingCodes = array_flip(array_map('strtoupper', $existingCodes));
+        $existingCodes[strtoupper($code)] = true;
+
+        $index = 1;
+        while (isset($existingCodes[strtoupper($code).'_'.$index])) {
+            ++$index;
+        }
+
+        return $code.'_'.$index;
+    }
+
+    /**
+     * Returns the list of session codes starting with $prefix.
+     */
+    public function findSessionCodesWithPrefix(string $prefix): array
+    {
+        return array_map(
+            function (array $session) {
+                return $session['code'];
+            },
+            $this->_em->createQuery('
+                SELECT UPPER(s.code) AS code
+                FROM Claroline\CursusBundle\Entity\Session s
+                WHERE UPPER(s.code) LIKE :search
+            ')
+            ->setParameter('search', strtoupper($prefix).'%')
+            ->getResult()
+        );
+    }
+
     public function findByWorkspace(Workspace $workspace)
     {
         return $this->_em
@@ -96,7 +133,7 @@ class SessionRepository extends EntityRepository
                 INNER JOIN su.user u
                 WHERE su.type = :registrationType
                   AND su.session = :session
-                  AND (su.state = 1 OR su.state = 4)
+                  AND (su.state = 1 OR su.state = 4 OR su.state = 5 OR su.state = 6)
                   AND u.isRemoved = 0
             ')
             ->setParameters([

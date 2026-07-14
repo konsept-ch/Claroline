@@ -11,6 +11,12 @@ const CoursePresences = connect(
     },
     validateParticipation(sessionId, users) {
       dispatch(actions.validateParticipation(sessionId, users))
+    },
+    validateAbsence(sessionId, users) {
+      dispatch(actions.validateAbsence(sessionId, users))
+    },
+    validateExcuse(sessionId, users) {
+      dispatch(actions.validateExcuse(sessionId, users))
     }
   })
 )(CoursePresencesComponent)

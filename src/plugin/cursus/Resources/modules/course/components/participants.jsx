@@ -272,7 +272,7 @@ const CourseParticipants = (props) =>
                       <Button
                         type={URL_BUTTON}
                         className="btn component-container"
-                        label={trans('export-presences-empty', {}, 'cursus')}
+                        label={trans('export-presences-filled', {}, 'cursus')}
                         target={['apiv2_cursus_session_presence_download', {id: props.activeSession.id}]}
                         primary={true}
                       />

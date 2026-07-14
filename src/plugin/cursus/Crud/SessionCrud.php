@@ -52,6 +52,7 @@ class SessionCrud
 
         $session->setCreatedAt(new \DateTime());
         $session->setUpdatedAt(new \DateTime());
+        $session->setCode($this->sessionManager->generateUniqueSessionCode($session->getName()));
 
         if (empty($session->getCreator()) && $user instanceof User) {
             $session->setCreator($user);

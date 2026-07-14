@@ -16,6 +16,7 @@ public/css/*
 public/data
 public/dist
 public/js/*
+web/js/translations/
 public/packages
 public/themes/*
 !public/themes/.gitkeep

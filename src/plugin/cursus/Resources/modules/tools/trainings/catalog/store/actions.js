@@ -257,6 +257,33 @@ actions.validateParticipation = (sessionId, users) => ({
   }
 })
 
+actions.validateAbsence = (sessionId, users) => ({
+  [API_REQUEST]: {
+    url: url(['apiv2_cursus_session_validate_absence', {id: sessionId}], {ids: users.map(user => user.id)}),
+    request: {
+      method: 'PUT'
+    },
+    success: (data, dispatch) => {
+      invalidateSessionLists(dispatch, sessionId)
+    }
+  }
+})
+
+actions.validateExcuse = (sessionId, users) => ({
+  [API_REQUEST]: {
+    url: url(`/apiv2/cursus_session/${sessionId}/validate/absence`, {
+      ids: users.map(user => user.id),
+      state: 6
+    }),
+    request: {
+      method: 'PUT'
+    },
+    success: (data, dispatch) => {
+      invalidateSessionLists(dispatch, sessionId)
+    }
+  }
+})
+
 actions.register = (course, sessionId = null) => ({
   [API_REQUEST]: {
     url: sessionId ?
