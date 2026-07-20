@@ -16,6 +16,8 @@ use Claroline\AppBundle\Manager\PlatformManager;
 use Claroline\AppBundle\Persistence\ObjectManager;
 use Claroline\CoreBundle\Entity\Resource\Directory;
 use Claroline\CoreBundle\Entity\Resource\ResourceNode;
+use Claroline\CoreBundle\Entity\Organization\Organization;
+use Claroline\CoreBundle\Event\GenericDataEvent;
 use Claroline\CoreBundle\Manager\Template\TemplateManager;
 use Claroline\CoreBundle\Manager\ResourceManager;
 use Claroline\CursusBundle\Entity\Course;
@@ -121,6 +123,144 @@ class CourseManager
         $this->om->endFlushSuite();
 
         return $results;
+    }
+
+    /**
+     * Creates an independent course copy. Registrations and events are deliberately
+     * not traversed; sessions keep their content/location associations only.
+     */
+    public function duplicate(Course $source, array $data): Course
+    {
+        $course = new Course();
+        $course->setName($data['name'] ?? $source->getName().' - copy');
+        $course->setDescription($data['description'] ?? $source->getDescription());
+        $course->setPlainDescription($data['plainDescription'] ?? $source->getPlainDescription());
+        $requestedCode = trim((string) ($data['code'] ?? ''));
+        if ($requestedCode !== '') {
+            if ($this->om->getRepository(Course::class)->findOneBy(['code' => $requestedCode])) {
+                throw new \InvalidArgumentException('The requested course code is already used.');
+            }
+            $course->setCode($requestedCode);
+        } else {
+            $course->setCode($this->generateUniqueCourseCode($course->getName()));
+        }
+        $course->setWorkspace($source->getWorkspace());
+        $course->setWorkspaceModel($source->getWorkspaceModel());
+        $course->setPublicRegistration($source->getPublicRegistration());
+        $course->setAutoRegistration($source->getAutoRegistration());
+        $course->setPublicUnregistration($source->getPublicUnregistration());
+        $course->setRegistrationValidation($source->getRegistrationValidation());
+        $course->setRegistrationMail($source->getRegistrationMail());
+        $course->setUserValidation($source->getUserValidation());
+        $course->setPendingRegistrations($source->getPendingRegistrations());
+        $course->setMaxUsers($source->getMaxUsers());
+        $course->setPrice($source->getPrice());
+        $course->setPriceDescription($source->getPriceDescription());
+        $course->setPropagateRegistration($source->getPropagateRegistration());
+        $course->setHideSessions($source->getHideSessions());
+        $course->setSessionOpening($source->getSessionOpening());
+        $course->setDefaultSessionDays($source->getDefaultSessionDays());
+        $course->setDefaultSessionHours($source->getDefaultSessionHours());
+        $organizations = $source->getOrganizations()->toArray();
+        if (array_key_exists('organizations', $data)) {
+            $organizations = [];
+            foreach ((array) $data['organizations'] as $organizationId) {
+                $organization = $this->om->getRepository(Organization::class)->findOneBy(['uuid' => $organizationId]);
+                if ($organization) {
+                    $organizations[] = $organization;
+                }
+            }
+        }
+        foreach ($organizations as $organization) {
+            $course->addOrganization($organization);
+        }
+
+        $this->om->persist($course);
+        $this->om->flush();
+        $this->ensureResource($course);
+        $this->copyTags($source, $course);
+
+        $byId = [];
+        foreach ($source->getSessions() as $session) {
+            $byId[$session->getUuid()] = $session;
+        }
+        // When the client does not send a selection, keep all sessions.
+        // This also prevents a partial/older client payload from silently
+        // creating a course without sessions.
+        $requestedSessions = $data['sessions'] ?? array_map(function (Session $session) {
+            return [
+                'id' => $session->getUuid(),
+                'startDate' => $session->getStartDate() ? $session->getStartDate()->format(DATE_ATOM) : null,
+                'endDate' => $session->getEndDate() ? $session->getEndDate()->format(DATE_ATOM) : null,
+            ];
+        }, $source->getSessions()->toArray());
+        foreach ($requestedSessions as $requested) {
+            $sourceSession = $byId[$requested['id'] ?? ''] ?? null;
+            if (!$sourceSession) {
+                continue;
+            }
+            $session = new Session();
+            $session->setName($requested['name'] ?? $sourceSession->getName());
+            $session->setCode($this->sessionManager->generateUniqueSessionCode($session->getName()));
+            $session->setCourse($course);
+            $session->setDescription($sourceSession->getDescription());
+            $session->setPlainDescription($sourceSession->getPlainDescription());
+            $session->setStartDate($this->parseDate($requested['startDate'] ?? null, $sourceSession->getStartDate()));
+            $session->setEndDate($this->parseDate($requested['endDate'] ?? null, $sourceSession->getEndDate()));
+            $session->setDefaultSession($sourceSession->isDefaultSession());
+            $session->setLocation($sourceSession->getLocation());
+            $session->setResources($sourceSession->getResources()->toArray());
+            $session->setEventRegistrationType($sourceSession->getEventRegistrationType());
+            $this->om->persist($session);
+        }
+        $this->om->flush();
+
+        return $course;
+    }
+
+    /**
+     * Copies the tags from the source course to the independent copy.
+     */
+    private function copyTags(Course $source, Course $copy): void
+    {
+        $event = new GenericDataEvent([
+            'class' => Course::class,
+            'ids' => [$source->getUuid()],
+        ]);
+        $this->eventDispatcher->dispatch($event, 'claroline_retrieve_used_tags_by_class_and_ids');
+
+        $this->eventDispatcher->dispatch(new GenericDataEvent([
+            'tags' => $event->getResponse() ?? [],
+            'data' => [[
+                'class' => Course::class,
+                'id' => $copy->getUuid(),
+                'name' => $copy->getName(),
+            ]],
+            'replace' => true,
+        ]), 'claroline_tag_multiple_data');
+    }
+
+    private function generateUniqueCourseCode(string $name): string
+    {
+        $base = strtoupper(preg_replace('/[^A-Z0-9]+/', '-', iconv('UTF-8', 'ASCII//TRANSLIT', $name)));
+        $base = trim($base, '-') ?: 'COURSE';
+        do {
+            $code = substr($base, 0, 48).'-'.strtoupper(substr(bin2hex(random_bytes(4)), 0, 6));
+        } while ($this->om->getRepository(Course::class)->findOneBy(['code' => $code]));
+
+        return $code;
+    }
+
+    private function parseDate(?string $value, ?\DateTime $fallback): ?\DateTime
+    {
+        if (!$value) {
+            return $fallback ? clone $fallback : null;
+        }
+        try {
+            return new \DateTime($value);
+        } catch (\Exception $e) {
+            return $fallback ? clone $fallback : null;
+        }
     }
 
     /**

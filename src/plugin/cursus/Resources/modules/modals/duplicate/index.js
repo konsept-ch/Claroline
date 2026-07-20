@@ -1,7 +1,5 @@
 /**
- * Visual duplication modal for cursus trainings.
- *
- * This is a prototype only. It is intentionally not wired to any backend action yet.
+ * Modal used to duplicate a cursus training.
  */
 
 import {registry} from '#/main/app/modals/registry'

@@ -256,6 +256,19 @@ class CourseController extends AbstractCrudController
     }
 
     /**
+     * @Route("/{id}/duplicate", name="apiv2_cursus_course_duplicate", methods={"POST"})
+     * @EXT\ParamConverter("course", class="Claroline\CursusBundle\Entity\Course", options={"mapping": {"id": "uuid"}})
+     */
+    public function duplicateAction(Course $course, Request $request): JsonResponse
+    {
+        $this->checkPermission('EDIT', $course, [], true);
+        $data = $this->decodeRequest($request);
+        $copy = $this->manager->duplicate($course, $data);
+
+        return new JsonResponse($this->serializer->serialize($copy), 201);
+    }
+
+    /**
      * @Route("/{id}/users", name="apiv2_cursus_course_list_users", methods={"GET"})
      * @EXT\ParamConverter("course", class="Claroline\CursusBundle\Entity\Course", options={"mapping": {"id": "uuid"}})
      */
