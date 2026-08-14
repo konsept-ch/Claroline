@@ -290,6 +290,21 @@ This is the key practical finding:
     - manual review
 - For the step-by-step SQL workflow, see [runbook_registration_private_org_recovery.md](./runbook_registration_private_org_recovery.md)
 
+## Solution
+
+La solution mise en place corrige l’affectation de l’organisation principale lors de l’inscription :
+
+- `mainOrganization` envoyé par le frontend est maintenant désérialisé avec l’option `Options::REGISTRATION` dans `UserSerializer`.
+- L’organisation sélectionnée est résolue à partir de son `vat` ou de son `code`, puis appliquée au compte avant sa persistance.
+- Le choix est également conservé dans le facet `ORGANISATION / EMPLOYEUR` sous forme d’UUID. Ce facet constitue une source fiable pour récupérer l’organisation d’origine des comptes déjà créés avec `Compte prive`.
+- La relation `userOrganizationReferences` est configurée en `EXTRA_LAZY` afin de limiter le chargement de collections volumineuses pendant l’inscription.
+- Les appels à Postal utilisent un timeout court pour éviter qu’un service mail indisponible ne bloque longuement la requête.
+- Le `replace()` supplémentaire après la création a été supprimé du contrôleur d’inscription.
+
+Les premiers contrôles indiquent que l’organisation sélectionnée est désormais correctement affectée. Pour les comptes historiques dont l’organisation principale reste `Compte prive`, la récupération doit être faite uniquement lorsqu’une source persistée et fiable existe : facet `ORGANISATION / EMPLOYEUR` ou organisation secondaire déjà liée. Les comptes sans source fiable restent en revue manuelle ; l’organisation ne doit pas être déduite du domaine de l’adresse e-mail.
+
+Le détail des requêtes de diagnostic, du classement des comptes, des corrections transactionnelles et des vérifications post-traitement est disponible dans le [runbook de récupération](./runbook_registration_private_org_recovery.md).
+
 ## Tests to keep green
 
 - `src/main/core/Tests/Unit/API/Serializer/User/UserSerializerTest.php`

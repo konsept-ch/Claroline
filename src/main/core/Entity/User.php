@@ -275,7 +275,8 @@ class User extends AbstractRoleSubject implements \Serializable, UserInterface, 
      *     targetEntity="Claroline\CoreBundle\Entity\Organization\UserOrganizationReference",
      *     mappedBy="user",
      *     fetch="EXTRA_LAZY",
-     *     cascade={"all"}
+     *     cascade={"all"},
+     *     orphanRemoval=true
      *  )
      * @ORM\JoinColumn(name="user_id", nullable=false)
      */
