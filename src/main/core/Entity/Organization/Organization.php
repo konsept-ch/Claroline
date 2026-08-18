@@ -186,6 +186,7 @@ class Organization
      *     targetEntity="Claroline\CoreBundle\Entity\Organization\UserOrganizationReference",
      *     mappedBy="organization",
      *     fetch="EXTRA_LAZY",
+     *     cascade={"persist"},
      * )
      * @ORM\JoinColumn(name="organization_id", nullable=false)
      *
