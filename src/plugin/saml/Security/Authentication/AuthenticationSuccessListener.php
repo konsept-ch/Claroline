@@ -18,6 +18,7 @@ use Claroline\CoreBundle\Entity\Group;
 use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Listener\AuthenticationSuccessListener as BaseAuthenticationSuccessListener;
 use Claroline\SamlBundle\Manager\IdpManager;
+use Claroline\SamlBundle\Manager\OrganizationResolution;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
@@ -65,7 +66,10 @@ class AuthenticationSuccessListener extends BaseAuthenticationSuccessListener
             $attributes = $token->getAttributes();
 
             // attach user to the defined organization
-            $organization = $this->idpManager->getOrganization($idpEntityId, $user->getEmail(), $attributes);
+            $resolution = $this->idpManager->getOrganizationResolution($idpEntityId, $user->getEmail(), $attributes);
+            $organization = OrganizationResolution::CONDITION === $resolution->getSource()
+                ? $resolution->getOrganization()
+                : $this->idpManager->getPendingOrganization();
             if ($organization && (empty($user->getMainOrganization()) || $user->getMainOrganization()->isDefault())) {
                 // reset organization if it has changed or has not been set (eg. user has just been created)
                 $this->crud->replace($user, 'mainOrganization', $organization, [Crud::THROW_EXCEPTION, Crud::NO_PERMISSIONS, Options::NO_EMAIL]);

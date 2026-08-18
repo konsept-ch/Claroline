@@ -22,6 +22,9 @@ class PlatformDefaults implements ParameterProviderInterface
                 'active' => false,
                 'entity_id' => 'claroline', // the sp name
                 'reactivate_on_login' => false, // will automatically reactivate disabled users when they log through saml
+                // UUID of the technical, non-public organization used when IAM cannot identify a business organization.
+                // This organization must not be the platform default organization or grant business permissions.
+                'pending_organization' => null,
                 'credentials' => [], // the app certificates and secrets
                 // The list of defined idp.
                 // Array is indexed by IDPs entityId.
@@ -32,7 +35,7 @@ class PlatformDefaults implements ParameterProviderInterface
                 //   - confirm       : a confirm text to display before redirecting to the IDP login page
                 //   - email_domains : an array of email domains. If specified, only users with matching emails will be registered to idp groups and organization
                 //   - conditions    : an array of expected saml response values (key is the field name). If specified, only users who match those values will be registered to groups and organization
-                //   - organization  : An organization UUID to register users created from this idp
+                //   - organization  : An organization UUID used as an IdP fallback (it is not a business assignment)
                 //   - groups        : A list of groups UUID to register users created from this idp
                 //   - mapping       : an associative array to know which saml props should be used for email, firstName and lastName at creation
                 'idp' => [],

@@ -74,6 +74,17 @@ class IdpManager
 
     public function getOrganization(string $idpEntityId, string $email, array $attributes): ?Organization
     {
+        return $this->getOrganizationResolution($idpEntityId, $email, $attributes)->getOrganization();
+    }
+
+    /**
+     * Resolve the organization configured by IAM without applying the platform policy.
+     *
+     * The source is deliberately retained: an IdP fallback only proves that the user
+     * authenticated with this IdP, whereas a condition can prove a business assignment.
+     */
+    public function getOrganizationResolution(string $idpEntityId, string $email, array $attributes): OrganizationResolution
+    {
         $organization = null;
 
         $conditions = $this->getConditions($idpEntityId);
@@ -84,7 +95,9 @@ class IdpManager
                         'uuid' => $condition['organization'],
                     ]);
 
-                    break;
+                    if ($organization) {
+                        return new OrganizationResolution($organization, OrganizationResolution::CONDITION);
+                    }
                 }
             }
         }
@@ -95,9 +108,35 @@ class IdpManager
             $organization = $this->om->getRepository(Organization::class)->findOneBy([
                 'uuid' => $config['organization'],
             ]);
+
+            if ($organization) {
+                return new OrganizationResolution($organization, OrganizationResolution::IDP_FALLBACK);
+            }
         }
 
-        return $organization;
+        return new OrganizationResolution(null, OrganizationResolution::NONE);
+    }
+
+    /**
+     * Get the technical organization assigned when IAM cannot identify a business one.
+     */
+    public function getPendingOrganization(): ?Organization
+    {
+        $organizationId = $this->config->getParameter('saml.pending_organization');
+        if (empty($organizationId)) {
+            return null;
+        }
+
+        $organization = $this->om->getRepository(Organization::class)->findOneBy([
+            'uuid' => $organizationId,
+        ]);
+
+        // Do not turn a configuration error into a broad organization assignment.
+        if ($organization && (!$organization->isDefault() && !$organization->isPublic())) {
+            return $organization;
+        }
+
+        return null;
     }
 
     public function getFieldMapping(string $idpEntityId): array
