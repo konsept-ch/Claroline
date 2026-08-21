@@ -166,7 +166,7 @@ class UserVoter extends AbstractRoleSubjectVoter
         /** @var OrderedToolRepository $orderedToolRepo */
         $orderedToolRepo = $this->getObjectManager()->getRepository(OrderedTool::class);
         /** @var OrderedTool[] $communityTools */
-        $communityTools = $orderedToolRepo->findByName('community');
+        $communityTools = $orderedToolRepo->findCommunityToolsEligibleForUserCreation();
         foreach ($communityTools as $communityTool) {
             // we do not take into account tool in personal ws, otherwise anyone will be granted
             // (users are managers of their personal ws)
