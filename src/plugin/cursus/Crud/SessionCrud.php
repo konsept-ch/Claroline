@@ -124,6 +124,6 @@ class SessionCrud
     public function preDelete(DeleteEvent $event)
     {
         $event = new LogSessionDeleteEvent($event->getObject());
-        $this->eventDispatcher->dispatch('log', $event);
+        $this->eventDispatcher->dispatch($event, 'log');
     }
 }

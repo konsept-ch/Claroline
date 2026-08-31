@@ -40,6 +40,25 @@ const CourseMain = (props) =>
           />
         )
       }, {
+        path: '/sessions',
+        exact: true,
+        onEnter: () => props.openSession(null),
+        render: () => (
+          <CourseDetails
+            path={props.path}
+            course={props.course}
+            activeSession={null}
+            activeSessionRegistration={null}
+            availableSessions={props.availableSessions}
+            courseRegistration={props.courseRegistration}
+            isAuthenticated={props.isAuthenticated}
+            isAdmin={props.isAdmin}
+            canValidateRegistrations={props.canValidateRegistrations}
+            canValidatePresences={props.canValidatePresences}
+            canOpenResources={props.canOpenResources}
+          />
+        )
+      }, {
         path: '/edit',
         onEnter: () => props.openForm(props.course.slug),
         disabled: !hasPermission('edit', props.course),

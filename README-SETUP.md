@@ -320,7 +320,7 @@ Windows (Local, sans Docker)
 - `composer install`.
 - `php bin/console cache:clear`. or `php -d memory_limit=512M bin/console cache:clear --env=prod`
 - `npm install --legacy-peer-deps`.
-- cmd claroline `symfony server:start --port=80`.
+- powershell claroline `symfony server:start --port=80`.
 -  `npm run webpack:dev`.
 - http://localhost:8080  -->listing server webpack
 - http://localhost  --> claroline
