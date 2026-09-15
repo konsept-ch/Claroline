@@ -2,6 +2,17 @@ FROM php:8.0-apache
 
 LABEL maintainer="Donovan Tengblad"
 
+# Temporary continuity measure: Debian 11 reached end of life on 2026-08-31.
+# The snapshot makes the legacy package set reproducible while the PHP/Debian
+# upgrade described in docs/incident_docker_build_debian11_eol.md is prepared.
+ARG DEBIAN_SNAPSHOT=20260831T235959Z
+RUN printf '%s\n' \
+  "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT} bullseye main" \
+  "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT} bullseye-updates main" \
+  "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT} bullseye-security main" \
+  > /etc/apt/sources.list \
+  && rm -rf /etc/apt/sources.list.d/* /var/lib/apt/lists/*
+
 RUN a2enmod rewrite expires ssl headers
 
 RUN curl -sL https://deb.nodesource.com/setup_16.x | bash
