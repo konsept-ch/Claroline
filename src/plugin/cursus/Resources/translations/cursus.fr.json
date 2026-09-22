@@ -136,7 +136,7 @@
     "subscription_refused": "Inscriptions refusées",
     "subscription_validated": "Inscriptions validées sur budget du service",
     "subscription_managed": "Inscriptions validées sur budget central de l’employeur",
-    "subscription_quota": "Jours quota utilisés",
+    "subscription_quota": "Jours utilisés sur budget central de l’employeur",
     "subscription_pending_help": "Le statut est en attente.",
     "subscription_refused_help": "Le statut sera refusé.",
     "subscription_validated_help": "Le statut est validé. Les coûts éventuels sont à la charge du service.",
