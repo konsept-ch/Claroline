@@ -34,3 +34,4 @@ package-lock.json
 /vendor/
 ###< symfony/framework-bundle ###
 stats-full.json
+docker-compose.dev.*.log
