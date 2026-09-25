@@ -333,7 +333,8 @@ class Organization
     public function addManager(User $user)
     {
         if (!$this->administrators->contains($user)) {
-            $this->addUser($user);
+            // Le rattachement (UserOrganizationReference) est créé par User::addAdministratedOrganization().
+            // Appeler aussi $this->addUser() créait une seconde référence pour le même couple utilisateur / organisation.
             $this->administrators->add($user);
             $user->addAdministratedOrganization($this);
         }
