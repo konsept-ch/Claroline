@@ -32,7 +32,21 @@ use Gedmo\Mapping\Annotation as Gedmo;
  * Base entity for all resources.
  *
  * @ORM\Entity(repositoryClass="Claroline\CoreBundle\Repository\Resource\ResourceNodeRepository")
- * @ORM\Table(name="claro_resource_node")
+ * @ORM\Table(
+ *     name="claro_resource_node",
+ *     indexes={
+ *         @ORM\Index(name="IDX_A76799FF_PATH", columns={"path"}, options={"lengths"={255}})
+ *     }
+ * )
+ *
+ * L'index sur `path` est indispensable : la strategie materializedPath de l'extension
+ * Tree cherche les descendants par `path LIKE '<parent>%'` a chaque creation de
+ * ressource. `path` etant un LONGTEXT, il ne s'indexe qu'avec une longueur de prefixe.
+ * Sans lui, la requete balaye toute la table (mesure : 5,1 s sur 140 195 lignes) et la
+ * creation de ressource depasse le delai d'execution en production.
+ * Voir la migration Version20260925000000 et
+ * docs/90-incidents/investigation_attestations_che_plantes_2026-09.md
+ *
  * @Gedmo\Tree(type="materializedPath")
  * @ORM\HasLifecycleCallbacks
  */
