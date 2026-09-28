@@ -27,7 +27,8 @@ actions.open = (formName, id = null, defaultProps = {}) => (dispatch) => {
     })
   }
 
-  return dispatch(formActions.resetForm(formName, merge(defaultProps, OrganizationTypes.defaultProps), true))
+  // Les valeurs par défaut d'abord : sinon leur `parent: null` écrase le parent choisi (correctif amont 13.7)
+  return dispatch(formActions.resetForm(formName, merge({}, OrganizationTypes.defaultProps, defaultProps), true))
 }
 
 actions.addUsers = (id, users) => ({
