@@ -11,9 +11,12 @@ use Claroline\CoreBundle\Entity\Location\Location;
 use Claroline\CoreBundle\Entity\Location\Room;
 use Claroline\CoreBundle\Entity\Planning\AbstractPlanned;
 use Claroline\CoreBundle\Entity\Planning\PlannedObject;
+use Claroline\CoreBundle\Entity\Planning\Planning;
 use Claroline\CoreBundle\Entity\User;
+use Claroline\CoreBundle\Library\Normalizer\DateNormalizer;
 use Claroline\CoreBundle\Manager\FileManager;
 use Claroline\CoreBundle\Manager\PlanningManager;
+use Claroline\CoreBundle\Validator\Exception\InvalidDataException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
@@ -98,6 +101,12 @@ abstract class AbstractPlannedSubscriber implements EventSubscriberInterface
         // la salle d'abord, pour la même raison qu'à la création
         $oldRoom = !empty($oldData['room']) ? $oldData['room']['id'] : null;
         $newRoom = !empty($object->getRoom()) ? $object->getRoom()->getUuid() : null;
+        if ($newRoom && $oldRoom === $newRoom && $this->datesChanged($object, $oldData)) {
+            // même salle, nouvelles dates : addToPlanning() n'est pas rappelé, il faut donc
+            // recontrôler ici, sans compter l'objet lui-même (il est déjà dans le planning)
+            $this->checkRoomAvailability($object);
+        }
+
         if ($oldRoom !== $newRoom) {
             // add to new room
             if ($newRoom) {
@@ -130,6 +139,32 @@ abstract class AbstractPlannedSubscriber implements EventSubscriberInterface
                     $this->planningManager->removeFromPlanning($object, $old);
                 }
             }
+        }
+    }
+
+    private function datesChanged(AbstractPlanned $object, array $oldData): bool
+    {
+        $newStart = $object->getStartDate() ? DateNormalizer::normalize($object->getStartDate()) : null;
+        $newEnd = $object->getEndDate() ? DateNormalizer::normalize($object->getEndDate()) : null;
+
+        return ($oldData['start'] ?? null) !== $newStart || ($oldData['end'] ?? null) !== $newEnd;
+    }
+
+    private function checkRoomAvailability(AbstractPlanned $object)
+    {
+        $start = $object->getStartDate();
+        $end = $object->getEndDate();
+        if (empty($start) || empty($end)) {
+            throw new InvalidDataException('valid_end_date_required', [['path' => 'end', 'message' => 'valid_end_date_required']]);
+        }
+
+        if ($end < $start) {
+            throw new InvalidDataException('invalid_date_range', [['path' => 'end', 'message' => 'invalid_date_range']]);
+        }
+
+        $available = $this->om->getRepository(Planning::class)->areDatesAvailable($object->getRoom()->getUuid(), $start, $end, $object->getUuid());
+        if (!$available) {
+            throw new InvalidDataException('The room is not available for this dates.', [['path' => 'room', 'message' => 'The room is not available for this dates.']]);
         }
     }
 

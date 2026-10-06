@@ -16,8 +16,22 @@ use Doctrine\ORM\EntityRepository;
 
 class PlanningRepository extends EntityRepository
 {
-    public function areDatesAvailable(string $objectId, \DateTimeInterface $start, \DateTimeInterface $end): bool
+    /**
+     * @param string|null $ignoredId - uuid d'un objet planifié à ne pas compter : l'objet lui-même,
+     *                                 quand on recontrôle ses nouvelles dates
+     */
+    public function areDatesAvailable(string $objectId, \DateTimeInterface $start, \DateTimeInterface $end, ?string $ignoredId = null): bool
     {
+        $parameters = [
+            'startDate' => DateNormalizer::normalize($start),
+            'endDate' => DateNormalizer::normalize($end),
+            'objectId' => $objectId,
+        ];
+
+        if ($ignoredId) {
+            $parameters['ignoredId'] = $ignoredId;
+        }
+
         $count = (int) $this->_em
             ->createQuery('
                 SELECT COUNT(p)
@@ -26,12 +40,9 @@ class PlanningRepository extends EntityRepository
                 WHERE :endDate > p.startDate
                   AND :startDate < p.endDate
                   AND pl.objectId = :objectId
+                  '.($ignoredId ? 'AND p.uuid != :ignoredId' : '').'
             ')
-            ->setParameters([
-                'startDate' => DateNormalizer::normalize($start),
-                'endDate' => DateNormalizer::normalize($end),
-                'objectId' => $objectId,
-            ])
+            ->setParameters($parameters)
             ->getSingleScalarResult();
 
         return 0 === $count;
