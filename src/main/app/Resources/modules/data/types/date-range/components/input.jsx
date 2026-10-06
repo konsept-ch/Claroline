@@ -2,6 +2,9 @@ import React, {Component} from 'react'
 import classes from 'classnames'
 import get from 'lodash/get'
 import isArray from 'lodash/isArray'
+import moment from 'moment'
+
+import {getApiFormat} from '#/main/app/intl/date'
 
 import {PropTypes as T, implementPropTypes} from '#/main/app/prop-types'
 import {DataInput as DataInputTypes} from '#/main/app/data/types/prop-types'
@@ -18,7 +21,23 @@ class DateRangeInput extends Component {
   }
 
   setRangeStart(date) {
-    this.props.onChange([date, this.props.value[1]])
+    const end = this.props.value[1]
+    if (this.props.endFollowsStart && date && moment.utc(date).isValid() && (!end || date > end)) {
+      // le début passe après la fin (ou la fin est vide) : la fin suit le début en gardant
+      // la durée précédente, plutôt que de laisser une plage inversée
+      let duration = 0
+      if (this.props.value[0] && end) {
+        duration = moment.utc(end).diff(moment.utc(this.props.value[0]))
+      }
+
+      if (0 >= duration && this.props.time) {
+        duration = moment.duration(1, 'h').asMilliseconds()
+      }
+
+      this.props.onChange([date, moment.utc(date).add(Math.max(duration, 0), 'ms').format(getApiFormat())])
+    } else {
+      this.props.onChange([date, end])
+    }
   }
 
   setRangeEnd(date) {
@@ -39,7 +58,7 @@ class DateRangeInput extends Component {
             disabled={this.props.disabled}
             onChange={this.setRangeStart}
             minDate={this.props.minDate}
-            maxDate={this.props.value[1] || this.props.maxDate}
+            maxDate={!this.props.endFollowsStart && this.props.value[1] ? this.props.value[1] : this.props.maxDate}
             time={this.props.time}
             minTime={this.props.minTime}
             maxTime={this.props.maxTime}
@@ -87,10 +106,15 @@ implementPropTypes(DateRangeInput, DataInputTypes, {
   // time configuration
   time: T.bool,
   minTime: T.string,
-  maxTime: T.string
+  maxTime: T.string,
+
+  // si true, le début n'est plus borné par la fin dans son calendrier : quand il la
+  // dépasse, la fin le suit en gardant sa durée. Évite d'avoir à saisir la fin avant le début.
+  endFollowsStart: T.bool
 }, {
   value: [null, null],
-  time: false
+  time: false,
+  endFollowsStart: false
 })
 
 export {

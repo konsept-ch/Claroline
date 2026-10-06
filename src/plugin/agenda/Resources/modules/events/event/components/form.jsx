@@ -8,6 +8,7 @@ import {FormData} from '#/main/app/content/form/containers/data'
 
 import {EventForm as BaseEventForm} from '#/plugin/agenda/event/containers/form'
 import {EventParticipants} from '#/plugin/agenda/events/event/containers/participants'
+import {eventDatesField} from '#/plugin/agenda/event/utils'
 
 const EventForm = (props) =>
   <BaseEventForm
@@ -28,20 +29,7 @@ const EventForm = (props) =>
               type: 'string',
               label: trans('name'),
               required: true
-            }, {
-              name: 'dates',
-              type: 'date-range',
-              label: trans('date'),
-              required: true,
-              calculated: (event) => [event.start || null, event.end || null],
-              onChange: (datesRange) => {
-                props.update('start', datesRange[0])
-                props.update('end', datesRange[1])
-              },
-              options: {
-                time: true
-              }
-            }
+            }, eventDatesField(props.event, props.update)
           ]
         }, {
           icon: 'fa fa-fw fa-info',

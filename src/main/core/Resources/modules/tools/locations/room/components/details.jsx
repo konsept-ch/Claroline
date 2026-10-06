@@ -1,5 +1,6 @@
 import React from 'react'
 import {PropTypes as T} from 'prop-types'
+import get from 'lodash/get'
 
 import {trans} from '#/main/app/intl/translation'
 import {LINK_BUTTON} from '#/main/app/buttons'
@@ -57,6 +58,16 @@ const RoomAbout = (props) =>
             url: ['apiv2_location_room_list_event', {room: props.room.id}],
             autoload: true
           }}
+          delete={{
+            url: ['apiv2_planned_object_delete_bulk'],
+            // seulement les évènements et tâches d'agenda : une séance de formation se
+            // supprime depuis sa session (elle porte les frais former22_event, supprimés en cascade).
+            // Le serveur (AbstractEventVoter) exige d'être admin ou créateur : on n'affiche pas plus.
+            displayed: (rows) => props.editable && -1 === rows.findIndex(row =>
+              -1 === ['event', 'task'].indexOf(row.meta.type)
+              || (!props.isAdmin && get(row, 'meta.creator.id') !== props.currentUserId)
+            )
+          }}
           definition={[
             {
               name: 'name',
@@ -92,6 +103,9 @@ RoomAbout.propTypes = {
   room: T.shape(
     RoomTypes.propTypes
   ),
+  editable: T.bool.isRequired,
+  isAdmin: T.bool.isRequired,
+  currentUserId: T.string,
   invalidateBookings: T.func.isRequired
 }
 
@@ -135,6 +149,9 @@ const RoomDetails = (props) =>
           render: () => (
             <RoomAbout
               room={props.room}
+              editable={props.editable}
+              isAdmin={props.isAdmin}
+              currentUserId={props.currentUserId}
               invalidateBookings={props.invalidateBookings}
             />
           )
@@ -148,6 +165,9 @@ RoomDetails.propTypes = {
   room: T.shape(
     RoomTypes.propTypes
   ),
+  editable: T.bool.isRequired,
+  isAdmin: T.bool.isRequired,
+  currentUserId: T.string,
   invalidateBookings: T.func.isRequired
 }
 

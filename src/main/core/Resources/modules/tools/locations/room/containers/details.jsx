@@ -1,5 +1,7 @@
 import {connect} from 'react-redux'
 
+import {hasPermission} from '#/main/app/security'
+import {selectors as securitySelectors} from '#/main/app/security/store'
 import {selectors as toolSelectors} from '#/main/core/tool/store'
 import {actions as listActions} from '#/main/app/content/list/store'
 import {selectors as detailsSelectors} from '#/main/app/content/details/store'
@@ -10,6 +12,10 @@ import {selectors} from '#/main/core/tools/locations/room/store'
 const RoomDetails = connect(
   (state) => ({
     path: toolSelectors.path(state),
+    // droit d'édition sur l'outil Lieux : permet de supprimer une réservation de la salle
+    editable: hasPermission('edit', toolSelectors.toolData(state)),
+    isAdmin: securitySelectors.isAdmin(state),
+    currentUserId: securitySelectors.currentUserId(state),
     room: detailsSelectors.data(detailsSelectors.details(state, selectors.FORM_NAME))
   }),
   (dispatch) => ({

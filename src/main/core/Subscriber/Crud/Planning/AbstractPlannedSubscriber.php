@@ -75,12 +75,15 @@ abstract class AbstractPlannedSubscriber implements EventSubscriberInterface
         $object->setCreatedAt(new \DateTime());
         $object->setUpdatedAt(new \DateTime());
 
-        if (!empty($object->getLocation())) {
-            $this->planningManager->addToPlanning($object, $object->getLocation());
-        }
-
+        // la salle d'abord : addToPlanning() flushe à chaque appel, et c'est le planning
+        // de la salle qui peut refuser l'objet (RoomPlanningSubscriber). Traité après le
+        // lieu, l'objet était déjà écrit en base quand l'erreur remontait à l'utilisateur.
         if (!empty($object->getRoom())) {
             $this->planningManager->addToPlanning($object, $object->getRoom());
+        }
+
+        if (!empty($object->getLocation())) {
+            $this->planningManager->addToPlanning($object, $object->getLocation());
         }
     }
 
@@ -91,6 +94,25 @@ abstract class AbstractPlannedSubscriber implements EventSubscriberInterface
         $oldData = $event->getOldData();
 
         $object->setUpdatedAt(new \DateTime());
+
+        // la salle d'abord, pour la même raison qu'à la création
+        $oldRoom = !empty($oldData['room']) ? $oldData['room']['id'] : null;
+        $newRoom = !empty($object->getRoom()) ? $object->getRoom()->getUuid() : null;
+        if ($oldRoom !== $newRoom) {
+            // add to new room
+            if ($newRoom) {
+                $this->planningManager->addToPlanning($object, $object->getRoom());
+            }
+
+            // remove from old room
+            if ($oldRoom) {
+                /** @var Room $old */
+                $old = $this->om->getObject($oldData['room'], Room::class);
+                if ($old) {
+                    $this->planningManager->removeFromPlanning($object, $old);
+                }
+            }
+        }
 
         $oldLocation = !empty($oldData['location']) ? $oldData['location']['id'] : null;
         $newLocation = !empty($object->getLocation()) ? $object->getLocation()->getUuid() : null;
@@ -104,24 +126,6 @@ abstract class AbstractPlannedSubscriber implements EventSubscriberInterface
             if ($oldLocation) {
                 /** @var Location $old */
                 $old = $this->om->getObject($oldData['location'], Location::class);
-                if ($old) {
-                    $this->planningManager->removeFromPlanning($object, $old);
-                }
-            }
-        }
-
-        $oldRoom = !empty($oldData['room']) ? $oldData['room']['id'] : null;
-        $newRoom = !empty($object->getRoom()) ? $object->getRoom()->getUuid() : null;
-        if ($oldRoom !== $newRoom) {
-            // add to new room
-            if ($newRoom) {
-                $this->planningManager->addToPlanning($object, $object->getRoom());
-            }
-
-            // remove from old room
-            if ($oldRoom) {
-                /** @var Room $old */
-                $old = $this->om->getObject($oldData['room'], Room::class);
                 if ($old) {
                     $this->planningManager->removeFromPlanning($object, $old);
                 }

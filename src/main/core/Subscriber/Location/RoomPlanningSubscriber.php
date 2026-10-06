@@ -35,6 +35,20 @@ class RoomPlanningSubscriber implements EventSubscriberInterface
         if ($object instanceof Room) {
             $planned = $event->getPlanned();
 
+            // une réservation de salle doit porter deux dates dans le bon ordre :
+            // sans fin, le contrôle de disponibilité ne peut pas être fait
+            if (empty($planned->getStartDate())) {
+                throw new InvalidDataException('valid_start_date_required', [['path' => 'start', 'message' => 'valid_start_date_required']]);
+            }
+
+            if (empty($planned->getEndDate())) {
+                throw new InvalidDataException('valid_end_date_required', [['path' => 'end', 'message' => 'valid_end_date_required']]);
+            }
+
+            if ($planned->getEndDate() < $planned->getStartDate()) {
+                throw new InvalidDataException('invalid_date_range', [['path' => 'end', 'message' => 'invalid_date_range']]);
+            }
+
             // check if the room is available
             $available = $this->om->getRepository(Planning::class)->areDatesAvailable($object->getUuid(), $planned->getStartDate(), $planned->getEndDate());
             if (!$available) {

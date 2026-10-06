@@ -27,8 +27,10 @@ const Day = props => {
           return
         }
 
+        // le jour cliqué est minuit en heure locale : on propose 08:00 et on convertit
+        // en UTC comme le reste de l'API (sinon la base reçoit 00:00 UTC, affiché 02:00)
         props.create({
-          start: props.current.format(getApiFormat())
+          start: moment(props.current).hours(8).minutes(0).seconds(0).utc().format(getApiFormat())
         })
       }}
     >

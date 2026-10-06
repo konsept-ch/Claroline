@@ -4,6 +4,7 @@ import merge from 'lodash/merge'
 import moment from 'moment'
 
 import {withRouter} from '#/main/app/router'
+import {getApiFormat} from '#/main/app/intl/date'
 import {selectors as securitySelectors} from '#/main/app/security/store'
 import {selectors as toolSelectors} from '#/main/core/tool/store'
 import {actions as modalActions} from '#/main/app/overlays/modal/store'
@@ -33,13 +34,13 @@ const AgendaCalendar = withRouter(
         return dispatch(actions.fetch(rangeDates))
       },
       create(event, context, user) {
-        const end = moment(event.start, 'YYYY-MM-DDThh:mm:ss')
+        const end = moment(event.start, getApiFormat())
         // default event duration to 1 hour
         end.add(1, 'h')
         dispatch(modalActions.showModal(MODAL_EVENT_CREATION, {
           event: merge({}, event, {
             workspace: !isEmpty(context) ? context : null,
-            end: end.format('YYYY-MM-DDThh:mm:ss'),
+            end: end.format(getApiFormat()),
             meta: {
               creator: user
             }

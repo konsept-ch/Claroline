@@ -15,7 +15,7 @@ const EventForm = connect(
   }),
   (dispatch) => ({
     save(name, target, onSave) {
-      dispatch(formActions.save(name, target))
+      return dispatch(formActions.save(name, target))
         .then((response) => {
           if (onSave) {
             onSave(response)

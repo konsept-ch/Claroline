@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useState} from 'react'
 import {PropTypes as T} from 'prop-types'
 
 import {url} from '#/main/app/api'
@@ -9,44 +9,55 @@ import {FormData} from '#/main/app/content/form/containers/data'
 
 import {EventIcon} from '#/plugin/agenda/event/components/icon'
 
-const EventForm = (props) =>
-  <FormData
-    name={props.name}
-    meta={true}
-    sections={[
-      {
-        title: trans('general'),
-        primary: true,
-        fields: [
-          {
-            name: 'meta.type',
-            type: 'type',
-            label: trans('type'),
-            hideLabel: true,
-            calculated: (event) => ({
-              icon: <EventIcon type={event.meta.type} />,
-              name: trans(event.meta.type, {}, 'event'),
-              description: trans(`${event.meta.type}_desc`, {}, 'event')
-            })
-          }
-        ]
-      }
-    ].concat(props.sections)}
-  >
-    {props.children}
+const EventForm = (props) => {
+  // bloque le bouton pendant l'envoi : un second clic créait un second évènement
+  const [saving, setSaving] = useState(false)
 
-    <Button
-      className="modal-btn btn"
-      type={CALLBACK_BUTTON}
-      primary={true}
-      disabled={!props.saveEnabled}
-      label={trans('save', {}, 'actions')}
-      htmlType="submit"
-      callback={() => props.save(props.name, url(
-        typeof props.target === 'function' ? props.target(props.data, props.isNew) : props.target
-      ), props.onSave)}
-    />
-  </FormData>
+  return (
+    <FormData
+      name={props.name}
+      meta={true}
+      sections={[
+        {
+          title: trans('general'),
+          primary: true,
+          fields: [
+            {
+              name: 'meta.type',
+              type: 'type',
+              label: trans('type'),
+              hideLabel: true,
+              calculated: (event) => ({
+                icon: <EventIcon type={event.meta.type} />,
+                name: trans(event.meta.type, {}, 'event'),
+                description: trans(`${event.meta.type}_desc`, {}, 'event')
+              })
+            }
+          ]
+        }
+      ].concat(props.sections)}
+    >
+      {props.children}
+
+      <Button
+        className="modal-btn btn"
+        type={CALLBACK_BUTTON}
+        primary={true}
+        disabled={!props.saveEnabled || saving}
+        label={trans('save', {}, 'actions')}
+        htmlType="submit"
+        callback={() => {
+          setSaving(true)
+
+          const done = () => setSaving(false)
+          props.save(props.name, url(
+            typeof props.target === 'function' ? props.target(props.data, props.isNew) : props.target
+          ), props.onSave).then(done, done)
+        }}
+      />
+    </FormData>
+  )
+}
 
 EventForm.propTypes = {
   name: T.string.isRequired,
