@@ -32,7 +32,7 @@ class UserActivitySubscriber implements EventSubscriberInterface
         ];
     }
 
-    public function setLastActivityDate()
+    public function setLastActivityDate(TerminateEvent $event)
     {
         $currentUser = $this->tokenStorage->getToken() ? $this->tokenStorage->getToken()->getUser() : null;
         if ($currentUser instanceof User) {
@@ -41,6 +41,18 @@ class UserActivitySubscriber implements EventSubscriberInterface
             // to avoid too many updates in the user table.
             if (empty($currentUser->getLastActivity()) || $now > date_add($currentUser->getLastActivity(), new \DateInterval('PT30S'))) {
                 $currentUser->setLastActivity($now);
+
+                if ($event->getResponse()->getStatusCode() >= 400) {
+                    // la requête a échoué : l'unité de travail peut contenir des objets à moitié
+                    // préparés (ex. une réservation refusée pour salle occupée). Un flush() global
+                    // les écrirait. On ne met à jour que la date d'activité.
+                    $this->om
+                        ->createQuery('UPDATE Claroline\CoreBundle\Entity\User u SET u.lastActivity = :now WHERE u.id = :id')
+                        ->setParameters(['now' => $now, 'id' => $currentUser->getId()])
+                        ->execute();
+
+                    return;
+                }
 
                 $this->om->persist($currentUser);
                 $this->om->flush();

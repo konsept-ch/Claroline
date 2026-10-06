@@ -27,6 +27,11 @@ class PlanningManager
 
     public function addToPlanning(AbstractPlanned $planned, IdentifiableInterface $object)
     {
+        // contrôle d'abord (ex. salle occupée), avant de toucher à l'unité de travail : si un
+        // subscriber refuse, il ne doit rester aucun objet persisté qu'un flush ultérieur de la
+        // même requête pourrait écrire
+        $this->eventDispatcher->dispatch(new PlanObjectEvent($planned, $object));
+
         $planning = $this->om->getRepository(Planning::class)->findOneBy([
             'objectId' => $object->getUuid(),
         ]);
@@ -41,10 +46,6 @@ class PlanningManager
 
         $planning->addPlannedObject($planned->getPlannedObject());
         $this->om->persist($planned);
-
-        // dispatch event before flush to allow subscriber to cancel it if needed
-        // this should have been done at validation level, but it's not possible for now (no event to listen to)
-        $this->eventDispatcher->dispatch(new PlanObjectEvent($planned, $object));
 
         $this->om->flush();
     }
