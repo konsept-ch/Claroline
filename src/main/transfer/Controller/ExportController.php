@@ -12,6 +12,7 @@
 namespace Claroline\TransferBundle\Controller;
 
 use Claroline\AppBundle\Controller\AbstractCrudController;
+use Claroline\CoreBundle\Entity\Tool\OrderedTool;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\CoreBundle\Library\Normalizer\DateNormalizer;
 use Claroline\CoreBundle\Library\Normalizer\TextNormalizer;
@@ -24,6 +25,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
  * @Route("/transfer_export")
@@ -57,6 +59,25 @@ class ExportController extends AbstractCrudController
     public function getClass()
     {
         return ExportFile::class;
+    }
+
+    /**
+     * Les exports contiennent des données de la plateforme. Un export se lit selon les droits de
+     * l'outil transfert de son espace ; la liste globale est réservée à qui peut ouvrir l'outil
+     * transfert du bureau.
+     */
+    protected function checkCrudReadPermission(string $action, $object = null): void
+    {
+        if ($object) {
+            $this->checkPermission('OPEN', $object, [], true);
+
+            return;
+        }
+
+        $desktopTool = $this->om->getRepository(OrderedTool::class)->findOneByNameAndDesktop('transfer');
+        if (!$desktopTool || !$this->authorization->isGranted('OPEN', $desktopTool)) {
+            throw new AccessDeniedException();
+        }
     }
 
     /**

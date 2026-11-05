@@ -12,6 +12,7 @@
 namespace Claroline\TransferBundle\Controller;
 
 use Claroline\AppBundle\Controller\AbstractCrudController;
+use Claroline\CoreBundle\Entity\Tool\OrderedTool;
 use Claroline\CoreBundle\Entity\Workspace\Workspace;
 use Claroline\CoreBundle\Security\PermissionCheckerTrait;
 use Claroline\TransferBundle\Entity\ImportFile;
@@ -25,6 +26,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
  * @Route("/transfer_import")
@@ -58,6 +60,25 @@ class ImportController extends AbstractCrudController
     public function getClass()
     {
         return ImportFile::class;
+    }
+
+    /**
+     * Les imports donnent accès aux fichiers déposés, dont des CSV de comptes avec mots de passe.
+     * Un import se lit selon les droits de l'outil transfert de son espace ; la liste globale est
+     * réservée à qui peut ouvrir l'outil transfert du bureau.
+     */
+    protected function checkCrudReadPermission(string $action, $object = null): void
+    {
+        if ($object) {
+            $this->checkPermission('OPEN', $object, [], true);
+
+            return;
+        }
+
+        $desktopTool = $this->om->getRepository(OrderedTool::class)->findOneByNameAndDesktop('transfer');
+        if (!$desktopTool || !$this->authorization->isGranted('OPEN', $desktopTool)) {
+            throw new AccessDeniedException();
+        }
     }
 
     /**

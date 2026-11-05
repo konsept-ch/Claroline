@@ -19,6 +19,9 @@ services:
             - method: setObjectManager
               arguments:
                   - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - method: setCrudAuthorizationChecker
+              arguments:
+                  - '@security.authorization_checker'
 
     Claroline\AppBundle\Controller\AbstractSecurityController:
         abstract: true

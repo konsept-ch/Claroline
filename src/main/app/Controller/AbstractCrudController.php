@@ -11,10 +11,30 @@ use Claroline\AppBundle\Persistence\ObjectManager;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 abstract class AbstractCrudController
 {
     use RequestDecoderTrait;
+
+    /**
+     * Options qu'une requête HTTP ne peut jamais transmettre : elles désactivent un contrôle
+     * de sécurité et sont réservées aux appels internes.
+     */
+    private const FORBIDDEN_REQUEST_OPTIONS = [
+        Crud::NO_PERMISSIONS,
+        Crud::NO_VALIDATION,
+        Options::NO_RIGHTS,
+        Options::SQL_QUERY,
+    ];
+
+    /**
+     * Nom distinct de `$authorization`, déjà déclaré par de nombreux contrôleurs enfants.
+     *
+     * @var AuthorizationCheckerInterface|null
+     */
+    private $crudAuthorization;
 
     /** @var FinderProvider */
     protected $finder;
@@ -63,6 +83,11 @@ abstract class AbstractCrudController
         $this->om = $om;
     }
 
+    public function setCrudAuthorizationChecker(AuthorizationCheckerInterface $authorization)
+    {
+        $this->crudAuthorization = $authorization;
+    }
+
     /**
      * @ApiDoc(
      *     description="Find a single object of class $class.",
@@ -76,18 +101,22 @@ abstract class AbstractCrudController
      */
     public function findAction(Request $request, $class)
     {
+        $this->checkCrudReadAccess();
+
         $query = $request->query->all();
         $data = $this->finder->fetch($class, $query['filters'], [], 0, 2);
 
         $options = $this->options['get'];
         if (isset($query['options'])) {
-            $options = $query['options'];
+            $options = $this->sanitizeRequestOptions($query['options']);
         }
 
         switch (count($data)) {
             case 0:
                 return new JsonResponse('No object found', 404);
             case 1:
+                $this->checkCrudReadPermission('find', $data[0]);
+
                 return new JsonResponse(
                     $this->serializer->serialize($data[0], $options)
                 );
@@ -112,15 +141,19 @@ abstract class AbstractCrudController
      */
     public function getAction(Request $request, $id, $class)
     {
+        $this->checkCrudReadAccess();
+
         $query = $request->query->all();
         $object = $this->crud->get($class, $id);
 
         $options = $this->options['get'];
         if (isset($query['options'])) {
-            $options = $query['options'];
+            $options = $this->sanitizeRequestOptions($query['options']);
         }
 
         if ($object) {
+            $this->checkCrudReadPermission('get', $object);
+
             return new JsonResponse(
                 $this->serializer->serialize($object, $options ?? [])
             );
@@ -173,11 +206,14 @@ abstract class AbstractCrudController
      */
     public function listAction(Request $request, $class)
     {
+        $this->checkCrudReadAccess();
+        $this->checkCrudReadPermission('list');
+
         $query = $request->query->all();
         $options = $this->options['list'];
 
         if (isset($query['options'])) {
-            $options = $query['options'];
+            $options = $this->sanitizeRequestOptions($query['options']);
         }
 
         $query['hiddenFilters'] = $this->getDefaultHiddenFilters();
@@ -205,11 +241,14 @@ abstract class AbstractCrudController
      */
     public function csvAction(Request $request, $class): BinaryFileResponse
     {
+        $this->checkCrudReadAccess();
+        $this->checkCrudReadPermission('csv');
+
         $query = $request->query->all();
         $options = $this->options['list'];
 
         if (isset($query['options'])) {
-            $options = $query['options'];
+            $options = $this->sanitizeRequestOptions($query['options']);
         }
 
         $hiddenFilters = isset($query['hiddenFilters']) ? $query['hiddenFilters'] : [];
@@ -242,7 +281,7 @@ abstract class AbstractCrudController
 
         $options = $this->options['create'];
         if (isset($query['options'])) {
-            $options = $query['options'];
+            $options = $this->sanitizeRequestOptions($query['options']);
         }
 
         $object = $this->crud->create($class, $this->decodeRequest($request), $options ?? []);
@@ -285,7 +324,7 @@ abstract class AbstractCrudController
 
         $options = $this->options['update'];
         if (isset($query['options'])) {
-            $options = $query['options'];
+            $options = $this->sanitizeRequestOptions($query['options']);
         }
 
         $object = $this->crud->update($class, $data, $options ?? []);
@@ -320,7 +359,7 @@ abstract class AbstractCrudController
         $options = $this->options['deleteBulk'];
 
         if (isset($query['options'])) {
-            $options = $query['options'];
+            $options = $this->sanitizeRequestOptions($query['options']);
         }
 
         $this->crud->deleteBulk(
@@ -350,7 +389,7 @@ abstract class AbstractCrudController
 
         $options = $this->options['copyBulk'];
         if (isset($query['options'])) {
-            $options = $query['options'];
+            $options = $this->sanitizeRequestOptions($query['options']);
         }
 
         $copies = $this->crud->copyBulk(
@@ -410,5 +449,47 @@ abstract class AbstractCrudController
     public function getIgnore()
     {
         return [];
+    }
+
+    /**
+     * Contrôle supplémentaire des lectures génériques (list, csv, find, get), à surcharger par
+     * les contrôleurs dont les données ne doivent pas être lisibles par tout utilisateur connecté.
+     * Doit lever une AccessDeniedException pour refuser.
+     *
+     * @param string      $action list | csv | find | get
+     * @param object|null $object l'objet lu, pour find et get
+     */
+    protected function checkCrudReadPermission(string $action, $object = null): void
+    {
+    }
+
+    /**
+     * @param mixed $attribute
+     * @param mixed $subject
+     */
+    protected function isCrudGranted($attribute, $subject = null): bool
+    {
+        return $this->crudAuthorization && $this->crudAuthorization->isGranted($attribute, $subject);
+    }
+
+    /**
+     * Les lectures génériques ne font aucun contrôle de droits objet par objet : sans au moins
+     * un utilisateur authentifié (session, jeton API ou IP), toute la base serait lisible.
+     */
+    private function checkCrudReadAccess(): void
+    {
+        if (!$this->isCrudGranted('IS_AUTHENTICATED_REMEMBERED')) {
+            throw new AccessDeniedException('Authentication is required.');
+        }
+    }
+
+    /**
+     * @param mixed $options
+     */
+    private function sanitizeRequestOptions($options): array
+    {
+        return array_values(array_filter((array) $options, function ($option) {
+            return is_string($option) && !in_array($option, self::FORBIDDEN_REQUEST_OPTIONS, true);
+        }));
     }
 }
