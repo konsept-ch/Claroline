@@ -13,32 +13,65 @@ RUN printf '%s\n' \
   > /etc/apt/sources.list \
   && rm -rf /etc/apt/sources.list.d/* /var/lib/apt/lists/*
 
+# snapshot.debian.org is slow and often overloaded (504, 503): apt retries every
+# download. See docs/60-infra-run/construction-images-docker.md (CEP workspace).
+RUN printf '%s\n' \
+  'Acquire::Retries "5";' \
+  'Acquire::http::Timeout "60";' \
+  'Acquire::https::Timeout "60";' \
+  > /etc/apt/apt.conf.d/80-retries
+
 RUN a2enmod rewrite expires ssl headers
 
-RUN curl -sL https://deb.nodesource.com/setup_16.x | bash
-RUN apt-get update && apt-get install -y \
-  git \
-  mariadb-client \
-  wget \
-  unzip \
-  zip \
-  libxml2-dev \
-  libmcrypt-dev \
-  libcurl4-gnutls-dev \
-  xz-utils \
-  xfonts-75dpi \
-  libldap2-dev \
-  libpng-dev \
-  libjpeg-dev \
-  zlib1g-dev \
-  libicu-dev \
-  libzip-dev \
-  libonig-dev \
-  g++ \
-  ssl-cert \
-  curl \
-  nodejs\
-  && rm -rf /var/lib/apt/lists/*
+# Node.js 16 repository, configured explicitly. The former `setup_16.x | bash`
+# ran its own `apt update` against the snapshot and exited 0 when it failed: the
+# repository was silently missing, Debian's nodejs 12 got installed without npm,
+# and the build broke later on `npm install`.
+RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key -o /usr/share/keyrings/nodesource.asc \
+  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/nodesource.asc] https://deb.nodesource.com/node_16.x nodistro main" \
+    > /etc/apt/sources.list.d/nodesource.list \
+  && printf '%s\n' 'Package: nodejs' 'Pin: origin deb.nodesource.com' 'Pin-Priority: 600' \
+    > /etc/apt/preferences.d/nodejs
+
+# If the snapshot is still unavailable after a second attempt, fall back to
+# archive.debian.org, the official home of bullseye since its end of life: same
+# package versions, served by a far more reliable mirror.
+RUN install_packages() { \
+    apt-get update && apt-get install -y \
+      git \
+      mariadb-client \
+      wget \
+      unzip \
+      zip \
+      libxml2-dev \
+      libmcrypt-dev \
+      libcurl4-gnutls-dev \
+      xz-utils \
+      xfonts-75dpi \
+      libldap2-dev \
+      libpng-dev \
+      libjpeg-dev \
+      zlib1g-dev \
+      libicu-dev \
+      libzip-dev \
+      libonig-dev \
+      g++ \
+      ssl-cert \
+      curl \
+      nodejs; \
+  } \
+  && { install_packages \
+    || { echo "snapshot.debian.org failed, retrying in 30s" && sleep 30 && install_packages; } \
+    || { echo "snapshot.debian.org unavailable, falling back to archive.debian.org" \
+      && printf '%s\n' \
+        "deb [check-valid-until=no] https://archive.debian.org/debian bullseye main" \
+        "deb [check-valid-until=no] https://archive.debian.org/debian bullseye-updates main" \
+        "deb [check-valid-until=no] https://archive.debian.org/debian-security bullseye-security main" \
+        > /etc/apt/sources.list \
+      && install_packages; }; } \
+  && rm -rf /var/lib/apt/lists/* \
+  && { npm -v >/dev/null 2>&1 || { echo "npm missing: Node.js was not installed from deb.nodesource.com" && exit 1; }; } \
+  && echo "node $(node -v), npm $(npm -v)"
 
 RUN docker-php-ext-install -j$(nproc) xml mysqli curl zip mbstring gettext pdo_mysql gd exif mbstring
 RUN docker-php-ext-configure intl
