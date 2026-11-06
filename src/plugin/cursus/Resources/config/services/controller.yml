@@ -74,3 +74,8 @@ services:
             - '@security.authorization_checker'
             - '@security.token_storage'
             - '@Claroline\AppBundle\API\FinderProvider'
+
+    Claroline\CursusBundle\Controller\User\AttestationController:
+        arguments:
+            - '@security.token_storage'
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
