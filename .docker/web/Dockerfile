@@ -2,23 +2,26 @@ FROM php:8.0-apache
 
 LABEL maintainer="Donovan Tengblad"
 
-# Temporary continuity measure: Debian 11 reached end of life on 2026-08-31.
-# The snapshot makes the legacy package set reproducible while the PHP/Debian
-# upgrade described in docs/incident_docker_build_debian11_eol.md is prepared.
+# Debian 11 reached end of life on 2026-08-31. Decision of 2026-11-06: this
+# image stays on PHP 8.0 / bullseye until the move to Claroline 15
+# (docs/90-decisions/decision-php80-bullseye-jusqua-claroline15.md, CEP workspace).
+# archive.debian.org, the official home of bullseye since its end of life, is the
+# main source: frozen, same package versions as the 2026-08-31 snapshot, served
+# by a CDN. snapshot.debian.org, slow and often overloaded (503, 504), is only
+# the fallback.
 ARG DEBIAN_SNAPSHOT=20260831T235959Z
 RUN printf '%s\n' \
-  "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT} bullseye main" \
-  "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT} bullseye-updates main" \
-  "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT} bullseye-security main" \
+  "deb [check-valid-until=no] https://archive.debian.org/debian bullseye main" \
+  "deb [check-valid-until=no] https://archive.debian.org/debian bullseye-updates main" \
+  "deb [check-valid-until=no] https://archive.debian.org/debian-security bullseye-security main" \
   > /etc/apt/sources.list \
   && rm -rf /etc/apt/sources.list.d/* /var/lib/apt/lists/*
 
-# snapshot.debian.org is slow and often overloaded (504, 503): apt retries every
-# download. See docs/60-infra-run/construction-images-docker.md (CEP workspace).
+# apt retries a failed download, without lingering on a slow mirror.
 RUN printf '%s\n' \
-  'Acquire::Retries "5";' \
-  'Acquire::http::Timeout "60";' \
-  'Acquire::https::Timeout "60";' \
+  'Acquire::Retries "3";' \
+  'Acquire::http::Timeout "30";' \
+  'Acquire::https::Timeout "30";' \
   > /etc/apt/apt.conf.d/80-retries
 
 RUN a2enmod rewrite expires ssl headers
@@ -33,9 +36,8 @@ RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key -o /usr
   && printf '%s\n' 'Package: nodejs' 'Pin: origin deb.nodesource.com' 'Pin-Priority: 600' \
     > /etc/apt/preferences.d/nodejs
 
-# If the snapshot is still unavailable after a second attempt, fall back to
-# archive.debian.org, the official home of bullseye since its end of life: same
-# package versions, served by a far more reliable mirror.
+# If archive.debian.org still fails after a second attempt, fall back to the
+# 2026-08-31 snapshot.
 # autofs and nfs-common are what Jelastic installs at every redeploy (jem docker
 # update) to mount the NFS volume on files/: preinstalled, so a mirror outage can
 # no longer leave the container without its files and run as a fresh install.
@@ -68,12 +70,12 @@ RUN install_packages() { \
       nfs-common; \
   } \
   && { install_packages \
-    || { echo "snapshot.debian.org failed, retrying in 30s" && sleep 30 && install_packages; } \
-    || { echo "snapshot.debian.org unavailable, falling back to archive.debian.org" \
+    || { echo "archive.debian.org failed, retrying in 30s" && sleep 30 && install_packages; } \
+    || { echo "archive.debian.org unavailable, falling back to snapshot.debian.org" \
       && printf '%s\n' \
-        "deb [check-valid-until=no] https://archive.debian.org/debian bullseye main" \
-        "deb [check-valid-until=no] https://archive.debian.org/debian bullseye-updates main" \
-        "deb [check-valid-until=no] https://archive.debian.org/debian-security bullseye-security main" \
+        "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT} bullseye main" \
+        "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT} bullseye-updates main" \
+        "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT} bullseye-security main" \
         > /etc/apt/sources.list \
       && install_packages; }; } \
   && rm -rf /var/lib/apt/lists/* \
