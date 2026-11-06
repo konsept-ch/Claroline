@@ -36,6 +36,11 @@ RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key -o /usr
 # If the snapshot is still unavailable after a second attempt, fall back to
 # archive.debian.org, the official home of bullseye since its end of life: same
 # package versions, served by a far more reliable mirror.
+# autofs and nfs-common are what Jelastic installs at every redeploy (jem docker
+# update) to mount the NFS volume on files/: preinstalled, so a mirror outage can
+# no longer leave the container without its files and run as a fresh install.
+# The final image keeps archive.debian.org as its apt source, for anything
+# installed after the build.
 RUN install_packages() { \
     apt-get update && apt-get install -y \
       git \
@@ -58,7 +63,9 @@ RUN install_packages() { \
       g++ \
       ssl-cert \
       curl \
-      nodejs; \
+      nodejs \
+      autofs \
+      nfs-common; \
   } \
   && { install_packages \
     || { echo "snapshot.debian.org failed, retrying in 30s" && sleep 30 && install_packages; } \
@@ -70,6 +77,11 @@ RUN install_packages() { \
         > /etc/apt/sources.list \
       && install_packages; }; } \
   && rm -rf /var/lib/apt/lists/* \
+  && printf '%s\n' \
+    "deb [check-valid-until=no] https://archive.debian.org/debian bullseye main" \
+    "deb [check-valid-until=no] https://archive.debian.org/debian bullseye-updates main" \
+    "deb [check-valid-until=no] https://archive.debian.org/debian-security bullseye-security main" \
+    > /etc/apt/sources.list \
   && { npm -v >/dev/null 2>&1 || { echo "npm missing: Node.js was not installed from deb.nodesource.com" && exit 1; }; } \
   && echo "node $(node -v), npm $(npm -v)"
 
