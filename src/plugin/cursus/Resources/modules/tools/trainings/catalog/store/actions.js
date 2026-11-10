@@ -7,6 +7,7 @@ import {actions as formActions} from '#/main/app/content/form/store/actions'
 import {actions as listActions} from '#/main/app/content/list/store/actions'
 
 import {selectors} from '#/plugin/cursus/tools/trainings/catalog/store/selectors'
+import {registrationRestrictionMessages} from '#/plugin/cursus/registration-restriction'
 
 export const LOAD_COURSE = 'LOAD_COURSE'
 export const LOAD_COURSE_SESSION = 'LOAD_COURSE_SESSION'
@@ -235,6 +236,7 @@ actions.register = (course, sessionId = null) => ({
     request: {
       method: 'PUT'
     },
+    messages: registrationRestrictionMessages(),
     success: (response, dispatch) => dispatch(actions.open(course.slug, true))
   }
 })
