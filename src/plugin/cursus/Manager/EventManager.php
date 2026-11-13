@@ -293,6 +293,14 @@ class EventManager
             return;
         }
 
+        // CEP : une séance dont la date n'est pas encore fixée n'a rien à annoncer. On n'envoie
+        // ni e-mail ni fichier .ics, mais l'inscription à la séance reste faite par l'appelant.
+        // Sans cette garde, les placeholders et le .ics plantent sur la date nulle, et toute
+        // l'inscription à la session échoue avec eux (incident ENT_LS/27/03, 13.11.2026).
+        if (empty($event->getStartDate()) || empty($event->getEndDate())) {
+            return;
+        }
+
         $basicPlaceholders = $this->getTemplatePlaceholders($event);
 
         // create ics file to attach to the message
@@ -431,8 +439,8 @@ class EventManager
             'session_name' => $session->getName(),
             'session_description' => $session->getDescription(),
             'session_code' => $session->getCode(),
-            'session_start' => $session->getStartDate()->format('d/m/Y'),
-            'session_end' => $session->getEndDate()->format('d/m/Y'),
+            'session_start' => $session->getStartDate() ? $session->getStartDate()->format('d/m/Y') : '',
+            'session_end' => $session->getEndDate() ? $session->getEndDate()->format('d/m/Y') : '',
             // event info
             'event_name' => $event->getName(),
             'event_description' => $event->getDescription(),

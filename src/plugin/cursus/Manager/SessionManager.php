@@ -220,8 +220,9 @@ class SessionManager
                     'session_name' => $sessionUser->getSession()->getName(),
                     'user_first_name' => $user->getFirstName(),
                     'user_last_name' => $user->getLastName(),
-                    'session_start' => $sessionUser->getSession()->getStartDate()->format('d/m/Y'),
-                    'session_end' => $sessionUser->getSession()->getEndDate()->format('d/m/Y'),
+                    // CEP : une session sans date ne doit pas faire échouer l'inscription
+                    'session_start' => $session->getStartDate() ? $session->getStartDate()->format('d/m/Y') : '',
+                    'session_end' => $session->getEndDate() ? $session->getEndDate()->format('d/m/Y') : '',
                 ];
 
                 if (AbstractRegistration::LEARNER === $type) {
@@ -590,8 +591,8 @@ class SessionManager
             'session_poster' => $session->getPoster() ? '<img src="'.$this->platformManager->getUrl().'/'.$session->getPoster().'" style="max-width: 100%;" />' : '',
             'session_name' => $session->getName(),
             'session_description' => $session->getDescription(),
-            'session_start' => $session->getStartDate()->format('d/m/Y'),
-            'session_end' => $session->getEndDate()->format('d/m/Y'),
+            'session_start' => $session->getStartDate() ? $session->getStartDate()->format('d/m/Y') : '',
+            'session_end' => $session->getEndDate() ? $session->getEndDate()->format('d/m/Y') : '',
             'session_trainers' => $trainersList,
             'registration_confirmation_url' => $this->router->generate('apiv2_cursus_session_self_confirm', ['id' => $session->getUuid()], UrlGeneratorInterface::ABSOLUTE_URL), // TODO
             'session_location_description' => $location ? $location->getDescription() : '',
@@ -635,8 +636,8 @@ class SessionManager
                 'course_description' => $course->getDescription(),
                 'session_name' => $session->getName(),
                 'session_description' => $session->getDescription(),
-                'session_start' => $session->getStartDate()->format('d/m/Y'),
-                'session_end' => $session->getEndDate()->format('d/m/Y'),
+                'session_start' => $session->getStartDate() ? $session->getStartDate()->format('d/m/Y') : '',
+                'session_end' => $session->getEndDate() ? $session->getEndDate()->format('d/m/Y') : '',
                 'first_name' => $user->getFirstName(),
                 'last_name' => $user->getLastName(),
                 'username' => $user->getUsername(),
