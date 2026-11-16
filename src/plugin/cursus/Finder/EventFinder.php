@@ -28,7 +28,16 @@ class EventFinder extends AbstractFinder
         $qb->join('obj.session', 's');
         $qb->join('s.course', 'c');
 
-        $qb->andWhere("year(po.startDate) ".(intval(getenv('ARCHIVE_MODE')) ? '<=' : '>')." :year");
+        if (intval(getenv('ARCHIVE_MODE'))) {
+            $qb->andWhere('year(po.startDate) <= :year');
+        } else {
+            // CEP : une séance dont la date n'est pas encore fixée doit rester visible, sinon
+            // personne ne la voit ni ne la corrige (incident ENT_LS/27/03, 13.11.2026).
+            $qb->andWhere($qb->expr()->orX(
+                'year(po.startDate) > :year',
+                $qb->expr()->isNull('po.startDate')
+            ));
+        }
         $qb->setParameter('year', (int)(new \DateTimeImmutable())->format('Y') - 2);
 
         foreach ($searches as $filterName => $filterValue) {

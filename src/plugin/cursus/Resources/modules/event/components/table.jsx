@@ -32,8 +32,9 @@ const EventTable = (props) => {
         				<tr key={event.id}>
         					<td>{event.name}</td>
         					<td>{event.location?.name || trans('event_location_undefined', {}, 'cursus')}</td>
-        					<td>{displayDate(event.start, false, true)}</td>
-        					<td>{displayDate(event.end, false, true)}</td>
+        					{/* CEP : une séance peut ne pas encore avoir de date */}
+        					<td>{event.start ? displayDate(event.start, false, true) : trans('session_no_date', {}, 'cursus')}</td>
+        					<td>{event.end ? displayDate(event.end, false, true) : trans('session_no_date', {}, 'cursus')}</td>
         				</tr>
 					))}
     			</tbody>

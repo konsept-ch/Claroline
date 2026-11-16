@@ -29,6 +29,7 @@
     "session_not_ended": "Not ended",
     "session_in_progress": "Ongoing",
     "session_not_started": "Not started",
+    "session_no_date": "Date to be defined",
     "session_event_registration": "Session event registration",
     "session_event_set": "Set",
     "session_events": "Session events",

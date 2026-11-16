@@ -29,6 +29,7 @@
     "session_not_ended": "Non terminé",
     "session_not_started": "Non commencé",
     "session_in_progress": "En cours",
+    "session_no_date": "Date à définir",
     "session_event_registration": "Inscription aux séances",
     "session_event_set": "Groupe",
     "session_events": "Séances",

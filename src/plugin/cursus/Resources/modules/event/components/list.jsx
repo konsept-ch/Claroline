@@ -109,7 +109,10 @@ const EventList = (props) =>
         },
         render: (row) => {
           let status
-          if (get(row, 'start') > now(false)) {
+          if (!get(row, 'start') || !get(row, 'end')) {
+            // CEP : séance dont la date n'est pas encore fixée
+            status = 'no_date'
+          } else if (get(row, 'start') > now(false)) {
             status = 'not_started'
           } else if (get(row, 'start') <= now(false) && get(row, 'end') >= now(false)) {
             status = 'in_progress'
@@ -121,7 +124,8 @@ const EventList = (props) =>
             <span className={classes('label', {
               'label-success': 'not_started' === status,
               'label-info': 'in_progress' === status,
-              'label-danger': 'ended' === status
+              'label-danger': 'ended' === status,
+              'label-warning': 'no_date' === status
             })}>
               {trans('session_'+status, {}, 'cursus')}
             </span>
