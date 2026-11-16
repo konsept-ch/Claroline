@@ -105,7 +105,9 @@ class EventFinder extends AbstractFinder
                             $qb->andWhere('po.endDate < :now');
                             break;
                         case 'not_ended':
-                            $qb->andWhere('po.endDate >= :now');
+                            // CEP : filtre par défaut de l'onglet Séances. Une séance sans date
+                            // n'est pas terminée, elle doit y rester visible.
+                            $qb->andWhere('(po.endDate >= :now OR po.endDate IS NULL)');
                             break;
                     }
 

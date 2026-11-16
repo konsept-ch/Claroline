@@ -29,6 +29,17 @@ class EventFinderTest extends TestCase
         $this->assertStringContainsString('po.startDate IS NULL', $dql);
     }
 
+    public function testNotEndedFilterKeepsEventsWithoutEndDate()
+    {
+        putenv('ARCHIVE_MODE=0');
+
+        // filtre par défaut de l'onglet Séances : une séance sans date n'est pas terminée
+        $dql = $this->dql(['status' => 'not_ended']);
+
+        $this->assertStringContainsString('po.endDate >= :now', $dql);
+        $this->assertStringContainsString('po.endDate IS NULL', $dql);
+    }
+
     public function testArchiveModeKeepsOnlyPastEvents()
     {
         putenv('ARCHIVE_MODE=1');
@@ -50,7 +61,7 @@ class EventFinderTest extends TestCase
         putenv(false === $this->archiveMode ? 'ARCHIVE_MODE' : 'ARCHIVE_MODE='.$this->archiveMode);
     }
 
-    private function dql(): string
+    private function dql(array $searches = []): string
     {
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getExpressionBuilder')->willReturn(new Expr());
@@ -58,7 +69,7 @@ class EventFinderTest extends TestCase
         $qb = new QueryBuilder($em);
         $qb->select('obj')->from(Event::class, 'obj');
 
-        (new EventFinder())->configureQueryBuilder($qb, []);
+        (new EventFinder())->configureQueryBuilder($qb, $searches);
 
         return $qb->getDQL();
     }
