@@ -99,7 +99,10 @@ class ICSGenerator
 
         $path = $this->filesDir.DIRECTORY_SEPARATOR.'ics'.DIRECTORY_SEPARATOR.$filename.'.ics';
 
-        $this->filesystem->appendToFile($path, $this->create($icsProps));
+        // CEP : le fichier porte l'uuid de l'objet et se réécrit à chaque envoi. appendToFile()
+        // joignait toutes les invitations précédentes (fichier .ics invalide). Repris de l'amont
+        // 14.1 (1fd48e4ae8), sans le reste du commit qui exige PHP 8.1.
+        $this->filesystem->dumpFile($path, $this->create($icsProps));
 
         return $path;
     }
