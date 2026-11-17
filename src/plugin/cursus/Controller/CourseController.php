@@ -28,7 +28,6 @@ use Claroline\CursusBundle\Entity\Registration\SessionGroup;
 use Claroline\CursusBundle\Entity\Registration\SessionUser;
 use Claroline\CursusBundle\Entity\Session;
 use Claroline\CursusBundle\Manager\CourseManager;
-use Claroline\CommunityBundle\Security\RegistrationRestriction;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -393,10 +392,6 @@ class CourseController extends AbstractCrudController
 
         if (!$course->getPendingRegistrations()) {
             throw new AccessDeniedException();
-        }
-
-        if (RegistrationRestriction::isRestricted($user)) {
-            return RegistrationRestriction::createResponse();
         }
 
         $courseUsers = $this->manager->addUsers($course, [$user]);

@@ -5,7 +5,6 @@ import {API_REQUEST, url} from '#/main/app/api'
 import {constants as actionConstants} from '#/main/app/action/constants'
 import {actions as listActions} from '#/main/app/content/list/store/actions'
 import {selectors} from '#/plugin/cursus/event/store/selectors'
-import {registrationRestrictionMessages} from '#/plugin/cursus/registration-restriction'
 
 export const LOAD_EVENT = 'LOAD_EVENT'
 export const EVENT_SET_LOADED = 'EVENT_SET_LOADED'
@@ -41,7 +40,6 @@ actions.register = (id) => ({
     request: {
       method: 'PUT'
     },
-    messages: registrationRestrictionMessages(),
     success: (response, dispatch) => dispatch(actions.open(id, true))
   }
 })
