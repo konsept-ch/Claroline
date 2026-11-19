@@ -13,6 +13,13 @@ services:
         tags:
             - { name: 'console.command', command: 'claroline:user:disable-inactive' }
 
+    Claroline\CommunityBundle\Command\PersonalWorkspacesCommand:
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\CoreBundle\Manager\Workspace\PersonalWorkspaceProvisioner'
+        tags:
+            - { name: 'console.command', command: 'claroline:user:personal-workspaces' }
+
     Claroline\CommunityBundle\Command\AddGroupCommand:
         arguments:
             - '@Claroline\AppBundle\Persistence\ObjectManager'

@@ -191,6 +191,12 @@ services:
         alias: Claroline\CoreBundle\Manager\Workspace\WorkspaceManager
         public: true
 
+    Claroline\CoreBundle\Manager\Workspace\PersonalWorkspaceProvisioner:
+        public: true
+        arguments:
+            - '@Claroline\AppBundle\Persistence\ObjectManager'
+            - '@Claroline\CoreBundle\Manager\Workspace\WorkspaceManager'
+
     Claroline\CoreBundle\Manager\Workspace\TransferManager:
         public: true
         arguments:
