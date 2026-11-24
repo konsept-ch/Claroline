@@ -46,6 +46,31 @@ class OrderedToolRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * Returns the community tools that reach the CREATE_USER permission vote.
+     *
+     * Personal workspaces are deliberately excluded: UserVoter ignores their
+     * tools before checking CREATE_USER. Selecting the workspace makes this a
+     * fetch join, so the voter can retain its safety check without an N+1.
+     *
+     * @return OrderedTool[]
+     */
+    public function findCommunityToolsEligibleForUserCreation(): array
+    {
+        return $this->_em
+            ->createQuery('
+                SELECT ot, w
+                FROM Claroline\CoreBundle\Entity\Tool\OrderedTool ot
+                JOIN ot.tool t
+                LEFT JOIN ot.workspace w
+                WHERE t.name = :name
+                AND (ot.workspace IS NULL OR w.personal = false)
+                ORDER BY ot.order ASC
+            ')
+            ->setParameter('name', 'community')
+            ->getResult();
+    }
+
     public function findOneByNameAndWorkspace(string $name, Workspace $workspace = null): ?OrderedTool
     {
         return $this->_em

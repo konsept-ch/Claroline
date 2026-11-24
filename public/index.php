@@ -7,9 +7,12 @@ use Symfony\Component\HttpFoundation\Request;
 
 require dirname(__DIR__).'/config/bootstrap.php';
 
-// Local/dev safeguard: Claroline can exceed 128M on some requests.
+// Cette valeur l'emporte sur le memory_limit de php.ini pour toute requête web, en local
+// comme en production. CEP : 1G depuis le 24.11.2026. À 512M, l'inscription publique
+// échouait en production par dépassement mémoire (UserVoter::checkCreate). Ne réduire
+// qu'après avoir mesuré la consommation réelle en production.
 if ((int) ini_get('memory_limit') > 0) {
-    ini_set('memory_limit', '512M');
+    ini_set('memory_limit', '1G');
 }
 
 if ($_SERVER['APP_DEBUG']) {
