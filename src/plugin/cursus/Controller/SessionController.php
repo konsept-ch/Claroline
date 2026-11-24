@@ -31,6 +31,7 @@ use Claroline\CursusBundle\Entity\Registration\SessionGroup;
 use Claroline\CursusBundle\Entity\Registration\SessionUser;
 use Claroline\CursusBundle\Entity\Session;
 use Claroline\CursusBundle\Manager\SessionManager;
+use Claroline\CommunityBundle\Security\RegistrationRestriction;
 use DateTime;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -431,6 +432,10 @@ class SessionController extends AbstractCrudController
 
         if (new DateTime() > $session->getStartDate()) {
             throw new AccessDeniedException();
+        }
+
+        if (RegistrationRestriction::isRestricted($user)) {
+            return RegistrationRestriction::createResponse();
         }
 
         $sessionUsers = $this->manager->addUsers($session, [$user], AbstractRegistration::LEARNER);

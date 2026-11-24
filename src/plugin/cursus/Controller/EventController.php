@@ -25,6 +25,7 @@ use Claroline\CursusBundle\Entity\Registration\EventGroup;
 use Claroline\CursusBundle\Entity\Registration\EventUser;
 use Claroline\CursusBundle\Entity\Session;
 use Claroline\CursusBundle\Manager\EventManager;
+use Claroline\CommunityBundle\Security\RegistrationRestriction;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -215,6 +216,11 @@ class EventController extends AbstractCrudController
         if (Session::REGISTRATION_PUBLIC !== $sessionEvent->getRegistrationType()) {
             throw new AccessDeniedException();
         }
+
+        if (RegistrationRestriction::isRestricted($user)) {
+            return RegistrationRestriction::createResponse();
+        }
+
         $this->manager->registerUserToSessionEvent($sessionEvent, $user);
 
         $eventsRegistration = [];

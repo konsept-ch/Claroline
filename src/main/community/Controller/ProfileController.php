@@ -17,6 +17,7 @@ use Claroline\AppBundle\API\SerializerProvider;
 use Claroline\AppBundle\Controller\RequestDecoderTrait;
 use Claroline\AppBundle\Manager\File\TempFileManager;
 use Claroline\AppBundle\Persistence\ObjectManager;
+use Claroline\CommunityBundle\Security\RegistrationRestriction;
 use Claroline\CoreBundle\API\Serializer\ParametersSerializer;
 use Claroline\CoreBundle\API\Serializer\User\ProfileSerializer;
 use Claroline\CoreBundle\Entity\Facet\Facet;
@@ -113,6 +114,10 @@ class ProfileController
         /** @var Organization */
         $organization = $user->getMainOrganization();
         if (null == $organization || count($organization->getChildren()) > 0) {
+            return new JsonResponse(2);
+        }
+
+        if (RegistrationRestriction::isRestricted($user)) {
             return new JsonResponse(2);
         }
 
