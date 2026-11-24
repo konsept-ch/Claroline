@@ -21,6 +21,8 @@ use Claroline\CoreBundle\Event\Security\ValidateEmailEvent;
 use Claroline\CoreBundle\Library\RoutingHelper;
 use Claroline\CoreBundle\Manager\MailManager;
 use Claroline\CoreBundle\Manager\UserManager;
+use Claroline\CoreBundle\Manager\Workspace\PersonalWorkspaceProvisioner;
+use Psr\Log\LoggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -38,6 +40,8 @@ class AuthenticationController
     private $routingHelper;
     private $authenticator;
     private $eventDispatcher;
+    private $personalWorkspaceProvisioner;
+    private $logger;
 
     public function __construct(
         UserManager $userManager,
@@ -45,7 +49,9 @@ class AuthenticationController
         MailManager $mailManager,
         RoutingHelper $routingHelper,
         Authenticator $authenticator,
-        StrictDispatcher $eventDispatcher
+        StrictDispatcher $eventDispatcher,
+        PersonalWorkspaceProvisioner $personalWorkspaceProvisioner,
+        LoggerInterface $logger
     ) {
         $this->userManager = $userManager;
         $this->om = $om;
@@ -53,6 +59,8 @@ class AuthenticationController
         $this->routingHelper = $routingHelper;
         $this->authenticator = $authenticator;
         $this->eventDispatcher = $eventDispatcher;
+        $this->personalWorkspaceProvisioner = $personalWorkspaceProvisioner;
+        $this->logger = $logger;
     }
 
     /**
@@ -72,7 +80,23 @@ class AuthenticationController
 
         $this->userManager->activateUser($user);
 
-        return $this->authenticator->login($user, $request);
+        $response = $this->authenticator->login($user, $request);
+
+        // CEP : l'inscription publique ne cree plus l'espace personnel (NO_PERSONAL_WORKSPACE,
+        // 09.06.2026). On le cree ici, dans une requete a part, apres la connexion : un echec ne
+        // doit jamais empecher la personne d'activer son compte. Le middleware et la commande
+        // claroline:user:personal-workspaces rattrapent ce qui manquerait.
+        try {
+            $this->personalWorkspaceProvisioner->ensure($user);
+        } catch (\Throwable $e) {
+            $this->logger->error(sprintf(
+                'Personal workspace not created on activation for user %s: %s',
+                $user->getUuid(),
+                $e->getMessage()
+            ));
+        }
+
+        return $response;
     }
 
     /**

@@ -185,6 +185,8 @@ services:
           - '@Claroline\CoreBundle\Library\RoutingHelper'
           - '@Claroline\AuthenticationBundle\Security\Authentication\Authenticator'
           - '@Claroline\AppBundle\Event\StrictDispatcher'
+          - '@Claroline\CoreBundle\Manager\Workspace\PersonalWorkspaceProvisioner'
+          - '@logger'
 
     Claroline\CoreBundle\Controller\DesktopController:
         arguments:
