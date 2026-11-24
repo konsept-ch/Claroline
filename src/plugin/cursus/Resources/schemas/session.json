@@ -60,9 +60,12 @@
         },
         "dates": {
           "type": "array",
-          "items": {
-            "type": ["string", "null"]
-          }
+          "description": "[startDate, endDate] : startDate is required, a session without it is excluded from every list",
+          "items": [
+            {"type": "string", "minLength": 1},
+            {"type": ["string", "null"]}
+          ],
+          "minItems": 1
         }
       },
       "required": ["dates"]

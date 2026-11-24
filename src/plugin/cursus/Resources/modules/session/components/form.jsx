@@ -2,7 +2,7 @@ import React from 'react'
 import {PropTypes as T} from 'prop-types'
 import get from 'lodash/get'
 
-import {trans} from '#/main/app/intl/translation'
+import {trans, tval} from '#/main/app/intl/translation'
 import {param} from '#/main/app/config'
 import {FormData} from '#/main/app/content/form/containers/data'
 
@@ -31,7 +31,14 @@ const SessionForm = (props) =>
             name: 'restrictions.dates',
             type: 'date-range',
             label: trans('access_dates'),
-            required: true
+            required: true,
+            // CEP : `required` laisse passer une période sans date de début, or une session
+            // sans date de début est exclue de toutes les listes (SessionFinder, ARCHIVE_MODE).
+            validate: (value) => {
+              if (!get(value, '[0]')) {
+                return [tval('valid_start_date_required'), undefined]
+              }
+            }
           }
         ]
       }, {

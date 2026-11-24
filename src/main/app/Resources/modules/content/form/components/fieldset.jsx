@@ -97,6 +97,7 @@ class FormFieldset extends Component {
             placeholder={field.placeholder}
             size={this.props.size}
             required={field.required}
+            validate={field.validate}
             disabled={this.props.disabled || (typeof field.disabled === 'function' ? field.disabled(this.props.data) : field.disabled)}
             validating={this.props.validating}
             autoFocus={field.autoFocus}
