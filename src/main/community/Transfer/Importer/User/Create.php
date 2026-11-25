@@ -31,11 +31,16 @@ class Create extends AbstractImporter
 
     public function execute(array $data): array
     {
-        $hasWs = false;
+        // CEP : l'espace personnel est créé par défaut. En amont, il ne l'était que si le fichier
+        // portait `meta.personalWorkspace` à vrai : les comptes importés n'avaient donc pas d'espace,
+        // et leurs attestations n'avaient nulle part où aller (constaté le 19.11.2026).
+        // Une valeur explicitement fausse reste respectée (import JSON). En CSV, l'adaptateur ignore
+        // les cellules vides ou à 0 : l'espace y est donc toujours créé.
+        $hasWs = true;
         $options = [Options::FORCE_FLUSH];
 
-        if (isset($data['meta']) && isset($data['meta']['personalWorkspace'])) {
-            $hasWs = $data['meta']['personalWorkspace'];
+        if (isset($data['meta']['personalWorkspace'])) {
+            $hasWs = (bool) $data['meta']['personalWorkspace'];
         }
 
         if (!$hasWs) {
