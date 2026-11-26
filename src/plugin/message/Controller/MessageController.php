@@ -14,6 +14,7 @@ namespace Claroline\MessageBundle\Controller;
 use Claroline\AppBundle\Annotations\ApiDoc;
 use Claroline\AppBundle\API\Options;
 use Claroline\AppBundle\Controller\AbstractCrudController;
+use Claroline\CoreBundle\Entity\User;
 use Claroline\MessageBundle\Entity\Message;
 use Claroline\MessageBundle\Entity\UserMessage;
 use Claroline\MessageBundle\Manager\MessageManager;
@@ -22,6 +23,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
  * @Route("/message")
@@ -44,6 +46,42 @@ class MessageController extends AbstractCrudController
     public function getName()
     {
         return 'message';
+    }
+
+    /**
+     * CEP : les listes de messages répondaient sans connexion et, faute d'utilisateur, le finder
+     * ne filtrait rien : toute la messagerie de la plateforme était lisible (constaté le 26.11.2026).
+     */
+    private function getCurrentUser(): User
+    {
+        $token = $this->tokenStorage->getToken();
+        $user = $token ? $token->getUser() : null;
+
+        if (!$user instanceof User) {
+            throw new AccessDeniedException();
+        }
+
+        return $user;
+    }
+
+    /**
+     * CEP : supprimer, restaurer, marquer lu ou non lu agissait sur n'importe quel identifiant,
+     * sans vérifier que le message appartient à la personne connectée.
+     *
+     * @return UserMessage[]
+     */
+    private function decodeOwnMessages(Request $request): array
+    {
+        $user = $this->getCurrentUser();
+        $messages = $this->decodeIdsString($request, UserMessage::class);
+
+        foreach ($messages as $message) {
+            if (!$message->getUser() || $message->getUser()->getId() !== $user->getId()) {
+                throw new AccessDeniedException();
+            }
+        }
+
+        return $messages;
     }
 
     /**
@@ -75,6 +113,8 @@ class MessageController extends AbstractCrudController
      */
     public function getReceivedAction(Request $request): JsonResponse
     {
+        $this->getCurrentUser();
+
         return new JsonResponse(
           $this->finder->search($this->getClass(), array_merge(
               $request->query->all(),
@@ -97,6 +137,8 @@ class MessageController extends AbstractCrudController
      */
     public function getRemovedAction(Request $request): JsonResponse
     {
+        $this->getCurrentUser();
+
         return new JsonResponse(
           $this->finder->search($this->getClass(), array_merge(
               $request->query->all(),
@@ -120,6 +162,8 @@ class MessageController extends AbstractCrudController
      */
     public function getSentAction(Request $request): JsonResponse
     {
+        $this->getCurrentUser();
+
         return new JsonResponse(
           $this->finder->search($this->getClass(), array_merge(
               $request->query->all(),
@@ -139,7 +183,7 @@ class MessageController extends AbstractCrudController
      */
     public function softDeleteAction(Request $request): JsonResponse
     {
-        $messages = $this->decodeIdsString($request, UserMessage::class);
+        $messages = $this->decodeOwnMessages($request);
 
         $this->om->startFlushSuite();
         foreach ($messages as $message) {
@@ -163,7 +207,7 @@ class MessageController extends AbstractCrudController
      */
     public function hardDeleteAction(Request $request): JsonResponse
     {
-        $messages = $this->decodeIdsString($request, UserMessage::class);
+        $messages = $this->decodeOwnMessages($request);
 
         $this->om->startFlushSuite();
         foreach ($messages as $message) {
@@ -185,7 +229,7 @@ class MessageController extends AbstractCrudController
      */
     public function restoreAction(Request $request): JsonResponse
     {
-        $messages = $this->decodeIdsString($request, UserMessage::class);
+        $messages = $this->decodeOwnMessages($request);
 
         $this->om->startFlushSuite();
         foreach ($messages as $message) {
@@ -209,7 +253,7 @@ class MessageController extends AbstractCrudController
      */
     public function readAction(Request $request): JsonResponse
     {
-        $messages = $this->decodeIdsString($request, UserMessage::class);
+        $messages = $this->decodeOwnMessages($request);
 
         $this->om->startFlushSuite();
 
@@ -235,7 +279,7 @@ class MessageController extends AbstractCrudController
      */
     public function unreadAction(Request $request): JsonResponse
     {
-        $messages = $this->decodeIdsString($request, UserMessage::class);
+        $messages = $this->decodeOwnMessages($request);
 
         $this->om->startFlushSuite();
 
@@ -263,7 +307,12 @@ class MessageController extends AbstractCrudController
      */
     public function getRootAction($id): JsonResponse
     {
+        $user = $this->getCurrentUser();
         $message = $this->crud->get($this->getClass(), $id);
+        // CEP : le fil de n'importe quel message était lisible par son identifiant.
+        if (!$message || !$this->om->getRepository(UserMessage::class)->findOneBy(['message' => $message, 'user' => $user])) {
+            throw new AccessDeniedException();
+        }
         $rootId = $message->getRoot();
         $root = $this->om->getRepository($this->getClass())->find($rootId);
 
@@ -272,16 +321,20 @@ class MessageController extends AbstractCrudController
 
     public function getAction(Request $request, $id, $class)
     {
-        $currentUser = $this->tokenStorage->getToken()->getUser();
+        $currentUser = $this->getCurrentUser();
 
         $query = $request->query->all();
         $object = $this->crud->get($class, $id);
-        $um = $this->om->getRepository(UserMessage::class)->findOneBy(['message' => $object, 'user' => $currentUser]);
+        $um = $object ? $this->om->getRepository(UserMessage::class)->findOneBy(['message' => $object, 'user' => $currentUser]) : null;
+        // CEP : un message qui n'est pas à la personne connectée n'est pas lisible.
+        if (!$um) {
+            throw new AccessDeniedException();
+        }
         $this->crud->replace($um, 'isRead', true);
         $options = $this->options['get'];
 
         if (isset($query['options'])) {
-            $options = $query['options'];
+            $options = $this->sanitizeRequestOptions($query['options']);
         }
 
         return $object ?

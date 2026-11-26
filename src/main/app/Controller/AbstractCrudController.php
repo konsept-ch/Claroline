@@ -179,6 +179,15 @@ abstract class AbstractCrudController
      */
     public function existAction($class, $field, $value)
     {
+        // CEP : sans connexion, cette route disait si n'importe quel objet existait, pour n'importe
+        // quel champ (codes d'organisation, d'espace, jetons d'API...). Seul le formulaire
+        // d'inscription en a besoin, pour l'identifiant et l'e-mail d'un compte (26.11.2026).
+        $isAccountCheck = 'Claroline\CoreBundle\Entity\User' === ltrim($class, '\\')
+            && in_array($field, ['email', 'username'], true);
+        if (!$isAccountCheck) {
+            $this->checkCrudReadAccess();
+        }
+
         $objects = $this->om->getRepository($class)->findBy([$field => $value]);
 
         if (count($objects) > 0) {
@@ -486,7 +495,7 @@ abstract class AbstractCrudController
     /**
      * @param mixed $options
      */
-    private function sanitizeRequestOptions($options): array
+    protected function sanitizeRequestOptions($options): array
     {
         return array_values(array_filter((array) $options, function ($option) {
             return is_string($option) && !in_array($option, self::FORBIDDEN_REQUEST_OPTIONS, true);

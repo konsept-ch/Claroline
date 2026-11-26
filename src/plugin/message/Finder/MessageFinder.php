@@ -45,6 +45,10 @@ class MessageFinder extends AbstractFinder
             $userId = $this->tokenStorage->getToken()->getUser()->getId();
             $qb->andWhere('currentUser.id = :userId');
             $qb->setParameter('userId', $userId);
+        } else {
+            // CEP : sans utilisateur connecté, aucun filtre n'était posé et toute la messagerie
+            // de la plateforme sortait (constaté le 26.11.2026). Sans utilisateur, aucun message.
+            $qb->andWhere('1 = 0');
         }
 
         foreach ($searches as $filterName => $filterValue) {
