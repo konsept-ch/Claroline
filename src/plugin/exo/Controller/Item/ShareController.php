@@ -91,13 +91,17 @@ class ShareController
      * Searches users by username, first or last name.
      *
      * @Route("/{search}", name="questions_share_users", methods={"GET"})
+     * @EXT\ParamConverter("user", converter="current_user", options={"allowAnonymous"=false})
      *
      * @param string $search
      *
      * @return JsonResponse
      */
-    public function searchUsers($search)
+    public function searchUsers($search, User $user)
     {
+        // CEP : `$user` n'est pas utilisé, il impose la connexion. Sans lui, la route rendait sans
+        // connexion tout l'annuaire (e-mail, nom, identifiant) : 27 133 comptes pour « a » sur VAL,
+        // constaté le 26.11.2026.
         $users = $this->userRepository->findByName($search);
 
         return new JsonResponse(array_map(function (User $user) {
