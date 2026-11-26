@@ -11,6 +11,7 @@
 
 namespace Claroline\CursusBundle\Security\Voter;
 
+use Claroline\CoreBundle\Entity\User;
 use Claroline\CoreBundle\Security\Voter\AbstractVoter;
 use Claroline\CursusBundle\Entity\Quota;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
@@ -32,11 +33,47 @@ class QuotaVoter extends AbstractVoter
             case self::EDIT:
                 return VoterInterface::ACCESS_GRANTED;
             case self::MANAGE_QUOTAS:
-            case self::VALIDATE_SUBSCRIPTIONS:
                 return $this->isToolGranted($attributes[0], 'trainings') ? VoterInterface::ACCESS_GRANTED : VoterInterface::ACCESS_DENIED;
+            case self::VALIDATE_SUBSCRIPTIONS:
+                if (!$this->isToolGranted($attributes[0], 'trainings')) {
+                    return VoterInterface::ACCESS_DENIED;
+                }
+
+                // CEP : le droit sur l'outil ne suffisait pas. Un gestionnaire RH lisait et validait les
+                // inscriptions de n'importe quelle organisation dont il connaissait le quota (constaté
+                // sur VAL le 26.11.2026 : 28 inscriptions d'un autre service). On applique la même règle
+                // que la liste des quotas : ses organisations et leurs sous-organisations.
+                return $this->isAdmin($token) || $this->isInUserOrganizations($token, $object)
+                    ? VoterInterface::ACCESS_GRANTED
+                    : VoterInterface::ACCESS_DENIED;
         }
 
         return VoterInterface::ACCESS_DENIED;
+    }
+
+    private function isInUserOrganizations(TokenInterface $token, Quota $quota): bool
+    {
+        $user = $token->getUser();
+        if (!$user instanceof User || !$quota->getOrganization()) {
+            return false;
+        }
+
+        $allowed = [];
+        $this->collectOrganizationIds($user->getOrganizations(), $allowed);
+
+        return in_array($quota->getOrganization()->getUuid(), $allowed, true);
+    }
+
+    private function collectOrganizationIds(iterable $organizations, array &$output): void
+    {
+        foreach ($organizations as $organization) {
+            if (in_array($organization->getUuid(), $output, true)) {
+                continue;
+            }
+
+            $output[] = $organization->getUuid();
+            $this->collectOrganizationIds($organization->getChildren(), $output);
+        }
     }
 
     public function getSupportedActions()
