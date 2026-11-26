@@ -48,7 +48,10 @@ const OrganizationTabComponent = props =>
         }, {
           path: '/organizations/form/parent/:parent',
           onEnter: (params) => {
-            const parent = props.organizations.find(organization => organization.id === params.parent)
+            // CEP : au premier chargement de la page (rafraîchissement, lien ouvert dans un nouvel onglet),
+            // la liste n'est pas encore en mémoire et le parent était perdu : la sous-organisation était
+            // créée à la racine. L'identifiant de l'adresse suffit au serveur (constaté le 26.11.2026).
+            const parent = props.organizations.find(organization => organization.id === params.parent) || {id: params.parent}
             props.openForm(null, parent)
           },
           component: Organization
