@@ -361,7 +361,7 @@ function has_domain(locale, domain) {
 function load_domain(locale, domain) {
 
   if (!has_domain(locale, domain) && Translator.loaded_domains.indexOf(domain) === -1) {
-    load_domain_file(asset(`js/translations/${domain}/${locale}.js?v=${param('version')}`))
+    load_domain_file(asset(`js/translations/${domain}/${locale}.js?v=${param('assetsVersion') || param('version')}`))
   }
 
   if (Translator.loaded_domains.indexOf(domain) === -1) {

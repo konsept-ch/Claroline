@@ -251,6 +251,7 @@ services:
             - '@Claroline\CoreBundle\Manager\PluginManager'
             - '@Claroline\CoreBundle\Manager\UserManager'
             - '@Claroline\CoreBundle\API\Serializer\Resource\ResourceTypeSerializer'
+            - '%kernel.project_dir%'
 
     Claroline\CoreBundle\API\Serializer\Log\LogSerializer:
         tags: [claroline.serializer]

@@ -19,7 +19,7 @@ function currentTheme() {
  * @return {string}
  */
 function theme(assetName = 'bootstrap') {
-  return asset(`themes/${currentTheme()}/${assetName}.css?v=${param('version')}`)
+  return asset(`themes/${currentTheme()}/${assetName}.css?v=${param('assetsVersion') || param('version')}`)
 }
 
 /**

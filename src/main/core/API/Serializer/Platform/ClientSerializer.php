@@ -55,6 +55,9 @@ class ClientSerializer
     /** @var EventDispatcherInterface */
     private $eventDispatcher;
 
+    /** @var string|null */
+    private $projectDir;
+
     public function __construct(
         string $env,
         EventDispatcherInterface $eventDispatcher,
@@ -66,7 +69,8 @@ class ClientSerializer
         VersionManager $versionManager,
         PluginManager $pluginManager,
         UserManager $userManager,
-        ResourceTypeSerializer $resourceTypeSerializer
+        ResourceTypeSerializer $resourceTypeSerializer,
+        string $projectDir = null
     ) {
         $this->env = $env;
         $this->tokenStorage = $tokenStorage;
@@ -79,11 +83,36 @@ class ClientSerializer
         $this->userManager = $userManager;
         $this->resourceTypeSerializer = $resourceTypeSerializer;
         $this->eventDispatcher = $eventDispatcher;
+        $this->projectDir = $projectDir;
     }
 
     public function getName()
     {
         return 'client';
+    }
+
+    /**
+     * CEP : version a mettre dans l'URL des traductions et du theme (`?v=`).
+     *
+     * `version` vaut le contenu de `VERSION.txt`, fige a 13.5.16 dans toutes les versions CEP :
+     * l'URL ne changeait jamais et le navigateur gardait les anciens libelles apres une livraison
+     * (docs/10-claroline/traductions-cache-navigateur.md). On y ajoute la date de generation des
+     * traductions, que `claroline:update` refait a chaque demarrage du conteneur.
+     */
+    public function getAssetsVersion(): string
+    {
+        $version = $this->versionManager->getCurrent();
+
+        if ($this->projectDir) {
+            foreach (['config.js', 'platform/fr.js'] as $file) {
+                $mtime = @filemtime($this->projectDir.'/public/js/translations/'.$file);
+                if ($mtime) {
+                    return $version.'-'.$mtime;
+                }
+            }
+        }
+
+        return $version;
     }
 
     /**
@@ -104,6 +133,7 @@ class ClientSerializer
             'secondaryName' => $this->config->getParameter('secondary_name'),
             'description' => null, // the one for the current locale
             'version' => $this->versionManager->getCurrent(),
+            'assetsVersion' => $this->getAssetsVersion(),
             'environment' => $this->env,
             'helpUrl' => $this->config->getParameter('help_url'),
             'selfRegistration' => $this->config->getParameter('registration.self') && !$this->userManager->hasReachedLimit(),
