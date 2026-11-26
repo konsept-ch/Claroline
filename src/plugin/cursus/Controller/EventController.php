@@ -30,6 +30,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration as EXT;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -107,6 +108,18 @@ class EventController extends AbstractCrudController
      */
     public function listAction(Request $request, $class = Event::class, Workspace $workspace = null): JsonResponse
     {
+        // CEP : cette route répondait sans connexion, et un identifiant qui n'est pas celui d'un
+        // espace (ex. `GET /apiv2/cursus_event/<uuid d'une séance>`) laissait `$workspace` à null,
+        // donc listait toutes les séances, avec leur créateur, sans limite (constaté le 25.11.2026).
+        // Les visiteurs anonymes passent par `apiv2_cursus_event_public`.
+        if (!$this->authorization->isGranted('IS_AUTHENTICATED_FULLY')) {
+            throw new AccessDeniedException();
+        }
+
+        if (!$workspace) {
+            throw new NotFoundHttpException('Workspace not found.');
+        }
+
         $query = $request->query->all();
         $options = $this->options['list'];
 
@@ -126,6 +139,11 @@ class EventController extends AbstractCrudController
      */
     public function listPublicAction(Request $request, Workspace $workspace = null): JsonResponse
     {
+        // CEP : même défaut que `listAction` — un identifiant inconnu listait toutes les séances publiques.
+        if (!$workspace) {
+            throw new NotFoundHttpException('Workspace not found.');
+        }
+
         $query = $request->query->all();
         $options = $this->options['list'];
 
