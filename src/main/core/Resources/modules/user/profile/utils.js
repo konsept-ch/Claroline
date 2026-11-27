@@ -183,19 +183,37 @@ function formatField(fieldDef, allFields, dataProp) {
   return field
 }
 
-function isFieldDisplayed(fieldDef, allFields, data) {
-  if (!isEmpty(fieldDef.display.condition)) {
+// CEP : un champ « organisation » a pour valeur l'organisation entière ({id, name, code, ...}),
+// jamais égale (===) à la valeur de la condition. On compare alors les identifiants.
+function getComparableValue(value) {
+  if (value && 'object' === typeof value && !Array.isArray(value) && value.id) {
+    return value.id
+  }
+
+  return value
+}
+
+function isFieldDisplayed(fieldDef, allFields, data, depth = 0) {
+  if (!isEmpty(get(fieldDef, 'display.condition.field'))) {
     const parentField = allFields.find(f => f.id === fieldDef.display.condition.field)
     if (parentField) {
-      const parentValue = get(data, parentField.id)
+      // CEP : un champ dont le champ parent est masqué est masqué lui aussi. Sans cela, les
+      // coordonnées d'une entreprise non référencée restaient affichées après le choix d'un
+      // employeur dans la liste, ou d'un compte privé (constaté sur VAL le 27.11.2026).
+      if (depth < 10 && !isFieldDisplayed(parentField, allFields, data, depth + 1)) {
+        return false
+      }
+
+      const parentValue = getComparableValue(get(data, parentField.id))
+      const expectedValue = getComparableValue(fieldDef.display.condition.value)
 
       let displayed = false
       switch (fieldDef.display.condition.comparator) {
         case 'equal':
-          displayed = parentValue === fieldDef.display.condition.value
+          displayed = parentValue === expectedValue
           break
         case 'different':
-          displayed = parentValue !== fieldDef.display.condition.value
+          displayed = parentValue !== expectedValue
           break
         case 'empty':
           displayed = isEmpty(parentValue)
